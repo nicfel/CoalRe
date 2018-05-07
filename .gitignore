@@ -16,6 +16,7 @@
 /build-test
 /test-reports
 /dist
+/out
 
 # Ignore generated BEAST files
 *.state

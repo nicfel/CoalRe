@@ -1,5 +1,5 @@
 
-package reassortment.distribution;
+package coalre.distribution;
 
 
 import java.util.List;
@@ -10,7 +10,6 @@ import beast.core.Distribution;
 import beast.core.Input;
 import beast.core.State;
 import beast.core.Input.Validate;
-import beast.evolution.tree.TreeInterface;
 
 // should be the same as the original tree distribution but allowing for Structured tree intervals 
 // additionally allows recalculation of which daughter lineages were involved in a coalescent event

@@ -1,7 +1,6 @@
-package reassortment.simulator;
+package coalre.simulator;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -16,8 +15,8 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
-import reassortment.network.Network;
-import reassortment.network.Networknode;
+import coalre.network.Network;
+import coalre.network.Networknode;
 
 public class SimulateCoalescentWithReassortment extends Network implements StateNodeInitialiser {
 	

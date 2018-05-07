@@ -1,10 +1,9 @@
-package reassortment.network;
+package coalre.network;
 
 import beast.core.*;
 import beast.core.util.Log;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.TraitSet;
-import beast.util.TreeParser;
 
 import java.io.PrintStream;
 import java.util.ArrayList;

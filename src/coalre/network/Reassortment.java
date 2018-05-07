@@ -1,14 +1,10 @@
-package reassortment.network;
+package coalre.network;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.w3c.dom.Node;
 
-import beast.core.Input;
 import beast.core.StateNode;
-import beast.evolution.tree.Tree;
 
 public class Reassortment extends StateNode {
 		

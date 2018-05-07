@@ -1,21 +1,14 @@
-package reassortment.distribution;
+package coalre.distribution;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 
-import beast.core.CalculationNode;
-import beast.core.Citation;
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.TraitSet;
-import beast.evolution.tree.coalescent.IntervalType;
-import beast.util.Randomizer;
-import reassortment.network.NetworkIntervalType;
-import reassortment.network.Networknode;
+import coalre.network.NetworkIntervalType;
+import coalre.network.Networknode;
 
 
 /**

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><beast beautitemplate='Standard' beautistatus='' namespace="beast.core:beast.evolution.alignment:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood:beast.mascot.dynamics:reassortment.simulator:beast.mascot.logger" version="2.0">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><beast beautitemplate='Standard' beautistatus='' namespace="beast.core:beast.evolution.alignment:beast.evolution.tree.coalescent:beast.core.util:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.likelihood:beast.mascot.dynamics:coalre.simulator:beast.mascot.logger" version="2.0">
     
     <data id="seg1">
         <sequence id="seq_c1.HA.A/YOKOHAMA/139/2017" taxon="A/YOKOHAMA/139/2017.c1" totalcount="4" value="?"/>
@@ -281,7 +281,7 @@
                 <taxonset idref="TaxonSet.seg1"/>
             </tree>
             
-            <stateNode spec="reassortment.network.Network" id="Network">
+            <stateNode spec="coalre.network.Network" id="Network">
                 <taxonset idref="TaxonSet.seg1"/>
             </stateNode>
 
@@ -291,7 +291,7 @@
 		</state>
         
         
-        <init id="InitialiseSegmentTrees" spec="reassortment.simulator.SimulateCoalescentWithReassortment" estimate="false"  rRate="0.5" coalRate="2">
+        <init id="InitialiseSegmentTrees" spec="coalre.simulator.SimulateCoalescentWithReassortment" estimate="false" rRate="0.5" coalRate="2">
             <network idref="Network"/>
             <segmentsTree idref="Tree.t:seg1"/>
             <segmentsTree idref="Tree.t:seg2"/>
@@ -314,8 +314,8 @@
                 </prior>
             </distribution>
 			<distribution id="likelihood" spec="util.CompoundDistribution">
-                <distribution id="coalescent" spec="reassortment.distribution.CoalescentWithReassortment">
-                    <networkIntervals id="st1" spec="reassortment.distribution.NetworkIntervals" network="@Network"/>
+                <distribution id="coalescent" spec="coalre.distribution.CoalescentWithReassortment">
+                    <networkIntervals id="st1" spec="coalre.distribution.NetworkIntervals" network="@Network"/>
                     <reassortmentRate idref="rRate"/>
                     <coalescentRate idref="coalRate"/>
                 </distribution>
