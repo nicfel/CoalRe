@@ -8,7 +8,7 @@ import beast.core.Description;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
 import coalre.network.NetworkIntervalType;
-import coalre.network.Networknode;
+import coalre.network.NetworkNode;
 
 
 /**
@@ -22,10 +22,9 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 	public Input<RealParameter> coalescentRateInput = new Input<>("coalescentRate", "coalescent rate", Input.Validate.REQUIRED);
 	
 
-	int failedParticles;
-    
     // Set up for lineage state probabilities
-    private ArrayList<Integer> activeLineages;
+    private ArrayList<NetworkNode> activeLineageNodes;
+	private ArrayList<Boolean> activeLineageIsLeft;
     private ArrayList<Boolean[]> activeSegments;
     
     private double coalescentRate;
@@ -40,69 +39,50 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 //    	System.out.println("calc");
     	logP = 0;
     	// newly calculate tree intervals
-    	networkIntervalsInput.get().calculateIntervals();
+    	List<NetworkIntervals.NetworkEvent> networkEventList = networkIntervalsInput.get().getNetworkEventList();
     	double nextEventTime = 0.0;
-    	int networkInterval = 0;
-    	
+
     	boolean first = true;
     	
-    	activeLineages = new ArrayList<>();
+    	activeLineageNodes = new ArrayList<>();
+    	activeLineageIsLeft = new ArrayList<>();
     	activeSegments = new ArrayList<>();
     	
     	coalescentRate = coalescentRateInput.get().getValue(0);
     	reassortmentRate = rRateInput.get().getValue(0);
-    	
-    	
-    	
-        do {       
-        	nextEventTime = networkIntervalsInput.get().getInterval(networkInterval);
+
+    	for (NetworkIntervals.NetworkEvent event : networkEventList) {
+        	nextEventTime = event.time;
         	
-        	if (nextEventTime==Double.POSITIVE_INFINITY)
-        		break;
-       	
         	if (nextEventTime > 0) {
         		logP += intervalContribution(nextEventTime);
         	}
-       	
-        	if (networkIntervalsInput.get().getNetworkIntervalType(networkInterval) == NetworkIntervalType.COALESCENT) {
-//        		System.out.println("coal");
-        		logP += coalesce(networkInterval);
-        	}
-       		
-       		if (networkIntervalsInput.get().getNetworkIntervalType(networkInterval) == NetworkIntervalType.SAMPLE) { 	
-//        		System.out.println("sam");
-      			sample(networkInterval, first);
-       			first = false;
-       		}	 
-       		
-       		if (networkIntervalsInput.get().getNetworkIntervalType(networkInterval) == NetworkIntervalType.REASSORTMENTSTART) { 
-//        		System.out.println("REASSORTMENTSTART");
-        		logP += reassortmentstart(networkInterval);
-       			first = false;
-       		}	 
-       		
-       		if (networkIntervalsInput.get().getNetworkIntervalType(networkInterval) == NetworkIntervalType.REASSORTMENTEND) { 	
-//        		System.out.println("REASSORTMENTEND");
-      			reassortmentend(networkInterval);
-       			first = false;
-       		}	    		
-       		
-       		
-       		networkInterval++;
+
+        	switch (event.type) {
+				case COALESCENCE:
+					logP += coalesce(event);
+					break;
+
+				case SAMPLE:
+					sample(event, first);
+					break;
+
+				case REASSORTMENT:
+					logP += reassortmentstart(event);
+					reassortmentend(event);
+					break;
+			}
+			first = false;
+
        		if (logP==Double.NEGATIVE_INFINITY)
        			break;
-        }while(nextEventTime <= Double.POSITIVE_INFINITY);
+        }
         
-//        count++;
-        
-//        System.out.println(logP);
-//        if (count == 2)
-//        	System.exit(0);
-		return logP;  	
+		return logP;
     }
     
-	private double reassortmentstart(int networkInterval) {
-		List<Networknode> reassLines = networkIntervalsInput.get().getLineagesRemoved(networkInterval);
+	private double reassortmentstart(NetworkIntervals.NetworkEvent event) {
+		List<NetworkNode> reassLines = networkIntervalsInput.get().getLineagesRemoved(networkInterval);
 
     	if (reassLines.size() != 1) {
 			System.err.println("Unsupported number of incoming lineages at a reassortment event");
@@ -140,7 +120,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
 
 	private void reassortmentend(int networkInterval) {
-		List<Networknode> reassLines = networkIntervalsInput.get().getLineagesAdded(networkInterval);
+		List<NetworkNode> reassLines = networkIntervalsInput.get().getLineagesAdded(networkInterval);
 		
     	if (reassLines.size() != 1) {
 			System.err.println("Unsupported number of incoming lineages at a second part of a reassortment event");
@@ -153,16 +133,16 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
 
 	private void sample(int networkInterval, boolean first) {
-		List<Networknode> incomingLines = networkIntervalsInput.get().getLineagesAdded(networkInterval);	
+		List<NetworkNode> incomingLines = networkIntervalsInput.get().getLineagesAdded(networkInterval);
 		
-		for (Networknode l : incomingLines) {
+		for (NetworkNode l : incomingLines) {
 			activeLineages.add(l.getNr());
 			activeSegments.add(l.getHasSegments());
 		}
 	}
 
 	private double coalesce(int networkInterval) {
-		List<Networknode> coalLines = networkIntervalsInput.get().getLineagesRemoved(networkInterval);
+		List<NetworkNode> coalLines = networkIntervalsInput.get().getLineagesRemoved(networkInterval);
 		
     	if (coalLines.size() > 2) {
 			System.err.println("Unsupported coalescent at non-binary node");

@@ -16,7 +16,7 @@ import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
 import coalre.network.Network;
-import coalre.network.Networknode;
+import coalre.network.NetworkNode;
 
 public class SimulateCoalescentWithReassortment extends Network implements StateNodeInitialiser {
 	
@@ -34,7 +34,7 @@ public class SimulateCoalescentWithReassortment extends Network implements State
     
     ArrayList<Double> samplingTimes;
     ArrayList<HashMap<Integer, Node>> activeLineages;
-    ArrayList<Networknode> activeNetworkNodes;
+    ArrayList<NetworkNode> activeNetworkNodes;
     Integer highestNetworkNodeNr;
     Integer reassortmentNumber;
     Integer[] highestNodeNr;
@@ -162,7 +162,7 @@ public class SimulateCoalescentWithReassortment extends Network implements State
 		}		
 		
 		// sample the network node
-		Networknode n = new Networknode();
+		NetworkNode n = new NetworkNode();
 		n.setID(taxonset.getTaxonId(minIndex));
 		n.setHeight(minSampleTime);
 		n.setNr(samplingInterval);
@@ -242,7 +242,7 @@ public class SimulateCoalescentWithReassortment extends Network implements State
     			parents.put(segs2[i], activeLineages.get(lineages2).get(segs2[i]));
     	}  	   
     	
-		Networknode p = new Networknode();
+		NetworkNode p = new NetworkNode();
 		p.setHeight(coalescentTime);
 		p.setNr(highestNetworkNodeNr + samplingTimes.size());
 						
@@ -309,8 +309,8 @@ public class SimulateCoalescentWithReassortment extends Network implements State
         		activeLineages.add(goesRight);	    	
 	    	
 	    	// the ones that go left have an actual parent 
-    		Networknode p_left = new Networknode();
-    		Networknode p_right = new Networknode();
+    		NetworkNode p_left = new NetworkNode();
+    		NetworkNode p_right = new NetworkNode();
     		
     		p_left.setHeight(reassortmentTime);
     		p_right.setHeight(reassortmentTime);
