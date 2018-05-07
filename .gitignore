@@ -1,13 +1,23 @@
-# Ignore everything in this directory
-.DS_Store
+# IDE cruft
 .classpath
 .project
-/.settings/
-/bin/
-/build/
-/build-lib/
-/build-beast/
-/build-test/
-/test-reports/
-/dist/
+/.settings
+/CoalRe.iml
+/.idea
 
+# Misc cruft
+.DS_Store
+
+# Build/test files
+/bin
+/build
+/build-lib
+/build-beast
+/build-test
+/test-reports
+/dist
+
+# Ignore generated BEAST files
+*.state
+*.log
+*.trees
