@@ -11,6 +11,7 @@ import coalre.network.NetworkNode;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -25,32 +26,6 @@ public class NetworkIntervals extends CalculationNode {
     private boolean isDirty;
 
     public enum NetworkEventType { SAMPLE, COALESCENCE, REASSORTMENT }
-
-    public class NetworkLineage {
-        NetworkNode node;
-        boolean isLeft;
-
-        public NetworkLineage(NetworkNode node, boolean isLeft) {
-            this.node = node;
-            this.isLeft = isLeft;
-        }
-
-        public NetworkNode getParentNode() {
-            if (isLeft)
-                return node.getParent();
-            else
-                return node.getSecondParent();
-        }
-    }
-
-    public class NetworkEvent {
-        NetworkEventType type;
-        double time;
-        int lineages;
-
-        List<NetworkLineage> lineagesAdded = new ArrayList<>();
-        List<NetworkLineage> lineagesRemoved = new ArrayList<>();
-    }
 
     List<NetworkEvent> networkEventList;
 

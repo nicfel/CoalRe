@@ -39,7 +39,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 //    	System.out.println("calc");
     	logP = 0;
     	// newly calculate tree intervals
-    	List<NetworkIntervals.NetworkEvent> networkEventList = networkIntervalsInput.get().getNetworkEventList();
+    	List<NetworkEvent> networkEventList = networkIntervalsInput.get().getNetworkEventList();
     	double nextEventTime = 0.0;
 
     	boolean first = true;
@@ -51,7 +51,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
     	coalescentRate = coalescentRateInput.get().getValue(0);
     	reassortmentRate = rRateInput.get().getValue(0);
 
-    	for (NetworkIntervals.NetworkEvent event : networkEventList) {
+    	for (NetworkEvent event : networkEventList) {
         	nextEventTime = event.time;
         	
         	if (nextEventTime > 0) {
@@ -81,24 +81,24 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 		return logP;
     }
     
-	private double reassortmentstart(NetworkIntervals.NetworkEvent event) {
-		List<NetworkNode> reassLines = networkIntervalsInput.get().getLineagesRemoved(networkInterval);
+	private double reassortmentstart(NetworkEvent event) {
+		List<NetworkLineage> reassLineages = event.lineagesRemoved;
 
-    	if (reassLines.size() != 1) {
+    	if (reassLineages.size() != 1) {
 			System.err.println("Unsupported number of incoming lineages at a reassortment event");
 			System.exit(0);
 		}
     	
-    	final int daughterIndex = activeLineages.indexOf(reassLines.get(0).getNr());
+    	final int daughterIndex = activeLineages.indexOf(reassLineages.get(0).getNr());
     	
 		if (daughterIndex == -1 ) {
-			System.out.println(reassLines.get(0).getNr() + " " + activeLineages);
+			System.out.println(reassLineages.get(0).getNr() + " " + activeLineages);
 			System.out.println("daughter lineage at reassortment event not found");
 			return Double.NaN;
 		}
 
 
-    	Boolean[] segsBefore = reassLines.get(0).getHasSegments();
+    	Boolean[] segsBefore = reassLineages.get(0).getHasSegments();
     	
     	int c_before = 0;
     	for (int i = 0; i < segsBefore.length; i++){
@@ -106,9 +106,9 @@ public class CoalescentWithReassortment extends NetworkDistribution {
     	}
     	
     	
-        activeLineages.add(reassLines.get(0).getParent().getNr());  
+        activeLineages.add(reassLineages.get(0).getParent().getNr());
         
-        activeSegments.add(reassLines.get(0).getParent().getHasSegments());
+        activeSegments.add(reassLineages.get(0).getParent().getHasSegments());
         
         activeLineages.remove(daughterIndex);
         activeSegments.remove(daughterIndex);
@@ -119,29 +119,29 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 	}
 
 
-	private void reassortmentend(int networkInterval) {
-		List<NetworkNode> reassLines = networkIntervalsInput.get().getLineagesAdded(networkInterval);
+	private void reassortmentend(NetworkEvent event) {
+		List<NetworkLineage> reassLineages = event.lineagesAdded;
 		
-    	if (reassLines.size() != 1) {
+    	if (reassLineages.size() != 1) {
 			System.err.println("Unsupported number of incoming lineages at a second part of a reassortment event");
 			System.exit(0);
     	}
 		
-		activeLineages.add(reassLines.get(0).getNr());
-		activeSegments.add(reassLines.get(0).getHasSegments());
+		activeLineages.add(reassLineages.get(0).getNr());
+		activeSegments.add(reassLineages.get(0).getHasSegments());
 	}
 
 
-	private void sample(int networkInterval, boolean first) {
-		List<NetworkNode> incomingLines = networkIntervalsInput.get().getLineagesAdded(networkInterval);
+	private void sample(NetworkEvent event, boolean first) {
+		List<NetworkLineage> incommingLineages = event.lineagesAdded;
 		
-		for (NetworkNode l : incomingLines) {
+		for (NetworkNode l : incommingLineages) {
 			activeLineages.add(l.getNr());
 			activeSegments.add(l.getHasSegments());
 		}
 	}
 
-	private double coalesce(int networkInterval) {
+	private double coalesce(NetworkEvent event) {
 		List<NetworkNode> coalLines = networkIntervalsInput.get().getLineagesRemoved(networkInterval);
 		
     	if (coalLines.size() > 2) {
