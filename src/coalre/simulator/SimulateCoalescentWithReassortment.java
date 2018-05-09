@@ -14,6 +14,8 @@ import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
+import beast.evolution.tree.coalescent.PopulationFunction;
+import beast.math.Binomial;
 import beast.util.Randomizer;
 import coalre.network.NetworkEdge;
 import coalre.network.Network;
@@ -23,13 +25,12 @@ public class SimulateCoalescentWithReassortment extends Network implements State
 
     final public Input<Double> rRateInput = new Input<>("rRate",
             "reassortmentRate", Validate.REQUIRED);
-    final public Input<Double> coalRateInput = new Input<>("coalRate",
-            "coalescent rate", Validate.REQUIRED);
-    final public Input<List<Tree>> segmentTreesInput = new Input<>("segmentTree",
-            "dummy segment tree", new ArrayList<>());
 
-    final public Input<Network> networkInput = new Input<>("network",
-            "dummy network", Validate.REQUIRED);
+    final public Input<PopulationFunction> populationFunctionInput = new Input<>("populationModel",
+            "Population model to use.", Validate.REQUIRED);
+
+    final public Input<List<Tree>> segmentTreesInput = new Input<>("segmentTree",
+            "Segment trees to initialize.", new ArrayList<>());
 
     final public Input<TraitSet> traitSetInput = new Input<>("traitSet",
             "Trait set specifying leaf ages.");
@@ -45,6 +46,8 @@ public class SimulateCoalescentWithReassortment extends Network implements State
     int reassortmentNumber;
     int[] highestNodeNr;
     TaxonSet taxonset;
+
+    PopulationFunction populationFunction;
 
     int nSegments;
 
@@ -63,6 +66,8 @@ public class SimulateCoalescentWithReassortment extends Network implements State
                 samplingTimes.add(0.0);
         }
 
+        populationFunction = populationFunctionInput.get();
+
         nSegments = segmentTreesInput.get().size();
 
         if (nSegments==0) {
@@ -78,38 +83,43 @@ public class SimulateCoalescentWithReassortment extends Network implements State
         int samplingInterval = 0;
         highestNetworkNodeNr = 0;
         reassortmentNumber = 0;
-        double currTime = 0;
+        double currentTime = 0;
+        double currentTransformedTime = 0;
         double nextSamplingTime;
         do {
             // get the timing of the next sampling event
             if (samplingInterval < samplingTimes.size()) {
-                nextSamplingTime = Collections.min(samplingTimes) - currTime;
+                nextSamplingTime = Collections.min(samplingTimes) - currentTime;
             } else {
                 nextSamplingTime = Double.POSITIVE_INFINITY;
             }
 
             // get the current propensities
             int k = extantLineages.size();
-            double coalProp = k * (k - 1) / 2 * coalRateInput.get();
-            double reasProp = k * rRateInput.get();
-            double totalProp = coalProp + reasProp;
+
+            double transformedTimeToNextCoal = Randomizer.nextExponential(0.5*k*(k-1));
+            double timeToNextCoal = populationFunction.getInverseIntensity(
+                    transformedTimeToNextCoal + currentTransformedTime)
+                    - currentTime;
+
+            double timeToNextReass = Randomizer.nextExponential(k*rRateInput.get());
 
             // next event time
-            double nextNonSamplingEvent = Randomizer.nextExponential(totalProp);
+            double nextNonSamplingEvent = Math.min(timeToNextCoal, timeToNextReass);
             if (nextNonSamplingEvent < nextSamplingTime) {
-                currTime += nextNonSamplingEvent;
-                if (Randomizer.nextDouble() * totalProp < coalProp) {
+                currentTime += nextNonSamplingEvent;
+                if (nextNonSamplingEvent == timeToNextCoal) {
 //        			System.out.println("c");
-                    coalesce(currTime);
+                    coalesce(currentTime);
                 } else {
 //        			System.out.println("r");
 //        			System.out.println(coalProb/(coalProb+reasProb));
-                    reassort(currTime);
+                    reassort(currentTime);
                 }
             } else {
 //    			System.out.println("s");
-                currTime += nextSamplingTime;
-                sample(currTime, samplingInterval);
+                currentTime += nextSamplingTime;
+                sample(currentTime, samplingInterval);
                 samplingInterval++;
             }
 
