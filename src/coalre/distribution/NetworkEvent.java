@@ -1,5 +1,7 @@
 package coalre.distribution;
 
+import coalre.network.NetworkEdge;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +10,6 @@ public class NetworkEvent {
     double time;
     int lineages;
 
-    List<NetworkLineage> lineagesAdded = new ArrayList<>();
-    List<NetworkLineage> lineagesRemoved = new ArrayList<>();
+    List<NetworkEdge> lineagesAdded = new ArrayList<>();
+    List<NetworkEdge> lineagesRemoved = new ArrayList<>();
 }

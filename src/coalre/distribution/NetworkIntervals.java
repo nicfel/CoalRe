@@ -6,12 +6,11 @@ import beast.core.CalculationNode;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import coalre.network.Network;
+import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -52,21 +51,21 @@ public class NetworkIntervals extends CalculationNode {
             switch(n.getChildCount()) {
                 case 0:
                     event.type = NetworkEventType.SAMPLE;
-                    event.lineagesAdded.add(new NetworkLineage(n, true));
+                    event.lineagesAdded.add(new NetworkEdge(n, true));
                     break;
 
                 case 1:
                     event.type = NetworkEventType.REASSORTMENT;
-                    event.lineagesAdded.add(new NetworkLineage(n, false));
+                    event.lineagesAdded.add(new NetworkEdge(n, false));
                     break;
 
                 case 2:
                     event.type = NetworkEventType.COALESCENCE;
 
-                    event.lineagesAdded.add(new NetworkLineage(n, true));
+                    event.lineagesAdded.add(new NetworkEdge(n, true));
 
                     for (NetworkNode childNode : n.getChildren()) {
-                        event.lineagesRemoved.add(new NetworkLineage(childNode,
+                        event.lineagesRemoved.add(new NetworkEdge(childNode,
                                 childNode.getParent() == n));
                     }
                     break;

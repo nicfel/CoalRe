@@ -7,6 +7,7 @@ import java.util.List;
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
+import coalre.network.NetworkEdge;
 import coalre.network.NetworkIntervalType;
 import coalre.network.NetworkNode;
 
@@ -82,7 +83,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
     }
     
 	private double reassortmentstart(NetworkEvent event) {
-		List<NetworkLineage> reassLineages = event.lineagesRemoved;
+		List<NetworkEdge> reassLineages = event.lineagesRemoved;
 
     	if (reassLineages.size() != 1) {
 			System.err.println("Unsupported number of incoming lineages at a reassortment event");
@@ -120,7 +121,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
 
 	private void reassortmentend(NetworkEvent event) {
-		List<NetworkLineage> reassLineages = event.lineagesAdded;
+		List<NetworkEdge> reassLineages = event.lineagesAdded;
 		
     	if (reassLineages.size() != 1) {
 			System.err.println("Unsupported number of incoming lineages at a second part of a reassortment event");
@@ -133,7 +134,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
 
 	private void sample(NetworkEvent event, boolean first) {
-		List<NetworkLineage> incommingLineages = event.lineagesAdded;
+		List<NetworkEdge> incommingLineages = event.lineagesAdded;
 		
 		for (NetworkNode l : incommingLineages) {
 			activeLineages.add(l.getNr());

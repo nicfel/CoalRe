@@ -15,6 +15,7 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
+import coalre.network.NetworkEdge;
 import coalre.network.Network;
 import coalre.network.NetworkNode;
 
@@ -24,32 +25,56 @@ public class SimulateCoalescentWithReassortment extends Network implements State
             "reassortmentRate", Validate.REQUIRED);
     final public Input<Double> coalRateInput = new Input<>("coalRate",
             "coalescent rate", Validate.REQUIRED);
-    final public Input<List<Tree>> segmentsTreeInput = new Input<>("segmentsTree",
+    final public Input<List<Tree>> segmentTreesInput = new Input<>("segmentTree",
             "dummy segment tree", new ArrayList<>());
 
     final public Input<Network> networkInput = new Input<>("network",
             "dummy network", Validate.REQUIRED);
 
+    final public Input<TraitSet> traitSetInput = new Input<>("traitSet",
+            "Trait set specifying leaf ages.");
+
+    final public Input<TaxonSet> taxonSetInput = new Input<>("taxonset",
+            "set of taxa that correspond to the leafs in the network",
+            Validate.XOR, traitSetInput);
+
 
     ArrayList<Double> samplingTimes;
-    ArrayList<HashMap<Integer, Node>> activeLineages;
-    ArrayList<NetworkNode> activeNetworkNodes;
-    Integer highestNetworkNodeNr;
-    Integer reassortmentNumber;
-    Integer[] highestNodeNr;
+    ArrayList<NetworkEdge> extantLineages;
+    int highestNetworkNodeNr;
+    int reassortmentNumber;
+    int[] highestNodeNr;
     TaxonSet taxonset;
+
+    int nSegments;
 
     public void initAndValidate() {
         // get the sampling times in order
         samplingTimes = new ArrayList<>();
-        activeLineages = new ArrayList<>();
-        activeNetworkNodes = new ArrayList<>();
+        extantLineages = new ArrayList<>();
 
+        TraitSet traitSet = traitSetInput.get();
+        if (traitSet != null && traitSet.isDateTrait()) {
+            for (String taxonName : traitSet.taxaInput.get().getTaxaNames()) {
+                samplingTimes.add(traitSet.getValue(taxonName));
+            }
+        } else {
+            for (int i=0; i<taxonSetInput.get().getTaxonCount(); i++)
+                samplingTimes.add(0.0);
+        }
+
+        nSegments = segmentTreesInput.get().size();
+
+        if (nSegments==0) {
+            throw new IllegalArgumentException("Need at least one segment tree!");
+        }
+
+        simulateNetwork();
 
         super.initAndValidate();
     }
 
-    public void simulateReassortment() {
+    public void simulateNetwork() {
         int samplingInterval = 0;
         highestNetworkNodeNr = 0;
         reassortmentNumber = 0;
@@ -64,8 +89,9 @@ public class SimulateCoalescentWithReassortment extends Network implements State
             }
 
             // get the current propensities
-            double coalProp = activeLineages.size() * (activeLineages.size() - 1) / 2 * coalRateInput.get();
-            double reasProp = activeLineages.size() * rRateInput.get();
+            int k = extantLineages.size();
+            double coalProp = k * (k - 1) / 2 * coalRateInput.get();
+            double reasProp = k * rRateInput.get();
             double totalProp = coalProp + reasProp;
 
             // next event time
@@ -88,44 +114,13 @@ public class SimulateCoalescentWithReassortment extends Network implements State
             }
 
         }
-        while (activeNetworkNodes.size() > 1 || nextSamplingTime < Double.POSITIVE_INFINITY);
+        while (extantLineages.size() > 1 || nextSamplingTime < Double.POSITIVE_INFINITY);
 
-        if (activeLineages.size() != 1) {
+        if (extantLineages.size() != 1) {
             throw new IllegalArgumentException("simulation turned awkward");
         }
 
-
-        for (HashMap<Integer, Node> h : activeLineages) {
-            Integer[] segs = new Integer[h.size()];
-            h.keySet().toArray(segs);
-
-
-            for (Integer seg : segs) {
-                Tree initTree = new Tree(h.get(seg));
-                segmentsTreeInput.get().get(seg).assignFromWithoutID(initTree);
-            }
-        }
-//        System.out.println("init");
-//        for (int i = 0; i < segmentsTreeInput.get().size();i++)
-//        	System.out.println(segmentsTreeInput.get().get(i));
-
-//        System.out.println(activeNetworkNodes.get(0).getNodeCount());
-//        System.out.println(activeNetworkNodes.get(0));
-//        System.exit(0);
-
-        Network initNetwork = new Network(activeNetworkNodes.get(0));
-        networkInput.get().assignFromWithoutID(initNetwork);
-
-//        System.out.println(activeNetworkNodes.get(0).getParent());
-//        System.out.println(segmentsTreeInput.get().get(0).getRoot());
-//        System.out.println(initNetwork.getRoot());
-//        System.out.println();
-//        System.exit(0);
-
-
-//        System.out.println(highestNetworkNodeNr);
-
-
+        setRoot(extantLineages.get(0).node);
     }
 
     private void sample(double samplingTime, int samplingInterval) {
@@ -142,37 +137,21 @@ public class SimulateCoalescentWithReassortment extends Network implements State
             }
         }
 
+        Boolean[] hasSegs = new Boolean[nSegments];
 
-        Boolean[] hasSegs = new Boolean[segmentsTreeInput.get().size()];
-
-        for (int i = 0; i < segmentsTreeInput.get().size(); i++) {
-            // get the minimal sampling time
-            // make new node for that segment
-            Node n = new Node();
-
-            n.setID(taxonset.getTaxonId(minIndex));
-            n.setHeight(minSampleTime);
-            n.setNr(samplingInterval);
-//			n.setParent(null);
-
+        for (int i = 0; i < nSegments; i++) {
             hasSegs[i] = true;
-
-            segs.put(i, n);
-//			highestNodeNr[i]++;
         }
 
         // sample the network node
         NetworkNode n = new NetworkNode();
-        n.setID(taxonset.getTaxonId(minIndex));
+        n.setTaxonLabel(taxonset.getTaxonId(minIndex));
         n.setHeight(minSampleTime);
-        n.setNr(samplingInterval);
 
         n.setHasSegments(hasSegs);
 
-
         samplingTimes.set(minIndex, Double.POSITIVE_INFINITY);
-        activeLineages.add(segs);
-        activeNetworkNodes.add(n);
+        extantLineages.add(n);
     }
 
     private void coalesce(double coalescentTime) {
@@ -246,13 +225,13 @@ public class SimulateCoalescentWithReassortment extends Network implements State
         p.setHeight(coalescentTime);
         p.setNr(highestNetworkNodeNr + samplingTimes.size());
 
-        p.setLeft(activeNetworkNodes.get(lineages1));
-        p.setRight(activeNetworkNodes.get(lineages2));
+        p.setLeft(extantLineages.get(lineages1));
+        p.setRight(extantLineages.get(lineages2));
 
         p.setHasSegments(hasSegs);
 
-        activeNetworkNodes.get(lineages1).setParent(p);
-        activeNetworkNodes.get(lineages2).setParent(p);
+        extantLineages.get(lineages1).setParent(p);
+        extantLineages.get(lineages2).setParent(p);
 
         highestNetworkNodeNr++;
 
@@ -260,13 +239,13 @@ public class SimulateCoalescentWithReassortment extends Network implements State
         activeLineages.remove(Math.max(lineages1, lineages2));
         activeLineages.remove(Math.min(lineages1, lineages2));
 
-        activeNetworkNodes.remove(Math.max(lineages1, lineages2));
-        activeNetworkNodes.remove(Math.min(lineages1, lineages2));
+        extantLineages.remove(Math.max(lineages1, lineages2));
+        extantLineages.remove(Math.min(lineages1, lineages2));
 
         activeLineages.add(parents);
 
 
-        activeNetworkNodes.add(p);
+        extantLineages.add(p);
 
     }
 
@@ -324,18 +303,18 @@ public class SimulateCoalescentWithReassortment extends Network implements State
             reassortmentNumber++;
             highestNetworkNodeNr++;
 
-            p_left.setLeft(activeNetworkNodes.get(lineages));
-//    		p_right.setLeft(activeNetworkNodes.get(lineages));
+            p_left.setLeft(extantLineages.get(lineages));
+//    		p_right.setLeft(extantLineages.get(lineages));
 
             p_left.setHasSegments(hasSegs_left);
             p_right.setHasSegments(hasSegs_right);
 
-            activeNetworkNodes.get(lineages).setParent(p_left);
-            activeNetworkNodes.get(lineages).setSecondParent(p_right);
+            extantLineages.get(lineages).setParent(p_left);
+            extantLineages.get(lineages).setSecondParent(p_right);
 
-            activeNetworkNodes.remove(lineages);
-            activeNetworkNodes.add(p_left);
-            activeNetworkNodes.add(p_right);
+            extantLineages.remove(lineages);
+            extantLineages.add(p_left);
+            extantLineages.add(p_right);
         }
     }
 
@@ -352,11 +331,11 @@ public class SimulateCoalescentWithReassortment extends Network implements State
             samplingTimes.add(datetrait.getValue(taxonset.getTaxonId(i)));
 
 
-        highestNodeNr = new Integer[segmentsTreeInput.get().size()];
+        highestNodeNr = new int[segmentsTreeInput.get().size()];
         for (int i = 0; i < highestNodeNr.length; i++)
             highestNodeNr[i] = 0;
 
-        simulateReassortment();
+        simulateNetwork();
 
     }
 

@@ -3,6 +3,7 @@ package coalre.network;
 import beast.core.Input;
 import beast.core.StateNode;
 import beast.evolution.alignment.TaxonSet;
+import beast.evolution.tree.TraitSet;
 import org.w3c.dom.Node;
 
 import java.io.PrintStream;
@@ -12,8 +13,6 @@ import java.util.List;
 import java.util.Set;
 
 public class Network extends StateNode {
-    final public Input<TaxonSet> taxonSetInput = new Input<>("taxonset",
-            "set of taxa that correspond to the leafs in the network");
 
     protected NetworkNode root;
 
