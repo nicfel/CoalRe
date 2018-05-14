@@ -1,0 +1,91 @@
+<beast version="2.0"
+       namespace="coalre.distribution
+                  :coalre.network
+                  :coalre.simulator
+                  :feast.mapping
+                  :beast.core
+                  :beast.core.parameter
+                  :beast.evolution.alignment
+                  :beast.evolution.tree
+                  :beast.evolution.tree.coalescent">
+
+    <network id="simulated_network" spec="SimulatedCoalescentNetwork">
+        <populationModel spec="ConstantPopulation">
+            <popSize spec="RealParameter" value="1.0"/>
+        </populationModel>
+
+        <reassortmentRate spec="RealParameter" value="1.0"/>
+
+        <segmentTree id="segment1" spec="Tree">
+            <trait spec="TraitSet" traitname="date-backward" id="traitSet">
+                <taxa spec="TaxonSet" id="taxonSet">
+                    <taxon spec="Taxon" id="t1"/>
+                    <taxon spec="Taxon" id="t2"/>
+                    <taxon spec="Taxon" id="t3"/>
+                    <taxon spec="Taxon" id="t4"/>
+                    <taxon spec="Taxon" id="t5"/>
+                    <taxon spec="Taxon" id="t6"/>
+                    <taxon spec="Taxon" id="t7"/>
+                    <taxon spec="Taxon" id="t8"/>
+                    <taxon spec="Taxon" id="t9"/>
+                    <taxon spec="Taxon" id="t10"/>
+                    <taxon spec="Taxon" id="t11"/>
+                    <taxon spec="Taxon" id="t12"/>
+                    <taxon spec="Taxon" id="t13"/>
+                    <taxon spec="Taxon" id="t14"/>
+                    <taxon spec="Taxon" id="t15"/>
+                    <taxon spec="Taxon" id="t16"/>
+                    <taxon spec="Taxon" id="t17"/>
+                    <taxon spec="Taxon" id="t18"/>
+                    <taxon spec="Taxon" id="t19"/>
+                    <taxon spec="Taxon" id="t20"/>
+                </taxa>
+
+                t1=0, t2=0.1, t3=0.2, t4=0.3, t5=0.4,
+                t6=0, t7=0.1, t8=0.2, t9=0.3, t10=0.4,
+                t11=0, t12=0.1, t13=0.2, t14=0.3, t15=0.4,
+                t16=0, t17=0.1, t18=0.2, t19=0.3, t20=0.4
+            </trait>
+        </segmentTree>
+        <segmentTree id="segment2" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment3" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment4" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment5" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment6" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment7" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment8" spec="Tree" trait="@traitSet"/>
+    </network>
+
+    <run spec="DensityMapper">
+
+        <distribution id="density" spec="CoalescentWithReassortment">
+            <networkIntervals spec="NetworkIntervals" network="@simulated_network"/>
+
+            <populationModel spec="ConstantPopulation">
+                <popSize idref="popSize"/>
+            </populationModel>
+
+            <reassortmentRate idref="reassortmentRate"/>
+        </distribution>
+
+        <realParam id="reassortmentRate" spec="RealParameter" value="1.0" lower="0.1" upper="2.0"/>
+        <logScale spec="BooleanParameter" value="false"/>
+        <steps spec="IntegerParameter" value="21"/>
+
+        <realParam id="popSize" spec="RealParameter" value="1.0" lower="0.5" upper="2.0"/>
+        <logScale spec="BooleanParameter" value="false"/>
+        <steps spec="IntegerParameter" value="21"/>
+
+        <logger spec="Logger" logEvery="1">
+            <log idref="popSize"/>
+            <log idref="reassortmentRate"/>
+            <log idref="density"/>
+        </logger>
+
+        <logger spec="Logger" logEvery="1" fileName="$(filebase).log">
+            <log idref="popSize"/>
+            <log idref="reassortmentRate"/>
+            <log idref="density"/>
+        </logger>
+    </run>
+</beast>

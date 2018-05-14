@@ -67,32 +67,32 @@ public class NetworkIntervals extends CalculationNode {
         }).sorted(Comparator.comparingDouble(e -> e.time)).collect(Collectors.toList());
 
         int lineages = 0;
-        double logReassortmentObsProb = 0;
+        double reassortmentObsProb = 0;
 
         for (NetworkEvent event : networkEventList) {
             switch(event.type) {
                 case SAMPLE:
                     lineages += 1;
-                    logReassortmentObsProb += event.node.getParentEdges().get(0).getLogReassortmentObsProb();
+                    reassortmentObsProb += event.node.getParentEdges().get(0).getReassortmentObsProb();
                     break;
 
                 case REASSORTMENT:
                     lineages += 1;
-                    logReassortmentObsProb -= event.node.getChildEdges().get(0).getLogReassortmentObsProb();
-                    logReassortmentObsProb += event.node.getParentEdges().get(0).getLogReassortmentObsProb();
-                    logReassortmentObsProb += event.node.getParentEdges().get(1).getLogReassortmentObsProb();
+                    reassortmentObsProb -= event.node.getChildEdges().get(0).getReassortmentObsProb();
+                    reassortmentObsProb += event.node.getParentEdges().get(0).getReassortmentObsProb();
+                    reassortmentObsProb += event.node.getParentEdges().get(1).getReassortmentObsProb();
                     break;
 
                 case COALESCENCE:
                     lineages -= 1;
-                    logReassortmentObsProb -= event.node.getChildEdges().get(0).getLogReassortmentObsProb();
-                    logReassortmentObsProb -= event.node.getChildEdges().get(1).getLogReassortmentObsProb();
-                    logReassortmentObsProb += event.node.getParentEdges().get(0).getLogReassortmentObsProb();
+                    reassortmentObsProb -= event.node.getChildEdges().get(0).getReassortmentObsProb();
+                    reassortmentObsProb -= event.node.getChildEdges().get(1).getReassortmentObsProb();
+                    reassortmentObsProb += event.node.getParentEdges().get(0).getReassortmentObsProb();
                     break;
             }
 
             event.lineages = lineages;
-            event.logReassortmentObsProb = logReassortmentObsProb;
+            event.logReassortmentObsProb = reassortmentObsProb;
         }
 
         isDirty = false;

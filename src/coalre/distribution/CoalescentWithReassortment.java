@@ -16,9 +16,9 @@ import java.util.List;
         " the framework of Mueller (2018).")
 public class CoalescentWithReassortment extends NetworkDistribution {
 	
-	public Input<RealParameter> rRateInput = new Input<>(
-	        "rRate",
-            "reassortment rate",
+	public Input<RealParameter> reassortmentRateInput = new Input<>(
+	        "reassortmentRate",
+            "reassortment rate (per lineage per unit time)",
             Input.Validate.REQUIRED);
 
 	public Input<PopulationFunction> populationFunctionInput = new Input<>(
@@ -27,12 +27,12 @@ public class CoalescentWithReassortment extends NetworkDistribution {
             Input.Validate.REQUIRED);
 	
     private PopulationFunction populationFunction;
-    private RealParameter rRate;
+    private RealParameter reassortmentRate;
 
     @Override
     public void initAndValidate(){
         populationFunction = populationFunctionInput.get();
-        rRate = rRateInput.get();
+        reassortmentRate = reassortmentRateInput.get();
     }
     
     public double calculateLogP() {
@@ -74,7 +74,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
         // Factor of 2 is because the network is un-oriented.
         // (I.e. whether segments go left or right is not meaningful.)
 
-        return Math.log(2*rRate.getValue())
+        return Math.log(2* reassortmentRate.getValue())
                 + event.node.getChildEdges().get(0).hasSegments.cardinality()*Math.log(0.5);
 	}
 
@@ -87,11 +87,11 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
         double result = 0.0;
 
-        result += rRate.getValue()*prevEvent.logReassortmentObsProb
+        result += -reassortmentRate.getValue()*prevEvent.logReassortmentObsProb
                 * (nextEvent.time-prevEvent.time);
 
 		
-		result += 0.5*prevEvent.lineages*(prevEvent.lineages-1)
+		result += -0.5*prevEvent.lineages*(prevEvent.lineages-1)
                 * populationFunction.getIntegral(prevEvent.time, nextEvent.time);
 		
 		return result;

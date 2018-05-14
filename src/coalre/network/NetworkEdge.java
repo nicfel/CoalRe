@@ -32,8 +32,8 @@ public class NetworkEdge {
         childNode = newChildNode;
     }
 
-    public double getLogReassortmentObsProb() {
-        return Math.log(1.0 - Math.pow(0.5, hasSegments.cardinality()-1));
+    public double getReassortmentObsProb() {
+        return 1.0 - Math.pow(0.5, hasSegments.cardinality()-1);
     }
 
     public String getExtendedNewick() {

@@ -133,6 +133,7 @@ public class SimulatedCoalescentNetwork extends Network implements StateNodeInit
         hasSegs.set(0, nSegments);
         NetworkEdge lineage = new NetworkEdge(null, n, hasSegs);
         extantLineages.add(lineage);
+        n.addParentEdge(lineage);
 
         remainingSampleNodes.remove(0);
     }
@@ -159,6 +160,7 @@ public class SimulatedCoalescentNetwork extends Network implements StateNodeInit
 
         // Create new lineage
         NetworkEdge lineage = new NetworkEdge(null, coalescentNode, hasSegments);
+        coalescentNode.addParentEdge(lineage);
 
         extantLineages.remove(lineage1);
         extantLineages.remove(lineage2);
