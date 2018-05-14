@@ -43,8 +43,6 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
     	NetworkEvent prevEvent = null;
 
-    	boolean first = true;
-
     	for (NetworkEvent event : networkEventList) {
         	if (prevEvent != null)
         		logP += intervalContribution(prevEvent, event);

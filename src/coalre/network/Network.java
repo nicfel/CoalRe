@@ -121,13 +121,21 @@ public abstract class Network extends StateNode {
         return 0;
     }
 
+    /** Logable implementation: **/
+
     @Override
     public void init(PrintStream out) {
-
+        out.println("#nexus");
+        out.println("begin trees;");
     }
 
     @Override
     public void close(PrintStream out) {
+        out.println("end trees;");
+    }
 
+    @Override
+    public void log(long sample, PrintStream out) {
+        out.println("tree STATE_" + sample + getExtendedNewick());
     }
 }
