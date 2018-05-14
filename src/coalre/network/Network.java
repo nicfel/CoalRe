@@ -136,6 +136,6 @@ public abstract class Network extends StateNode {
 
     @Override
     public void log(long sample, PrintStream out) {
-        out.println("tree STATE_" + sample + getExtendedNewick());
+        out.println("tree STATE_" + sample + " = " + getExtendedNewick());
     }
 }

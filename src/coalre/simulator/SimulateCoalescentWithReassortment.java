@@ -4,6 +4,7 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.StateNode;
 import beast.core.StateNodeInitialiser;
+import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
@@ -21,8 +22,8 @@ import java.util.List;
 
 public class SimulateCoalescentWithReassortment extends Network implements StateNodeInitialiser {
 
-    final public Input<Double> rRateInput = new Input<>("rRate",
-            "reassortmentRate", Validate.REQUIRED);
+    final public Input<RealParameter> reassortmentRateInput = new Input<>("reassortmentRate",
+            "Rate of reassortment (per lineage per unit time)", Validate.REQUIRED);
 
     final public Input<PopulationFunction> populationFunctionInput = new Input<>("populationModel",
             "Population model to use.", Validate.REQUIRED);
@@ -34,6 +35,7 @@ public class SimulateCoalescentWithReassortment extends Network implements State
     private ArrayList<NetworkNode> remainingSampleNodes;
 
     private PopulationFunction populationFunction;
+    private RealParameter reassortmentRate;
 
     private int nSegments;
 
@@ -75,6 +77,8 @@ public class SimulateCoalescentWithReassortment extends Network implements State
 
         populationFunction = populationFunctionInput.get();
 
+        reassortmentRate = reassortmentRateInput.get();
+
         simulateNetwork();
 
         super.initAndValidate();
@@ -84,8 +88,6 @@ public class SimulateCoalescentWithReassortment extends Network implements State
         double currentTime = 0;
         double timeUntilNextSample;
         do {
-            System.out.println(currentTime);
-
             // get the timing of the next sampling event
             if (!remainingSampleNodes.isEmpty()) {
                 timeUntilNextSample = remainingSampleNodes.get(0).getHeight() - currentTime;
@@ -101,7 +103,7 @@ public class SimulateCoalescentWithReassortment extends Network implements State
             double timeToNextCoal = populationFunction.getInverseIntensity(
                     transformedTimeToNextCoal + currentTransformedTime) - currentTime;
 
-            double timeToNextReass = k>0 ? Randomizer.nextExponential(k*rRateInput.get()) : 0.0;
+            double timeToNextReass = k>0 ? Randomizer.nextExponential(k*reassortmentRate.getValue()) : 0.0;
 
             // next event time
             double timeUntilNextEvent = Math.min(timeToNextCoal, timeToNextReass);

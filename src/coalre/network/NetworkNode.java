@@ -70,23 +70,6 @@ public class NetworkNode {
         return this;
     }
 
-
-    public NetworkNode setReassortmentNumber(Integer reassortmentNumber){
-    	this.reassortmentNumber = reassortmentNumber;
-    	return this;
-    }
-    
-    public Integer getReassortmentNumber(){
-    	return reassortmentNumber;
-    }
-
-    /**
-     * @return true if current node is root node *
-     */
-    public boolean isRoot() {
-        return parents.isEmpty();
-    }
-
     /**
      * @return true if current node is a leaf node *
      */
