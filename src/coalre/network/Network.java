@@ -1,10 +1,12 @@
 package coalre.network;
 
 import beast.core.StateNode;
-import beast.util.XMLParser;
 import org.w3c.dom.Node;
 
 import java.io.PrintStream;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class Network extends StateNode {
 
@@ -33,8 +35,23 @@ public class Network extends StateNode {
         return rootEdge.getExtendedNewick();
     }
 
-    public void fromExtendedNewick(String newickString) {
+    public Set<NetworkNode> getNodes() {
+        Set<NetworkNode> networkNodeSet = new HashSet<>();
 
+        getNodesRecurse(rootEdge, networkNodeSet);
+
+        return networkNodeSet;
+    }
+
+    private void getNodesRecurse(NetworkEdge lineage, Set<NetworkNode> networkNodeSet) {
+
+        if (networkNodeSet.contains(lineage.getChildNode()))
+            return;
+
+        networkNodeSet.add(lineage.getChildNode());
+
+        for (NetworkEdge childLineage : lineage.getChildNode().getChildEdges())
+            getNodesRecurse(childLineage, networkNodeSet);
     }
 
     /** StateNode implementation: **/
@@ -70,7 +87,7 @@ public class Network extends StateNode {
 
     @Override
     public void fromXML(Node node) {
-        fromExtendedNewick(node.getTextContent().replaceAll("&amp;","&"));
+
     }
 
     @Override

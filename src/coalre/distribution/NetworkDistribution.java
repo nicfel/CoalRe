@@ -33,18 +33,4 @@ public class NetworkDistribution extends Distribution {
     public void sample(State state, Random random) {
     }
 
-    @Override
-    protected boolean requiresRecalculation() {
-        final NetworkIntervals ti = networkIntervalsInput.get();
-        assert ti.isDirtyCalculation();
-        return true;
-    }
-    
- 	/** Indicate that the tree distribution can deal with dated tips in the tree
-	 * Some tree distributions like the Yule prior cannot handle this.
-	 * @return true by default
-	 */
-	public boolean canHandleTipDates() {
-		return true;
-	}
 }

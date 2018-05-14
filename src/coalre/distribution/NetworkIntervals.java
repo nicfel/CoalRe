@@ -48,26 +48,18 @@ public class NetworkIntervals extends CalculationNode {
         networkEventList = network.getNodes().stream().map(n -> {
             NetworkEvent event = new NetworkEvent();
             event.time = n.getHeight();
+            event.node = n;
             switch(n.getChildCount()) {
                 case 0:
                     event.type = NetworkEventType.SAMPLE;
-                    event.lineagesAdded.add(new NetworkEdge(n, true));
                     break;
 
                 case 1:
                     event.type = NetworkEventType.REASSORTMENT;
-                    event.lineagesAdded.add(new NetworkEdge(n, false));
                     break;
 
                 case 2:
                     event.type = NetworkEventType.COALESCENCE;
-
-                    event.lineagesAdded.add(new NetworkEdge(n, true));
-
-                    for (NetworkNode childNode : n.getChildren()) {
-                        event.lineagesRemoved.add(new NetworkEdge(childNode,
-                                childNode.getParent() == n));
-                    }
                     break;
 
                 default:

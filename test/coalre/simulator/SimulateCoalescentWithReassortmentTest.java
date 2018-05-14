@@ -14,6 +14,12 @@ public class SimulateCoalescentWithReassortmentTest extends CoalReTestClass {
     @Test
     public void testSimulator() {
 
+        /*
+        This isn't actually a test yet: just some code used in debugging simulator.
+        But this will form the basis for a statistical test of the simulation
+        code and a separate test of the serialization code.
+         */
+
         TraitSet dateTrait = getContempDateTraitSet(getTaxonSet(10));
         List<Tree> segmentTrees = getSegmentTreeObjects(8, dateTrait);
 
@@ -34,6 +40,6 @@ public class SimulateCoalescentWithReassortmentTest extends CoalReTestClass {
                 "segmentTree", segmentTrees.get(6),
                 "segmentTree", segmentTrees.get(7));
 
-        System.out.println(network.getRootEdge().getExtendedNewick());
+        System.out.println(network);
     }
 }

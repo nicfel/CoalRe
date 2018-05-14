@@ -1,15 +1,11 @@
 package coalre.distribution;
 
-import coalre.network.NetworkEdge;
-
-import java.util.ArrayList;
-import java.util.List;
+import coalre.network.NetworkNode;
 
 public class NetworkEvent {
     NetworkIntervals.NetworkEventType type;
     double time;
     int lineages;
+    NetworkNode node;
 
-    List<NetworkEdge> lineagesAdded = new ArrayList<>();
-    List<NetworkEdge> lineagesRemoved = new ArrayList<>();
 }
