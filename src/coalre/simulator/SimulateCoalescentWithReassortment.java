@@ -1,21 +1,22 @@
 package coalre.simulator;
 
-import java.util.*;
-
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.StateNode;
 import beast.core.StateNodeInitialiser;
 import beast.evolution.alignment.TaxonSet;
-import beast.evolution.tree.Node;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
 import beast.evolution.tree.coalescent.PopulationFunction;
-import beast.math.Binomial;
 import beast.util.Randomizer;
-import coalre.network.NetworkEdge;
 import coalre.network.Network;
+import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
+
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Comparator;
+import java.util.List;
 
 public class SimulateCoalescentWithReassortment extends Network implements StateNodeInitialiser {
 
@@ -118,7 +119,7 @@ public class SimulateCoalescentWithReassortment extends Network implements State
         }
         while (extantLineages.size() > 1 || !remainingSampleNodes.isEmpty());
 
-        setRoot(extantLineages.get(0).getChildNode());
+        setRootEdge(extantLineages.get(0));
     }
 
     private void sample() {

@@ -1,61 +1,38 @@
 package coalre.network;
 
-import beast.core.Input;
 import beast.core.StateNode;
-import beast.evolution.alignment.TaxonSet;
-import beast.evolution.tree.TraitSet;
 import org.w3c.dom.Node;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class Network extends StateNode {
 
-    protected NetworkNode root;
+    protected NetworkEdge rootEdge;
 
 
     public Network() {
     }
 
-    public Network(final NetworkNode rootNode) {
-        setRoot(rootNode);
+    public Network(NetworkEdge rootEdge) {
+        setRootEdge(rootEdge);
     }
 
     @Override
     public void initAndValidate() { }
 
-	public NetworkNode getRoot() {
-        return root;
+	public NetworkEdge getRootEdge() {
+        return rootEdge;
     }
 
-    public void setRoot(final NetworkNode root) {
-        this.root = root;
-    }
-
-    public Set<NetworkNode> getNodes() {
-        Set<NetworkNode> nodeSet = new HashSet<>();
-        addDescendentsToNodeSet(root, nodeSet);
-
-        return nodeSet;
-    }
-
-    private void addDescendentsToNodeSet(NetworkNode node, Set<NetworkNode> nodeSet) {
-        if (!nodeSet.contains(node)) {
-            nodeSet.add(node);
-
-            for (NetworkNode child : node.getChildren())
-                addDescendentsToNodeSet(child, nodeSet);
-        }
+    public void setRootEdge(NetworkEdge rootEdge) {
+        this.rootEdge = rootEdge;
     }
 
     /** StateNode implementation: **/
 
     @Override
 	public String toString() {
-        return root.toString();
+        return rootEdge.toString();
     }
 
     @Override

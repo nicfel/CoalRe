@@ -2,8 +2,9 @@ package coalre.network;
 
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class NetworkNode {
 
@@ -93,11 +94,10 @@ public class NetworkNode {
      */
     public boolean isLeaf() {
         return children.size() == 0;
-        //return getLeft() == null && getRight() == null;
     }
     
     public boolean isReassortment() {
-        return reassortmentNumber != null;
+        return parents.size()>1;
     }
 
     public int getChildCount() {
@@ -123,4 +123,6 @@ public class NetworkNode {
     public void setTaxonLabel(String taxonLabel) {
         this.taxonLabel = taxonLabel;
     }
+
+
 }

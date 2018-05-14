@@ -1,8 +1,6 @@
 package coalre.network;
 
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Objects;
+import java.util.*;
 
 public class NetworkEdge {
     public NetworkNode parentNode, childNode;
@@ -32,6 +30,51 @@ public class NetworkEdge {
 
     public void setChildNode(NetworkNode newChildNode) {
         childNode = newChildNode;
+    }
+
+    public String getExtendedNewick() {
+        return getExtendedNewick(new ArrayList<NetworkNode>());
+    }
+
+    private String getExtendedNewick(List<NetworkNode> seenReassortmentNodes) {
+        String result = "";
+
+        boolean traverse = true;
+        int hybridID = -1;
+        if (childNode.isReassortment()) {
+            hybridID = seenReassortmentNodes.indexOf(childNode);
+
+            if (hybridID<0) {
+                traverse = false;
+                seenReassortmentNodes.add(childNode);
+                hybridID = seenReassortmentNodes.size()-1;
+            }
+        }
+
+        if (traverse) {
+            if (!childNode.children.isEmpty()) {
+                result += "(";
+
+                for (NetworkEdge childEdge : childNode.children) {
+                    result += childEdge.getExtendedNewick(seenReassortmentNodes);
+                }
+
+                result += ")";
+            }
+        }
+
+        if (hybridID>=0) {
+            result += "#H" + hybridID;
+        }
+
+        if (parentNode != null)
+            result += ":" + (parentNode.getHeight() - childNode.getHeight());
+        else
+            result += ":0.0";
+
+        result += "[&segments=" + hasSegments.toString() + "]";
+
+        return result;
     }
 
     @Override
