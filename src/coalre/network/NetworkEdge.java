@@ -35,7 +35,7 @@ public class NetworkEdge {
     }
 
     @Override
-    public boolean equals(Object o) {:while ()
+    public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         NetworkEdge that = (NetworkEdge) o;
