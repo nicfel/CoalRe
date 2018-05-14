@@ -5,7 +5,8 @@ import coalre.network.NetworkNode;
 public class NetworkEvent {
     NetworkIntervals.NetworkEventType type;
     double time;
-    int lineages;
     NetworkNode node;
 
+    int lineages;
+    double logReassortmentObsProb;
 }

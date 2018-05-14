@@ -8,16 +8,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class Network extends StateNode {
+public abstract class Network extends StateNode {
 
     protected NetworkEdge rootEdge;
+    protected int nSegments;
 
 
     public Network() {
     }
 
-    public Network(NetworkEdge rootEdge) {
-        setRootEdge(rootEdge);
+    public int getSegmentCount() {
+        return nSegments;
     }
 
     @Override

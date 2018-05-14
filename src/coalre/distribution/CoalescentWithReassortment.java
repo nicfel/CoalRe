@@ -1,63 +1,53 @@
 package coalre.distribution;
 
-import java.util.ArrayList;
-import java.util.List;
-
-
 import beast.core.Description;
 import beast.core.Input;
 import beast.core.parameter.RealParameter;
-import coalre.network.NetworkEdge;
-import coalre.network.NetworkIntervalType;
-import coalre.network.NetworkNode;
+import beast.evolution.tree.coalescent.PopulationFunction;
+
+import java.util.List;
 
 
 /**
  * @author Nicola Felix Mueller
  */
 
-@Description("Calculates the probability of a beast.tree using under the framework of Mueller (2017).")
+@Description("Calculates the probability of a reassortment network using under" +
+        " the framework of Mueller (2018).")
 public class CoalescentWithReassortment extends NetworkDistribution {
 	
-	public Input<RealParameter> rRateInput = new Input<>("reassortmentRate", "reassortment rate", Input.Validate.REQUIRED);
-	public Input<RealParameter> coalescentRateInput = new Input<>("coalescentRate", "coalescent rate", Input.Validate.REQUIRED);
-	
+	public Input<RealParameter> rRateInput = new Input<>(
+	        "rRate",
+            "reassortment rate",
+            Input.Validate.REQUIRED);
 
-    // Set up for lineage state probabilities
-    private ArrayList<NetworkNode> activeLineageNodes;
-	private ArrayList<Boolean> activeLineageIsLeft;
-    private ArrayList<Boolean[]> activeSegments;
-    
-    private double coalescentRate;
-    private double reassortmentRate;
-           
+	public Input<PopulationFunction> populationFunctionInput = new Input<>(
+	        "populationModel",
+            "Population model.",
+            Input.Validate.REQUIRED);
+	
+    private PopulationFunction populationFunction;
+    private RealParameter rRate;
+
     @Override
-    public void initAndValidate(){    	
+    public void initAndValidate(){
+        populationFunction = populationFunctionInput.get();
+        rRate = rRateInput.get();
     }
     
-//    int count = 0;
     public double calculateLogP() {
-//    	System.out.println("calc");
     	logP = 0;
-    	// newly calculate tree intervals
+
+    	// Calculate tree intervals
     	List<NetworkEvent> networkEventList = networkIntervalsInput.get().getNetworkEventList();
-    	double nextEventTime = 0.0;
+
+    	NetworkEvent prevEvent = null;
 
     	boolean first = true;
-    	
-    	activeLineageNodes = new ArrayList<>();
-    	activeLineageIsLeft = new ArrayList<>();
-    	activeSegments = new ArrayList<>();
-    	
-    	coalescentRate = coalescentRateInput.get().getValue(0);
-    	reassortmentRate = rRateInput.get().getValue(0);
 
     	for (NetworkEvent event : networkEventList) {
-        	nextEventTime = event.time;
-        	
-        	if (nextEventTime > 0) {
-        		logP += intervalContribution(nextEventTime);
-        	}
+        	if (prevEvent != null)
+        		logP += intervalContribution(prevEvent, event);
 
         	switch (event.type) {
 				case COALESCENCE:
@@ -65,152 +55,48 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 					break;
 
 				case SAMPLE:
-					sample(event, first);
 					break;
 
 				case REASSORTMENT:
-					logP += reassortmentstart(event);
-					reassortmentend(event);
+					logP += reassortment(event);
 					break;
 			}
-			first = false;
 
        		if (logP==Double.NEGATIVE_INFINITY)
        			break;
+
+        	prevEvent = event;
         }
         
 		return logP;
     }
     
-	private double reassortmentstart(NetworkEvent event) {
-		List<NetworkEdge> reassLineages = event.lineagesRemoved;
+	private double reassortment(NetworkEvent event) {
 
-    	if (reassLineages.size() != 1) {
-			System.err.println("Unsupported number of incoming lineages at a reassortment event");
-			System.exit(0);
-		}
-    	
-    	final int daughterIndex = activeLineages.indexOf(reassLineages.get(0).getNr());
-    	
-		if (daughterIndex == -1 ) {
-			System.out.println(reassLineages.get(0).getNr() + " " + activeLineages);
-			System.out.println("daughter lineage at reassortment event not found");
-			return Double.NaN;
-		}
+        // Factor of 2 is because the network is un-oriented.
+        // (I.e. whether segments go left or right is not meaningful.)
 
-
-    	Boolean[] segsBefore = reassLineages.get(0).getHasSegments();
-    	
-    	int c_before = 0;
-    	for (int i = 0; i < segsBefore.length; i++){
-    		if (segsBefore[i]==true) c_before++;
-    	}
-    	
-    	
-        activeLineages.add(reassLineages.get(0).getParent().getNr());
-        
-        activeSegments.add(reassLineages.get(0).getParent().getHasSegments());
-        
-        activeLineages.remove(daughterIndex);
-        activeSegments.remove(daughterIndex);
-
-
-		return Math.log(reassortmentRate*2*Math.pow(0.5, c_before));
-		
-	}
-
-
-	private void reassortmentend(NetworkEvent event) {
-		List<NetworkEdge> reassLineages = event.lineagesAdded;
-		
-    	if (reassLineages.size() != 1) {
-			System.err.println("Unsupported number of incoming lineages at a second part of a reassortment event");
-			System.exit(0);
-    	}
-		
-		activeLineages.add(reassLineages.get(0).getNr());
-		activeSegments.add(reassLineages.get(0).getHasSegments());
-	}
-
-
-	private void sample(NetworkEvent event, boolean first) {
-		List<NetworkEdge> incommingLineages = event.lineagesAdded;
-		
-		for (NetworkNode l : incommingLineages) {
-			activeLineages.add(l.getNr());
-			activeSegments.add(l.getHasSegments());
-		}
+        return Math.log(2*rRate.getValue())
+                + event.node.getChildEdges().get(0).hasSegments.cardinality()*Math.log(0.5);
 	}
 
 	private double coalesce(NetworkEvent event) {
-		List<NetworkNode> coalLines = networkIntervalsInput.get().getLineagesRemoved(networkInterval);
-		
-    	if (coalLines.size() > 2) {
-			System.err.println("Unsupported coalescent at non-binary node");
-			System.exit(0);
-		}
-    	if (coalLines.size() < 2) {
-    		System.out.println();
-    		System.out.println("WARNING: Less than two lineages found at coalescent event!");
-    		System.out.println();
-    		return Double.NaN;
-		}
-		
-    	final int daughterIndex1 = activeLineages.indexOf(coalLines.get(0).getNr());
-		final int daughterIndex2 = activeLineages.indexOf(coalLines.get(1).getNr());
-		if (daughterIndex1 == -1 || daughterIndex2 == -1) {
-			System.out.println(coalLines.get(0).getNr() + " " + coalLines.get(1).getNr() + " " + activeLineages);
-			System.out.println("daughter lineages at coalescent event not found");
-			return Double.NaN;
-		}
-		
-        activeLineages.add(coalLines.get(0).getParent().getNr());    
-        
-        activeSegments.add(coalLines.get(0).getParent().getHasSegments());
-        
-		activeLineages.remove(Math.max(daughterIndex1, daughterIndex2));
-		activeLineages.remove(Math.min(daughterIndex1, daughterIndex2));
-		
-		activeSegments.remove(Math.max(daughterIndex1, daughterIndex2));
-		activeSegments.remove(Math.min(daughterIndex1, daughterIndex2));
 
-		
-		return Math.log(coalescentRate);
+		return Math.log(1.0/populationFunction.getPopSize(event.time));
 	}
 
-	private double intervalContribution(double nextEventTime) {
-		// for each active lineage, calculate the reassortment interval contribution
-		double reassCont = 0.0;
-		// TODO make this thing more efficient
-		for (int i = 0; i < activeSegments.size(); i++){
-	    	int nr_lins = 0;
-	    	for (int j = 0; j < activeSegments.get(i).length; j++)
-	    		if (activeSegments.get(i)[j]==true) nr_lins++;
-	    	
-	    	// Precompute powers
-	    	reassCont -= (1-2*Math.pow(0.5, nr_lins));
+	private double intervalContribution(NetworkEvent prevEvent, NetworkEvent nextEvent) {
 
-		}
-		reassCont *= reassortmentRate;
+        double result = 0.0;
+
+        result += rRate.getValue()*prevEvent.logReassortmentObsProb
+                * (nextEvent.time-prevEvent.time);
+
 		
+		result += 0.5*prevEvent.lineages*(prevEvent.lineages-1)
+                * populationFunction.getIntegral(prevEvent.time, nextEvent.time);
 		
-		int overlap = 0;
-		
-		// TODO keep directly track of which network nodes overlap
-		for (int i = 0; i < activeSegments.size(); i++){
-			for (int j = i+1; j < activeSegments.size(); j++){
-				for (int k = 0; k < activeSegments.get(i).length; k++){
-					if (activeSegments.get(i)[k] && activeSegments.get(i)[k]){
-						overlap++;
-						break; // break out of the loop if there is at least one segment overlapping						
-					}// if
-				}// k					
-			}// j		
-		}// i
-		
-		double coalCont = -overlap*coalescentRate;
-		
-		return nextEventTime*(reassCont+coalCont);
+		return result;
 	}   
 
     

@@ -6,8 +6,6 @@ import beast.core.CalculationNode;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import coalre.network.Network;
-import coalre.network.NetworkEdge;
-import coalre.network.NetworkNode;
 
 import java.util.Comparator;
 import java.util.List;
@@ -26,7 +24,7 @@ public class NetworkIntervals extends CalculationNode {
 
     public enum NetworkEventType { SAMPLE, COALESCENCE, REASSORTMENT }
 
-    List<NetworkEvent> networkEventList;
+    private List<NetworkEvent> networkEventList;
 
     @Override
     public void initAndValidate() {
@@ -69,19 +67,32 @@ public class NetworkIntervals extends CalculationNode {
         }).sorted(Comparator.comparingDouble(e -> e.time)).collect(Collectors.toList());
 
         int lineages = 0;
+        double logReassortmentObsProb = 0;
 
         for (NetworkEvent event : networkEventList) {
             switch(event.type) {
                 case SAMPLE:
+                    lineages += 1;
+                    logReassortmentObsProb += event.node.getParentEdges().get(0).getLogReassortmentObsProb();
+                    break;
+
                 case REASSORTMENT:
                     lineages += 1;
+                    logReassortmentObsProb -= event.node.getChildEdges().get(0).getLogReassortmentObsProb();
+                    logReassortmentObsProb += event.node.getParentEdges().get(0).getLogReassortmentObsProb();
+                    logReassortmentObsProb += event.node.getParentEdges().get(1).getLogReassortmentObsProb();
                     break;
+
                 case COALESCENCE:
                     lineages -= 1;
+                    logReassortmentObsProb -= event.node.getChildEdges().get(0).getLogReassortmentObsProb();
+                    logReassortmentObsProb -= event.node.getChildEdges().get(1).getLogReassortmentObsProb();
+                    logReassortmentObsProb += event.node.getParentEdges().get(0).getLogReassortmentObsProb();
                     break;
             }
 
             event.lineages = lineages;
+            event.logReassortmentObsProb = logReassortmentObsProb;
         }
 
         isDirty = false;
