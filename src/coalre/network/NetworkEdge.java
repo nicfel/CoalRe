@@ -33,7 +33,7 @@ public class NetworkEdge {
     }
 
     public String getExtendedNewick() {
-        return getExtendedNewick(new ArrayList<NetworkNode>());
+        return getExtendedNewick(new ArrayList<NetworkNode>()) + ";";
     }
 
     private String getExtendedNewick(List<NetworkNode> seenReassortmentNodes) {

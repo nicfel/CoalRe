@@ -1,6 +1,7 @@
 package coalre.network;
 
 import beast.core.StateNode;
+import beast.util.XMLParser;
 import org.w3c.dom.Node;
 
 import java.io.PrintStream;
@@ -28,11 +29,19 @@ public class Network extends StateNode {
         this.rootEdge = rootEdge;
     }
 
+    public String getExtendedNewick() {
+        return rootEdge.getExtendedNewick();
+    }
+
+    public void fromExtendedNewick(String newickString) {
+
+    }
+
     /** StateNode implementation: **/
 
     @Override
 	public String toString() {
-        return rootEdge.toString();
+        return getExtendedNewick();
     }
 
     @Override
@@ -61,7 +70,7 @@ public class Network extends StateNode {
 
     @Override
     public void fromXML(Node node) {
-
+        fromExtendedNewick(node.getTextContent().replaceAll("&amp;","&"));
     }
 
     @Override
