@@ -20,7 +20,7 @@ import java.util.BitSet;
 import java.util.Comparator;
 import java.util.List;
 
-public class SimulateCoalescentWithReassortment extends Network implements StateNodeInitialiser {
+public class SimulatedCoalescentNetwork extends Network implements StateNodeInitialiser {
 
     final public Input<RealParameter> reassortmentRateInput = new Input<>("reassortmentRate",
             "Rate of reassortment (per lineage per unit time)", Validate.REQUIRED);

@@ -291,7 +291,7 @@
 		</state>
         
         
-        <init id="InitialiseSegmentTrees" spec="coalre.simulator.SimulateCoalescentWithReassortment" estimate="false" rRate="0.5" coalRate="2">
+        <init id="InitialiseSegmentTrees" spec="coalre.simulator.SimulatedCoalescentNetwork" estimate="false" rRate="0.5" coalRate="2">
             <network idref="Network"/>
             <segmentsTree idref="Tree.t:seg1"/>
             <segmentsTree idref="Tree.t:seg2"/>

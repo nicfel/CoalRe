@@ -14,7 +14,7 @@
                  :coalre.network
                  :coalre.simulator">
 
-    <network id="simulated_network" spec="SimulateCoalescentWithReassortment">
+    <network id="simulated_network" spec="SimulatedCoalescentNetwork">
         <populationModel spec="ConstantPopulation">
             <popSize spec="RealParameter" value="1.0"/>
         </populationModel>

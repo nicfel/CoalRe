@@ -9,7 +9,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-public class SimulateCoalescentWithReassortmentTest extends CoalReTestClass {
+public class SimulatedCoalescentNetworkTest extends CoalReTestClass {
 
     @Test
     public void testSimulator() {
@@ -27,9 +27,9 @@ public class SimulateCoalescentWithReassortmentTest extends CoalReTestClass {
         populationFunction.initByName("popSize", new RealParameter("1.0"));
 
 
-        SimulateCoalescentWithReassortment network = new SimulateCoalescentWithReassortment();
+        SimulatedCoalescentNetwork network = new SimulatedCoalescentNetwork();
         network.initByName(
-                "rRate", 1.0,
+                "reassortmentRate", new RealParameter("1.0"),
                 "populationModel", populationFunction,
                 "segmentTree", segmentTrees.get(0),
                 "segmentTree", segmentTrees.get(1),
