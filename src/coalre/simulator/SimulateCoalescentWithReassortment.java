@@ -1,10 +1,6 @@
 package coalre.simulator;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import beast.core.Input;
 import beast.core.Input.Validate;
@@ -40,30 +36,36 @@ public class SimulateCoalescentWithReassortment extends Network implements State
             Validate.XOR, traitSetInput);
 
 
-    ArrayList<Double> samplingTimes;
-    ArrayList<NetworkEdge> extantLineages;
-    int highestNetworkNodeNr;
-    int reassortmentNumber;
-    int[] highestNodeNr;
-    TaxonSet taxonset;
+    private ArrayList<NetworkEdge> extantLineages;
+    private ArrayList<NetworkNode> remainingSampleNodes;
 
-    PopulationFunction populationFunction;
+    private PopulationFunction populationFunction;
 
-    int nSegments;
+    private int nSegments;
 
     public void initAndValidate() {
         // get the sampling times in order
-        samplingTimes = new ArrayList<>();
+        remainingSampleNodes = new ArrayList<>();
         extantLineages = new ArrayList<>();
 
         TraitSet traitSet = traitSetInput.get();
         if (traitSet != null && traitSet.isDateTrait()) {
+
             for (String taxonName : traitSet.taxaInput.get().getTaxaNames()) {
-                samplingTimes.add(traitSet.getValue(taxonName));
+                NetworkNode sampleNode = new NetworkNode();
+                sampleNode.setTaxonLabel(taxonName);
+                sampleNode.setHeight(traitSet.getValue(taxonName));
+                remainingSampleNodes.add(sampleNode);
             }
+            remainingSampleNodes.sort(Comparator.comparingDouble(NetworkNode::getHeight));
+
         } else {
-            for (int i=0; i<taxonSetInput.get().getTaxonCount(); i++)
-                samplingTimes.add(0.0);
+            for (String taxonName : taxonSetInput.get().getTaxaNames()) {
+                NetworkNode sampleNode = new NetworkNode();
+                sampleNode.setTaxonLabel(taxonName);
+                sampleNode.setHeight(0.0);
+                remainingSampleNodes.add(sampleNode);
+            }
         }
 
         populationFunction = populationFunctionInput.get();
@@ -80,278 +82,129 @@ public class SimulateCoalescentWithReassortment extends Network implements State
     }
 
     public void simulateNetwork() {
-        int samplingInterval = 0;
-        highestNetworkNodeNr = 0;
-        reassortmentNumber = 0;
         double currentTime = 0;
-        double currentTransformedTime = 0;
-        double nextSamplingTime;
+        double timeUntilNextSample;
         do {
             // get the timing of the next sampling event
-            if (samplingInterval < samplingTimes.size()) {
-                nextSamplingTime = Collections.min(samplingTimes) - currentTime;
+            if (!remainingSampleNodes.isEmpty()) {
+                timeUntilNextSample = remainingSampleNodes.get(0).getHeight() - currentTime;
             } else {
-                nextSamplingTime = Double.POSITIVE_INFINITY;
+                timeUntilNextSample = Double.POSITIVE_INFINITY;
             }
 
             // get the current propensities
             int k = extantLineages.size();
 
+            double currentTransformedTime = populationFunction.getIntensity(currentTime);
             double transformedTimeToNextCoal = Randomizer.nextExponential(0.5*k*(k-1));
             double timeToNextCoal = populationFunction.getInverseIntensity(
-                    transformedTimeToNextCoal + currentTransformedTime)
-                    - currentTime;
+                    transformedTimeToNextCoal + currentTransformedTime) - currentTime;
 
             double timeToNextReass = Randomizer.nextExponential(k*rRateInput.get());
 
             // next event time
-            double nextNonSamplingEvent = Math.min(timeToNextCoal, timeToNextReass);
-            if (nextNonSamplingEvent < nextSamplingTime) {
-                currentTime += nextNonSamplingEvent;
-                if (nextNonSamplingEvent == timeToNextCoal) {
-//        			System.out.println("c");
+            double timeUntilNextEvent = Math.min(timeToNextCoal, timeToNextReass);
+            if (timeUntilNextEvent < timeUntilNextSample) {
+                currentTime += timeUntilNextEvent;
+                if (timeUntilNextEvent == timeToNextCoal)
                     coalesce(currentTime);
-                } else {
-//        			System.out.println("r");
-//        			System.out.println(coalProb/(coalProb+reasProb));
+                else
                     reassort(currentTime);
-                }
             } else {
-//    			System.out.println("s");
-                currentTime += nextSamplingTime;
-                sample(currentTime, samplingInterval);
-                samplingInterval++;
+                currentTime += timeUntilNextSample;
+                sample();
             }
 
         }
-        while (extantLineages.size() > 1 || nextSamplingTime < Double.POSITIVE_INFINITY);
+        while (extantLineages.size() > 1 || !remainingSampleNodes.isEmpty());
 
-        if (extantLineages.size() != 1) {
-            throw new IllegalArgumentException("simulation turned awkward");
-        }
-
-        setRoot(extantLineages.get(0).node);
+        setRoot(extantLineages.get(0).getChildNode());
     }
 
-    private void sample(double samplingTime, int samplingInterval) {
-        HashMap<Integer, Node> segs = new HashMap<>();
-
-        double minSampleTime = Collections.min(samplingTimes);
-        int minIndex = -1;
-
-        // check for the index of the minSampleTime
-        for (int j = 0; j < samplingTimes.size(); j++) {
-            if (samplingTimes.get(j) == minSampleTime) {
-                minIndex = j;
-                break;
-            }
-        }
-
-        Boolean[] hasSegs = new Boolean[nSegments];
-
-        for (int i = 0; i < nSegments; i++) {
-            hasSegs[i] = true;
-        }
-
+    private void sample() {
         // sample the network node
-        NetworkNode n = new NetworkNode();
-        n.setTaxonLabel(taxonset.getTaxonId(minIndex));
-        n.setHeight(minSampleTime);
+        NetworkNode n = remainingSampleNodes.get(0);
 
-        n.setHasSegments(hasSegs);
+        // Create corresponding lineage
+        BitSet hasSegs = new BitSet();
+        hasSegs.set(0, nSegments-1);
+        NetworkEdge lineage = new NetworkEdge(null, n, hasSegs);
+        extantLineages.add(lineage);
 
-        samplingTimes.set(minIndex, Double.POSITIVE_INFINITY);
-        extantLineages.add(n);
+        remainingSampleNodes.remove(0);
     }
 
     private void coalesce(double coalescentTime) {
-        // sample the first "bunch" of lineages to coalesce
-        int lineages1 = Randomizer.nextInt(activeLineages.size());
-        int lineages2 = Randomizer.nextInt(activeLineages.size());
-        while (lineages1 == lineages2)
-            lineages2 = Randomizer.nextInt(activeLineages.size());
+        // Sample the pair of lineages that are coalescing:
+        NetworkEdge lineage1 = extantLineages.get(Randomizer.nextInt(extantLineages.size()));
+        NetworkEdge lineage2 = extantLineages.get(Randomizer.nextInt(extantLineages.size()));
+        while (lineage1 == lineage2)
+            lineage2 = extantLineages.get(Randomizer.nextInt(extantLineages.size()));
 
-        HashMap<Integer, Node> h1 = new HashMap<>(activeLineages.get(lineages1));
-        HashMap<Integer, Node> h2 = new HashMap<>(activeLineages.get(lineages2));
+        // Create coalescent node
+        NetworkNode coalescentNode = new NetworkNode();
+        coalescentNode.setHeight(coalescentTime)
+                .addChildEdge(lineage1)
+                .addChildEdge(lineage2);
+        lineage1.setParentNode(coalescentNode);
+        lineage2.setParentNode(coalescentNode);
 
-        // check if there is any overlap between the bunch of lineages
-        Integer[] segs1 = new Integer[h1.size()];
-        Integer[] segs2 = new Integer[h2.size()];
-        h1.keySet().toArray(segs1);
-        h2.keySet().toArray(segs2);
+        // Merge segment flags:
+        BitSet hasSegments = new BitSet();
+        hasSegments.or(lineage1.hasSegments);
+        hasSegments.or(lineage2.hasSegments);
 
+        // Create new lineage
+        NetworkEdge lineage = new NetworkEdge(null, coalescentNode, hasSegments);
 
-        Set<Integer> segs11 = h1.keySet();
-        Set<Integer> segs22 = h2.keySet();
-
-        // get all segments in 1 that are in 2
-        segs11.retainAll(segs22);
-
-        // remove the daugher lineages from being active lineages
-
-        HashMap<Integer, Node> parents = new HashMap<>();
-
-        Integer[] overlapSegs = new Integer[segs11.size()];
-        segs11.toArray(overlapSegs);
-
-        Boolean[] hasSegs = new Boolean[segmentsTreeInput.get().size()];
-
-
-        // coalesce overlapping segments
-        for (int i = 0; i < overlapSegs.length; i++) {
-            Node p = new Node();
-            p.setHeight(coalescentTime);
-            p.setNr(highestNodeNr[overlapSegs[i]] + samplingTimes.size());
-//    		p.setParent(null);
-            p.setLeft(h1.get(overlapSegs[i]));
-            p.setRight(h2.get(overlapSegs[i]));
-            h1.get(overlapSegs[i]).setParent(p);
-            h2.get(overlapSegs[i]).setParent(p);
-
-            highestNodeNr[overlapSegs[i]]++;
-//    		p.getLength()
-
-            hasSegs[overlapSegs[i]] = true;
-
-            parents.put(overlapSegs[i], p);
-        }
-
-
-//    	System.out.println("....");    	
-        for (Integer aSegs1 : segs1) {
-            // check if already added
-            if (parents.get(aSegs1) == null) {
-                parents.put(aSegs1, activeLineages.get(lineages1).get(aSegs1));
-            }
-        }
-
-        for (Integer aSegs2 : segs2) {
-            // check if already added
-            if (parents.get(aSegs2) == null)
-                parents.put(aSegs2, activeLineages.get(lineages2).get(aSegs2));
-        }
-
-        NetworkNode p = new NetworkNode();
-        p.setHeight(coalescentTime);
-        p.setNr(highestNetworkNodeNr + samplingTimes.size());
-
-        p.setLeft(extantLineages.get(lineages1));
-        p.setRight(extantLineages.get(lineages2));
-
-        p.setHasSegments(hasSegs);
-
-        extantLineages.get(lineages1).setParent(p);
-        extantLineages.get(lineages2).setParent(p);
-
-        highestNetworkNodeNr++;
-
-
-        activeLineages.remove(Math.max(lineages1, lineages2));
-        activeLineages.remove(Math.min(lineages1, lineages2));
-
-        extantLineages.remove(Math.max(lineages1, lineages2));
-        extantLineages.remove(Math.min(lineages1, lineages2));
-
-        activeLineages.add(parents);
-
-
-        extantLineages.add(p);
-
+        extantLineages.remove(lineage1);
+        extantLineages.remove(lineage2);
+        extantLineages.add(lineage);
     }
 
     private void reassort(double reassortmentTime) {
-        // get which part is reassorting
-        int lineages = Randomizer.nextInt(activeLineages.size());
+        NetworkEdge lineage = extantLineages.get(Randomizer.nextInt(extantLineages.size()));
 
+        BitSet hasSegs_left = new BitSet();
+        BitSet hasSegs_right = new BitSet();
 
-        // get the nodes
-        HashMap<Integer, Node> h = activeLineages.get(lineages);
-
-        HashMap<Integer, Node> goesLeft = new HashMap<>();
-        HashMap<Integer, Node> goesRight = new HashMap<>();
-
-        Boolean[] hasSegs_left = new Boolean[segmentsTreeInput.get().size()];
-        Boolean[] hasSegs_right = new Boolean[segmentsTreeInput.get().size()];
-
-        //keys
-        Integer[] keys = new Integer[h.size()];
-        h.keySet().toArray(keys);
-
-        for (Integer key : keys) {
+        for (int segIdx = lineage.hasSegments.nextSetBit(0);
+             segIdx != -1; segIdx = lineage.hasSegments.nextSetBit(segIdx+1)) {
             if (Randomizer.nextBoolean()) {
-                goesLeft.put(key, h.get(key));
-                hasSegs_left[key] = true;
+                hasSegs_left.set(segIdx);
             } else {
-                goesRight.put(key, h.get(key));
-                hasSegs_right[key] = true;
+                hasSegs_right.set(segIdx);
             }
         }
 
-        // check if the reassortment event is actually observable
-        if (goesLeft.size() > 0 && goesRight.size() > 0) {
-            // remove old
-            activeLineages.remove(lineages);
+        // Stop here if reassortment event is unobservable
+        if (hasSegs_left.cardinality() == 0 || hasSegs_right.cardinality() == 0)
+            return;
 
-            if (goesLeft.size() > 0)
-                activeLineages.add(goesLeft);
-            if (goesRight.size() > 0)
-                activeLineages.add(goesRight);
+        // Create reassortment node
 
-            // the ones that go left have an actual parent
-            NetworkNode p_left = new NetworkNode();
-            NetworkNode p_right = new NetworkNode();
+        NetworkNode node = new NetworkNode();
+        node.setHeight(reassortmentTime)
+                .addChildEdge(lineage);
+        lineage.setParentNode(node);
 
-            p_left.setHeight(reassortmentTime);
-            p_right.setHeight(reassortmentTime);
+        // Create reassortment lineages
+        NetworkEdge leftLineage = new NetworkEdge(null, node, hasSegs_left);
+        NetworkEdge rightLineage = new NetworkEdge(null, node, hasSegs_right);
 
-            p_left.setNr(highestNetworkNodeNr + samplingTimes.size());
-            highestNetworkNodeNr++;
-            p_right.setNr(highestNetworkNodeNr + samplingTimes.size());
-            p_left.setReassortmentNumber(reassortmentNumber);
-            p_right.setReassortmentNumber(reassortmentNumber);
-
-            reassortmentNumber++;
-            highestNetworkNodeNr++;
-
-            p_left.setLeft(extantLineages.get(lineages));
-//    		p_right.setLeft(extantLineages.get(lineages));
-
-            p_left.setHasSegments(hasSegs_left);
-            p_right.setHasSegments(hasSegs_right);
-
-            extantLineages.get(lineages).setParent(p_left);
-            extantLineages.get(lineages).setSecondParent(p_right);
-
-            extantLineages.remove(lineages);
-            extantLineages.add(p_left);
-            extantLineages.add(p_right);
-        }
+        extantLineages.remove(lineage);
+        extantLineages.add(leftLineage);
+        extantLineages.add(rightLineage);
     }
 
     @Override
     public void initStateNodes() {
-        // get the sampling times in order
-        samplingTimes = new ArrayList<>();
-        activeLineages = new ArrayList<>();
-
-        taxonset = segmentsTreeInput.get().get(0).getTaxonset();
-        TraitSet datetrait = segmentsTreeInput.get().get(0).getDateTrait();
-        // get the sampling times of the taxa
-        for (int i = 0; i < taxonset.getNrTaxa(); i++)
-            samplingTimes.add(datetrait.getValue(taxonset.getTaxonId(i)));
-
-
-        highestNodeNr = new int[segmentsTreeInput.get().size()];
-        for (int i = 0; i < highestNodeNr.length; i++)
-            highestNodeNr[i] = 0;
-
-        simulateNetwork();
-
+        initAndValidate();
     }
 
     @Override
     public void getInitialisedStateNodes(List<StateNode> stateNodes) {
-        stateNodes.addAll(segmentsTreeInput.get());
+        stateNodes.addAll(segmentTreesInput.get());
     }
 
 

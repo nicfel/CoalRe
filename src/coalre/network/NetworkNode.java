@@ -35,8 +35,9 @@ public class NetworkNode {
         return height;
     }
 
-    public void setHeight(final double height) {
+    public NetworkNode setHeight(final double height) {
         this.height = height;
+        return this;
     }
 
     /**
@@ -46,29 +47,34 @@ public class NetworkNode {
         return parents;
     }
 
-    public void addParentEdge(NetworkEdge newParentEdge) {
+    public NetworkNode addParentEdge(NetworkEdge newParentEdge) {
         parents.add(newParentEdge);
+        return this;
     }
 
-    public void removeParentEdge(NetworkEdge parentEdge) {
+    public NetworkNode removeParentEdge(NetworkEdge parentEdge) {
         parents.remove(parentEdge);
+        return this;
     }
 
     public List<NetworkEdge> getChildEdges() {
         return children;
     }
 
-    public void addChildEdge(NetworkEdge newChildEdge) {
+    public NetworkNode addChildEdge(NetworkEdge newChildEdge) {
         children.add(newChildEdge);
+        return this;
     }
 
-    public void removeChildEdge(NetworkEdge childEdge) {
+    public NetworkNode removeChildEdge(NetworkEdge childEdge) {
         children.remove(childEdge);
+        return this;
     }
 
 
-    public void setReassortmentNumber(Integer reassortmentNumber){
+    public NetworkNode setReassortmentNumber(Integer reassortmentNumber){
     	this.reassortmentNumber = reassortmentNumber;
+    	return this;
     }
     
     public Integer getReassortmentNumber(){
