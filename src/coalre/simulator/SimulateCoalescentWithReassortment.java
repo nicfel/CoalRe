@@ -7,6 +7,7 @@ import beast.core.StateNodeInitialiser;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
+import beast.evolution.tree.coalescent.ConstantPopulation;
 import beast.evolution.tree.coalescent.PopulationFunction;
 import beast.util.Randomizer;
 import coalre.network.Network;
@@ -27,15 +28,7 @@ public class SimulateCoalescentWithReassortment extends Network implements State
             "Population model to use.", Validate.REQUIRED);
 
     final public Input<List<Tree>> segmentTreesInput = new Input<>("segmentTree",
-            "Segment trees to initialize.", new ArrayList<>());
-
-    final public Input<TraitSet> traitSetInput = new Input<>("traitSet",
-            "Trait set specifying leaf ages.");
-
-    final public Input<TaxonSet> taxonSetInput = new Input<>("taxonset",
-            "set of taxa that correspond to the leafs in the network",
-            Validate.XOR, traitSetInput);
-
+            "One or more segment trees to initialize.", new ArrayList<>());
 
     private ArrayList<NetworkEdge> extantLineages;
     private ArrayList<NetworkNode> remainingSampleNodes;
@@ -45,12 +38,17 @@ public class SimulateCoalescentWithReassortment extends Network implements State
     private int nSegments;
 
     public void initAndValidate() {
-        // get the sampling times in order
         remainingSampleNodes = new ArrayList<>();
         extantLineages = new ArrayList<>();
 
-        TraitSet traitSet = traitSetInput.get();
-        if (traitSet != null && traitSet.isDateTrait()) {
+        nSegments = segmentTreesInput.get().size();
+
+        if (nSegments==0) {
+            throw new IllegalArgumentException("Need at least one segment tree!");
+        }
+
+        TraitSet traitSet = segmentTreesInput.get().get(0).getDateTrait();
+        if (traitSet != null) {
 
             for (String taxonName : traitSet.taxaInput.get().getTaxaNames()) {
                 NetworkNode sampleNode = new NetworkNode();
@@ -61,7 +59,13 @@ public class SimulateCoalescentWithReassortment extends Network implements State
             remainingSampleNodes.sort(Comparator.comparingDouble(NetworkNode::getHeight));
 
         } else {
-            for (String taxonName : taxonSetInput.get().getTaxaNames()) {
+            TaxonSet taxonSet = segmentTreesInput.get().get(0).getTaxonset();
+
+            if (taxonSet == null)
+                throw new IllegalArgumentException("Segment trees must define" +
+                        " either a trait set or a taxon set.");
+
+            for (String taxonName : taxonSet.getTaxaNames()) {
                 NetworkNode sampleNode = new NetworkNode();
                 sampleNode.setTaxonLabel(taxonName);
                 sampleNode.setHeight(0.0);
@@ -70,12 +74,6 @@ public class SimulateCoalescentWithReassortment extends Network implements State
         }
 
         populationFunction = populationFunctionInput.get();
-
-        nSegments = segmentTreesInput.get().size();
-
-        if (nSegments==0) {
-            throw new IllegalArgumentException("Need at least one segment tree!");
-        }
 
         simulateNetwork();
 
@@ -86,6 +84,8 @@ public class SimulateCoalescentWithReassortment extends Network implements State
         double currentTime = 0;
         double timeUntilNextSample;
         do {
+            System.out.println(currentTime);
+
             // get the timing of the next sampling event
             if (!remainingSampleNodes.isEmpty()) {
                 timeUntilNextSample = remainingSampleNodes.get(0).getHeight() - currentTime;
@@ -97,11 +97,11 @@ public class SimulateCoalescentWithReassortment extends Network implements State
             int k = extantLineages.size();
 
             double currentTransformedTime = populationFunction.getIntensity(currentTime);
-            double transformedTimeToNextCoal = Randomizer.nextExponential(0.5*k*(k-1));
+            double transformedTimeToNextCoal = k>0 ? Randomizer.nextExponential(0.5*k*(k-1)) : 0.0;
             double timeToNextCoal = populationFunction.getInverseIntensity(
                     transformedTimeToNextCoal + currentTransformedTime) - currentTime;
 
-            double timeToNextReass = Randomizer.nextExponential(k*rRateInput.get());
+            double timeToNextReass = k>0 ? Randomizer.nextExponential(k*rRateInput.get()) : 0.0;
 
             // next event time
             double timeUntilNextEvent = Math.min(timeToNextCoal, timeToNextReass);
@@ -128,7 +128,7 @@ public class SimulateCoalescentWithReassortment extends Network implements State
 
         // Create corresponding lineage
         BitSet hasSegs = new BitSet();
-        hasSegs.set(0, nSegments-1);
+        hasSegs.set(0, nSegments);
         NetworkEdge lineage = new NetworkEdge(null, n, hasSegs);
         extantLineages.add(lineage);
 
@@ -192,6 +192,8 @@ public class SimulateCoalescentWithReassortment extends Network implements State
         // Create reassortment lineages
         NetworkEdge leftLineage = new NetworkEdge(null, node, hasSegs_left);
         NetworkEdge rightLineage = new NetworkEdge(null, node, hasSegs_right);
+        node.addParentEdge(leftLineage);
+        node.addParentEdge(rightLineage);
 
         extantLineages.remove(lineage);
         extantLineages.add(leftLineage);
@@ -206,6 +208,18 @@ public class SimulateCoalescentWithReassortment extends Network implements State
     @Override
     public void getInitialisedStateNodes(List<StateNode> stateNodes) {
         stateNodes.addAll(segmentTreesInput.get());
+    }
+
+    /**
+     * Main method for debugging.
+     * @param args not used
+     */
+    public static void main(String[] args) {
+
+        PopulationFunction popFunc = new ConstantPopulation();
+
+        System.out.println("Hello!");
+
     }
 
 

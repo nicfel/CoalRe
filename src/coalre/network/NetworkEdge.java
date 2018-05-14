@@ -37,7 +37,7 @@ public class NetworkEdge {
     }
 
     private String getExtendedNewick(List<NetworkNode> seenReassortmentNodes) {
-        String result = "";
+        StringBuilder result = new StringBuilder();
 
         boolean traverse = true;
         int hybridID = -1;
@@ -51,30 +51,37 @@ public class NetworkEdge {
             }
         }
 
-        if (traverse) {
-            if (!childNode.children.isEmpty()) {
-                result += "(";
+        if (traverse && !childNode.isLeaf()) {
+            result.append("(");
 
-                for (NetworkEdge childEdge : childNode.children) {
-                    result += childEdge.getExtendedNewick(seenReassortmentNodes);
-                }
+            boolean isFirst = true;
+            for (NetworkEdge childEdge : childNode.getChildEdges()) {
+                if (isFirst)
+                    isFirst = false;
+                else
+                    result.append(",");
 
-                result += ")";
+                result.append(childEdge.getExtendedNewick(seenReassortmentNodes));
             }
+
+            result.append(")");
         }
+
+        if (childNode.getTaxonLabel() != null)
+            result.append(childNode.getTaxonLabel());
 
         if (hybridID>=0) {
-            result += "#H" + hybridID;
+            result.append("#H").append(hybridID);
         }
 
+        result.append("[&segments=").append(hasSegments).append("]");
+
         if (parentNode != null)
-            result += ":" + (parentNode.getHeight() - childNode.getHeight());
+            result.append(":").append(parentNode.getHeight() - childNode.getHeight());
         else
-            result += ":0.0";
+            result.append(":0.0");
 
-        result += "[&segments=" + hasSegments.toString() + "]";
-
-        return result;
+        return result.toString();
     }
 
     @Override
