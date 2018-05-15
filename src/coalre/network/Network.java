@@ -1,11 +1,9 @@
 package coalre.network;
 
 import beast.core.StateNode;
-import coalre.distribution.NetworkEvent;
 import coalre.network.parser.NetworkBaseVisitor;
 import coalre.network.parser.NetworkLexer;
 import coalre.network.parser.NetworkParser;
-import coalre.network.parser.NetworkVisitor;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -20,6 +18,7 @@ public class Network extends StateNode {
     protected NetworkEdge rootEdge;
     protected int nSegments;
 
+    protected NetworkEdge storedRootEdge;
 
     public Network() {
     }
@@ -37,10 +36,6 @@ public class Network extends StateNode {
 
     public void setRootEdge(NetworkEdge rootEdge) {
         this.rootEdge = rootEdge;
-    }
-
-    public String getExtendedNewick() {
-        return rootEdge.getExtendedNewick();
     }
 
     public Set<NetworkNode> getNodes() {
@@ -62,6 +57,58 @@ public class Network extends StateNode {
             getNodesRecurse(childLineage, networkNodeSet);
     }
 
+    public String getExtendedNewick() {
+        return getExtendedNewick(rootEdge, new ArrayList<NetworkNode>()) + ";";
+    }
+
+    private String getExtendedNewick(NetworkEdge currentEdge, List<NetworkNode> seenReassortmentNodes) {
+        StringBuilder result = new StringBuilder();
+
+        boolean traverse = true;
+        int hybridID = -1;
+        if (currentEdge.childNode.isReassortment()) {
+            hybridID = seenReassortmentNodes.indexOf(currentEdge.childNode);
+
+            if (hybridID<0) {
+                traverse = false;
+                seenReassortmentNodes.add(currentEdge.childNode);
+                hybridID = seenReassortmentNodes.size()-1;
+            }
+        }
+
+        if (traverse && !currentEdge.childNode.isLeaf()) {
+            result.append("(");
+
+            boolean isFirst = true;
+            for (NetworkEdge childEdge : currentEdge.childNode.getChildEdges()) {
+                if (isFirst)
+                    isFirst = false;
+                else
+                    result.append(",");
+
+                result.append(getExtendedNewick(childEdge, seenReassortmentNodes));
+            }
+
+            result.append(")");
+        }
+
+        if (currentEdge.childNode.getTaxonLabel() != null)
+            result.append(currentEdge.childNode.getTaxonLabel());
+
+        if (hybridID>=0) {
+            result.append("#H").append(hybridID);
+        }
+
+        result.append("[&segments=").append(currentEdge.hasSegments).append("]");
+
+        if (currentEdge.parentNode != null)
+            result.append(":").append(currentEdge.parentNode.getHeight() - currentEdge.childNode.getHeight());
+        else
+            result.append(":0.0");
+
+        return result.toString();
+    }
+
     public void fromExtendedNewick(String newickStr) {
 
         CharStream inputStream = CharStreams.fromString(newickStr);
@@ -69,12 +116,9 @@ public class Network extends StateNode {
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         NetworkParser parser = new NetworkParser(tokenStream);
         ParseTree tree = parser.network();
-//        System.out.println(tree.toStringTree(parser));
 
         NetworkBuilderVisitor builder = new NetworkBuilderVisitor();
         rootEdge = builder.visit(tree);
-
-        System.out.print(toString());
     }
 
     /** StateNode implementation: **/
@@ -110,7 +154,7 @@ public class Network extends StateNode {
 
     @Override
     public void fromXML(Node node) {
-
+        fromExtendedNewick(node.getTextContent().replaceAll("&amp;", "&"));
     }
 
     @Override
