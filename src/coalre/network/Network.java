@@ -194,12 +194,14 @@ public class Network extends StateNode {
 
     @Override
     protected void store() {
-
+        storedRootEdge = copyEdge(rootEdge, new HashMap<>());
     }
 
     @Override
     public void restore() {
-
+        NetworkEdge tmp = storedRootEdge;
+        storedRootEdge = rootEdge;
+        rootEdge = tmp;
     }
 
     @Override
