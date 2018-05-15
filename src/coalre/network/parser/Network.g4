@@ -8,7 +8,7 @@ post: label? hybrid? meta? (':' length=number)? ;
 
 label: number | string ;
 
-hybrid: '#'(type=RECTYPE)?INT ;
+hybrid: '#' (type=STRINGALPHA)? id=INT ;
 
 meta: '[&' attrib (',' attrib)* ']' ;
 
@@ -20,7 +20,7 @@ number: INT | FLOAT ;
 
 vector: '{' attribValue (',' attribValue)* '}' ;
 
-string: RECTYPE | STRINGPRIM ;
+string:  STRINGALPHA (STRINGNUMALPHA | INT)? | STRINGNUMALPHA;
 
 // Lexer rules:
 
@@ -30,10 +30,10 @@ fragment NNINT : '0' | NZD D* ;
 fragment NZD : [1-9] ;
 fragment D : [0-9] ;
 
-RECTYPE: 'R' | 'H' | 'LGT' ;
+STRINGALPHA: [a-zA-Z]+ ;
 
-STRINGPRIM :
-    [a-zA-Z0-9|*%/.\-+_&]+  // these chars don't need quotes
+STRINGNUMALPHA :
+    [0-9|*%/.\-+_&][a-zA-Z0-9|*%/.\-+_&]+  // these chars don't need quotes
     | '"' .*? '"'
     | '\'' .*? '\''
     ;

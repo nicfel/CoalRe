@@ -3,8 +3,8 @@ package coalre.network;
 import java.util.*;
 
 public class NetworkEdge {
-    public NetworkNode parentNode, childNode;
 
+    public NetworkNode parentNode, childNode;
     public BitSet hasSegments;
 
     public NetworkEdge(NetworkNode parentNode, NetworkNode childNode,
@@ -86,21 +86,5 @@ public class NetworkEdge {
             result.append(":0.0");
 
         return result.toString();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        NetworkEdge that = (NetworkEdge) o;
-        return Objects.equals(parentNode, that.parentNode) &&
-                Objects.equals(childNode, that.childNode) &&
-                Objects.equals(hasSegments, that.hasSegments);
-    }
-
-    @Override
-    public int hashCode() {
-
-        return Objects.hash(parentNode, childNode, hasSegments);
     }
 }

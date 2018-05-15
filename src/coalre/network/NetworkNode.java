@@ -20,13 +20,6 @@ public class NetworkNode {
     List<NetworkEdge> children = new ArrayList<>();
     List<NetworkEdge> parents = new ArrayList<>();
 
-    Integer reassortmentNumber;
-
-    /**
-     * Which segments do the lineages above this node correspond to?
-     */
-    List<Boolean[]> hasSegments;
-
     public NetworkNode() {
     }
 
