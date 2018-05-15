@@ -23,6 +23,10 @@ public class Network extends StateNode {
     public Network() {
     }
 
+    public Network(NetworkEdge rootEdge) {
+        this.rootEdge = rootEdge;
+    }
+
     public int getSegmentCount() {
         return nSegments;
     }
@@ -134,7 +138,33 @@ public class Network extends StateNode {
 
     @Override
     public StateNode copy() {
-        return null;
+        return new Network(copyEdge(rootEdge, new HashMap<>()));
+    }
+
+    private NetworkEdge copyEdge(NetworkEdge edge, Map<NetworkNode,NetworkNode> seenNodes) {
+
+        NetworkEdge edgeCopy = new NetworkEdge(null, null, (BitSet)edge.hasSegments.clone());
+        NetworkNode childNodeCopy;
+        boolean traverse = true;
+        if (seenNodes.containsKey(edge.getChildNode())) {
+            childNodeCopy = seenNodes.get(edge.getChildNode());
+            traverse = false;
+        } else {
+            childNodeCopy = new NetworkNode();
+        }
+
+        edgeCopy.setChildNode(childNodeCopy);
+        childNodeCopy.addParentEdge(edgeCopy);
+
+        if (traverse) {
+            for (NetworkEdge childEdge : edge.getChildNode().getChildEdges()) {
+                NetworkEdge childEdgeCopy = copyEdge(childEdge, seenNodes);
+                childEdgeCopy.setParentNode(childNodeCopy);
+                childNodeCopy.addChildEdge(childEdgeCopy);
+            }
+        }
+
+        return edgeCopy;
     }
 
     @Override

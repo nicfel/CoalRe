@@ -12,8 +12,7 @@ public class NetworkEdge {
         this.parentNode = parentNode;
         this.childNode = childNode;
 
-        this.hasSegments = new BitSet();
-        this.hasSegments.or(hasSegments);
+        this.hasSegments = hasSegments;
     }
 
     public NetworkNode getParentNode() {
@@ -30,6 +29,10 @@ public class NetworkEdge {
 
     public void setChildNode(NetworkNode newChildNode) {
         childNode = newChildNode;
+    }
+
+    public BitSet getHasSegments() {
+        return hasSegments;
     }
 
     public double getReassortmentObsProb() {
