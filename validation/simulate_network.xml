@@ -12,6 +12,7 @@
                  :beast.math.distributions
                  :feast.simulation
                  :coalre.network
+                 :coalre.statistics
                  :coalre.simulator">
 
     <network id="simulated_network" spec="SimulatedCoalescentNetwork">
@@ -55,6 +56,10 @@
 
         <logger spec="Logger" logEvery="1" mode="tree" fileName="$(filebase).nexus">
             <log idref="simulated_network"/>
+        </logger>
+
+        <logger spec="Logger" logEvery="1">
+            <log spec="NetworkStatsLogger" network="@simulated_network"/>
         </logger>
     </run>
 </beast>
