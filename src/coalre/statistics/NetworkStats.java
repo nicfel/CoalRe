@@ -16,6 +16,6 @@ public class NetworkStats {
     }
 
     public static double getTotalHeight(Network network) {
-        return network.getRootEdge().getChildNode().getHeight();
+        return network.getRootEdge().childNode.getHeight();
     }
 }

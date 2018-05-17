@@ -150,8 +150,8 @@ public class SimulatedCoalescentNetwork extends Network implements StateNodeInit
         coalescentNode.setHeight(coalescentTime)
                 .addChildEdge(lineage1)
                 .addChildEdge(lineage2);
-        lineage1.setParentNode(coalescentNode);
-        lineage2.setParentNode(coalescentNode);
+        lineage1.parentNode = coalescentNode;
+        lineage2.parentNode = coalescentNode;
 
         // Merge segment flags:
         BitSet hasSegments = new BitSet();
@@ -191,7 +191,7 @@ public class SimulatedCoalescentNetwork extends Network implements StateNodeInit
         NetworkNode node = new NetworkNode();
         node.setHeight(reassortmentTime)
                 .addChildEdge(lineage);
-        lineage.setParentNode(node);
+        lineage.parentNode = node;
 
         // Create reassortment lineages
         NetworkEdge leftLineage = new NetworkEdge(null, node, hasSegs_left);

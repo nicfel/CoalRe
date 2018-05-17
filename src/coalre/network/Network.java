@@ -27,6 +27,10 @@ public class Network extends StateNode {
         this.rootEdge = rootEdge;
     }
 
+    public Network(String newickString) {
+        fromExtendedNewick(newickString);
+    }
+
     public int getSegmentCount() {
         return nSegments;
     }
@@ -55,12 +59,12 @@ public class Network extends StateNode {
 
     private void getNodesRecurse(NetworkEdge lineage, Set<NetworkNode> networkNodeSet) {
 
-        if (networkNodeSet.contains(lineage.getChildNode()))
+        if (networkNodeSet.contains(lineage.childNode))
             return;
 
-        networkNodeSet.add(lineage.getChildNode());
+        networkNodeSet.add(lineage.childNode);
 
-        for (NetworkEdge childLineage : lineage.getChildNode().getChildEdges())
+        for (NetworkEdge childLineage : lineage.childNode.getChildEdges())
             getNodesRecurse(childLineage, networkNodeSet);
     }
 
@@ -81,7 +85,7 @@ public class Network extends StateNode {
             return;
 
         networkEdgeSet.add(edge);
-        for (NetworkEdge childEdge : edge.getChildNode().getChildEdges())
+        for (NetworkEdge childEdge : edge.childNode.getChildEdges())
             getEdgesRecurse(childEdge, networkEdgeSet);
     }
 
@@ -170,20 +174,20 @@ public class Network extends StateNode {
         NetworkEdge edgeCopy = new NetworkEdge(null, null, (BitSet)edge.hasSegments.clone());
         NetworkNode childNodeCopy;
         boolean traverse = true;
-        if (seenNodes.containsKey(edge.getChildNode())) {
-            childNodeCopy = seenNodes.get(edge.getChildNode());
+        if (seenNodes.containsKey(edge.childNode)) {
+            childNodeCopy = seenNodes.get(edge.childNode);
             traverse = false;
         } else {
             childNodeCopy = new NetworkNode();
         }
 
-        edgeCopy.setChildNode(childNodeCopy);
+        edgeCopy.childNode = childNodeCopy;
         childNodeCopy.addParentEdge(edgeCopy);
 
         if (traverse) {
-            for (NetworkEdge childEdge : edge.getChildNode().getChildEdges()) {
+            for (NetworkEdge childEdge : edge.childNode.getChildEdges()) {
                 NetworkEdge childEdgeCopy = copyEdge(childEdge, seenNodes);
-                childEdgeCopy.setParentNode(childNodeCopy);
+                childEdgeCopy.parentNode = childNodeCopy;
                 childNodeCopy.addChildEdge(childEdgeCopy);
             }
         }
@@ -283,7 +287,7 @@ public class Network extends StateNode {
 
             double maxTime = 0.0;
             for (NetworkEdge childEdge : node.getChildEdges()) {
-                NetworkNode childNode = childEdge.getChildNode();
+                NetworkNode childNode = childEdge.childNode;
                 childNode.setHeight(node.getHeight()-edgeLengths.get(childEdge));
 
                 double thisTime = edgeLengths.get(childEdge) +
@@ -304,7 +308,7 @@ public class Network extends StateNode {
             node.setHeight(node.getHeight() + maxRTLT);
 
             for (NetworkEdge childEdge : node.getChildEdges())
-                shiftNodeHeights(maxRTLT, childEdge.getChildNode(), seenNodes);
+                shiftNodeHeights(maxRTLT, childEdge.childNode, seenNodes);
         }
 
         @Override
@@ -315,12 +319,12 @@ public class Network extends StateNode {
             NetworkEdge rootEdge = visit(ctx.node());
 
             Set<NetworkNode> seenNodes = new HashSet<>();
-            NetworkNode rootNode = rootEdge.getChildNode();
+            NetworkNode rootNode = rootEdge.childNode;
             rootNode.setHeight(0.0);
             double maxRTLT = getMaxRootToLeafTime(rootNode, seenNodes);
 
             seenNodes.clear();
-            shiftNodeHeights(maxRTLT, rootEdge.getChildNode(), seenNodes);
+            shiftNodeHeights(maxRTLT, rootEdge.childNode, seenNodes);
 
             return rootEdge;
         }
@@ -350,14 +354,14 @@ public class Network extends StateNode {
 
             for (NetworkParser.NodeContext childNodeCtx : ctx.node()) {
                 NetworkEdge childEdge = visit(childNodeCtx);
-                childEdge.setParentNode(node);
+                childEdge.parentNode = node;
                 node.addChildEdge(childEdge);
             }
 
             boolean segmentsProcessed = false;
             BitSet hasSegments = new BitSet();
             if (ctx.post().meta() != null
-                    || ctx.post().meta().attrib() != null) {
+                    && ctx.post().meta().attrib() != null) {
 
                 for (NetworkParser.AttribContext attribCtx : ctx.post().meta().attrib()) {
                     if (!attribCtx.attribKey.getText().equals("segments"))
