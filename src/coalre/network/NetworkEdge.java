@@ -39,4 +39,12 @@ public class NetworkEdge {
         return 1.0 - Math.pow(0.5, hasSegments.cardinality()-1);
     }
 
+    public double getLength() {
+        return parentNode.getHeight() - childNode.getHeight();
+    }
+
+    public boolean isRootEdge() {
+        return parentNode == null;
+    }
+
 }

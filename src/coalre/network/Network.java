@@ -42,6 +42,9 @@ public class Network extends StateNode {
         this.rootEdge = rootEdge;
     }
 
+    /**
+     * @return set of node objects comprising network
+     */
     public Set<NetworkNode> getNodes() {
         Set<NetworkNode> networkNodeSet = new HashSet<>();
 
@@ -59,6 +62,27 @@ public class Network extends StateNode {
 
         for (NetworkEdge childLineage : lineage.getChildNode().getChildEdges())
             getNodesRecurse(childLineage, networkNodeSet);
+    }
+
+    /**
+     * @return set of edge objects comprising network
+     */
+    public Set<NetworkEdge> getEdges() {
+        Set<NetworkEdge> networkEdgeSet = new HashSet<>();
+
+        getEdgesRecurse(rootEdge, networkEdgeSet);
+
+        return networkEdgeSet;
+    }
+
+    private void getEdgesRecurse(NetworkEdge edge, Set<NetworkEdge> networkEdgeSet) {
+
+        if (networkEdgeSet.contains(edge))
+            return;
+
+        networkEdgeSet.add(edge);
+        for (NetworkEdge childEdge : edge.getChildNode().getChildEdges())
+            getEdgesRecurse(childEdge, networkEdgeSet);
     }
 
     public String getExtendedNewick() {
@@ -219,7 +243,7 @@ public class Network extends StateNode {
         return 0;
     }
 
-    /** Logable implementation: **/
+    /** Loggable implementation: **/
 
     @Override
     public void init(PrintStream out) {

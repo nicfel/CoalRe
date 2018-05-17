@@ -41,11 +41,13 @@ public class NetworkNode {
 
     public NetworkNode addParentEdge(NetworkEdge newParentEdge) {
         parents.add(newParentEdge);
+        newParentEdge.setChildNode(this);
         return this;
     }
 
     public NetworkNode removeParentEdge(NetworkEdge parentEdge) {
         parents.remove(parentEdge);
+        parentEdge.setChildNode(null);
         return this;
     }
 
@@ -55,11 +57,13 @@ public class NetworkNode {
 
     public NetworkNode addChildEdge(NetworkEdge newChildEdge) {
         children.add(newChildEdge);
+        newChildEdge.setParentNode(this);
         return this;
     }
 
     public NetworkNode removeChildEdge(NetworkEdge childEdge) {
         children.remove(childEdge);
+        childEdge.setParentNode(null);
         return this;
     }
 
