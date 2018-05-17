@@ -68,14 +68,24 @@ public class NetworkNode {
     }
 
     /**
-     * @return true if current node is a leaf node *
+     * @return true iff current node is a leaf node.
      */
     public boolean isLeaf() {
         return children.size() == 0;
     }
-    
+
+    /**
+     * @return true iff current node is a reassortment node.
+     */
     public boolean isReassortment() {
         return parents.size()>1;
+    }
+
+    /**
+     * @return true iff current node is a coalescence node.
+     */
+    public boolean isCoalescence() {
+        return children.size() > 1;
     }
 
     public int getChildCount() {
