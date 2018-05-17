@@ -13,16 +13,19 @@ public class NetworkStatsLogger extends BEASTObject implements Loggable {
             "Network for which to log statistics.",
             Input.Validate.REQUIRED);
 
+    Network network;
+
     public NetworkStatsLogger() { }
 
     @Override
     public void initAndValidate() {
+        network = networkInput.get();
     }
 
     @Override
     public void init(PrintStream out) {
 
-        String prefix = getID() == null ? "networkStat." : getID() + ".";
+        String prefix = network.getID() == null ? "networkStat." : network.getID() + ".";
 
         out.print(prefix + "height\t" +
                 prefix + "totalLength\t" +
@@ -32,9 +35,9 @@ public class NetworkStatsLogger extends BEASTObject implements Loggable {
     @Override
     public void log(long sample, PrintStream out) {
 
-        out.print(NetworkStats.getTotalHeight(networkInput.get()) + "\t" +
-                NetworkStats.getTotalEdgeLength(networkInput.get()) + "\t" +
-                NetworkStats.getReassortmentCount(networkInput.get()) + "\t");
+        out.print(NetworkStats.getTotalHeight(network) + "\t" +
+                NetworkStats.getTotalEdgeLength(network) + "\t" +
+                NetworkStats.getReassortmentCount(network) + "\t");
     }
 
     @Override
