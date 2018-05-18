@@ -33,8 +33,6 @@ public class AddRemoveReassortmentTest extends CoalReTestClass {
     public void testAddRemoveSegment() {
 
         Network network = new Network(networkString);
-        System.out.println(network.getExtendedNewickVerbose(15));
-
         NetworkNode leafNode = new ArrayList<>(network.getLeafNodes()).get(0);
 
         AddRemoveReassortment operator = new AddRemoveReassortment();
@@ -44,8 +42,6 @@ public class AddRemoveReassortmentTest extends CoalReTestClass {
 
         operator.addSegmentsToAncestors(leafNode.getParentEdges().get(0), segmentsToAdd);
 
-        System.out.println(network.getExtendedNewickVerbose(15));
-
         BitSet allSegments = new BitSet();
         allSegments.set(0, 15);
         Assert.assertEquals(allSegments, network.getRootEdge().hasSegments);
@@ -53,8 +49,6 @@ public class AddRemoveReassortmentTest extends CoalReTestClass {
         BitSet segmentsToRemove = new BitSet();
         segmentsToRemove.set(8, 15);
         operator.removeSegmentsFromAncestors(leafNode.getParentEdges().get(0), segmentsToRemove);
-
-        System.out.println(network.getExtendedNewickVerbose(15));
 
         Assert.assertEquals(networkString, network.toString());
     }
