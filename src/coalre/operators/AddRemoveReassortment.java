@@ -57,6 +57,8 @@ public class AddRemoveReassortment extends NetworkOperator {
         NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
         NetworkNode edgeToRemoveSpouseParent = edgeToRemoveSpouse.parentNode;
 
+        logHR -= Math.log(1.0/(2*reassortmentNodes.size()));
+
         // Divert segments away from chosen edge
         BitSet segsToDivert = (BitSet)edgeToRemove.hasSegments.clone();
         logHR += removeSegmentsFromAncestors(edgeToRemove, segsToDivert);
@@ -73,22 +75,23 @@ public class AddRemoveReassortment extends NetworkOperator {
         NetworkNode secondNodeToRemove = edgeToRemove.parentNode;
         NetworkEdge secondEdgeToExtend = getSisterEdge(edgeToRemove);
 
-        if (secondNodeToRemove.getParentEdges().get(0).isRootEdge()) {
-            secondNodeToRemove.removeChildEdge(secondEdgeToExtend);
-            secondNodeToRemove.removeChildEdge(edgeToRemove);
+        secondNodeToRemove.removeChildEdge(secondEdgeToExtend);
+        secondNodeToRemove.removeChildEdge(edgeToRemove);
 
+        if (secondNodeToRemove.getParentEdges().get(0).isRootEdge()) {
             network.setRootEdge(secondEdgeToExtend);
+
         } else {
             NetworkEdge secondNodeToRemoveParentEdge = secondNodeToRemove.getParentEdges().get(0);
             NetworkNode secondNodeToRemoveParent = secondNodeToRemoveParentEdge.parentNode;
             secondNodeToRemoveParent.removeChildEdge(secondNodeToRemoveParentEdge);
             secondNodeToRemove.removeParentEdge(secondNodeToRemoveParentEdge);
 
-            secondNodeToRemove.removeChildEdge(secondEdgeToExtend);
-            secondNodeToRemove.removeChildEdge(edgeToRemove);
-
             secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
         }
+
+        // HR contribution of edge selection for reverse move
+        logHR += Math.log(1.0/(network.getNodes().size()-1));
 
         return logHR;
     }
