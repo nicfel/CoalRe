@@ -1,5 +1,7 @@
 package coalre.operators;
 
+import beast.core.Input;
+import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
@@ -12,11 +14,17 @@ import java.util.Set;
 
 public class AddRemoveReassortment extends NetworkOperator {
 
+    public Input<Double> alphaInput = new Input<>("alpha",
+            "Mean of exponential used for choosing root attachment times.",
+            Input.Validate.REQUIRED);
+
     private Network network;
+    private double alpha;
 
     @Override
     public void initAndValidate() {
         network = networkInput.get();
+        alpha = alphaInput.get();
     }
 
     @Override
@@ -35,6 +43,39 @@ public class AddRemoveReassortment extends NetworkOperator {
     }
 
     double addReassortment() {
+        double logHR = 0.0;
+
+        List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
+
+        NetworkEdge sourceEdge;
+        do {
+            sourceEdge = networkEdges.get(Randomizer.nextInt(networkEdges.size()));
+        } while (sourceEdge.isRootEdge());
+
+        double sourceTime = Randomizer.nextDouble()*sourceEdge.getLength() + sourceEdge.childNode.getHeight();
+
+        logHR -= Math.log(1.0/(networkEdges.size()-1)/sourceEdge.getLength());
+
+        NetworkEdge destEdge = networkEdges.get(Randomizer.nextInt(networkEdges.size()));
+
+
+        if (!destEdge.isRootEdge() && sourceTime>destEdge.parentNode.getHeight())
+            return Double.NEGATIVE_INFINITY;
+
+        double minDestTime = Math.max(destEdge.childNode.getHeight(), sourceEdge.parentNode.getHeight());
+
+        double destTime;
+        if (destEdge.isRootEdge()) {
+
+            destTime = minDestTime + Randomizer.nextExponential(1.0/alpha);
+            logHR -= -(1.0/alpha)*(destTime-minDestTime) + Math.log(1.0/alpha);
+
+        } else {
+
+            destTime = Randomizer.nextDouble()*(destEdge.parentNode.getHeight()-minDestTime) + minDestTime;
+            logHR -= Math.log(1.0/(destEdge.parentNode.getHeight()-minDestTime));
+
+        }
 
         return 0.0;
     }
@@ -91,7 +132,7 @@ public class AddRemoveReassortment extends NetworkOperator {
         }
 
         // HR contribution of edge selection for reverse move
-        logHR += Math.log(1.0/(network.getNodes().size()-1));
+        logHR += Math.log(1.0/(network.getEdges().size()-1)/edgeToExtend.getLength());
 
         return logHR;
     }
