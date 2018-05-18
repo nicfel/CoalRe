@@ -5,12 +5,9 @@ import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
-import beast.util.TreeParser;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 

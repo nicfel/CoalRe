@@ -12,6 +12,7 @@ import org.w3c.dom.Node;
 
 import java.io.PrintStream;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Network extends StateNode {
 
@@ -66,6 +67,13 @@ public class Network extends StateNode {
 
         for (NetworkEdge childLineage : lineage.childNode.getChildEdges())
             getNodesRecurse(childLineage, networkNodeSet);
+    }
+
+    /**
+     * @return set of leaf nodes in network
+     */
+    public Set<NetworkNode> getLeafNodes() {
+        return getNodes().stream().filter(NetworkNode::isLeaf).collect(Collectors.toSet());
     }
 
     /**
@@ -329,6 +337,18 @@ public class Network extends StateNode {
             return rootEdge;
         }
 
+        private String removeQuotes(String str) {
+
+            String[] quoteChars = {"\"", "'"};
+
+            for (String quoteChar : quoteChars) {
+                if (str.startsWith(quoteChar) && str.endsWith(quoteChar) && str.length() >= 2)
+                    str = str.substring(1, str.length() - 1);
+            }
+
+            return str;
+        }
+
         @Override
         public NetworkEdge visitNode(NetworkParser.NodeContext ctx) {
 
@@ -350,7 +370,7 @@ public class Network extends StateNode {
             }
 
             if (ctx.post().label() != null)
-                node.setTaxonLabel(ctx.post().label().getText());
+                node.setTaxonLabel(removeQuotes(ctx.post().label().getText()));
 
             for (NetworkParser.NodeContext childNodeCtx : ctx.node()) {
                 NetworkEdge childEdge = visit(childNodeCtx);
@@ -364,7 +384,7 @@ public class Network extends StateNode {
                     && ctx.post().meta().attrib() != null) {
 
                 for (NetworkParser.AttribContext attribCtx : ctx.post().meta().attrib()) {
-                    if (!attribCtx.attribKey.getText().equals("segments"))
+                    if (!removeQuotes(attribCtx.attribKey.getText()).equals("segments"))
                         continue;
 
                     if (attribCtx.attribValue().vector() == null)

@@ -66,7 +66,7 @@ public class AddRemoveReassortment extends NetworkOperator {
      * @param segsToRemove segments to remove from edge and ancestors
      * @param seenNodes set of nodes already seen during traversal
      */
-    private void removeSegmentsFromAncestors(NetworkEdge edge, BitSet segsToRemove, Set<NetworkNode> seenNodes) {
+    void removeSegmentsFromAncestors(NetworkEdge edge, BitSet segsToRemove, Set<NetworkNode> seenNodes) {
         if (!edge.hasSegments.intersects(segsToRemove))
             return;
 
@@ -86,7 +86,7 @@ public class AddRemoveReassortment extends NetworkOperator {
             removeSegmentsFromAncestors(parentEdge, segsToRemove, seenNodes);
     }
 
-    private void addSegmentsToAncestors(NetworkEdge edge, BitSet segsToAdd, Set<NetworkNode> seenNodes) {
+    void addSegmentsToAncestors(NetworkEdge edge, BitSet segsToAdd, Set<NetworkNode> seenNodes) {
         int origSegCount = edge.hasSegments.cardinality();
         edge.hasSegments.or(segsToAdd);
 
