@@ -56,4 +56,18 @@ public class AddRemoveReassortmentTest extends CoalReTestClass {
         Assert.assertEquals(networkString, network.toString());
         Assert.assertEquals(logPadd, logPremove, 1e-10);
     }
+
+    @Test
+    public void testRemoveReassortment() {
+        Network network = new Network(networkString);
+
+        AddRemoveReassortment operator = new AddRemoveReassortment();
+        operator.initByName("network", network, "weight", 1.0);
+
+        System.out.println(network.getExtendedNewickVerbose(8));
+
+        operator.removeReassortment();
+
+        System.out.println(network.getExtendedNewickVerbose(8));
+    }
 }

@@ -12,7 +12,7 @@ import java.util.Set;
 
 public class AddRemoveReassortment extends NetworkOperator {
 
-    Network network;
+    private Network network;
 
     @Override
     public void initAndValidate() {
@@ -34,12 +34,14 @@ public class AddRemoveReassortment extends NetworkOperator {
         }
     }
 
-    private double addReassortment() {
+    double addReassortment() {
 
         return 0.0;
     }
 
-    private double removeReassortment() {
+    double removeReassortment() {
+        double logHR = 0.0;
+
         Set<NetworkNode> networkNodes = network.getNodes();
         List<NetworkNode> reassortmentNodes = new ArrayList<>();
         for (NetworkNode node : networkNodes)
@@ -52,11 +54,43 @@ public class AddRemoveReassortment extends NetworkOperator {
         NetworkNode nodeToRemove = reassortmentNodes.get(Randomizer.nextInt(reassortmentNodes.size()));
         int removalEdgeIdx = Randomizer.nextInt(2);
         NetworkEdge edgeToRemove = nodeToRemove.getParentEdges().get(removalEdgeIdx);
+        NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
+        NetworkNode edgeToRemoveSpouseParent = edgeToRemoveSpouse.parentNode;
 
-        // Remove edge parent node
+        // Divert segments away from chosen edge
+        BitSet segsToDivert = (BitSet)edgeToRemove.hasSegments.clone();
+        logHR += removeSegmentsFromAncestors(edgeToRemove, segsToDivert);
+        logHR -= addSegmentsToAncestors(edgeToRemoveSpouse, segsToDivert);
 
+        // Remove edge and associated nodes
+        NetworkEdge edgeToExtend = nodeToRemove.getChildEdges().get(0);
+        nodeToRemove.removeChildEdge(edgeToExtend);
+        nodeToRemove.removeParentEdge(edgeToRemove);
+        nodeToRemove.removeParentEdge(edgeToRemoveSpouse);
+        edgeToRemoveSpouseParent.removeChildEdge(edgeToRemoveSpouse);
+        edgeToRemoveSpouseParent.addChildEdge(edgeToExtend);
 
-        return 0.0;
+        NetworkNode secondNodeToRemove = edgeToRemove.parentNode;
+        NetworkEdge secondEdgeToExtend = getSisterEdge(edgeToRemove);
+
+        if (secondNodeToRemove.getParentEdges().get(0).isRootEdge()) {
+            secondNodeToRemove.removeChildEdge(secondEdgeToExtend);
+            secondNodeToRemove.removeChildEdge(edgeToRemove);
+
+            network.setRootEdge(secondEdgeToExtend);
+        } else {
+            NetworkEdge secondNodeToRemoveParentEdge = secondNodeToRemove.getParentEdges().get(0);
+            NetworkNode secondNodeToRemoveParent = secondNodeToRemoveParentEdge.parentNode;
+            secondNodeToRemoveParent.removeChildEdge(secondNodeToRemoveParentEdge);
+            secondNodeToRemove.removeParentEdge(secondNodeToRemoveParentEdge);
+
+            secondNodeToRemove.removeChildEdge(secondEdgeToExtend);
+            secondNodeToRemove.removeChildEdge(edgeToRemove);
+
+            secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
+        }
+
+        return logHR;
     }
 
     /**
@@ -64,6 +98,7 @@ public class AddRemoveReassortment extends NetworkOperator {
      *
      * @param edge edge at which to start removal
      * @param segsToRemove segments to remove from edge and ancestors
+     * @return log probability of reverse operation
      */
     double removeSegmentsFromAncestors(NetworkEdge edge, BitSet segsToRemove) {
         double logP = 0.0;
@@ -97,6 +132,7 @@ public class AddRemoveReassortment extends NetworkOperator {
      *
      * @param edge edge at which to start addition
      * @param segsToAdd segments to add to the edge and ancestors
+     * @return log probability of operation
      */
     double addSegmentsToAncestors(NetworkEdge edge, BitSet segsToAdd) {
         double logP = 0.0;
@@ -138,15 +174,4 @@ public class AddRemoveReassortment extends NetworkOperator {
         return logP;
     }
 
-    /**
-     * Retrieve sister edge given parent.
-     * @param childEdge child edge
-     * @return sister of given child edge
-     */
-    private NetworkEdge getSisterEdge(NetworkEdge childEdge) {
-        int idx = childEdge.parentNode.getChildEdges().indexOf(childEdge);
-        int otherIdx = (idx + 1) % 2;
-
-        return childEdge.parentNode.getChildEdges().get(otherIdx);
-    }
 }
