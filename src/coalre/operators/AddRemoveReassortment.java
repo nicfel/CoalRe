@@ -65,22 +65,31 @@ public class AddRemoveReassortment extends NetworkOperator {
      * @param edge edge at which to start removal
      * @param segsToRemove segments to remove from edge and ancestors
      */
-    void removeSegmentsFromAncestors(NetworkEdge edge, BitSet segsToRemove) {
+    double removeSegmentsFromAncestors(NetworkEdge edge, BitSet segsToRemove) {
+        double logP = 0.0;
+
         if (!edge.hasSegments.intersects(segsToRemove))
-            return;
+            return logP;
+
+        segsToRemove = (BitSet)segsToRemove.clone();
+        segsToRemove.and(edge.hasSegments);
 
         edge.hasSegments.andNot(segsToRemove);
 
         if (edge.isRootEdge())
-            return;
+            return logP;
 
         if (edge.parentNode.isCoalescence()) {
-            segsToRemove = (BitSet)segsToRemove.clone();
             segsToRemove.andNot(getSisterEdge(edge).hasSegments);
         }
 
+        if (edge.parentNode.isReassortment())
+            logP += -LOG2*segsToRemove.cardinality();
+
         for (NetworkEdge parentEdge : edge.parentNode.getParentEdges())
-            removeSegmentsFromAncestors(parentEdge, segsToRemove);
+            logP += removeSegmentsFromAncestors(parentEdge, segsToRemove);
+
+        return logP;
     }
 
     /**
@@ -89,22 +98,21 @@ public class AddRemoveReassortment extends NetworkOperator {
      * @param edge edge at which to start addition
      * @param segsToAdd segments to add to the edge and ancestors
      */
-    void addSegmentsToAncestors(NetworkEdge edge, BitSet segsToAdd) {
+    double addSegmentsToAncestors(NetworkEdge edge, BitSet segsToAdd) {
+        double logP = 0.0;
+
         int origSegCount = edge.hasSegments.cardinality();
         edge.hasSegments.or(segsToAdd);
 
         // Stop here if nothing has changed
-        if (edge.hasSegments.cardinality() == origSegCount)
-            return;
-
-        if (edge.isRootEdge())
-            return;
+        if (edge.hasSegments.cardinality() == origSegCount || edge.isRootEdge())
+            return logP;
 
         if (edge.parentNode.isCoalescence()) {
-
             NetworkEdge sisterEdge = getSisterEdge(edge);
+            segsToAdd = (BitSet)segsToAdd.clone();
             segsToAdd.andNot(sisterEdge.hasSegments);
-            addSegmentsToAncestors(edge.parentNode.getParentEdges().get(0), segsToAdd);
+            logP += addSegmentsToAncestors(edge.parentNode.getParentEdges().get(0), segsToAdd);
 
         } else if (edge.parentNode.isReassortment()) {
             BitSet segsToAddLeft = new BitSet();
@@ -116,11 +124,15 @@ public class AddRemoveReassortment extends NetworkOperator {
                     segsToAddLeft.set(segIdx);
                 else
                     segsToAddRight.set(segIdx);
+
+                logP += -LOG2;
             }
 
-            addSegmentsToAncestors(edge.parentNode.getParentEdges().get(0), segsToAddLeft);
-            addSegmentsToAncestors(edge.parentNode.getParentEdges().get(1), segsToAddRight);
+            logP += addSegmentsToAncestors(edge.parentNode.getParentEdges().get(0), segsToAddLeft);
+            logP += addSegmentsToAncestors(edge.parentNode.getParentEdges().get(1), segsToAddRight);
         }
+
+        return logP;
     }
 
     /**
