@@ -24,17 +24,19 @@ public class AddRemoveReassortment extends NetworkOperator {
 
 
         if (Randomizer.nextBoolean()) {
-            return addReassortment(List<NetworkNode>);
+
+            return addReassortment();
 
         } else {
-            return removeReassortment();
-        }
 
-        return 0;
+            return removeReassortment();
+
+        }
     }
 
     private double addReassortment() {
 
+        return 0.0;
     }
 
     private double removeReassortment() {
@@ -52,8 +54,9 @@ public class AddRemoveReassortment extends NetworkOperator {
         NetworkEdge edgeToRemove = nodeToRemove.getParentEdges().get(removalEdgeIdx);
 
         // Remove edge parent node
-        edgeToRemove.parentNode
 
+
+        return 0.0;
     }
 
     /**
@@ -71,7 +74,7 @@ public class AddRemoveReassortment extends NetworkOperator {
 
         if (edge.parentNode.isCoalescence()) {
             segsToRemove = (BitSet)segsToRemove.clone();
-            segsToRemove.andNot(getSisterEdge(edge.parentNode, edge).hasSegments);
+            segsToRemove.andNot(getSisterEdge(edge).hasSegments);
         }
 
          if (edge.isRootEdge() || seenNodes.contains(edge.parentNode))
@@ -94,23 +97,42 @@ public class AddRemoveReassortment extends NetworkOperator {
         if (edge.isRootEdge() || seenNodes.contains(edge.parentNode))
             return;
 
-
         seenNodes.add(edge.parentNode);
 
-        BitSet segsToAddLeft = new BitSet();
-        BitSet segsToAddRight = new BitSet();
+        if (edge.parentNode.isCoalescence()) {
+
+            NetworkEdge sisterEdge = getSisterEdge(edge);
+            segsToAdd.andNot(sisterEdge.hasSegments);
+            addSegmentsToAncestors(edge.parentNode.getParentEdges().get(0), segsToAdd, seenNodes);
+
+        } else if (edge.parentNode.isReassortment()) {
+            BitSet segsToAddLeft = new BitSet();
+            BitSet segsToAddRight = new BitSet();
+
+            for (int segIdx=segsToAdd.nextSetBit(0); segIdx != -1;
+                    segIdx=segsToAdd.nextSetBit(segIdx+1)) {
+                if (Randomizer.nextBoolean())
+                    segsToAddLeft.set(segIdx);
+                else
+                    segsToAddRight.set(segIdx);
+            }
+
+            addSegmentsToAncestors(edge.parentNode.getParentEdges().get(0),
+                    segsToAddLeft, seenNodes);
+            addSegmentsToAncestors(edge.parentNode.getParentEdges().get(1),
+                    segsToAddRight, seenNodes);
+        }
     }
 
     /**
      * Retrieve sister edge given parent.
-     * @param parentNode parent node
      * @param childEdge child edge
      * @return sister of given child edge
      */
-    private NetworkEdge getSisterEdge(NetworkNode parentNode, NetworkEdge childEdge) {
-        int idx = (parentNode.getChildEdges().indexOf(childEdge);
+    private NetworkEdge getSisterEdge(NetworkEdge childEdge) {
+        int idx = childEdge.parentNode.getChildEdges().indexOf(childEdge);
         int otherIdx = (idx + 1) % 2;
 
-        return parentNode.getChildEdges().get(otherIdx);
+        return childEdge.parentNode.getChildEdges().get(otherIdx);
     }
 }

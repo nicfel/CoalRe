@@ -213,18 +213,4 @@ public class SimulatedCoalescentNetwork extends Network implements StateNodeInit
     public void getInitialisedStateNodes(List<StateNode> stateNodes) {
         stateNodes.addAll(segmentTreesInput.get());
     }
-
-    /**
-     * Main method for debugging.
-     * @param args not used
-     */
-    public static void main(String[] args) {
-
-        PopulationFunction popFunc = new ConstantPopulation();
-
-        System.out.println("Hello!");
-
-    }
-
-
 }
