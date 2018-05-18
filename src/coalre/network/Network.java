@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 public class Network extends StateNode {
 
     protected NetworkEdge rootEdge;
-    protected int nSegments;
 
     protected NetworkEdge storedRootEdge;
 
@@ -30,10 +29,6 @@ public class Network extends StateNode {
 
     public Network(String newickString) {
         fromExtendedNewick(newickString);
-    }
-
-    public int getSegmentCount() {
-        return nSegments;
     }
 
     @Override
@@ -87,6 +82,10 @@ public class Network extends StateNode {
         return networkEdgeSet;
     }
 
+    public int getSegmentCount() {
+        return getLeafNodes().iterator().next().getParentEdges().get(0).hasSegments.cardinality();
+    }
+
     private void getEdgesRecurse(NetworkEdge edge, Set<NetworkEdge> networkEdgeSet) {
 
         if (networkEdgeSet.contains(edge))
@@ -98,10 +97,15 @@ public class Network extends StateNode {
     }
 
     public String getExtendedNewick() {
-        return getExtendedNewick(rootEdge, new ArrayList<NetworkNode>()) + ";";
+        return getExtendedNewick(rootEdge, new ArrayList<NetworkNode>(), null) + ";";
     }
 
-    private String getExtendedNewick(NetworkEdge currentEdge, List<NetworkNode> seenReassortmentNodes) {
+    public String getExtendedNewickVerbose(int nSegments) {
+        return getExtendedNewick(rootEdge, new ArrayList<NetworkNode>(), nSegments) + ";";
+    }
+
+    private String getExtendedNewick(NetworkEdge currentEdge, List<NetworkNode> seenReassortmentNodes,
+                                     Integer nSegments) {
         StringBuilder result = new StringBuilder();
 
         boolean traverse = true;
@@ -126,7 +130,7 @@ public class Network extends StateNode {
                 else
                     result.append(",");
 
-                result.append(getExtendedNewick(childEdge, seenReassortmentNodes));
+                result.append(getExtendedNewick(childEdge, seenReassortmentNodes, nSegments));
             }
 
             result.append(")");
@@ -139,7 +143,15 @@ public class Network extends StateNode {
             result.append("#H").append(hybridID);
         }
 
-        result.append("[&segments=").append(currentEdge.hasSegments).append("]");
+        result.append("[&");
+        result.append("segments=").append(currentEdge.hasSegments);
+        if (nSegments != null) {
+            for (int segIdx=0; segIdx<nSegments; segIdx++) {
+                result.append(",seg").append(segIdx).append("=")
+                        .append(currentEdge.hasSegments.get(segIdx));
+            }
+        }
+        result.append("]");
 
         if (currentEdge.parentNode != null)
             result.append(":").append(currentEdge.parentNode.getHeight() - currentEdge.childNode.getHeight());

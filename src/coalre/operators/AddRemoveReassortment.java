@@ -72,15 +72,15 @@ public class AddRemoveReassortment extends NetworkOperator {
 
         edge.hasSegments.andNot(segsToRemove);
 
+        if (edge.isRootEdge() || seenNodes.contains(edge.parentNode))
+            return;
+
         if (edge.parentNode.isCoalescence()) {
             segsToRemove = (BitSet)segsToRemove.clone();
             segsToRemove.andNot(getSisterEdge(edge).hasSegments);
         }
 
-         if (edge.isRootEdge() || seenNodes.contains(edge.parentNode))
-            return;
-
-         seenNodes.add(edge.parentNode);
+        seenNodes.add(edge.parentNode);
 
         for (NetworkEdge parentEdge : edge.parentNode.getParentEdges())
             removeSegmentsFromAncestors(parentEdge, segsToRemove, seenNodes);
