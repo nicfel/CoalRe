@@ -7,6 +7,7 @@
 
 # Misc cruft
 .DS_Store
+.ipynb_checkpoints
 
 # Build/test files
 /bin
