@@ -76,7 +76,6 @@ public class AddRemoveReassortmentTest extends CoalReTestClass {
 
     @Test
     public void testAddReassortment() {
-        Randomizer.setSeed(3);
         Network network = new Network(networkString);
 
         AddRemoveReassortment operator = new AddRemoveReassortment();
@@ -86,8 +85,10 @@ public class AddRemoveReassortmentTest extends CoalReTestClass {
 
         System.out.println(network.getExtendedNewickVerbose(8));
 
-        operator.addReassortment();
+        double logHR = operator.addReassortment();
 
         System.out.println(network.getExtendedNewickVerbose(8));
+
+        System.out.println(logHR);
     }
 }
