@@ -1,5 +1,6 @@
 package coalre.operators;
 
+import beast.util.Randomizer;
 import coalre.CoalReTestClass;
 import coalre.network.Network;
 import coalre.network.NetworkNode;
@@ -62,11 +63,30 @@ public class AddRemoveReassortmentTest extends CoalReTestClass {
         Network network = new Network(networkString);
 
         AddRemoveReassortment operator = new AddRemoveReassortment();
-        operator.initByName("network", network, "weight", 1.0);
+        operator.initByName("network", network,
+                "alpha", 1.0,
+                "weight", 1.0);
 
         System.out.println(network.getExtendedNewickVerbose(8));
 
         operator.removeReassortment();
+
+        System.out.println(network.getExtendedNewickVerbose(8));
+    }
+
+    @Test
+    public void testAddReassortment() {
+        Randomizer.setSeed(3);
+        Network network = new Network(networkString);
+
+        AddRemoveReassortment operator = new AddRemoveReassortment();
+        operator.initByName("network", network,
+                "alpha", 1.0,
+                "weight", 1.0);
+
+        System.out.println(network.getExtendedNewickVerbose(8));
+
+        operator.addReassortment();
 
         System.out.println(network.getExtendedNewickVerbose(8));
     }

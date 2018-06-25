@@ -151,6 +151,7 @@ public class Network extends StateNode {
                         .append(currentEdge.hasSegments.get(segIdx));
             }
         }
+        result.append(",edgeObjID=\"").append(currentEdge.toString()).append("\"");
         result.append("]");
 
         if (currentEdge.parentNode != null)

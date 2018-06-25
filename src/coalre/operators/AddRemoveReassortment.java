@@ -1,7 +1,6 @@
 package coalre.operators;
 
 import beast.core.Input;
-import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
@@ -52,15 +51,19 @@ public class AddRemoveReassortment extends NetworkOperator {
             sourceEdge = networkEdges.get(Randomizer.nextInt(networkEdges.size()));
         } while (sourceEdge.isRootEdge());
 
+        if (sourceEdge.hasSegments.cardinality()<2)
+            return Double.NEGATIVE_INFINITY;
+
         double sourceTime = Randomizer.nextDouble()*sourceEdge.getLength() + sourceEdge.childNode.getHeight();
 
         logHR -= Math.log(1.0/(networkEdges.size()-1)/sourceEdge.getLength());
 
         NetworkEdge destEdge = networkEdges.get(Randomizer.nextInt(networkEdges.size()));
 
-
         if (!destEdge.isRootEdge() && sourceTime>destEdge.parentNode.getHeight())
             return Double.NEGATIVE_INFINITY;
+
+        logHR -= Math.log(1.0/networkEdges.size());
 
         double minDestTime = Math.max(destEdge.childNode.getHeight(), sourceEdge.parentNode.getHeight());
 
@@ -77,7 +80,61 @@ public class AddRemoveReassortment extends NetworkOperator {
 
         }
 
-        return 0.0;
+        // Create new reassortment edge
+
+        NetworkNode sourceNode = new NetworkNode();
+        sourceNode.setHeight(sourceTime);
+
+        NetworkNode oldSourceEdgeParent = sourceEdge.parentNode;
+        oldSourceEdgeParent.removeChildEdge(sourceEdge);
+        sourceNode.addChildEdge(sourceEdge);
+
+        NetworkEdge newEdge1 = new NetworkEdge();
+        sourceNode.addParentEdge(newEdge1);
+        oldSourceEdgeParent.addChildEdge(newEdge1);
+
+        newEdge1.hasSegments = (BitSet) sourceEdge.hasSegments.clone();
+
+        if (destEdge == sourceEdge)
+            destEdge = newEdge1;
+
+        NetworkNode destNode = new NetworkNode();
+        destNode.setHeight(destTime);
+
+        NetworkNode oldDestEdgeParent = destEdge.parentNode;
+        if (oldDestEdgeParent != null) {
+            oldDestEdgeParent.removeChildEdge(destEdge);
+        }
+
+        destNode.addChildEdge(destEdge);
+
+        NetworkEdge newEdge2 = new NetworkEdge();
+        destNode.addParentEdge(newEdge2);
+
+        if (oldDestEdgeParent == null) {
+            network.setRootEdge(newEdge2);
+        } else {
+            oldDestEdgeParent.addChildEdge(newEdge2);
+        }
+
+        newEdge2.hasSegments = (BitSet) destEdge.hasSegments.clone();
+
+        NetworkEdge reassortmentEdge = new NetworkEdge();
+        sourceNode.addParentEdge(reassortmentEdge);
+        destNode.addChildEdge(reassortmentEdge);
+        reassortmentEdge.hasSegments = new BitSet();
+
+        // Choose segments to divert to new edge
+        BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
+        logHR += removeSegmentsFromAncestors(newEdge1, segsToDivert);
+        logHR -= addSegmentsToAncestors(reassortmentEdge, segsToDivert);
+
+        // HR contribution for reverse move
+        int nReassortmentNodes = (int) network.getNodes().stream()
+                .filter(NetworkNode::isReassortment).count();
+        logHR += Math.log(1.0/(2.0*nReassortmentNodes));
+
+        return logHR;
     }
 
     double removeReassortment() {
@@ -98,7 +155,7 @@ public class AddRemoveReassortment extends NetworkOperator {
         NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
         NetworkNode edgeToRemoveSpouseParent = edgeToRemoveSpouse.parentNode;
 
-        logHR -= Math.log(1.0/(2*reassortmentNodes.size()));
+        logHR -= Math.log(1.0/(2.0*reassortmentNodes.size()));
 
         // Divert segments away from chosen edge
         BitSet segsToDivert = (BitSet)edgeToRemove.hasSegments.clone();
