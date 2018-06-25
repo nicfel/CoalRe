@@ -200,6 +200,7 @@ public class Network extends StateNode {
             traverse = false;
         } else {
             childNodeCopy = new NetworkNode();
+            childNodeCopy.setHeight(edge.childNode.getHeight());
             childNodeCopy.setTaxonLabel(edge.childNode.getTaxonLabel());
             seenNodes.put(edge.childNode, childNodeCopy);
         }
