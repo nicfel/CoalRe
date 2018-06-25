@@ -201,7 +201,7 @@ public class Network extends StateNode {
         } else {
             childNodeCopy = new NetworkNode();
             childNodeCopy.setHeight(edge.childNode.getHeight());
-            childNodeCopy.setTaxonLabel(edge.childNode.getTaxonLabel());
+            childNodeCopy.setLabel(edge.childNode.getTaxonLabel());
             seenNodes.put(edge.childNode, childNodeCopy);
         }
 
@@ -386,7 +386,7 @@ public class Network extends StateNode {
             }
 
             if (ctx.post().label() != null)
-                node.setTaxonLabel(removeQuotes(ctx.post().label().getText()));
+                node.setLabel(removeQuotes(ctx.post().label().getText()));
 
             for (NetworkParser.NodeContext childNodeCtx : ctx.node()) {
                 NetworkEdge childEdge = visit(childNodeCtx);

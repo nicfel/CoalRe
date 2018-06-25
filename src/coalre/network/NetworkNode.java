@@ -9,7 +9,7 @@ public class NetworkNode {
     /**
      * Taxon corresponding to this node (usually only used for leaves)
      */
-    String taxonLabel;
+    protected String taxonLabel;
 
     /**
      * height of this node.
@@ -108,7 +108,7 @@ public class NetworkNode {
      *
      * @param taxonLabel the new taxon label
      */
-    public void setTaxonLabel(String taxonLabel) {
+    public void setLabel(String taxonLabel) {
         this.taxonLabel = taxonLabel;
     }
 

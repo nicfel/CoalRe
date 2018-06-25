@@ -5,7 +5,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.BitSet;
-import java.util.HashMap;
 
 public class NetworkTest extends CoalReTestClass {
 
@@ -16,12 +15,12 @@ public class NetworkTest extends CoalReTestClass {
         hasSegments.set(0, 8);
 
         NetworkNode nodeA = new NetworkNode();
-        nodeA.setTaxonLabel("A");
+        nodeA.setLabel("A");
         nodeA.setHeight(0.0);
         NetworkNode nodeAprime = new NetworkNode();
         nodeAprime.setHeight(1.0);
         NetworkNode nodeB = new NetworkNode();
-        nodeB.setTaxonLabel("B");
+        nodeB.setLabel("B");
         nodeB.setHeight(0.0);
         NetworkNode nodeAB = new NetworkNode();
         nodeAB.setHeight(2.0);
@@ -76,10 +75,8 @@ public class NetworkTest extends CoalReTestClass {
     public void copyEdgeTest() {
         Network network = new Network("(((A[&segments={0,1,2,3,4,5,6,7}]:1)#1[&segments={1,4}]:1,B[&segments={0,1,2,3,4,5,6,7}]:2)[&segments={0,1,2,3,4,5,6,7}]:1,#1[&segments={0,2,3,5,6,7}]:2)[&segments={0,1,2,3,4,5,6,7}]:0.0;");
 
-        System.out.println(network.getExtendedNewick());
-
         Network copiedNetwork = (Network) network.copy();
 
-        System.out.println(copiedNetwork.getExtendedNewick());
+        Assert.assertEquals(network.toString(), copiedNetwork.toString());
     }
 }

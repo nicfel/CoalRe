@@ -8,7 +8,6 @@ import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
-import beast.evolution.tree.coalescent.ConstantPopulation;
 import beast.evolution.tree.coalescent.PopulationFunction;
 import beast.util.Randomizer;
 import coalre.network.Network;
@@ -54,7 +53,7 @@ public class SimulatedCoalescentNetwork extends Network implements StateNodeInit
 
             for (String taxonName : traitSet.taxaInput.get().getTaxaNames()) {
                 NetworkNode sampleNode = new NetworkNode();
-                sampleNode.setTaxonLabel(taxonName);
+                sampleNode.setLabel(taxonName);
                 sampleNode.setHeight(traitSet.getValue(taxonName));
                 remainingSampleNodes.add(sampleNode);
             }
@@ -69,7 +68,7 @@ public class SimulatedCoalescentNetwork extends Network implements StateNodeInit
 
             for (String taxonName : taxonSet.getTaxaNames()) {
                 NetworkNode sampleNode = new NetworkNode();
-                sampleNode.setTaxonLabel(taxonName);
+                sampleNode.setLabel(taxonName);
                 sampleNode.setHeight(0.0);
                 remainingSampleNodes.add(sampleNode);
             }
