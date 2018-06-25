@@ -151,7 +151,7 @@ public class Network extends StateNode {
                         .append(currentEdge.hasSegments.get(segIdx));
             }
         }
-        result.append(",edgeObjID=\"").append(currentEdge.toString()).append("\"");
+//        result.append(",edgeObjID=\"").append(currentEdge.toString()).append("\"");
         result.append("]");
 
         if (currentEdge.parentNode != null)
@@ -200,6 +200,8 @@ public class Network extends StateNode {
             traverse = false;
         } else {
             childNodeCopy = new NetworkNode();
+            childNodeCopy.setTaxonLabel(edge.childNode.getTaxonLabel());
+            seenNodes.put(edge.childNode, childNodeCopy);
         }
 
         edgeCopy.childNode = childNodeCopy;

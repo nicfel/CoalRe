@@ -80,6 +80,8 @@ public class AddRemoveReassortment extends NetworkOperator {
 
         }
 
+        network.startEditing(this);
+
         // Create new reassortment edge
 
         NetworkNode sourceNode = new NetworkNode();
@@ -148,6 +150,8 @@ public class AddRemoveReassortment extends NetworkOperator {
 
         if (reassortmentNodes.isEmpty())
             return Double.NEGATIVE_INFINITY;
+
+        network.startEditing(this);
 
         NetworkNode nodeToRemove = reassortmentNodes.get(Randomizer.nextInt(reassortmentNodes.size()));
         int removalEdgeIdx = Randomizer.nextInt(2);

@@ -1,11 +1,13 @@
 package coalre.network;
 
+import coalre.CoalReTestClass;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.BitSet;
+import java.util.HashMap;
 
-public class NetworkTest {
+public class NetworkTest extends CoalReTestClass {
 
     @Test
     public void parserTest() {
@@ -68,5 +70,16 @@ public class NetworkTest {
         // generated newick string is unique: it is not.
         // Root of the problem: testing for network equivalence is hard, as
         // discussed at https://en.wikipedia.org/wiki/Graph_isomorphism_problem
+    }
+
+    @Test
+    public void copyEdgeTest() {
+        Network network = new Network("(((A[&segments={0,1,2,3,4,5,6,7}]:1)#1[&segments={1,4}]:1,B[&segments={0,1,2,3,4,5,6,7}]:2)[&segments={0,1,2,3,4,5,6,7}]:1,#1[&segments={0,2,3,5,6,7}]:2)[&segments={0,1,2,3,4,5,6,7}]:0.0;");
+
+        System.out.println(network.getExtendedNewick());
+
+        Network copiedNetwork = (Network) network.copy();
+
+        System.out.println(copiedNetwork.getExtendedNewick());
     }
 }
