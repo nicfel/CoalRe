@@ -17,7 +17,7 @@
                  :coalre.operators
                  :coalre.distribution">
 
-    <run spec="MCMC" chainLength="100">
+    <run spec="MCMC" chainLength="1000">
 
         <state>
             <stateNode id="network" spec="SimulatedCoalescentNetwork">

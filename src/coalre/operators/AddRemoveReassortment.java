@@ -77,7 +77,7 @@ public class AddRemoveReassortment extends NetworkOperator {
 
         logHR -= Math.log(1.0/networkEdges.size());
 
-        double minDestTime = Math.max(destEdge.childNode.getHeight(), sourceEdge.parentNode.getHeight());
+        double minDestTime = Math.max(destEdge.childNode.getHeight(), sourceTime);
 
         double destTime;
         if (destEdge.isRootEdge()) {
@@ -143,6 +143,11 @@ public class AddRemoveReassortment extends NetworkOperator {
         logHR += removeSegmentsFromAncestors(newEdge1, segsToDivert);
         logHR -= addSegmentsToAncestors(reassortmentEdge, segsToDivert);
 
+        if (!allEdgesAncestral()) {
+            System.out.println("DIRECT REJECT (EDGE WITH NO SEGMENT)");
+            return Double.NEGATIVE_INFINITY;
+        }
+
         // HR contribution for reverse move
         int nRemovableEdges = (int) network.getEdges().stream()
                 .filter(e -> !e.isRootEdge()
@@ -180,6 +185,7 @@ public class AddRemoveReassortment extends NetworkOperator {
         logHR += removeSegmentsFromAncestors(edgeToRemove, segsToDivert);
         logHR -= addSegmentsToAncestors(edgeToRemoveSpouse, segsToDivert);
 
+
         // Remove edge and associated nodes
         NetworkEdge edgeToExtend = nodeToRemove.getChildEdges().get(0);
         nodeToRemove.removeChildEdge(edgeToExtend);
@@ -204,6 +210,11 @@ public class AddRemoveReassortment extends NetworkOperator {
             secondNodeToRemove.removeParentEdge(secondNodeToRemoveParentEdge);
 
             secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
+        }
+
+        if (!allEdgesAncestral()) {
+            System.out.println("DIRECT REJECT (EDGE WITH NO SEGMENT)");
+            return Double.NEGATIVE_INFINITY;
         }
 
         // HR contribution of edge selection for reverse move
@@ -291,6 +302,22 @@ public class AddRemoveReassortment extends NetworkOperator {
         }
 
         return logP;
+    }
+
+    /**
+     * Check that each edge is ancestral to at least one segment.
+     *
+     * @return true if all edges are ancestral.
+     */
+    public boolean allEdgesAncestral() {
+        for (NetworkNode node : network.getNodes()) {
+            for (NetworkEdge parentEdge : node.getParentEdges()) {
+                if (parentEdge.hasSegments.isEmpty())
+                    return false;
+            }
+        }
+
+        return true;
     }
 
 }
