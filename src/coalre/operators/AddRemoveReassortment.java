@@ -144,9 +144,11 @@ public class AddRemoveReassortment extends NetworkOperator {
         logHR -= addSegmentsToAncestors(reassortmentEdge, segsToDivert);
 
         // HR contribution for reverse move
-        int nReassortmentNodes = (int) network.getNodes().stream()
-                .filter(NetworkNode::isReassortment).count();
-        logHR += Math.log(1.0/(2.0*nReassortmentNodes));
+        int nRemovableEdges = (int) network.getEdges().stream()
+                .filter(e -> !e.isRootEdge()
+                        && e.childNode.isReassortment()
+                        && e.parentNode.isCoalescence()).count();
+        logHR += Math.log(1.0/nRemovableEdges);
 
         return logHR;
     }
@@ -154,24 +156,24 @@ public class AddRemoveReassortment extends NetworkOperator {
     double removeReassortment() {
         double logHR = 0.0;
 
-        Set<NetworkNode> networkNodes = network.getNodes();
-        List<NetworkNode> reassortmentNodes = new ArrayList<>();
-        for (NetworkNode node : networkNodes)
-            if (node.isReassortment())
-                reassortmentNodes.add(node);
+        Set<NetworkEdge> networkEdges = network.getEdges();
+        List<NetworkEdge> removableEdges = new ArrayList<>();
 
-        if (reassortmentNodes.isEmpty())
+        for (NetworkEdge edge : networkEdges)
+            if (!edge.isRootEdge() && edge.childNode.isReassortment() && edge.parentNode.isCoalescence())
+                removableEdges.add(edge);
+
+        if (removableEdges.isEmpty())
             return Double.NEGATIVE_INFINITY;
 
         network.startEditing(this);
 
-        NetworkNode nodeToRemove = reassortmentNodes.get(Randomizer.nextInt(reassortmentNodes.size()));
-        int removalEdgeIdx = Randomizer.nextInt(2);
-        NetworkEdge edgeToRemove = nodeToRemove.getParentEdges().get(removalEdgeIdx);
+        NetworkEdge edgeToRemove = removableEdges.get(Randomizer.nextInt(removableEdges.size()));
+        NetworkNode nodeToRemove = edgeToRemove.childNode;
         NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
         NetworkNode edgeToRemoveSpouseParent = edgeToRemoveSpouse.parentNode;
 
-        logHR -= Math.log(1.0/(2.0*reassortmentNodes.size()));
+        logHR -= Math.log(1.0/(removableEdges.size()));
 
         // Divert segments away from chosen edge
         BitSet segsToDivert = (BitSet)edgeToRemove.hasSegments.clone();
