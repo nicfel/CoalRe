@@ -26,15 +26,23 @@ public class AddRemoveReassortment extends NetworkOperator {
         alpha = alphaInput.get();
     }
 
+    int count = 0;
+
     @Override
     public double proposal() {
+
+        System.out.print("Add/remove counter " + (count++));
 
 
         if (Randomizer.nextBoolean()) {
 
+            System.out.println(" (ADD)");
+
             return addReassortment();
 
         } else {
+
+            System.out.println(" (REMOVE)");
 
             return removeReassortment();
 
@@ -51,8 +59,10 @@ public class AddRemoveReassortment extends NetworkOperator {
             sourceEdge = networkEdges.get(Randomizer.nextInt(networkEdges.size()));
         } while (sourceEdge.isRootEdge());
 
-        if (sourceEdge.hasSegments.cardinality()<2)
+        if (sourceEdge.hasSegments.cardinality()<2) {
+            System.out.println("DIRECT REJECT (TOO FEW SEGS ON SELECTED EDGE)");
             return Double.NEGATIVE_INFINITY;
+        }
 
         double sourceTime = Randomizer.nextDouble()*sourceEdge.getLength() + sourceEdge.childNode.getHeight();
 
@@ -60,8 +70,10 @@ public class AddRemoveReassortment extends NetworkOperator {
 
         NetworkEdge destEdge = networkEdges.get(Randomizer.nextInt(networkEdges.size()));
 
-        if (!destEdge.isRootEdge() && sourceTime>destEdge.parentNode.getHeight())
+        if (!destEdge.isRootEdge() && sourceTime>destEdge.parentNode.getHeight()) {
+            System.out.println("DIRECT REJECT (INCOMPATIBLE SOURCE/DEST PAIR)");
             return Double.NEGATIVE_INFINITY;
+        }
 
         logHR -= Math.log(1.0/networkEdges.size());
 

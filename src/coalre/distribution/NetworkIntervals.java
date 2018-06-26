@@ -41,7 +41,7 @@ public class NetworkIntervals extends CalculationNode {
         if (!isDirty)
             return;
 
-        // TODO: update event list
+        System.out.println("Update event list.");
 
         networkEventList = network.getNodes().stream().map(n -> {
             NetworkEvent event = new NetworkEvent();

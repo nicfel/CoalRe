@@ -183,6 +183,7 @@ public class Network extends StateNode {
 
     @Override
     public void setEverythingDirty(boolean isDirty) {
+        setSomethingIsDirty(isDirty);
     }
 
     @Override
