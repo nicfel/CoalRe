@@ -220,6 +220,8 @@ public class AddRemoveReassortment extends NetworkOperator {
         // HR contribution of edge selection for reverse move
         logHR += Math.log(1.0/(network.getEdges().size()-1)/edgeToExtend.getLength());
 
+        // TODO: HR contributions for time selections in reverse move.
+
         return logHR;
     }
 
