@@ -180,11 +180,12 @@ public class AddRemoveReassortment extends NetworkOperator {
 
         logHR -= Math.log(1.0/(removableEdges.size()));
 
+        double sourceTime = edgeToRemove.childNode.getHeight();
+
         // Divert segments away from chosen edge
         BitSet segsToDivert = (BitSet)edgeToRemove.hasSegments.clone();
         logHR += removeSegmentsFromAncestors(edgeToRemove, segsToDivert);
         logHR -= addSegmentsToAncestors(edgeToRemoveSpouse, segsToDivert);
-
 
         // Remove edge and associated nodes
         NetworkEdge edgeToExtend = nodeToRemove.getChildEdges().get(0);
@@ -217,10 +218,17 @@ public class AddRemoveReassortment extends NetworkOperator {
             return Double.NEGATIVE_INFINITY;
         }
 
-        // HR contribution of edge selection for reverse move
+        // HR contribution for reverse move
+
         logHR += Math.log(1.0/(network.getEdges().size()-1)/edgeToExtend.getLength());
 
-        // TODO: HR contributions for time selections in reverse move.
+        double minDestTime = Math.max(secondEdgeToExtend.childNode.getHeight(), sourceTime);
+
+        if (secondEdgeToExtend.isRootEdge()) {
+            logHR += -(1.0/alpha)*(secondEdgeToExtend.childNode.getHeight()-minDestTime) + Math.log(1.0/alpha);
+        } else {
+            logHR += Math.log(1.0/(secondEdgeToExtend.parentNode.getHeight()-minDestTime));
+        }
 
         return logHR;
     }
