@@ -3,10 +3,12 @@ package coalre.distribution;
 import coalre.network.NetworkNode;
 
 public class NetworkEvent {
-    NetworkIntervals.NetworkEventType type;
-    double time;
-    NetworkNode node;
+    public enum NetworkEventType { SAMPLE, COALESCENCE, REASSORTMENT }
 
-    int lineages;
-    double logReassortmentObsProb;
+    public NetworkEventType type;
+    public double time;
+    public NetworkNode node;
+
+    public int lineages;
+    public double logReassortmentObsProb;
 }

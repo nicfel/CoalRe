@@ -38,6 +38,8 @@ public class CoalescentWithReassortment extends NetworkDistribution {
     public double calculateLogP() {
     	logP = 0;
 
+    	System.out.println("calculateLogP");
+
     	// Calculate tree intervals
     	List<NetworkEvent> networkEventList = networkIntervalsInput.get().getNetworkEventList();
 
@@ -73,6 +75,9 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
         // Factor of 2 is because the network is un-oriented.
         // (I.e. whether segments go left or right is not meaningful.)
+
+        if (event.node.getChildEdges().isEmpty())
+            System.out.println("WTF??");
 
         return Math.log(2* reassortmentRate.getValue())
                 + event.node.getChildEdges().get(0).hasSegments.cardinality()*Math.log(0.5);

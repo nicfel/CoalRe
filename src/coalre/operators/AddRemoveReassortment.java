@@ -2,16 +2,16 @@ package coalre.operators;
 
 import beast.core.Input;
 import beast.util.Randomizer;
+import coalre.distribution.NetworkEvent;
+import coalre.distribution.NetworkIntervals;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
-public class AddRemoveReassortment extends NetworkOperator {
+public class AddRemoveReassortment extends DivertSegmentOperator {
 
     public Input<Double> alphaInput = new Input<>("alpha",
             "Mean of exponential used for choosing root attachment times.",
@@ -32,7 +32,6 @@ public class AddRemoveReassortment extends NetworkOperator {
     public double proposal() {
 
         System.out.print("Add/remove counter " + (count++));
-
 
         if (Randomizer.nextBoolean()) {
 
@@ -140,6 +139,7 @@ public class AddRemoveReassortment extends NetworkOperator {
 
         // Choose segments to divert to new edge
         BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
+        logHR -= getConditionedSubsetProb(sourceEdge.hasSegments);
         logHR += removeSegmentsFromAncestors(newEdge1, segsToDivert);
         logHR -= addSegmentsToAncestors(reassortmentEdge, segsToDivert);
 
@@ -171,9 +171,13 @@ public class AddRemoveReassortment extends NetworkOperator {
         if (removableEdges.isEmpty())
             return Double.NEGATIVE_INFINITY;
 
+        NetworkEdge edgeToRemove = removableEdges.get(Randomizer.nextInt(removableEdges.size()));
+
+        if (!edgeSafeToRemove(edgeToRemove))
+            return Double.NEGATIVE_INFINITY;
+
         network.startEditing(this);
 
-        NetworkEdge edgeToRemove = removableEdges.get(Randomizer.nextInt(removableEdges.size()));
         NetworkNode nodeToRemove = edgeToRemove.childNode;
         NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
         NetworkNode edgeToRemoveSpouseParent = edgeToRemoveSpouse.parentNode;
@@ -186,6 +190,7 @@ public class AddRemoveReassortment extends NetworkOperator {
         BitSet segsToDivert = (BitSet)edgeToRemove.hasSegments.clone();
         logHR += removeSegmentsFromAncestors(edgeToRemove, segsToDivert);
         logHR -= addSegmentsToAncestors(edgeToRemoveSpouse, segsToDivert);
+        logHR += getConditionedSubsetProb(edgeToRemoveSpouse.hasSegments);
 
         // Remove edge and associated nodes
         NetworkEdge edgeToExtend = nodeToRemove.getChildEdges().get(0);
@@ -234,96 +239,52 @@ public class AddRemoveReassortment extends NetworkOperator {
     }
 
     /**
-     * Remove segments from this edge and ancestors.
+     * Determines whether a given edge is "safe" to remove, in that
+     * removing it would not result in network structure above the MRCA.
      *
-     * @param edge edge at which to start removal
-     * @param segsToRemove segments to remove from edge and ancestors
-     * @return log probability of reverse operation
+     * TODO: This method is overly complex and could hide problems.
+     * It might be better (at least initially) to simply test the proposed
+     * network for a premature MRCA.  It also doubles up slightly on
+     * the NetworkIntervals class: should reuse that to speed up calculation.
+     *
+     * @param edgeToRemove edge to be removed by the operator
+     * @return true if edge is safe to remove.
      */
-    double removeSegmentsFromAncestors(NetworkEdge edge, BitSet segsToRemove) {
-        double logP = 0.0;
+    boolean edgeSafeToRemove(NetworkEdge edgeToRemove) {
 
-        if (!edge.hasSegments.intersects(segsToRemove))
-            return logP;
+        List<NetworkNode> sortedNodes = network.getNodes().stream()
+                .sorted(Comparator.comparingDouble(NetworkNode::getHeight))
+                .collect(Collectors.toList());
 
-        segsToRemove = (BitSet)segsToRemove.clone();
-        segsToRemove.and(edge.hasSegments);
-
-        edge.hasSegments.andNot(segsToRemove);
-
-        if (edge.isRootEdge())
-            return logP;
-
-        if (edge.parentNode.isCoalescence()) {
-            segsToRemove.andNot(getSisterEdge(edge).hasSegments);
+        double maxSampleTime = 0.0;
+        for (NetworkNode node : sortedNodes) {
+            if (node.isLeaf())
+                maxSampleTime = node.getHeight();
         }
 
-        if (edge.parentNode.isReassortment())
-            logP += -LOG2*segsToRemove.cardinality();
+        int lineages = 0;
+        boolean insideRemovalRegion = false;
+        for (NetworkNode node : sortedNodes) {
 
-        for (NetworkEdge parentEdge : edge.parentNode.getParentEdges())
-            logP += removeSegmentsFromAncestors(parentEdge, segsToRemove);
-
-        return logP;
-    }
-
-    /**
-     * Add segments to this edge and ancestors.
-     *
-     * @param edge edge at which to start addition
-     * @param segsToAdd segments to add to the edge and ancestors
-     * @return log probability of operation
-     */
-    double addSegmentsToAncestors(NetworkEdge edge, BitSet segsToAdd) {
-        double logP = 0.0;
-
-        segsToAdd = (BitSet)segsToAdd.clone();
-        segsToAdd.andNot(edge.hasSegments);
-
-        if (segsToAdd.isEmpty())
-            return logP;
-
-        edge.hasSegments.or(segsToAdd);
-
-        if (edge.isRootEdge())
-            return logP;
-
-        if (edge.parentNode.isReassortment()) {
-
-            BitSet segsToAddLeft = new BitSet();
-            BitSet segsToAddRight = new BitSet();
-
-            for (int segIdx=segsToAdd.nextSetBit(0); segIdx != -1;
-                    segIdx=segsToAdd.nextSetBit(segIdx+1)) {
-                if (Randomizer.nextBoolean())
-                    segsToAddLeft.set(segIdx);
-                else
-                    segsToAddRight.set(segIdx);
-
-                logP += -LOG2;
+            if (!insideRemovalRegion && node.getHeight() > edgeToRemove.childNode.getHeight())
+                insideRemovalRegion = true;
+            else if (insideRemovalRegion && node.getHeight() > edgeToRemove.parentNode.getHeight()) {
+                return lineages > 2 || !edgeToRemove.parentNode.getParentEdges().get(0).isRootEdge();
             }
 
-            logP += addSegmentsToAncestors(edge.parentNode.getParentEdges().get(0), segsToAddLeft);
-            logP += addSegmentsToAncestors(edge.parentNode.getParentEdges().get(1), segsToAddRight);
+            switch (node.getChildEdges().size()) {
+                case 2:
+                    lineages -= 1;
+                    break;
+                case 1:
+                case 0:
 
-        } else {
+                    if (insideRemovalRegion && node.getHeight() > maxSampleTime
+                            && lineages <= 2)
+                        return false;
 
-            logP += addSegmentsToAncestors(edge.parentNode.getParentEdges().get(0), segsToAdd);
-        }
-
-        return logP;
-    }
-
-    /**
-     * Check that each edge is ancestral to at least one segment.
-     *
-     * @return true if all edges are ancestral.
-     */
-    public boolean allEdgesAncestral() {
-        for (NetworkNode node : network.getNodes()) {
-            for (NetworkEdge parentEdge : node.getParentEdges()) {
-                if (parentEdge.hasSegments.isEmpty())
-                    return false;
+                    lineages += 1;
+                    break;
             }
         }
 

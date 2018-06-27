@@ -22,8 +22,6 @@ public class NetworkIntervals extends CalculationNode {
 
     private boolean isDirty;
 
-    public enum NetworkEventType { SAMPLE, COALESCENCE, REASSORTMENT }
-
     private List<NetworkEvent> networkEventList;
 
     @Override
@@ -41,21 +39,23 @@ public class NetworkIntervals extends CalculationNode {
         if (!isDirty)
             return;
 
+        System.out.println("Updating networkIntervals");
+
         networkEventList = network.getNodes().stream().map(n -> {
             NetworkEvent event = new NetworkEvent();
             event.time = n.getHeight();
             event.node = n;
             switch(n.getChildCount()) {
                 case 0:
-                    event.type = NetworkEventType.SAMPLE;
+                    event.type = NetworkEvent.NetworkEventType.SAMPLE;
                     break;
 
                 case 1:
-                    event.type = NetworkEventType.REASSORTMENT;
+                    event.type = NetworkEvent.NetworkEventType.REASSORTMENT;
                     break;
 
                 case 2:
-                    event.type = NetworkEventType.COALESCENCE;
+                    event.type = NetworkEvent.NetworkEventType.COALESCENCE;
                     break;
 
                 default:
