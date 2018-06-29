@@ -52,6 +52,10 @@ public abstract class NetworkOperator extends Operator {
      */
     protected BitSet getRandomConditionedSubset(BitSet sourceSegments) {
 
+        if (sourceSegments.cardinality()<2) {
+            throw new RuntimeException("Too few segments to draw conditioned subset.");
+        }
+
         BitSet destSegments = new BitSet();
 
         int firstSegPos = Randomizer.nextInt(sourceSegments.cardinality());

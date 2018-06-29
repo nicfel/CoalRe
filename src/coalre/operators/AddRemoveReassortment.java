@@ -5,6 +5,7 @@ import beast.util.Randomizer;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
+import sun.nio.ch.Net;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -157,9 +158,6 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 
         NetworkEdge edgeToRemove = removableEdges.get(Randomizer.nextInt(removableEdges.size()));
 
-        if (!edgeSafeToRemove(edgeToRemove))
-            return Double.NEGATIVE_INFINITY;
-
         network.startEditing(this);
 
         NetworkNode nodeToRemove = edgeToRemove.childNode;
@@ -202,7 +200,7 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
             secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
         }
 
-        if (!allEdgesAncestral())
+        if (!allEdgesAncestral() || !networkTerminatesAtMRCA())
             return Double.NEGATIVE_INFINITY;
 
         // HR contribution for reverse move
@@ -220,50 +218,41 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
         return logHR;
     }
 
+
     /**
-     * Determines whether a given edge is "safe" to remove, in that
-     * removing it would not result in network structure above the MRCA.
+     * Simple (but probably too expensive) check for a kind of invalid network
+     * which can result from an edge deletion operation: one in which the
+     * network posesses nontrivial structure above the MRCA. (I.e. the MRCA
+     * is not the root.)
      *
-     * TODO: This method is overly complex and could hide problems.
-     * It might be better (at least initially) to simply test the proposed
-     * network for a premature MRCA.  It also doubles up slightly on
-     * the NetworkIntervals class: should reuse that to speed up calculation.
-     *
-     * @param edgeToRemove edge to be removed by the operator
-     * @return true if edge is safe to remove.
+     * @return true if the network terminates at the true MRCA. (I.e. is valid.)
      */
-    boolean edgeSafeToRemove(NetworkEdge edgeToRemove) {
-
-        List<NetworkNode> sortedNodes = network.getNodes().stream()
-                .sorted(Comparator.comparingDouble(NetworkNode::getHeight))
-                .collect(Collectors.toList());
-
-        double maxSampleTime = 0.0;
-        for (NetworkNode node : sortedNodes) {
-            if (node.isLeaf())
-                maxSampleTime = node.getHeight();
-        }
+    protected boolean networkTerminatesAtMRCA() {
+        List<NetworkNode> sortedNodes = new ArrayList<>(network.getNodes());
+        sortedNodes.sort(Comparator.comparingDouble(NetworkNode::getHeight));
+        List<NetworkNode> sampleNodes = sortedNodes.stream().filter(NetworkNode::isLeaf).collect(Collectors.toList());
+        double maxSampleHeight = sampleNodes.get(sampleNodes.size()-1).getHeight();
 
         int lineages = 0;
-        boolean insideRemovalRegion = false;
         for (NetworkNode node : sortedNodes) {
-
-            if (!insideRemovalRegion && node.getHeight() > edgeToRemove.childNode.getHeight())
-                insideRemovalRegion = true;
-            else if (insideRemovalRegion && node.getHeight() > edgeToRemove.parentNode.getHeight()) {
-                return lineages > 2 || !edgeToRemove.parentNode.getParentEdges().get(0).isRootEdge();
-            }
-
-            switch (node.getChildEdges().size()) {
+            switch(node.getChildEdges().size()) {
                 case 2:
+                    // Coalescence
+
                     lineages -= 1;
                     break;
-                case 1:
-                case 0:
 
-                    if (insideRemovalRegion && node.getHeight() > maxSampleTime
-                            && lineages <= 2)
+                case 1:
+                    // Reassortment
+
+                    if (lineages < 2 && node.getHeight() > maxSampleHeight)
                         return false;
+
+                    lineages += 1;
+                    break;
+
+                case 0:
+                    // Sample
 
                     lineages += 1;
                     break;
@@ -272,5 +261,4 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 
         return true;
     }
-
 }

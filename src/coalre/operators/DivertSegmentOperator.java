@@ -33,7 +33,10 @@ public class DivertSegmentOperator extends NetworkOperator {
         NetworkNode reassortmentNode = reassortmentNodes.get(Randomizer.nextInt(reassortmentNodes.size()));
         logHR -= Math.log(1.0/reassortmentNodes.size());
 
-//        int segCounter = Randomizer.nextInt(reassortmentNode.)
+        NetworkEdge sourceEdge = reassortmentNode.getParentEdges().get(Randomizer.nextInt(2));
+        NetworkEdge siblingEdge = getSpouseEdge(sourceEdge);
+
+        BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
 
         return logHR;
     }
