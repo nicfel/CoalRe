@@ -24,22 +24,14 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
         alpha = alphaInput.get();
     }
 
-    int count = 0;
-
     @Override
     public double proposal() {
 
-        System.out.print("Add/remove counter " + (count++));
-
         if (Randomizer.nextBoolean()) {
-
-            System.out.println(" (ADD)");
 
             return addReassortment();
 
         } else {
-
-            System.out.println(" (REMOVE)");
 
             return removeReassortment();
 
@@ -56,10 +48,8 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
             sourceEdge = networkEdges.get(Randomizer.nextInt(networkEdges.size()));
         } while (sourceEdge.isRootEdge());
 
-        if (sourceEdge.hasSegments.cardinality()<2) {
-            System.out.println("DIRECT REJECT (TOO FEW SEGS ON SELECTED EDGE)");
+        if (sourceEdge.hasSegments.cardinality()<2)
             return Double.NEGATIVE_INFINITY;
-        }
 
         double sourceTime = Randomizer.nextDouble()*sourceEdge.getLength() + sourceEdge.childNode.getHeight();
 
@@ -67,10 +57,8 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 
         NetworkEdge destEdge = networkEdges.get(Randomizer.nextInt(networkEdges.size()));
 
-        if (!destEdge.isRootEdge() && sourceTime>destEdge.parentNode.getHeight()) {
-            System.out.println("DIRECT REJECT (INCOMPATIBLE SOURCE/DEST PAIR)");
+        if (!destEdge.isRootEdge() && sourceTime>destEdge.parentNode.getHeight())
             return Double.NEGATIVE_INFINITY;
-        }
 
         logHR -= Math.log(1.0/networkEdges.size());
 
@@ -141,10 +129,8 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
         logHR += removeSegmentsFromAncestors(newEdge1, segsToDivert);
         logHR -= addSegmentsToAncestors(reassortmentEdge, segsToDivert);
 
-        if (!allEdgesAncestral()) {
-            System.out.println("DIRECT REJECT (EDGE WITH NO SEGMENT)");
+        if (!allEdgesAncestral())
             return Double.NEGATIVE_INFINITY;
-        }
 
         // HR contribution for reverse move
         int nRemovableEdges = (int) network.getEdges().stream()
@@ -153,7 +139,6 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
                         && e.parentNode.isCoalescence()).count();
         logHR += Math.log(1.0/nRemovableEdges);
 
-        System.out.println("RETURNED HR SUCCESSFULLY: " + logHR);
         return logHR;
     }
 
@@ -167,17 +152,13 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
             if (!edge.isRootEdge() && edge.childNode.isReassortment() && edge.parentNode.isCoalescence())
                 removableEdges.add(edge);
 
-        if (removableEdges.isEmpty()) {
-            System.out.println("DIRECT REJECT (NO REMOVABLE EDGES)");
+        if (removableEdges.isEmpty())
             return Double.NEGATIVE_INFINITY;
-        }
 
         NetworkEdge edgeToRemove = removableEdges.get(Randomizer.nextInt(removableEdges.size()));
 
-        if (!edgeSafeToRemove(edgeToRemove)) {
-            System.out.println("DIRECT REJECT (EDGE IS NOT SAFE TO REMOVE)");
+        if (!edgeSafeToRemove(edgeToRemove))
             return Double.NEGATIVE_INFINITY;
-        }
 
         network.startEditing(this);
 
@@ -221,10 +202,8 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
             secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
         }
 
-        if (!allEdgesAncestral()) {
-            System.out.println("DIRECT REJECT (EDGE WITH NO SEGMENT)");
+        if (!allEdgesAncestral())
             return Double.NEGATIVE_INFINITY;
-        }
 
         // HR contribution for reverse move
 
@@ -238,7 +217,6 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
             logHR += Math.log(1.0/(secondEdgeToExtend.parentNode.getHeight()-minDestTime));
         }
 
-        System.out.println("RETURNED HR SUCCESSFULLY: " + logHR);
         return logHR;
     }
 
