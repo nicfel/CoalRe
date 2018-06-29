@@ -34,11 +34,16 @@ public class CoalescentWithReassortment extends NetworkDistribution {
         populationFunction = populationFunctionInput.get();
         reassortmentRate = reassortmentRateInput.get();
     }
+
+    int count = 0;
     
     public double calculateLogP() {
     	logP = 0;
 
-    	System.out.println("calculateLogP");
+    	System.out.println("calculateLogP (" + (++count) + ")");
+
+    	if (!networkIntervalsInput.get().eventListDirty)
+    	    System.out.println("*** REUSING EVENT LIST ***");
 
     	// Calculate tree intervals
     	List<NetworkEvent> networkEventList = networkIntervalsInput.get().getNetworkEventList();

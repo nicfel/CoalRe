@@ -2,8 +2,6 @@ package coalre.operators;
 
 import beast.core.Input;
 import beast.util.Randomizer;
-import coalre.distribution.NetworkEvent;
-import coalre.distribution.NetworkIntervals;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
@@ -155,6 +153,7 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
                         && e.parentNode.isCoalescence()).count();
         logHR += Math.log(1.0/nRemovableEdges);
 
+        System.out.println("RETURNED HR SUCCESSFULLY: " + logHR);
         return logHR;
     }
 
@@ -168,13 +167,17 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
             if (!edge.isRootEdge() && edge.childNode.isReassortment() && edge.parentNode.isCoalescence())
                 removableEdges.add(edge);
 
-        if (removableEdges.isEmpty())
+        if (removableEdges.isEmpty()) {
+            System.out.println("DIRECT REJECT (NO REMOVABLE EDGES)");
             return Double.NEGATIVE_INFINITY;
+        }
 
         NetworkEdge edgeToRemove = removableEdges.get(Randomizer.nextInt(removableEdges.size()));
 
-        if (!edgeSafeToRemove(edgeToRemove))
+        if (!edgeSafeToRemove(edgeToRemove)) {
+            System.out.println("DIRECT REJECT (EDGE IS NOT SAFE TO REMOVE)");
             return Double.NEGATIVE_INFINITY;
+        }
 
         network.startEditing(this);
 
@@ -235,6 +238,7 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
             logHR += Math.log(1.0/(secondEdgeToExtend.parentNode.getHeight()-minDestTime));
         }
 
+        System.out.println("RETURNED HR SUCCESSFULLY: " + logHR);
         return logHR;
     }
 

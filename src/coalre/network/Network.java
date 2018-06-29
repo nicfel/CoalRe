@@ -206,13 +206,11 @@ public class Network extends StateNode {
             seenNodes.put(edge.childNode, childNodeCopy);
         }
 
-        edgeCopy.childNode = childNodeCopy;
         childNodeCopy.addParentEdge(edgeCopy);
 
         if (traverse) {
             for (NetworkEdge childEdge : edge.childNode.getChildEdges()) {
                 NetworkEdge childEdgeCopy = copyEdge(childEdge, seenNodes);
-                childEdgeCopy.parentNode = childNodeCopy;
                 childNodeCopy.addChildEdge(childEdgeCopy);
             }
         }
@@ -255,6 +253,7 @@ public class Network extends StateNode {
         NetworkEdge tmp = storedRootEdge;
         storedRootEdge = rootEdge;
         rootEdge = tmp;
+        hasStartedEditing = false;
     }
 
     @Override

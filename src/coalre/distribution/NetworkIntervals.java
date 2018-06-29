@@ -20,24 +20,25 @@ public class NetworkIntervals extends CalculationNode {
 
     private Network network;
 
-    private boolean isDirty;
+    private List<NetworkEvent> networkEventList, storedNetworkEventList;
 
-    private List<NetworkEvent> networkEventList;
+    public boolean eventListDirty = true;
 
     @Override
     public void initAndValidate() {
         network = networkInput.get();
-        isDirty = true;
     }
 
     List<NetworkEvent> getNetworkEventList() {
-        update();
+        if (eventListDirty) {
+            update();
+            eventListDirty = false;
+        }
+
         return networkEventList;
     }
 
     void update() {
-        if (!isDirty)
-            return;
 
         System.out.println("Updating networkIntervals");
 
@@ -92,19 +93,27 @@ public class NetworkIntervals extends CalculationNode {
             event.lineages = lineages;
             event.logReassortmentObsProb = reassortmentObsProb;
         }
-
-        isDirty = false;
     }
 
     @Override
     protected boolean requiresRecalculation() {
-        isDirty = true;
+        eventListDirty = true;
 
         return true;
     }
 
     @Override
     protected void restore() {
-        isDirty = true;
+        List<NetworkEvent> tmp = networkEventList;
+        networkEventList = storedNetworkEventList;
+        storedNetworkEventList = tmp;
+        super.restore();
+    }
+
+    @Override
+    protected void store() {
+        storedNetworkEventList = networkEventList;
+        update();
+        super.store();
     }
 }
