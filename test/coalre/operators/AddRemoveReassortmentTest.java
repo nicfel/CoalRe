@@ -60,6 +60,8 @@ public class AddRemoveReassortmentTest extends CoalReTestClass {
 
     @Test
     public void testRemoveReassortment() {
+        // TODO Flesh out this test
+
         Network network = new Network(networkString);
 
         AddRemoveReassortment operator = new AddRemoveReassortment();
@@ -76,6 +78,8 @@ public class AddRemoveReassortmentTest extends CoalReTestClass {
 
     @Test
     public void testAddReassortment() {
+        // TODO Flesh out this test
+
         Network network = new Network(networkString);
 
         AddRemoveReassortment operator = new AddRemoveReassortment();

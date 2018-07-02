@@ -22,21 +22,38 @@ public class DivertSegmentOperator extends NetworkOperator {
     public double proposal() {
         double logHR = 0.0;
 
-        List<NetworkNode> reassortmentNodes = network.getNodes().stream()
-                .filter(NetworkNode::isReassortment)
-                .filter(n -> n.getChildEdges().get(0).hasSegments.cardinality()>1)
+        List<NetworkEdge> sourceEdges = network.getEdges().stream()
+                .filter(e -> e.childNode.isReassortment())
+                .filter(e -> e.hasSegments.cardinality()>1)
                 .collect(Collectors.toList());
 
-        if (reassortmentNodes.isEmpty())
+        if (sourceEdges.isEmpty())
             return Double.NEGATIVE_INFINITY;
 
-        NetworkNode reassortmentNode = reassortmentNodes.get(Randomizer.nextInt(reassortmentNodes.size()));
-        logHR -= Math.log(1.0/reassortmentNodes.size());
+        logHR -= Math.log(1.0/sourceEdges.size());
 
-        NetworkEdge sourceEdge = reassortmentNode.getParentEdges().get(Randomizer.nextInt(2));
-        NetworkEdge siblingEdge = getSpouseEdge(sourceEdge);
+        NetworkEdge sourceEdge = sourceEdges.get(Randomizer.nextInt(sourceEdges.size()));
+        NetworkEdge sourceSpouseEdge = getSpouseEdge(sourceEdge);
 
         BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
+        logHR -= getConditionedSubsetProb(sourceEdge.hasSegments);
+
+        network.startEditing(this);
+
+        logHR += removeSegmentsFromAncestors(sourceEdge, segsToDivert);
+        logHR -= addSegmentsToAncestors(sourceSpouseEdge, segsToDivert);
+
+        if (!allEdgesAncestral())
+            return Double.NEGATIVE_INFINITY;
+
+        logHR += getConditionedSubsetProb(sourceSpouseEdge.hasSegments);
+
+        int reverseSourceEdgeCount = (int)(network.getEdges().stream()
+                .filter(e -> e.childNode.isReassortment())
+                .filter(e -> e.hasSegments.cardinality()>1)
+                .count());
+
+        logHR += Math.log(1.0/reverseSourceEdgeCount);
 
         return logHR;
     }

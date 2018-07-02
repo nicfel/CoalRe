@@ -19,7 +19,7 @@ import java.util.BitSet;
 import java.util.Comparator;
 import java.util.List;
 
-public class SimulatedCoalescentNetwork extends Network implements StateNodeInitialiser {
+public class SimulatedCoalescentNetwork extends Network {
 
     final public Input<RealParameter> reassortmentRateInput = new Input<>("reassortmentRate",
             "Rate of reassortment (per lineage per unit time)", Validate.REQUIRED);
@@ -30,8 +30,6 @@ public class SimulatedCoalescentNetwork extends Network implements StateNodeInit
     final public Input<List<Tree>> segmentTreesInput = new Input<>("segmentTree",
             "One or more segment trees to initialize.", new ArrayList<>());
 
-    private ArrayList<NetworkEdge> extantLineages;
-    private ArrayList<NetworkNode> remainingSampleNodes;
 
     private PopulationFunction populationFunction;
     private RealParameter reassortmentRate;
@@ -39,8 +37,7 @@ public class SimulatedCoalescentNetwork extends Network implements StateNodeInit
     private int nSegments;
 
     public void initAndValidate() {
-        remainingSampleNodes = new ArrayList<>();
-        extantLineages = new ArrayList<>();
+        List<NetworkNode> sampleNodes = new ArrayList<>();
 
         nSegments = segmentTreesInput.get().size();
 
@@ -55,10 +52,8 @@ public class SimulatedCoalescentNetwork extends Network implements StateNodeInit
                 NetworkNode sampleNode = new NetworkNode();
                 sampleNode.setLabel(taxonName);
                 sampleNode.setHeight(traitSet.getValue(taxonName));
-                remainingSampleNodes.add(sampleNode);
+                sampleNodes.add(sampleNode);
             }
-            remainingSampleNodes.sort(Comparator.comparingDouble(NetworkNode::getHeight));
-
         } else {
             TaxonSet taxonSet = segmentTreesInput.get().get(0).getTaxonset();
 
@@ -70,7 +65,7 @@ public class SimulatedCoalescentNetwork extends Network implements StateNodeInit
                 NetworkNode sampleNode = new NetworkNode();
                 sampleNode.setLabel(taxonName);
                 sampleNode.setHeight(0.0);
-                remainingSampleNodes.add(sampleNode);
+                sampleNodes.add(sampleNode);
             }
         }
 
@@ -78,12 +73,18 @@ public class SimulatedCoalescentNetwork extends Network implements StateNodeInit
 
         reassortmentRate = reassortmentRateInput.get();
 
-        simulateNetwork();
+        simulateNetwork(sampleNodes);
 
         super.initAndValidate();
     }
 
-    public void simulateNetwork() {
+    public void simulateNetwork(List<NetworkNode> sampleNodes) {
+
+        List<NetworkNode> remainingSampleNodes = new ArrayList<>(sampleNodes);
+        List<NetworkEdge> extantLineages = new ArrayList<>();
+
+        remainingSampleNodes.sort(Comparator.comparingDouble(NetworkNode::getHeight));
+
         double currentTime = 0;
         double timeUntilNextSample;
         do {
@@ -109,12 +110,12 @@ public class SimulatedCoalescentNetwork extends Network implements StateNodeInit
             if (timeUntilNextEvent < timeUntilNextSample) {
                 currentTime += timeUntilNextEvent;
                 if (timeUntilNextEvent == timeToNextCoal)
-                    coalesce(currentTime);
+                    coalesce(currentTime, extantLineages);
                 else
-                    reassort(currentTime);
+                    reassort(currentTime, extantLineages);
             } else {
                 currentTime += timeUntilNextSample;
-                sample();
+                sample(remainingSampleNodes, extantLineages);
             }
 
         }
@@ -123,7 +124,7 @@ public class SimulatedCoalescentNetwork extends Network implements StateNodeInit
         setRootEdge(extantLineages.get(0));
     }
 
-    private void sample() {
+    private void sample(List<NetworkNode> remainingSampleNodes, List<NetworkEdge> extantLineages) {
         // sample the network node
         NetworkNode n = remainingSampleNodes.get(0);
 
@@ -137,7 +138,7 @@ public class SimulatedCoalescentNetwork extends Network implements StateNodeInit
         remainingSampleNodes.remove(0);
     }
 
-    private void coalesce(double coalescentTime) {
+    private void coalesce(double coalescentTime, List<NetworkEdge> extantLineages) {
         // Sample the pair of lineages that are coalescing:
         NetworkEdge lineage1 = extantLineages.get(Randomizer.nextInt(extantLineages.size()));
         NetworkEdge lineage2 = extantLineages.get(Randomizer.nextInt(extantLineages.size()));
@@ -166,7 +167,7 @@ public class SimulatedCoalescentNetwork extends Network implements StateNodeInit
         extantLineages.add(lineage);
     }
 
-    private void reassort(double reassortmentTime) {
+    private void reassort(double reassortmentTime, List<NetworkEdge> extantLineages) {
         NetworkEdge lineage = extantLineages.get(Randomizer.nextInt(extantLineages.size()));
 
         BitSet hasSegs_left = new BitSet();
@@ -203,13 +204,4 @@ public class SimulatedCoalescentNetwork extends Network implements StateNodeInit
         extantLineages.add(rightLineage);
     }
 
-    @Override
-    public void initStateNodes() {
-        initAndValidate();
-    }
-
-    @Override
-    public void getInitialisedStateNodes(List<StateNode> stateNodes) {
-        stateNodes.addAll(segmentTreesInput.get());
-    }
 }

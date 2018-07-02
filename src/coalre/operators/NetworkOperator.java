@@ -48,12 +48,12 @@ public abstract class NetworkOperator extends Operator {
      * Each of the remaining segments are included in the subset with probability 0.5.
      *
      * @param sourceSegments set of segments from which to choose
-     * @return the segment subset.
+     * @return the segment subset or null if conditional subsetting is impossible.
      */
     protected BitSet getRandomConditionedSubset(BitSet sourceSegments) {
 
         if (sourceSegments.cardinality()<2) {
-            throw new RuntimeException("Too few segments to draw conditioned subset.");
+            return null;
         }
 
         BitSet destSegments = new BitSet();
