@@ -2,6 +2,7 @@ package coalre.operators;
 
 import beast.core.Input;
 import beast.util.Randomizer;
+import coalre.distribution.NetworkEvent;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
@@ -78,9 +79,29 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 
         }
 
-        network.startEditing(this);
-
         // Create new reassortment edge
+
+        logHR += addReassortmentEdge(sourceEdge, sourceTime, destEdge, destTime);
+
+        if (logHR == Double.NEGATIVE_INFINITY)
+            return Double.NEGATIVE_INFINITY;
+
+        // HR contribution for reverse move
+        int nRemovableEdges = (int) network.getEdges().stream()
+                .filter(e -> !e.isRootEdge()
+                        && e.childNode.isReassortment()
+                        && e.parentNode.isCoalescence()).count();
+        logHR += Math.log(1.0/nRemovableEdges);
+
+        return logHR;
+    }
+
+    double addReassortmentEdge(NetworkEdge sourceEdge, double sourceTime,
+                               NetworkEdge destEdge, double destTime) {
+
+        double logHR = 0.0;
+
+        network.startEditing(this);
 
         NetworkNode sourceNode = new NetworkNode();
         sourceNode.setHeight(sourceTime);
@@ -133,13 +154,6 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
         if (!allEdgesAncestral())
             return Double.NEGATIVE_INFINITY;
 
-        // HR contribution for reverse move
-        int nRemovableEdges = (int) network.getEdges().stream()
-                .filter(e -> !e.isRootEdge()
-                        && e.childNode.isReassortment()
-                        && e.parentNode.isCoalescence()).count();
-        logHR += Math.log(1.0/nRemovableEdges);
-
         return logHR;
     }
 
@@ -157,16 +171,45 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
             return Double.NEGATIVE_INFINITY;
 
         NetworkEdge edgeToRemove = removableEdges.get(Randomizer.nextInt(removableEdges.size()));
+        logHR -= Math.log(1.0/(removableEdges.size()));
+
+        double sourceTime = edgeToRemove.childNode.getHeight();
+        NetworkEdge sourceEdge = edgeToRemove.childNode.getChildEdges().get(0);
+        NetworkEdge destEdge = getSisterEdge(edgeToRemove);
+        if (destEdge.childNode == edgeToRemove.childNode)
+            destEdge = sourceEdge;
+        double destTime = edgeToRemove.parentNode.getHeight();
+
+        // Remove reassortment edge
+        logHR += removeReassortmentEdge(edgeToRemove);
+
+        if (logHR == Double.NEGATIVE_INFINITY)
+            return Double.NEGATIVE_INFINITY;
+
+        // HR contribution for reverse move
+
+        logHR += Math.log(1.0/(network.getEdges().size()-1)/sourceEdge.getLength());
+
+        double minDestTime = Math.max(destEdge.childNode.getHeight(), sourceTime);
+
+        if (destEdge.isRootEdge()) {
+            logHR += -(1.0/alpha)*(destTime-minDestTime) + Math.log(1.0/alpha);
+        } else {
+            logHR += Math.log(1.0/(destEdge.parentNode.getHeight()-minDestTime));
+        }
+
+        return logHR;
+    }
+
+
+    double removeReassortmentEdge(NetworkEdge edgeToRemove) {
+        double logHR = 0.0;
 
         network.startEditing(this);
 
         NetworkNode nodeToRemove = edgeToRemove.childNode;
         NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
         NetworkNode edgeToRemoveSpouseParent = edgeToRemoveSpouse.parentNode;
-
-        logHR -= Math.log(1.0/(removableEdges.size()));
-
-        double sourceTime = edgeToRemove.childNode.getHeight();
 
         // Divert segments away from chosen edge
         BitSet segsToDivert = (BitSet)edgeToRemove.hasSegments.clone();
@@ -203,21 +246,8 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
         if (!allEdgesAncestral() || !networkTerminatesAtMRCA())
             return Double.NEGATIVE_INFINITY;
 
-        // HR contribution for reverse move
-
-        logHR += Math.log(1.0/(network.getEdges().size()-1)/edgeToExtend.getLength());
-
-        double minDestTime = Math.max(secondEdgeToExtend.childNode.getHeight(), sourceTime);
-
-        if (secondEdgeToExtend.isRootEdge()) {
-            logHR += -(1.0/alpha)*(secondEdgeToExtend.childNode.getHeight()-minDestTime) + Math.log(1.0/alpha);
-        } else {
-            logHR += Math.log(1.0/(secondEdgeToExtend.parentNode.getHeight()-minDestTime));
-        }
-
         return logHR;
     }
-
 
     /**
      * Simple (but probably too expensive) check for a kind of invalid network
