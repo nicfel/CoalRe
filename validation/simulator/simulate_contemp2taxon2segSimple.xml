@@ -1,0 +1,50 @@
+<beast version="2.0"
+       namespace="beast.core
+                 :beast.core.util
+                 :beast.core.parameter
+                 :beast.evolution.alignment
+                 :beast.evolution.likelihood
+                 :beast.evolution.tree
+                 :beast.evolution.tree.coalescent
+                 :beast.evolution.sitemodel
+                 :beast.evolution.substitutionmodel
+                 :beast.evolution.operators
+                 :beast.math.distributions
+                 :feast.simulation
+                 :coalre.network
+                 :coalre.statistics
+                 :coalre.simulator">
+
+    <network id="network" spec="SimulatedCoalescentNetwork" simpleReassortmentOnly="true">
+        <populationModel spec="ConstantPopulation">
+            <popSize spec="RealParameter" value="1.0"/>
+        </populationModel>
+
+        <reassortmentRate spec="RealParameter" value="1.0"/>
+
+        <segmentTree id="segment1" spec="Tree">
+            <trait spec="TraitSet" traitname="date-backward" id="traitSet">
+                <taxa spec="TaxonSet" id="taxonSet">
+                    <taxon spec="Taxon" id="t1"/>
+                    <taxon spec="Taxon" id="t2"/>
+                </taxa>
+
+                t1=0, t2=0.0
+            </trait>
+        </segmentTree>
+        <segmentTree id="segment2" spec="Tree" trait="@traitSet"/>
+    </network>
+
+    <run spec="GPSimulator" nSims="100000">
+
+        <simulationObject idref="network"/>
+
+        <logger spec="Logger" logEvery="10" mode="tree" fileName="$(filebase).trees">
+            <log idref="network"/>
+        </logger>
+
+        <logger spec="Logger" logEvery="1" fileName="$(filebase).log">
+            <log spec="NetworkStatsLogger" network="@network"/>
+        </logger>
+    </run>
+</beast>
