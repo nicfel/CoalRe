@@ -21,18 +21,24 @@ import java.util.List;
 
 public class SimulatedCoalescentNetwork extends Network {
 
-    final public Input<RealParameter> reassortmentRateInput = new Input<>("reassortmentRate",
+    public Input<RealParameter> reassortmentRateInput = new Input<>("reassortmentRate",
             "Rate of reassortment (per lineage per unit time)", Validate.REQUIRED);
 
-    final public Input<PopulationFunction> populationFunctionInput = new Input<>("populationModel",
+    public Input<PopulationFunction> populationFunctionInput = new Input<>("populationModel",
             "Population model to use.", Validate.REQUIRED);
 
-    final public Input<List<Tree>> segmentTreesInput = new Input<>("segmentTree",
+    public Input<List<Tree>> segmentTreesInput = new Input<>("segmentTree",
             "One or more segment trees to initialize.", new ArrayList<>());
+
+    public Input<Boolean> simpleReassortmentOnlyInput = new Input<>(
+            "simpleReassortmentOnly",
+            "Disable generation of reassortment events on lineages not ancestral to all segments.",
+            false);
 
 
     private PopulationFunction populationFunction;
     private RealParameter reassortmentRate;
+    private boolean simpleReassortmentOnly;
 
     private int nSegments;
 
@@ -73,6 +79,8 @@ public class SimulatedCoalescentNetwork extends Network {
 
         reassortmentRate = reassortmentRateInput.get();
 
+        simpleReassortmentOnly = simpleReassortmentOnlyInput.get();
+
         simulateNetwork(sampleNodes);
 
         super.initAndValidate();
@@ -99,11 +107,11 @@ public class SimulatedCoalescentNetwork extends Network {
             int k = extantLineages.size();
 
             double currentTransformedTime = populationFunction.getIntensity(currentTime);
-            double transformedTimeToNextCoal = k>0 ? Randomizer.nextExponential(0.5*k*(k-1)) : 0.0;
+            double transformedTimeToNextCoal = k>=2 ? Randomizer.nextExponential(0.5*k*(k-1)) : Double.POSITIVE_INFINITY;
             double timeToNextCoal = populationFunction.getInverseIntensity(
                     transformedTimeToNextCoal + currentTransformedTime) - currentTime;
 
-            double timeToNextReass = k>0 ? Randomizer.nextExponential(k*reassortmentRate.getValue()) : 0.0;
+            double timeToNextReass = Randomizer.nextExponential(k*reassortmentRate.getValue());
 
             // next event time
             double timeUntilNextEvent = Math.min(timeToNextCoal, timeToNextReass);
@@ -141,9 +149,10 @@ public class SimulatedCoalescentNetwork extends Network {
     private void coalesce(double coalescentTime, List<NetworkEdge> extantLineages) {
         // Sample the pair of lineages that are coalescing:
         NetworkEdge lineage1 = extantLineages.get(Randomizer.nextInt(extantLineages.size()));
-        NetworkEdge lineage2 = extantLineages.get(Randomizer.nextInt(extantLineages.size()));
-        while (lineage1 == lineage2)
+        NetworkEdge lineage2;
+        do {
             lineage2 = extantLineages.get(Randomizer.nextInt(extantLineages.size()));
+        } while (lineage1 == lineage2);
 
         // Create coalescent node
         NetworkNode coalescentNode = new NetworkNode();
@@ -169,6 +178,9 @@ public class SimulatedCoalescentNetwork extends Network {
 
     private void reassort(double reassortmentTime, List<NetworkEdge> extantLineages) {
         NetworkEdge lineage = extantLineages.get(Randomizer.nextInt(extantLineages.size()));
+
+        if (simpleReassortmentOnly && lineage.hasSegments.cardinality()<nSegments)
+            return;
 
         BitSet hasSegs_left = new BitSet();
         BitSet hasSegs_right = new BitSet();
