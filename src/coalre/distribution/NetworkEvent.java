@@ -10,5 +10,5 @@ public class NetworkEvent {
     public NetworkNode node;
 
     public int lineages;
-    public double logReassortmentObsProb;
+    public double totalReassortmentObsProb;
 }

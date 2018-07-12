@@ -20,6 +20,8 @@ public class Network extends StateNode {
 
     protected NetworkEdge storedRootEdge;
 
+    protected Integer segmentCount = null;
+
     public Network() {
     }
 
@@ -83,7 +85,10 @@ public class Network extends StateNode {
     }
 
     public int getSegmentCount() {
-        return getLeafNodes().iterator().next().getParentEdges().get(0).hasSegments.cardinality();
+        if (segmentCount == null)
+            segmentCount = getLeafNodes().iterator().next().getParentEdges().get(0).hasSegments.cardinality();
+
+        return segmentCount;
     }
 
     private void getEdgesRecurse(NetworkEdge edge, Set<NetworkEdge> networkEdgeSet) {
@@ -152,6 +157,7 @@ public class Network extends StateNode {
             }
         }
 //        result.append(",edgeObjID=\"").append(currentEdge.toString()).append("\"");
+        result.append(",segsCarried=").append(currentEdge.hasSegments.cardinality());
         result.append("]");
 
         if (currentEdge.parentNode != null)

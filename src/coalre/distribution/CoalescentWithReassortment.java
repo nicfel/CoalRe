@@ -26,18 +26,23 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 	        "populationModel",
             "Population model.",
             Input.Validate.REQUIRED);
+
+	public Input<Boolean> simpleReassortmentOnlyInput = new Input<>(
+	        "simpleReassortmentOnly",
+            "Disable generation of reassortment events on lineages not ancestral to all segments.",
+            false);
 	
     private PopulationFunction populationFunction;
     private RealParameter reassortmentRate;
+    private boolean simpleReassortmentOnly;
 
     @Override
     public void initAndValidate(){
         populationFunction = populationFunctionInput.get();
         reassortmentRate = reassortmentRateInput.get();
+        simpleReassortmentOnly = simpleReassortmentOnlyInput.get();
     }
 
-    int count = 0;
-    
     public double calculateLogP() {
     	logP = 0;
 
@@ -76,12 +81,12 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
     	BitSet segments = event.node.getChildEdges().get(0).hasSegments;
 
+    	if (simpleReassortmentOnly && segments.cardinality()<networkIntervalsInput.get().getSegmentCount())
+    	    return Double.NEGATIVE_INFINITY;
+
         // Factor of 2 is because the network is un-oriented.
         // (I.e. whether segments go left or right is not meaningful.)
-        return Math.log(2.0 * reassortmentRate.getValue())
-				+ Math.log(1.0/segments.cardinality())
-				+ Math.log(1.0/(segments.cardinality()-1))
-                + (segments.cardinality()-2)*Math.log(0.5);
+        return Math.log(reassortmentRate.getValue()*event.node.getChildEdges().get(0).getReassortmentObsProb());
 	}
 
 	private double coalesce(NetworkEvent event) {
@@ -93,7 +98,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
         double result = 0.0;
 
-        result += -reassortmentRate.getValue()*prevEvent.logReassortmentObsProb
+        result += -reassortmentRate.getValue()*prevEvent.totalReassortmentObsProb
                 * (nextEvent.time-prevEvent.time);
 
 		

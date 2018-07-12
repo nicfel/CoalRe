@@ -41,7 +41,7 @@
         <segmentTree id="segment8" spec="Tree" trait="@traitSet"/>
     </network>
 
-    <run spec="GPSimulator" nSims="1000000">
+    <run spec="GPSimulator" nSims="10000">
 
         <simulationObject idref="network"/>
 
