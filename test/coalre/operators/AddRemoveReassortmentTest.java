@@ -3,6 +3,7 @@ package coalre.operators;
 import beast.util.Randomizer;
 import coalre.CoalReTestClass;
 import coalre.network.Network;
+import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
 import org.junit.Assert;
 import org.junit.Test;
@@ -56,6 +57,46 @@ public class AddRemoveReassortmentTest extends CoalReTestClass {
 
         Assert.assertEquals(networkString, network.toString());
         Assert.assertEquals(logPadd, logPremove, 1e-10);
+    }
+
+    @Test
+    public void testAddRemoveReassortmentEdge() {
+        Network network = getContempNetwork(2, 8, 0.0);
+
+        AddRemoveReassortment operator = new AddRemoveReassortment();
+        operator.initByName("alpha", 1.0,
+                "network", network,
+                "weight", 1.0);
+
+        NetworkNode origRoot = network.getRootEdge().childNode;
+
+        NetworkEdge sourceEdge = network.getRootEdge().childNode.getChildEdges().get(0);
+        double sourceTime = sourceEdge.getLength()/2.0;
+        NetworkEdge destEdge = network.getRootEdge();
+        double destTime = destEdge.childNode.getHeight() + 1.0;
+
+        double logP1 = operator.addReassortmentEdge(sourceEdge, sourceTime, destEdge, destTime);
+
+        NetworkEdge edgeToRemove = sourceEdge.parentNode.getParentEdges().get(0).parentNode == origRoot
+                ? sourceEdge.parentNode.getParentEdges().get(1)
+                : sourceEdge.parentNode.getParentEdges().get(0);
+
+        double logP2 = operator.removeReassortmentEdge(edgeToRemove);
+
+        Assert.assertEquals(logP1, -logP2, 1e-10);
+
+        sourceEdge = network.getRootEdge().childNode.getChildEdges().get(1);
+        sourceTime = sourceEdge.getLength()/4.0;
+        destEdge = sourceEdge;
+        destTime = sourceEdge.getLength()*3.0/4.0;
+
+        logP1 = operator.addReassortmentEdge(sourceEdge, sourceTime, destEdge, destTime);
+
+        edgeToRemove = sourceEdge.parentNode.getParentEdges().get(0);
+
+        logP2 = operator.removeReassortmentEdge(edgeToRemove);
+
+        Assert.assertEquals(logP1, -logP2, 1e-10);
     }
 
     @Test
