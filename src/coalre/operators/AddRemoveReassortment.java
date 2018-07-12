@@ -2,11 +2,9 @@ package coalre.operators;
 
 import beast.core.Input;
 import beast.util.Randomizer;
-import coalre.distribution.NetworkEvent;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
-import sun.nio.ch.Net;
 
 import java.util.*;
 import java.util.stream.Collectors;
