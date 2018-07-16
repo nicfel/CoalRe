@@ -7,6 +7,7 @@ import coalre.network.NetworkNode;
 
 import java.util.BitSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DivertSegmentOperator extends NetworkOperator {
@@ -85,7 +86,7 @@ public class DivertSegmentOperator extends NetworkOperator {
         }
 
         if (edge.parentNode.isReassortment())
-            logP += -LOG2*segsToRemove.cardinality();
+            logP += Math.log(0.5)*segsToRemove.cardinality();
 
         for (NetworkEdge parentEdge : edge.parentNode.getParentEdges())
             logP += removeSegmentsFromAncestors(parentEdge, segsToRemove);
@@ -146,7 +147,8 @@ public class DivertSegmentOperator extends NetworkOperator {
      * @return true if all edges are ancestral.
      */
     public boolean allEdgesAncestral() {
-        for (NetworkNode node : networkInput.get().getNodes()) {
+        Set<NetworkNode> nodeList = networkInput.get().getNodes();
+        for (NetworkNode node : nodeList) {
             for (NetworkEdge parentEdge : node.getParentEdges()) {
                 if (parentEdge.hasSegments.isEmpty())
                     return false;

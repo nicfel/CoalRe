@@ -111,7 +111,7 @@ public class SimulatedCoalescentNetwork extends Network {
             double timeToNextCoal = populationFunction.getInverseIntensity(
                     transformedTimeToNextCoal + currentTransformedTime) - currentTime;
 
-            double timeToNextReass = Randomizer.nextExponential(k*reassortmentRate.getValue());
+            double timeToNextReass = k>=1 ? Randomizer.nextExponential(k*reassortmentRate.getValue()) : Double.POSITIVE_INFINITY;
 
             // next event time
             double timeUntilNextEvent = Math.min(timeToNextCoal, timeToNextReass);
@@ -199,11 +199,8 @@ public class SimulatedCoalescentNetwork extends Network {
             return;
 
         // Create reassortment node
-
         NetworkNode node = new NetworkNode();
-        node.setHeight(reassortmentTime)
-                .addChildEdge(lineage);
-        lineage.parentNode = node;
+        node.setHeight(reassortmentTime).addChildEdge(lineage);
 
         // Create reassortment lineages
         NetworkEdge leftLineage = new NetworkEdge(null, node, hasSegs_left);

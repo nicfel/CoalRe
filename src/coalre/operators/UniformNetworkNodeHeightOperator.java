@@ -1,5 +1,6 @@
 package coalre.operators;
 
+import beast.core.parameter.RealParameter;
 import beast.util.Randomizer;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;

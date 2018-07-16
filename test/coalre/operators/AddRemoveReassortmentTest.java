@@ -8,6 +8,8 @@ import coalre.network.NetworkNode;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.*;
 
 public class AddRemoveReassortmentTest extends CoalReTestClass {
@@ -57,6 +59,40 @@ public class AddRemoveReassortmentTest extends CoalReTestClass {
 
         Assert.assertEquals(networkString, network.toString());
         Assert.assertEquals(logPadd, logPremove, 1e-10);
+    }
+
+    @Test
+    public void testAddRemoveMultipleSegments() {
+
+        Network network = getContempNetwork(10, 8, 1.0);
+        AddRemoveReassortment operator = new AddRemoveReassortment();
+        List<NetworkNode> leafNodes = new ArrayList<>(network.getLeafNodes());
+
+        try (PrintStream ps = new PrintStream("trees.txt")) {
+
+            for (int i = 0; i < 100; i++) {
+
+                NetworkNode sourceLeaf = leafNodes.get(Randomizer.nextInt(leafNodes.size()));
+                NetworkNode destLeaf;
+                do {
+                    destLeaf = leafNodes.get(Randomizer.nextInt(leafNodes.size()));
+                } while (destLeaf == sourceLeaf);
+
+                BitSet segs = sourceLeaf.getParentEdges().get(0).hasSegments;
+
+                BitSet segsToMove = operator.getRandomConditionedSubset(segs);
+
+                if (segsToMove != null) {
+                    operator.removeSegmentsFromAncestors(sourceLeaf.getParentEdges().get(0), segsToMove);
+                    operator.addSegmentsToAncestors(destLeaf.getParentEdges().get(0), segsToMove);
+                }
+
+                ps.println(network);
+            }
+        } catch (FileNotFoundException ex) {
+
+        }
+
     }
 
     @Test
