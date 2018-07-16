@@ -6,9 +6,6 @@ import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -72,9 +69,6 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
             logHR -= Math.log(1.0/(destEdge.parentNode.getHeight()-minDestTime));
 
         }
-
-//        System.out.println("\n" + network);
-
 
         // Create new reassortment edge
 
@@ -152,8 +146,6 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
         if (!allEdgesAncestral())
             return Double.NEGATIVE_INFINITY;
 
-//        System.out.println(network);
-
         return logHR;
     }
 
@@ -168,8 +160,6 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 
         if (removableEdges.isEmpty())
             return Double.NEGATIVE_INFINITY;
-
-//        System.out.println("\n" + network);
 
         NetworkEdge edgeToRemove = removableEdges.get(Randomizer.nextInt(removableEdges.size()));
         logHR -= Math.log(1.0/(removableEdges.size()));
@@ -208,8 +198,6 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
         } else {
             logHR += Math.log(1.0/(destEdge.parentNode.getHeight()-minDestTime));
         }
-
-//        System.out.println(network);
 
         return logHR;
     }
@@ -258,8 +246,6 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 
         if (!allEdgesAncestral() || !networkTerminatesAtMRCA())
             return Double.NEGATIVE_INFINITY;
-
-//        System.out.println(network);
 
         return logHR;
     }

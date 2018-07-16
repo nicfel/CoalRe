@@ -93,8 +93,11 @@ public abstract class NetworkOperator extends Operator {
      * @return log probability of subset
      */
     protected double getConditionedSubsetProb(BitSet sourceSegments) {
-        return Math.log(1.0/sourceSegments.cardinality()) +
-                Math.log(1.0/(sourceSegments.cardinality()-1)) +
-                (sourceSegments.cardinality()-2)*Math.log(0.5);
+
+        int segsToPartition = sourceSegments.cardinality();
+
+        return Math.log(1.0/segsToPartition) +
+                Math.log(1.0/(segsToPartition-1)) +
+                (segsToPartition-2)*Math.log(0.5);
     }
 }

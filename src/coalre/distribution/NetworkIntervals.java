@@ -93,10 +93,6 @@ public class NetworkIntervals extends CalculationNode {
         }
     }
 
-    public int getSegmentCount() {
-        return network.getSegmentCount();
-    }
-
     @Override
     protected boolean requiresRecalculation() {
         eventListDirty = true;
