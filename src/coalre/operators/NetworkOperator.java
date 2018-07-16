@@ -15,8 +15,6 @@ public abstract class NetworkOperator extends Operator {
             "Network on which to operate",
             Input.Validate.REQUIRED);
 
-    public static final double LOG2 = Math.log(2.0);
-
     /**
      * Retrieve sister of given edge
      * @param childEdge child edge
@@ -65,7 +63,7 @@ public abstract class NetworkOperator extends Operator {
         } while (lastSegPos == firstSegPos);
 
         int segPos = 0;
-        for (int segIdx=sourceSegments.nextSetBit(0); segIdx >=0;
+        for (int segIdx=sourceSegments.nextSetBit(0); segIdx != -1;
              segIdx = sourceSegments.nextSetBit(segIdx+1), segPos += 1) {
 
             if (segPos == firstSegPos) {
@@ -92,7 +90,7 @@ public abstract class NetworkOperator extends Operator {
      * @param sourceSegments set of segments used as the argument to getRandomConditionedSubset
      * @return log probability of subset
      */
-    protected double getConditionedSubsetProb(BitSet sourceSegments) {
+    protected double getLogConditionedSubsetProb(BitSet sourceSegments) {
 
         int segsToPartition = sourceSegments.cardinality();
 
