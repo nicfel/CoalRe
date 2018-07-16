@@ -27,25 +27,22 @@
                 <taxa spec="TaxonSet" id="taxonSet">
                     <taxon spec="Taxon" id="t1"/>
                     <taxon spec="Taxon" id="t2"/>
+                    <taxon spec="Taxon" id="t3"/>
+                    <taxon spec="Taxon" id="t4"/>
+                    <taxon spec="Taxon" id="t5"/>
                 </taxa>
 
-                t1=0.0, t2=0.0
+                t1=0, t2=0.1, t3=0.2, t4=0.3, t5=0.4
             </trait>
         </segmentTree>
         <segmentTree id="segment2" spec="Tree" trait="@traitSet"/>
-        <segmentTree id="segment3" spec="Tree" trait="@traitSet"/>
-        <segmentTree id="segment4" spec="Tree" trait="@traitSet"/>
-        <segmentTree id="segment5" spec="Tree" trait="@traitSet"/>
-        <segmentTree id="segment6" spec="Tree" trait="@traitSet"/>
-        <segmentTree id="segment7" spec="Tree" trait="@traitSet"/>
-        <segmentTree id="segment8" spec="Tree" trait="@traitSet"/>
     </network>
 
-    <run spec="GPSimulator" nSims="10000">
+    <run spec="GPSimulator" nSims="100000">
 
         <simulationObject idref="network"/>
 
-        <logger spec="Logger" logEvery="1000" mode="tree" fileName="$(filebase).trees">
+        <logger spec="Logger" logEvery="100" mode="tree" fileName="$(filebase).trees">
             <log idref="network"/>
         </logger>
 

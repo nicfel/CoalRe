@@ -27,20 +27,13 @@ public class CoalescentWithReassortment extends NetworkDistribution {
             "Population model.",
             Input.Validate.REQUIRED);
 
-	public Input<Boolean> simpleReassortmentOnlyInput = new Input<>(
-	        "simpleReassortmentOnly",
-            "Disable generation of reassortment events on lineages not ancestral to all segments.",
-            false);
-	
     private PopulationFunction populationFunction;
     private RealParameter reassortmentRate;
-    private boolean simpleReassortmentOnly;
 
     @Override
     public void initAndValidate(){
         populationFunction = populationFunctionInput.get();
         reassortmentRate = reassortmentRateInput.get();
-        simpleReassortmentOnly = simpleReassortmentOnlyInput.get();
     }
 
     public double calculateLogP() {
@@ -81,10 +74,10 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
     	BitSet segments = event.node.getChildEdges().get(0).hasSegments;
 
-    	if (simpleReassortmentOnly && segments.cardinality()<networkIntervalsInput.get().getSegmentCount())
-    	    return Double.NEGATIVE_INFINITY;
-
-        return Math.log(reassortmentRate.getValue()*event.node.getChildEdges().get(0).getReassortmentObsProb());
+        return Math.log(reassortmentRate.getValue())
+                + Math.log(1.0/segments.cardinality())
+                + Math.log(1.0/(segments.cardinality()-1))
+                + (segments.cardinality()-2)*Math.log(0.5);
 	}
 
 	private double coalesce(NetworkEvent event) {
