@@ -84,10 +84,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
     	if (simpleReassortmentOnly && segments.cardinality()<networkIntervalsInput.get().getSegmentCount())
     	    return Double.NEGATIVE_INFINITY;
 
-        return Math.log(reassortmentRate.getValue()) +
-                Math.log(1.0/segments.cardinality()) +
-                Math.log(1.0/(segments.cardinality()-1)) +
-                (segments.cardinality()-2)*Math.log(0.5);
+        return Math.log(reassortmentRate.getValue()*event.node.getChildEdges().get(0).getReassortmentObsProb());
 	}
 
 	private double coalesce(NetworkEvent event) {

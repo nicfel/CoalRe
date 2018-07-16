@@ -6,7 +6,7 @@ import beast.evolution.tree.Tree;
 import beast.evolution.tree.coalescent.ConstantPopulation;
 import beast.util.Randomizer;
 import coalre.CoalReTestClass;
-import coalre.statistics.NetworkStats;
+import coalre.statistics.NetworkStatsLogger;
 import org.junit.Assert;
 import org.junit.Test;
 import test.beast.beast2vs1.trace.DiscreteStatistics;
@@ -45,9 +45,9 @@ public class SimulatedCoalescentNetworkTest extends CoalReTestClass {
                     "segmentTree", segmentTrees.get(6),
                     "segmentTree", segmentTrees.get(7));
 
-            reassortmentNodeCounts[i] = NetworkStats.getReassortmentCount(network);
-            networkHeights[i] = NetworkStats.getTotalHeight(network);
-            networkLengths[i] = NetworkStats.getTotalEdgeLength(network);
+            reassortmentNodeCounts[i] = NetworkStatsLogger.getReassortmentCount(network);
+            networkHeights[i] = NetworkStatsLogger.getTotalHeight(network);
+            networkLengths[i] = NetworkStatsLogger.getTotalEdgeLength(network);
         }
 
         double meanCount = DiscreteStatistics.mean(reassortmentNodeCounts);
