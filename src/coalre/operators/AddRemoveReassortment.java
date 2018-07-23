@@ -1,11 +1,15 @@
 package coalre.operators;
 
 import beast.core.Input;
+import beast.util.Package;
 import beast.util.Randomizer;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -85,7 +89,7 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
                 .count();
         logHR += Math.log(1.0/nRemovableEdges);
 
-        return logHR - Math.log(0.5);
+        return logHR;
     }
 
     double addReassortmentEdge(NetworkEdge sourceEdge, double sourceTime,
@@ -199,7 +203,7 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
             logHR += Math.log(1.0/(destEdge.parentNode.getHeight()-minDestTime));
         }
 
-        return logHR + Math.log(0.5);
+        return logHR;
     }
 
 
