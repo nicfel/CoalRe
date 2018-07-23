@@ -28,13 +28,28 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
         alpha = alphaInput.get();
     }
 
+    int count = 0;
+
     @Override
     public double proposal() {
 
+        double logHR;
         if (Randomizer.nextBoolean())
-            return addReassortment();
+            logHR = addReassortment();
         else
-            return removeReassortment();
+            logHR = removeReassortment();
+
+        if ((count++) % 1000 == 0) {
+            try (PrintStream ps = new PrintStream(new FileOutputStream("trees.txt", true))) {
+
+                ps.println(network);
+
+            } catch (FileNotFoundException ex) {
+
+            }
+        }
+
+        return logHR;
     }
 
     double addReassortment() {

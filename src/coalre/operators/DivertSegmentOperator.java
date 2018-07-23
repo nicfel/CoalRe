@@ -34,7 +34,7 @@ public class DivertSegmentOperator extends NetworkOperator {
         logHR -= Math.log(1.0/sourceEdges.size());
 
         NetworkEdge sourceEdge = sourceEdges.get(Randomizer.nextInt(sourceEdges.size()));
-        NetworkEdge sourceSpouseEdge = getSpouseEdge(sourceEdge);
+        NetworkEdge destEdge = getSpouseEdge(sourceEdge);
 
         BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
         logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
@@ -42,12 +42,12 @@ public class DivertSegmentOperator extends NetworkOperator {
         network.startEditing(this);
 
         logHR += removeSegmentsFromAncestors(sourceEdge, segsToDivert);
-        logHR -= addSegmentsToAncestors(sourceSpouseEdge, segsToDivert);
+        logHR -= addSegmentsToAncestors(destEdge, segsToDivert);
 
         if (!allEdgesAncestral())
             return Double.NEGATIVE_INFINITY;
 
-        logHR += getLogConditionedSubsetProb(sourceSpouseEdge.hasSegments);
+        logHR += getLogConditionedSubsetProb(destEdge.hasSegments);
 
         int reverseSourceEdgeCount = (int)(network.getEdges().stream()
                 .filter(e -> e.childNode.isReassortment())
