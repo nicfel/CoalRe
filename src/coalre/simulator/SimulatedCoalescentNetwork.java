@@ -30,6 +30,8 @@ public class SimulatedCoalescentNetwork extends Network {
     public Input<List<Tree>> segmentTreesInput = new Input<>("segmentTree",
             "One or more segment trees to initialize.", new ArrayList<>());
 
+    public Input<Boolean> disableSegsInput = new Input<>("disableSegs",
+            "Forget about segments", false);
 
     private PopulationFunction populationFunction;
     private RealParameter reassortmentRate;
@@ -183,9 +185,11 @@ public class SimulatedCoalescentNetwork extends Network {
             }
         }
 
-        // Stop here if reassortment event is unobservable
-        if (hasSegs_left.cardinality() == 0 || hasSegs_right.cardinality() == 0)
-            return;
+        if (!disableSegsInput.get()) {
+            // Stop here if reassortment event is unobservable
+            if (hasSegs_left.cardinality() == 0 || hasSegs_right.cardinality() == 0)
+                return;
+        }
 
         // Create reassortment node
         NetworkNode node = new NetworkNode();

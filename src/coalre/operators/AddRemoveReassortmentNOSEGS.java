@@ -1,26 +1,19 @@
 package coalre.operators;
 
 import beast.core.Input;
-import beast.util.Package;
 import beast.util.Randomizer;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class AddRemoveReassortment extends DivertSegmentOperator {
+public class AddRemoveReassortmentNOSEGS extends DivertSegmentOperator {
 
     public Input<Double> alphaInput = new Input<>("alpha",
             "Mean of exponential used for choosing root attachment times.",
             Input.Validate.REQUIRED);
-
-    public Input<Boolean> disableSegsInput = new Input<>("disableSegs",
-            "Disable segs.", false);
 
     private Network network;
     private double alpha;
@@ -50,7 +43,6 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 
         List<NetworkEdge> possibleSourceEdges = networkEdges.stream()
                 .filter(e -> !e.isRootEdge())
-                .filter(e -> disableSegsInput.get() || e.hasSegments.cardinality()>=2)
                 .collect(Collectors.toList());
 
         NetworkEdge sourceEdge = possibleSourceEdges.get(Randomizer.nextInt(possibleSourceEdges.size()));
@@ -62,7 +54,7 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
         NetworkEdge destEdge = networkEdges.get(Randomizer.nextInt(networkEdges.size()));
         logHR -= Math.log(1.0/networkEdges.size());
 
-        if (!destEdge.isRootEdge() && sourceTime>destEdge.parentNode.getHeight())
+        if (!destEdge.isRootEdge() && destEdge.parentNode.getHeight() < sourceTime)
             return Double.NEGATIVE_INFINITY;
 
         double minDestTime = Math.max(destEdge.childNode.getHeight(), sourceTime);
@@ -116,7 +108,7 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
         sourceNode.addParentEdge(newEdge1);
         oldSourceEdgeParent.addChildEdge(newEdge1);
 
-        newEdge1.hasSegments = (BitSet) sourceEdge.hasSegments.clone();
+        newEdge1.hasSegments = new BitSet();
 
         if (destEdge == sourceEdge)
             destEdge = newEdge1;
@@ -140,23 +132,12 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
             oldDestEdgeParent.addChildEdge(newEdge2);
         }
 
-        newEdge2.hasSegments = (BitSet) destEdge.hasSegments.clone();
+        newEdge2.hasSegments = new BitSet();
 
         NetworkEdge reassortmentEdge = new NetworkEdge();
         sourceNode.addParentEdge(reassortmentEdge);
         destNode.addChildEdge(reassortmentEdge);
         reassortmentEdge.hasSegments = new BitSet();
-
-        // Choose segments to divert to new edge
-        if (!disableSegsInput.get()) {
-            BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
-            logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
-            logHR += removeSegmentsFromAncestors(newEdge1, segsToDivert);
-            logHR -= addSegmentsToAncestors(reassortmentEdge, segsToDivert);
-
-            if (!allEdgesAncestral())
-                return Double.NEGATIVE_INFINITY;
-        }
 
         return logHR;
     }
@@ -195,7 +176,6 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 
         int nPossibleSourceEdges = (int)finalNetworkEdges.stream()
                 .filter(e -> !e.isRootEdge())
-                .filter(e -> disableSegsInput.get() || e.hasSegments.cardinality()>=2)
                 .count();
 
         logHR += Math.log(1.0/(double)nPossibleSourceEdges)
@@ -224,14 +204,6 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
         NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
         NetworkNode edgeToRemoveSpouseParent = edgeToRemoveSpouse.parentNode;
 
-        if (!disableSegsInput.get()) {
-            // Divert segments away from chosen edge
-            BitSet segsToDivert = (BitSet) edgeToRemove.hasSegments.clone();
-            logHR += removeSegmentsFromAncestors(edgeToRemove, segsToDivert);
-            logHR -= addSegmentsToAncestors(edgeToRemoveSpouse, segsToDivert);
-            logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments);
-        }
-
         // Remove edge and associated nodes
         NetworkEdge edgeToExtend = nodeToRemove.getChildEdges().get(0);
         nodeToRemove.removeChildEdge(edgeToExtend);
@@ -258,7 +230,7 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
             secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
         }
 
-        if ((!disableSegsInput.get() && !allEdgesAncestral()) || !networkTerminatesAtMRCA())
+        if (!networkTerminatesAtMRCA())
             return Double.NEGATIVE_INFINITY;
 
         return logHR;

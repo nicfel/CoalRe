@@ -27,6 +27,11 @@ public class CoalescentWithReassortment extends NetworkDistribution {
             "Population model.",
             Input.Validate.REQUIRED);
 
+	public Input<Boolean> disableSegsInput = new Input<>(
+	        "disableSegs",
+            "Disable segments",
+            false);
+
     private PopulationFunction populationFunction;
     private RealParameter reassortmentRate;
 
@@ -74,7 +79,10 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
     	int segsToReassort = event.node.getChildEdges().get(0).hasSegments.cardinality();
 
-    	return Math.log(reassortmentRate.getValue()) + segsToReassort*Math.log(0.5) + Math.log(2.0);
+    	if (!disableSegsInput.get())
+            return Math.log(reassortmentRate.getValue()) + segsToReassort*Math.log(0.5) + Math.log(2.0);
+    	else
+            return Math.log(reassortmentRate.getValue());
 	}
 
 	private double coalesce(NetworkEvent event) {
@@ -86,10 +94,14 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
         double result = 0.0;
 
-        result += -reassortmentRate.getValue()*prevEvent.totalReassortmentObsProb
-                * (nextEvent.time-prevEvent.time);
+        if (!disableSegsInput.get()) {
+            result += -reassortmentRate.getValue() * prevEvent.totalReassortmentObsProb
+                    * (nextEvent.time - prevEvent.time);
+        } else {
+            result += -reassortmentRate.getValue() * prevEvent.lineages
+                    * (nextEvent.time - prevEvent.time);
+        }
 
-		
 		result += -0.5*prevEvent.lineages*(prevEvent.lineages-1)
                 * populationFunction.getIntegral(prevEvent.time, nextEvent.time);
 		
