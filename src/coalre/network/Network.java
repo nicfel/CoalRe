@@ -102,11 +102,11 @@ public class Network extends StateNode {
     }
 
     public String getExtendedNewick() {
-        return getExtendedNewick(rootEdge, new ArrayList<NetworkNode>(), null) + ";";
+        return getExtendedNewick(rootEdge, new ArrayList<>(), null) + ";";
     }
 
     public String getExtendedNewickVerbose(int nSegments) {
-        return getExtendedNewick(rootEdge, new ArrayList<NetworkNode>(), nSegments) + ";";
+        return getExtendedNewick(rootEdge, new ArrayList<>(), nSegments) + ";";
     }
 
     private String getExtendedNewick(NetworkEdge currentEdge, List<NetworkNode> seenReassortmentNodes,

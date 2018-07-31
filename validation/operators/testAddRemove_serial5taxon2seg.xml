@@ -22,10 +22,10 @@
         <state>
             <stateNode id="network" spec="SimulatedCoalescentNetwork">
                 <populationModel spec="ConstantPopulation">
-                    <popSize spec="RealParameter" value="1.0"/>
+                    <popSize spec="RealParameter" value="0.5"/>
                 </populationModel>
 
-                <reassortmentRate spec="RealParameter" value="1.0"/>
+                <reassortmentRate spec="RealParameter" value="1.5"/>
 
                 <segmentTree id="segment1" spec="Tree">
                     <trait spec="TraitSet" traitname="date-backward" id="traitSet">
@@ -48,10 +48,10 @@
             <networkIntervals spec="NetworkIntervals" network="@network"/>
 
             <populationModel spec="ConstantPopulation">
-                <popSize spec="RealParameter" value="1.0"/>
+                <popSize spec="RealParameter" value="0.5"/>
             </populationModel>
 
-            <reassortmentRate spec="RealParameter" value="1.0"/>
+            <reassortmentRate spec="RealParameter" value="1.5"/>
         </distribution>
 
         <operator spec="AddRemoveReassortment" network="@network" alpha="1.0" weight="1.0"/>

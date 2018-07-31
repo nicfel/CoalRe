@@ -30,15 +30,9 @@ public class SimulatedCoalescentNetwork extends Network {
     public Input<List<Tree>> segmentTreesInput = new Input<>("segmentTree",
             "One or more segment trees to initialize.", new ArrayList<>());
 
-    public Input<Boolean> simpleReassortmentOnlyInput = new Input<>(
-            "simpleReassortmentOnly",
-            "Disable generation of reassortment events on lineages not ancestral to all segments.",
-            false);
-
 
     private PopulationFunction populationFunction;
     private RealParameter reassortmentRate;
-    private boolean simpleReassortmentOnly;
 
     private int nSegments;
 
@@ -78,8 +72,6 @@ public class SimulatedCoalescentNetwork extends Network {
         populationFunction = populationFunctionInput.get();
 
         reassortmentRate = reassortmentRateInput.get();
-
-        simpleReassortmentOnly = simpleReassortmentOnlyInput.get();
 
         simulateNetwork(sampleNodes);
 
@@ -178,9 +170,6 @@ public class SimulatedCoalescentNetwork extends Network {
 
     private void reassort(double reassortmentTime, List<NetworkEdge> extantLineages) {
         NetworkEdge lineage = extantLineages.get(Randomizer.nextInt(extantLineages.size()));
-
-        if (simpleReassortmentOnly && lineage.hasSegments.cardinality()<nSegments)
-            return;
 
         BitSet hasSegs_left = new BitSet();
         BitSet hasSegs_right = new BitSet();

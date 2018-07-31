@@ -15,8 +15,8 @@ import beast.core.Input.Validate;
 // additionally allows recalculation of which daughter lineages were involved in a coalescent event
 @Description("Distribution on a tree, typically a prior such as Coalescent or Yule")
 public class NetworkDistribution extends Distribution {
-    public Input<NetworkIntervals> networkIntervalsInput = new Input<NetworkIntervals>("networkIntervals",
-    		"Structured Intervals for a phylogenetic beast tree", Validate.REQUIRED);
+    public Input<NetworkIntervals> networkIntervalsInput = new Input<>("networkIntervals",
+            "Structured Intervals for a phylogenetic beast tree", Validate.REQUIRED);
 
     
     @Override
