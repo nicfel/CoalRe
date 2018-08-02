@@ -17,7 +17,7 @@
                  :coalre.operators
                  :coalre.distribution">
 
-    <run spec="MCMC" chainLength="10000000">
+    <run spec="MCMC" chainLength="100000000">
 
         <state>
             <stateNode id="network" spec="SimulatedCoalescentNetwork">
@@ -57,11 +57,11 @@
 
         <operator spec="AddRemoveReassortmentNOSEGS" network="@network" alpha="1.0" weight="1.0"/>
 
-        <logger spec="Logger" logEvery="1000" mode="tree" fileName="$(filebase).trees">
+        <logger spec="Logger" logEvery="10000" mode="tree" fileName="$(filebase).trees">
             <log idref="network"/>
         </logger>
 
-        <logger spec="Logger" logEvery="100" fileName="$(filebase).log">
+        <logger spec="Logger" logEvery="1000" fileName="$(filebase).log">
             <log spec="NetworkStatsLogger" network="@network"/>
         </logger>
 

@@ -82,7 +82,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
     	if (!disableSegsInput.get())
             return Math.log(reassortmentRate.getValue()) + segsToReassort*Math.log(0.5) + Math.log(2.0);
     	else
-            return Math.log(reassortmentRate.getValue());
+            return Math.log(2.0*reassortmentRate.getValue());
 	}
 
 	private double coalesce(NetworkEvent event) {
