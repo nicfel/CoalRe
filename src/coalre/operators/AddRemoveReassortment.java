@@ -62,7 +62,7 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
         NetworkEdge destEdge = networkEdges.get(Randomizer.nextInt(networkEdges.size()));
         logHR -= Math.log(1.0/networkEdges.size());
 
-        if (!destEdge.isRootEdge() && sourceTime>destEdge.parentNode.getHeight())
+        if (!destEdge.isRootEdge() && destEdge.parentNode.getHeight() < sourceTime)
             return Double.NEGATIVE_INFINITY;
 
         double minDestTime = Math.max(destEdge.childNode.getHeight(), sourceTime);
