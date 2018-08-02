@@ -55,7 +55,7 @@
             <reassortmentRate spec="RealParameter" value="1.0"/>
         </distribution>
 
-        <operator spec="AddRemoveReassortmentNOSEGS" network="@network" alpha="1.0" weight="1.0"/>
+        <operator spec="AddRemoveReassortment" network="@network" alpha="1.0" weight="1.0" disableSegs="true"/>
 
         <logger spec="Logger" logEvery="10000" mode="tree" fileName="$(filebase).trees">
             <log idref="network"/>
