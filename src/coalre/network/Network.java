@@ -74,6 +74,13 @@ public class Network extends StateNode {
     }
 
     /**
+     * @return set of internal nodes in network
+     */
+    public Set<NetworkNode> getInternalNodes() {
+        return getNodes().stream().filter(n -> !n.isLeaf()).collect(Collectors.toSet());
+    }
+
+    /**
      * @return set of edge objects comprising network
      */
     public Set<NetworkEdge> getEdges() {
