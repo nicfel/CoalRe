@@ -56,29 +56,21 @@ public abstract class NetworkOperator extends Operator {
 
         BitSet destSegments = new BitSet();
 
-        int firstSegPos = Randomizer.nextInt(sourceSegments.cardinality());
-        int lastSegPos;
         do {
-            lastSegPos = Randomizer.nextInt(sourceSegments.cardinality());
-        } while (lastSegPos == firstSegPos);
 
-        int segPos = 0;
-        for (int segIdx=sourceSegments.nextSetBit(0); segIdx != -1;
-             segIdx = sourceSegments.nextSetBit(segIdx+1), segPos += 1) {
+            destSegments.clear();
 
-            if (segPos == firstSegPos) {
-                destSegments.set(segIdx);
-                continue;
+            for (int segIdx = sourceSegments.nextSetBit(0); segIdx != -1;
+                 segIdx = sourceSegments.nextSetBit(segIdx + 1)) {
+
+                if (Randomizer.nextBoolean()) {
+                    destSegments.set(segIdx);
+                }
+
             }
 
-            if (segPos == lastSegPos)
-                continue;
-
-            if (Randomizer.nextBoolean()) {
-                destSegments.set(segIdx);
-            }
-
-        }
+        } while (destSegments.cardinality() == 0
+                || destSegments.cardinality() == sourceSegments.cardinality());
 
         return destSegments;
     }
@@ -92,10 +84,10 @@ public abstract class NetworkOperator extends Operator {
      */
     protected double getLogConditionedSubsetProb(BitSet sourceSegments) {
 
-        int segsToPartition = sourceSegments.cardinality();
+        if (sourceSegments.cardinality()<2)
+            return Double.NEGATIVE_INFINITY;
 
-        return Math.log(1.0/segsToPartition) +
-                Math.log(1.0/(segsToPartition-1)) +
-                (segsToPartition-2)*Math.log(0.5);
+        return sourceSegments.cardinality()*Math.log(0.5)
+                - Math.log(1.0 - 2.0*Math.pow(0.5, sourceSegments.cardinality()));
     }
 }

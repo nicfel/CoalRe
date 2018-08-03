@@ -61,8 +61,7 @@ public class DivertSegmentOperator extends NetworkOperator {
 
 
     /**
-     * Remove segments from this edge and ancestors. Assumes none of the
-     * segments in segsToRemove are currently on edge.
+     * Remove segments from this edge and ancestors.
      *
      * @param edge edge at which to start removal
      * @param segsToRemove segments to remove from edge and ancestors
@@ -71,10 +70,11 @@ public class DivertSegmentOperator extends NetworkOperator {
     double removeSegmentsFromAncestors(NetworkEdge edge, BitSet segsToRemove) {
         double logP = 0.0;
 
+        segsToRemove = (BitSet)segsToRemove.clone();
+        segsToRemove.and(edge.hasSegments);
+
         if (segsToRemove.isEmpty())
             return logP;
-
-        segsToRemove = (BitSet)segsToRemove.clone();
 
         edge.hasSegments.andNot(segsToRemove);
 
@@ -85,16 +85,8 @@ public class DivertSegmentOperator extends NetworkOperator {
 
             logP += Math.log(0.5)*segsToRemove.cardinality();
 
-            NetworkEdge leftParentEdge = edge.parentNode.getParentEdges().get(0);
-            BitSet leftSegsToRemove = (BitSet)segsToRemove.clone();
-            leftSegsToRemove.and(leftParentEdge.hasSegments);
-
-            NetworkEdge rightParentEdge = edge.parentNode.getParentEdges().get(1);
-            BitSet rightSegsToRemove = (BitSet)segsToRemove.clone();
-            rightSegsToRemove.and(rightParentEdge.hasSegments);
-
-            logP += removeSegmentsFromAncestors(leftParentEdge, leftSegsToRemove);
-            logP += removeSegmentsFromAncestors(rightParentEdge, rightSegsToRemove);
+            logP += removeSegmentsFromAncestors(edge.parentNode.getParentEdges().get(0), segsToRemove);
+            logP += removeSegmentsFromAncestors(edge.parentNode.getParentEdges().get(1), segsToRemove);
 
         } else {
 
@@ -107,8 +99,7 @@ public class DivertSegmentOperator extends NetworkOperator {
     }
 
     /**
-     * Add segments to this edge and ancestors. Assumes none of the segments
-     * in segsToAdd are currently on edge.
+     * Add segments to this edge and ancestors.
      *
      * @param edge edge at which to start addition
      * @param segsToAdd segments to add to the edge and ancestors
@@ -117,10 +108,11 @@ public class DivertSegmentOperator extends NetworkOperator {
     double addSegmentsToAncestors(NetworkEdge edge, BitSet segsToAdd) {
         double logP = 0.0;
 
+        segsToAdd = (BitSet)segsToAdd.clone();
+        segsToAdd.andNot(edge.hasSegments);
+
         if (segsToAdd.isEmpty())
             return logP;
-
-        segsToAdd = (BitSet)segsToAdd.clone();
 
         edge.hasSegments.or(segsToAdd);
 
@@ -147,7 +139,6 @@ public class DivertSegmentOperator extends NetworkOperator {
 
         } else {
 
-            segsToAdd.andNot(getSisterEdge(edge).hasSegments);
             logP += addSegmentsToAncestors(edge.parentNode.getParentEdges().get(0), segsToAdd);
         }
 
