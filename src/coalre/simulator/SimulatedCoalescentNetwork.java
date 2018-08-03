@@ -2,8 +2,6 @@ package coalre.simulator;
 
 import beast.core.Input;
 import beast.core.Input.Validate;
-import beast.core.StateNode;
-import beast.core.StateNodeInitialiser;
 import beast.core.parameter.RealParameter;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.TraitSet;
@@ -52,27 +50,29 @@ public class SimulatedCoalescentNetwork extends Network {
         List<NetworkNode> sampleNodes = new ArrayList<>();
 
         TraitSet traitSet = segmentTreesInput.get().get(0).getDateTrait();
-        if (traitSet != null) {
+        TaxonSet taxonSet;
+        if (traitSet != null)
+            taxonSet = traitSet.taxaInput.get();
+        else
+            taxonSet = segmentTreesInput.get().get(0).getTaxonset();
 
-            for (String taxonName : traitSet.taxaInput.get().getTaxaNames()) {
-                NetworkNode sampleNode = new NetworkNode();
-                sampleNode.setLabel(taxonName);
-                sampleNode.setHeight(traitSet.getValue(taxonName));
-                sampleNodes.add(sampleNode);
-            }
-        } else {
-            TaxonSet taxonSet = segmentTreesInput.get().get(0).getTaxonset();
-
-            if (taxonSet == null)
+        if (taxonSet == null)
                 throw new IllegalArgumentException("Segment trees must define" +
                         " either a trait set or a taxon set.");
 
-            for (String taxonName : taxonSet.getTaxaNames()) {
-                NetworkNode sampleNode = new NetworkNode();
-                sampleNode.setLabel(taxonName);
+        for (int taxonIndex=0; taxonIndex<traitSet.taxaInput.get().getTaxonCount(); taxonIndex++) {
+            String taxonName = traitSet.taxaInput.get().getTaxonId(taxonIndex);
+
+            NetworkNode sampleNode = new NetworkNode();
+            sampleNode.setTaxonLabel(taxonName);
+            sampleNode.setTaxonIndex(taxonIndex);
+
+            if (traitSet != null)
+                sampleNode.setHeight(traitSet.getValue(taxonName));
+            else
                 sampleNode.setHeight(0.0);
-                sampleNodes.add(sampleNode);
-            }
+
+            sampleNodes.add(sampleNode);
         }
 
         // Perform network simulation:

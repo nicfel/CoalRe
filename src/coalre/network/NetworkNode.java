@@ -12,6 +12,11 @@ public class NetworkNode {
     protected String taxonLabel;
 
     /**
+     * Index of taxon corresponding to this node (usually only used for leaves)
+     */
+    protected int taxonIndex;
+
+    /**
      * height of this node.
      */
     protected double height = Double.MAX_VALUE;
@@ -108,9 +113,24 @@ public class NetworkNode {
      *
      * @param taxonLabel the new taxon label
      */
-    public void setLabel(String taxonLabel) {
+    public void setTaxonLabel(String taxonLabel) {
         this.taxonLabel = taxonLabel;
     }
 
 
+    /**
+     * @return the index of the taxon (if any) corresponding to this node
+     */
+    public int getTaxonIndex() {
+        return taxonIndex;
+    }
+
+    /**
+     * Sets the index of the taxon corresponding to this node.
+     *
+     * @param taxonIndex new taxon index
+     */
+    public void setTaxonIndex(int taxonIndex) {
+        this.taxonIndex = taxonIndex;
+    }
 }

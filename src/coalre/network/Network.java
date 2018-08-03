@@ -1,6 +1,7 @@
 package coalre.network;
 
 import beast.core.StateNode;
+import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import coalre.network.parser.NetworkBaseVisitor;
 import coalre.network.parser.NetworkLexer;
@@ -9,7 +10,6 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.w3c.dom.Node;
 
 import java.io.PrintStream;
 import java.util.*;
@@ -233,7 +233,7 @@ public class Network extends StateNode {
         } else {
             childNodeCopy = new NetworkNode();
             childNodeCopy.setHeight(edge.childNode.getHeight());
-            childNodeCopy.setLabel(edge.childNode.getTaxonLabel());
+            childNodeCopy.setTaxonLabel(edge.childNode.getTaxonLabel());
             seenNodes.put(edge.childNode, childNodeCopy);
         }
 
@@ -265,7 +265,7 @@ public class Network extends StateNode {
     }
 
     @Override
-    public void fromXML(Node node) {
+    public void fromXML(org.w3c.dom.Node node) {
         fromExtendedNewick(node.getTextContent().replaceAll("&amp;", "&"));
     }
 
@@ -417,7 +417,7 @@ public class Network extends StateNode {
             }
 
             if (ctx.post().label() != null)
-                node.setLabel(removeQuotes(ctx.post().label().getText()));
+                node.setTaxonLabel(removeQuotes(ctx.post().label().getText()));
 
             for (NetworkParser.NodeContext childNodeCtx : ctx.node()) {
                 NetworkEdge childEdge = visit(childNodeCtx);
@@ -472,5 +472,96 @@ public class Network extends StateNode {
      */
     public void updateSegmentTree(Tree segmentTree, int segmentIdx) {
 
+        // Identify segment tree clades present in network
+
+        Set<BitSet> cladesInNetwork = new HashSet<>();
+        Map<BitSet, NetworkNode> networkCladeNodes = new HashMap<>();
+        getSegTreeCladesFromNetwork(getRootEdge(), segmentIdx,
+                cladesInNetwork, networkCladeNodes);
+
+        // Identify segment tree clades in existing Tree
+
+        Set<BitSet> cladesInTree = new HashSet<>();
+        Map<BitSet, Node> cladeNodes = new HashMap<>();
+        getSegTreeClades(segmentTree.getRoot(), cladesInTree, cladeNodes);
+
+        // Identify which clades need to be added, removed and conserved
+        // in order to update the Tree to match the segment tree embedded
+        // in the network.
+
+        Set<BitSet> addedClades = new HashSet<>(cladesInNetwork);
+        addedClades.removeAll(cladesInTree);
+
+        Set<BitSet> removedClades = new HashSet<>(cladesInTree);
+        removedClades.removeAll(cladesInNetwork);
+
+        Set<BitSet> conservedClades = new HashSet<>(cladesInTree);
+        conservedClades.removeAll(removedClades);
+
+        // Update ages of nodes corresponding to conserved clades:
+        for (BitSet clade : conservedClades) {
+            NetworkNode networkNode = networkCladeNodes.get(clade);
+            Node treeNode = cladeNodes.get(clade);
+
+            if (networkNode.getHeight() != treeNode.getHeight())
+                treeNode.setHeight(networkNode.getHeight());
+        }
+
+        // TODO Remove clades from Tree, placing node objects in a bin
+
+        // TODO Add new clades to tree, using node objects binned in prev step
+
     }
+
+    private BitSet getSegTreeCladesFromNetwork(NetworkEdge edge, int segmentIdx,
+                                               Set<BitSet> clades,
+                                               Map<BitSet, NetworkNode> cladeNodes) {
+
+        BitSet thisClade = new BitSet();
+
+        int childrenWithSeg = 0;
+        for (NetworkEdge childEdge : edge.childNode.getChildEdges()) {
+            if (childEdge.hasSegments.get(segmentIdx)) {
+                thisClade.or(getSegTreeCladesFromNetwork(childEdge, segmentIdx, clades, cladeNodes));
+                childrenWithSeg += 1;
+            }
+        }
+
+        if (childrenWithSeg == 0) {
+            // Leaf node
+
+            thisClade.set(edge.childNode.getTaxonIndex());
+        }
+
+        if (childrenWithSeg == 0 || childrenWithSeg == 2) {
+            // Node in segment tree
+
+            clades.add(thisClade);
+            cladeNodes.put(thisClade, edge.childNode);
+        }
+
+        return thisClade;
+    }
+
+    private BitSet getSegTreeClades(Node node,
+                                    Set<BitSet> clades,
+                                    Map<BitSet, Node> cladeNodes) {
+
+        BitSet thisClade = new BitSet();
+
+        if (node.isLeaf()) {
+            thisClade.set(node.getNr());
+
+        } else {
+            for (Node child : node.getChildren()) {
+                thisClade.or(getSegTreeClades(child, clades, cladeNodes));
+            }
+        }
+
+        clades.add(thisClade);
+        cladeNodes.put(thisClade, node);
+
+        return thisClade;
+    }
+
 }

@@ -15,12 +15,12 @@ public class NetworkTest extends CoalReTestClass {
         hasSegments.set(0, 8);
 
         NetworkNode nodeA = new NetworkNode();
-        nodeA.setLabel("A");
+        nodeA.setTaxonLabel("A");
         nodeA.setHeight(0.0);
         NetworkNode nodeAprime = new NetworkNode();
         nodeAprime.setHeight(1.0);
         NetworkNode nodeB = new NetworkNode();
-        nodeB.setLabel("B");
+        nodeB.setTaxonLabel("B");
         nodeB.setHeight(0.0);
         NetworkNode nodeAB = new NetworkNode();
         nodeAB.setHeight(2.0);
