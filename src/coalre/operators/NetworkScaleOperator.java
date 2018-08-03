@@ -32,14 +32,14 @@ public class NetworkScaleOperator extends NetworkOperator {
             "Parameters to scale in the OPPOSITE direction as the network.",
             new ArrayList<>());
 
-    Network network;
     double scaleFactor;
     boolean scaleRootOnly;
     List<RealParameter> upParameters, downParameters;
 
     @Override
     public void initAndValidate() {
-        network = networkInput.get();
+        super.initAndValidate();
+
         scaleFactor = scaleFactorInput.get();
         scaleRootOnly = scaleRootOnlyInput.get();
         upParameters = upParametersInput.get();

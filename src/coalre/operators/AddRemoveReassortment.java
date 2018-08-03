@@ -19,12 +19,12 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
             "Mean of exponential used for choosing root attachment times.",
             Input.Validate.REQUIRED);
 
-    private Network network;
     private double alpha;
 
     @Override
     public void initAndValidate() {
-        network = networkInput.get();
+        super.initAndValidate();
+
         alpha = alphaInput.get();
     }
 

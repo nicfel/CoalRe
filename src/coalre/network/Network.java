@@ -1,6 +1,7 @@
 package coalre.network;
 
 import beast.core.StateNode;
+import beast.evolution.tree.Tree;
 import coalre.network.parser.NetworkBaseVisitor;
 import coalre.network.parser.NetworkLexer;
 import coalre.network.parser.NetworkParser;
@@ -36,10 +37,18 @@ public class Network extends StateNode {
     @Override
     public void initAndValidate() { }
 
+    /**
+     * @return the root edge of the network
+     */
 	public NetworkEdge getRootEdge() {
         return rootEdge;
     }
 
+    /**
+     * Set the root edge of the network.
+     *
+     * @param rootEdge the new root edge.
+     */
     public void setRootEdge(NetworkEdge rootEdge) {
         this.rootEdge = rootEdge;
     }
@@ -91,6 +100,9 @@ public class Network extends StateNode {
         return networkEdgeSet;
     }
 
+    /**
+     * @return number of segments represented on network
+     */
     public int getSegmentCount() {
         if (segmentCount == null)
             segmentCount = getLeafNodes().iterator().next().getParentEdges().get(0).hasSegments.cardinality();
@@ -108,16 +120,23 @@ public class Network extends StateNode {
             getEdgesRecurse(childEdge, networkEdgeSet);
     }
 
+    /**
+     * @return Extended Newick representation of network
+     */
     public String getExtendedNewick() {
-        return getExtendedNewick(rootEdge, new ArrayList<>(), null) + ";";
+        return getExtendedNewick(rootEdge, new ArrayList<>(), false) + ";";
     }
 
-    public String getExtendedNewickVerbose(int nSegments) {
-        return getExtendedNewick(rootEdge, new ArrayList<>(), nSegments) + ";";
+    /**
+     * @return Extended Newick representation of network, with
+     *         segment presence annotation.
+     */
+    public String getExtendedNewickVerbose() {
+        return getExtendedNewick(rootEdge, new ArrayList<>(), true) + ";";
     }
 
     private String getExtendedNewick(NetworkEdge currentEdge, List<NetworkNode> seenReassortmentNodes,
-                                     Integer nSegments) {
+                                     boolean verbose) {
         StringBuilder result = new StringBuilder();
 
         boolean traverse = true;
@@ -142,7 +161,7 @@ public class Network extends StateNode {
                 else
                     result.append(",");
 
-                result.append(getExtendedNewick(childEdge, seenReassortmentNodes, nSegments));
+                result.append(getExtendedNewick(childEdge, seenReassortmentNodes, verbose));
             }
 
             result.append(")");
@@ -157,13 +176,12 @@ public class Network extends StateNode {
 
         result.append("[&");
         result.append("segments=").append(currentEdge.hasSegments);
-        if (nSegments != null) {
-            for (int segIdx=0; segIdx<nSegments; segIdx++) {
+        if (verbose) {
+            for (int segIdx=0; segIdx<getSegmentCount(); segIdx++) {
                 result.append(",seg").append(segIdx).append("=")
                         .append(currentEdge.hasSegments.get(segIdx));
             }
         }
-//        result.append(",edgeObjID=\"").append(currentEdge.toString()).append("\"");
         result.append(",segsCarried=").append(currentEdge.hasSegments.cardinality());
         result.append("]");
 
@@ -448,13 +466,11 @@ public class Network extends StateNode {
     }
 
     /**
-     * Main method for debugging.
+     * Modify segmentTree so that it matches the current network state.
      *
-     * @param args unused
+     * @param segmentTree
      */
-    public static void main(String[] args) {
+    public void updateSegmentTree(Tree segmentTree, int segmentIdx) {
 
-        Network network = new Network();
-        network.fromExtendedNewick("((((t4[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.215550515569861,t3[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.31555051556986097)[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.19210197814368535,(t1[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.5324769040894228,#H0[&segments={2, 5, 6, 7}]:0.18961198047244393)[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.1751755896241235)[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.18917632524163308,t5[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.4968288189551794)[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.19990298145199947,((t10[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.06464178732090486,(t9[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.0384994570159497,t7[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.23849945701594968)[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.1261423303049552)[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.12164810442847562,((t8[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.1428649236169789)#H0[&segments={0, 1, 3, 4}]:0.10219993034575986,(t2[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.06745859531190146,t6[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.16745859531190146)[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.2776062586508373)[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.14122503778664175)[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.5104419086577984)[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.0;");
     }
 }

@@ -2,6 +2,7 @@ package coalre.operators;
 
 import beast.core.Input;
 import beast.core.Operator;
+import beast.core.util.Log;
 import beast.evolution.tree.Tree;
 import beast.math.Binomial;
 import beast.util.Randomizer;
@@ -22,12 +23,31 @@ public abstract class NetworkOperator extends Operator {
             "Segment tree associated with network.",
             new ArrayList<>());
 
+    Network network;
+    List<Tree> segmentTrees;
+
+    @Override
+    public void initAndValidate() {
+        network = networkInput.get();
+        segmentTrees = segmentTreesInput.get();
+
+        if (segmentTrees.isEmpty()) {
+            Log.warning.println("Warning: no segment trees provided to " +
+                    "network operator " + getID() + ".");
+        } else {
+            if (segmentTrees.size() != network.getSegmentCount())
+                throw new IllegalArgumentException("Number of segment trees provided " +
+                        "to operator must match number of segments in network.");
+        }
+
+    }
+
     final public double proposal() {
         double logHR = networkProposal();
 
         if (logHR>Double.NEGATIVE_INFINITY) {
-            for (Tree segmentTree : segmentTreesInput.get())
-                updateSegmentTree(segmentTree);
+            for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
+                network.updateSegmentTree(segmentTrees.get(segIdx), segIdx);
         }
 
         return logHR;
@@ -77,23 +97,19 @@ public abstract class NetworkOperator extends Operator {
      */
     protected BitSet getRandomConditionedSubset(BitSet sourceSegments) {
 
-        if (sourceSegments.cardinality()<2) {
+        if (sourceSegments.cardinality()<2)
             return null;
-        }
 
         BitSet destSegments = new BitSet();
 
         do {
-
             destSegments.clear();
 
             for (int segIdx = sourceSegments.nextSetBit(0); segIdx != -1;
                  segIdx = sourceSegments.nextSetBit(segIdx + 1)) {
 
-                if (Randomizer.nextBoolean()) {
+                if (Randomizer.nextBoolean())
                     destSegments.set(segIdx);
-                }
-
             }
 
         } while (destSegments.cardinality() == 0
@@ -116,13 +132,5 @@ public abstract class NetworkOperator extends Operator {
 
         return sourceSegments.cardinality()*Math.log(0.5)
                 - Math.log(1.0 - 2.0*Math.pow(0.5, sourceSegments.cardinality()));
-    }
-
-    /**
-     * Modify segmentTree so that it matches the
-     * @param segmentTree
-     */
-    protected void updateSegmentTree(Tree segmentTree) {
-
     }
 }

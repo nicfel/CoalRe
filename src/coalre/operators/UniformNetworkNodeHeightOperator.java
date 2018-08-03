@@ -11,13 +11,6 @@ import java.util.stream.Collectors;
 
 public class UniformNetworkNodeHeightOperator extends NetworkOperator {
 
-    Network network;
-
-    @Override
-    public void initAndValidate() {
-        network = networkInput.get();
-    }
-
     @Override
     public double networkProposal() {
         List<NetworkNode> networkNodes = network.getNodes().stream()

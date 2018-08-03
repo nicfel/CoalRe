@@ -39,13 +39,17 @@ public class SimulatedCoalescentNetwork extends Network {
     private int nSegments;
 
     public void initAndValidate() {
-        List<NetworkNode> sampleNodes = new ArrayList<>();
-
         nSegments = segmentTreesInput.get().size();
+        populationFunction = populationFunctionInput.get();
+        reassortmentRate = reassortmentRateInput.get();
 
         if (nSegments==0) {
             throw new IllegalArgumentException("Need at least one segment tree!");
         }
+
+        // Set up sample nodes:
+
+        List<NetworkNode> sampleNodes = new ArrayList<>();
 
         TraitSet traitSet = segmentTreesInput.get().get(0).getDateTrait();
         if (traitSet != null) {
@@ -71,15 +75,20 @@ public class SimulatedCoalescentNetwork extends Network {
             }
         }
 
-        populationFunction = populationFunctionInput.get();
-
-        reassortmentRate = reassortmentRateInput.get();
-
+        // Perform network simulation:
         simulateNetwork(sampleNodes);
+
+        // Update segment trees:
+        for (int segIdx=0; segIdx<nSegments; segIdx++)
+            updateSegmentTree(segmentTreesInput.get().get(segIdx), segIdx);
 
         super.initAndValidate();
     }
 
+    /**
+     * Simulate network under coalescent with reassortment model.
+     * @param sampleNodes network nodes corresponding to samples.
+     */
     public void simulateNetwork(List<NetworkNode> sampleNodes) {
 
         List<NetworkNode> remainingSampleNodes = new ArrayList<>(sampleNodes);

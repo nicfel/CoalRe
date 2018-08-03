@@ -12,13 +12,6 @@ import java.util.stream.Collectors;
 
 public class DivertSegmentOperator extends NetworkOperator {
 
-    protected Network network;
-
-    @Override
-    public void initAndValidate() {
-        network = networkInput.get();
-    }
-
     @Override
     public double networkProposal() {
         double logHR = 0.0;
