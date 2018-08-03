@@ -2,18 +2,45 @@ package coalre.operators;
 
 import beast.core.Input;
 import beast.core.Operator;
+import beast.evolution.tree.Tree;
 import beast.math.Binomial;
 import beast.util.Randomizer;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.List;
 
 public abstract class NetworkOperator extends Operator {
 
     public Input<Network> networkInput = new Input<>("network",
             "Network on which to operate",
             Input.Validate.REQUIRED);
+
+    public Input<List<Tree>> segmentTreesInput = new Input<>("segmentTree",
+            "Segment tree associated with network.",
+            new ArrayList<>());
+
+    final public double proposal() {
+        double logHR = networkProposal();
+
+        if (logHR>Double.NEGATIVE_INFINITY) {
+            for (Tree segmentTree : segmentTreesInput.get())
+                updateSegmentTree(segmentTree);
+        }
+
+        return logHR;
+    }
+
+    /**
+     * Propose a new network state.  The network state will be
+     * used to update the segment trees once the network proposal
+     * is complete.
+     *
+     * @return log of HR for proposal.
+     */
+    protected abstract double networkProposal();
 
     /**
      * Retrieve sister of given edge
@@ -89,5 +116,13 @@ public abstract class NetworkOperator extends Operator {
 
         return sourceSegments.cardinality()*Math.log(0.5)
                 - Math.log(1.0 - 2.0*Math.pow(0.5, sourceSegments.cardinality()));
+    }
+
+    /**
+     * Modify segmentTree so that it matches the
+     * @param segmentTree
+     */
+    protected void updateSegmentTree(Tree segmentTree) {
+
     }
 }

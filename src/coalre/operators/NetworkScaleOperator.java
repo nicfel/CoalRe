@@ -47,7 +47,7 @@ public class NetworkScaleOperator extends NetworkOperator {
     }
 
     @Override
-    public double proposal() {
+    public double networkProposal() {
 
         int count = 0;
 

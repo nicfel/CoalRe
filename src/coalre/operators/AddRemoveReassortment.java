@@ -29,7 +29,7 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
     }
 
     @Override
-    public double proposal() {
+    public double networkProposal() {
 
         double logHR;
         if (Randomizer.nextBoolean())

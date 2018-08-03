@@ -20,7 +20,7 @@ public class DivertSegmentOperator extends NetworkOperator {
     }
 
     @Override
-    public double proposal() {
+    public double networkProposal() {
         double logHR = 0.0;
 
         List<NetworkEdge> sourceEdges = network.getEdges().stream()
