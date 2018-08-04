@@ -507,9 +507,28 @@ public class Network extends StateNode {
                 treeNode.setHeight(networkNode.getHeight());
         }
 
-        // TODO Remove clades from Tree, placing node objects in a bin
+        // Remove clades from Tree, placing node objects in a bin
 
-        // TODO Add new clades to tree, using node objects binned in prev step
+        List<Node> nodeBin = new ArrayList<>();
+        for (BitSet clade : removedClades) {
+            Node node = cladeNodes.get(clade);
+            nodeBin.add(node);
+
+            if (!node.isRoot()) {
+                node.getParent().removeChild(node);
+                node.setParent(null);
+            }
+
+            for (Node child : node.getChildren()) {
+                node.removeChild(child);
+                child.setParent(null);
+            }
+        }
+
+        // Traverse segment tree in network, adding new nodes from
+        // bin as required
+
+        buildSegmentTree(getRootEdge(), segmentIdx, cladeNodes, nodeBin);
 
     }
 
@@ -562,6 +581,34 @@ public class Network extends StateNode {
         cladeNodes.put(thisClade, node);
 
         return thisClade;
+    }
+
+    private BitSet buildSegmentTree(NetworkEdge edge, int segmentIdx,
+                                  Map<BitSet,Node> cladeNodes, List<Node> nodeBin) {
+
+        BitSet thisClade = new BitSet();
+
+        int childrenWithSeg = 0;
+        for (NetworkEdge childEdge : edge.childNode.getChildEdges()) {
+            if (childEdge.hasSegments.get(segmentIdx)) {
+                thisClade.or(buildSegmentTree(childEdge, segmentIdx, cladeNodes, nodeBin));
+                childrenWithSeg += 1;
+            }
+        }
+
+        if (childrenWithSeg == 0) {
+            // Leaf node
+
+            thisClade.set(edge.childNode.getTaxonIndex());
+        }
+
+        if (childrenWithSeg == 2) {
+            // Internal node
+
+        }
+
+        return thisClade;
+
     }
 
 }
