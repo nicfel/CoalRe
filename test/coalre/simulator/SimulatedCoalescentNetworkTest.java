@@ -43,7 +43,8 @@ public class SimulatedCoalescentNetworkTest extends CoalReTestClass {
                     "segmentTree", segmentTrees.get(4),
                     "segmentTree", segmentTrees.get(5),
                     "segmentTree", segmentTrees.get(6),
-                    "segmentTree", segmentTrees.get(7));
+                    "segmentTree", segmentTrees.get(7),
+                    "enableSegmentTreeUpdate", false);
 
             reassortmentNodeCounts[i] = NetworkStatsLogger.getReassortmentCount(network);
             networkHeights[i] = NetworkStatsLogger.getTotalHeight(network);

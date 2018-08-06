@@ -59,7 +59,7 @@ public abstract class CoalReTestClass {
 
         for (int seg=0; seg<nSegments; seg++) {
             Tree tree = new Tree();
-            tree.initByName("trait", traitSet);
+            tree.initByName("trait", traitSet, "taxonset", traitSet.taxaInput.get());
             segmentTrees.add(tree);
         }
 
@@ -68,16 +68,23 @@ public abstract class CoalReTestClass {
 
     protected Network getContempNetwork(int nTaxa, int nSegments, double reassortmentRate) {
 
-        SimulatedCoalescentNetwork network = new SimulatedCoalescentNetwork();
         TaxonSet taxonSet = getTaxonSet(nTaxa);
         TraitSet traitSet = getContempDateTraitSet(taxonSet);
+        List<Tree> segmentTrees = getSegmentTreeObjects(nSegments, traitSet);
+
+        return getContempNetwork(segmentTrees, reassortmentRate);
+    }
+
+    protected Network getContempNetwork(List<Tree> segmentTrees, double reassortmentRate) {
         ConstantPopulation popFunc = new ConstantPopulation();
         popFunc.initByName("popSize", new RealParameter("1.0"));
 
+        SimulatedCoalescentNetwork network = new SimulatedCoalescentNetwork();
         network.initByName(
-                "segmentTree", getSegmentTreeObjects(nSegments, traitSet),
+                "segmentTree", segmentTrees,
                 "populationModel", popFunc,
-                "reassortmentRate", new RealParameter(String.valueOf(reassortmentRate)));
+                "reassortmentRate", new RealParameter(String.valueOf(reassortmentRate)),
+                "enableSegmentTreeUpdate", false);
 
         return network;
     }

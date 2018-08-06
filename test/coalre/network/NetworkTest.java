@@ -1,10 +1,14 @@
 package coalre.network;
 
+import beast.evolution.alignment.TaxonSet;
+import beast.evolution.tree.TraitSet;
+import beast.evolution.tree.Tree;
+import beast.util.Randomizer;
 import coalre.CoalReTestClass;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.BitSet;
+import java.util.*;
 
 public class NetworkTest extends CoalReTestClass {
 
@@ -78,5 +82,34 @@ public class NetworkTest extends CoalReTestClass {
         Network copiedNetwork = (Network) network.copy();
 
         Assert.assertEquals(network.toString(), copiedNetwork.toString());
+    }
+
+    @Test
+    public void segmentTreeUpdateTest() {
+        Randomizer.setSeed(53);
+
+        int nSegs = 5;
+        TaxonSet taxonSet = getTaxonSet(5);
+        TraitSet contempTraitset = getContempDateTraitSet(taxonSet);
+        List<Tree> segTrees = getSegmentTreeObjects(nSegs, contempTraitset);
+
+//        String newickString = "(((t0[&segments={0,1,2,3,4,5,6,7}]:1)#1[&segments={1,4}]:1,t1[&segments={0,1,2,3,4,5,6,7}]:2)[&segments={0,1,2,3,4,5,6,7}]:1,#1[&segments={0,2,3,5,6,7}]:2)[&segments={0,1,2,3,4,5,6,7}]:0.0;";
+//        Network network = new Network(newickString, taxonSet);
+        Network network = getContempNetwork(segTrees, 0.5);
+
+        System.out.println(network);
+
+        Set<BitSet> networkClades = new HashSet<>();
+        Map<BitSet, NetworkNode> networkCladeNodes = new HashMap<>();
+        network.getSegTreeCladesFromNetwork(network.getRootEdge().childNode,
+                0, networkClades, networkCladeNodes);
+
+        System.out.println(networkClades);
+        System.out.println(networkCladeNodes);
+
+        for (int segIdx=0; segIdx<nSegs; segIdx++) {
+            network.updateSegmentTree(segTrees.get(segIdx), segIdx);
+            System.out.println(segTrees.get(segIdx).getRoot().toNewick());
+        }
     }
 }

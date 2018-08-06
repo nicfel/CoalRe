@@ -1,6 +1,7 @@
 package coalre.network;
 
 import beast.core.StateNode;
+import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 import coalre.network.parser.NetworkBaseVisitor;
@@ -32,6 +33,13 @@ public class Network extends StateNode {
 
     public Network(String newickString) {
         fromExtendedNewick(newickString);
+    }
+
+    public Network(String newickString, TaxonSet taxonSet) {
+        fromExtendedNewick(newickString);
+
+        for (NetworkNode leafNode : getLeafNodes())
+            leafNode.setTaxonIndex(taxonSet.getTaxonIndex(leafNode.getTaxonLabel()));
     }
 
     @Override
@@ -203,6 +211,8 @@ public class Network extends StateNode {
 
         NetworkBuilderVisitor builder = new NetworkBuilderVisitor();
         rootEdge = builder.visit(tree);
+
+        List<NetworkNode> leafNodes = new ArrayList<>(getLeafNodes());
     }
 
     /** StateNode implementation: **/
@@ -478,7 +488,7 @@ public class Network extends StateNode {
 
         Set<BitSet> cladesInNetwork = new HashSet<>();
         Map<BitSet, NetworkNode> networkCladeNodes = new HashMap<>();
-        getSegTreeCladesFromNetwork(getRootEdge(), segmentIdx,
+        getSegTreeCladesFromNetwork(getRootEdge().childNode, segmentIdx,
                 cladesInNetwork, networkCladeNodes);
 
         // Identify segment tree clades in existing Tree
@@ -500,15 +510,6 @@ public class Network extends StateNode {
         Set<BitSet> conservedClades = new HashSet<>(cladesInTree);
         conservedClades.removeAll(removedClades);
 
-        // Update ages of nodes corresponding to conserved clades:
-        for (BitSet clade : conservedClades) {
-            NetworkNode networkNode = networkCladeNodes.get(clade);
-            Node treeNode = cladeNodes.get(clade);
-
-            if (networkNode.getHeight() != treeNode.getHeight())
-                treeNode.setHeight(networkNode.getHeight());
-        }
-
         // Remove clades from Tree, placing node objects in a bin
 
         List<Node> nodeBin = new ArrayList<>();
@@ -521,32 +522,46 @@ public class Network extends StateNode {
                 node.setParent(null);
             }
 
-            for (Node child : node.getChildren()) {
+            List<Node> children = new ArrayList<>(node.getChildren());
+            for (Node child : children) {
                 node.removeChild(child);
                 child.setParent(null);
             }
         }
 
+        for (BitSet clade : removedClades)
+            cladeNodes.remove(clade);
+
+
         // Traverse segment tree in network, adding new nodes from
         // bin as required
 
-        BitSet rootClade = buildSegmentTree(getRootEdge(), segmentIdx, cladeNodes, nodeBin);
+        BitSet rootClade = buildSegmentTree(getRootEdge().childNode, segmentIdx, cladeNodes, nodeBin);
 
         // Keep root up to date
 
         segmentTree.setRoot(cladeNodes.get(rootClade));
     }
 
-    private BitSet getSegTreeCladesFromNetwork(NetworkEdge edge, int segmentIdx,
-                                               Set<BitSet> clades,
-                                               Map<BitSet, NetworkNode> cladeNodes) {
+    /**
+     * Identify which clades are present in the network below edge for the given segment.
+     *
+     * @param networkNode       network node below which clades are identified
+     * @param segmentIdx        index of segment to consider
+     * @param clades            empty set to populate with discovered clades
+     * @param cladeNetworkNodes empty map to populate with links from caldes to network nodes.
+     * @return clade corresponding to network node
+     */
+    BitSet getSegTreeCladesFromNetwork(NetworkNode networkNode, int segmentIdx,
+                                       Set<BitSet> clades,
+                                       Map<BitSet, NetworkNode> cladeNetworkNodes) {
 
         BitSet thisClade = new BitSet();
 
         int childrenWithSeg = 0;
-        for (NetworkEdge childEdge : edge.childNode.getChildEdges()) {
+        for (NetworkEdge childEdge : networkNode.getChildEdges()) {
             if (childEdge.hasSegments.get(segmentIdx)) {
-                thisClade.or(getSegTreeCladesFromNetwork(childEdge, segmentIdx, clades, cladeNodes));
+                thisClade.or(getSegTreeCladesFromNetwork(childEdge.childNode, segmentIdx, clades, cladeNetworkNodes));
                 childrenWithSeg += 1;
             }
         }
@@ -554,22 +569,30 @@ public class Network extends StateNode {
         if (childrenWithSeg == 0) {
             // Leaf node
 
-            thisClade.set(edge.childNode.getTaxonIndex());
+            thisClade.set(networkNode.getTaxonIndex());
         }
 
         if (childrenWithSeg != 1) {
             // Node in segment tree
 
             clades.add(thisClade);
-            cladeNodes.put(thisClade, edge.childNode);
+            cladeNetworkNodes.put(thisClade, networkNode);
         }
 
         return thisClade;
     }
 
-    private BitSet getSegTreeClades(Node node,
-                                    Set<BitSet> clades,
-                                    Map<BitSet, Node> cladeNodes) {
+    /**
+     * Identify which clades are present in the segment tree below node
+     *
+     * @param node          node below which clades are identified
+     * @param clades        empty set to populate with discovered clades
+     * @param cladeNodes    empty map to populate with links from clades to tree nodes
+     * @return clade corresponding to segment tree node
+     */
+    BitSet getSegTreeClades(Node node,
+                            Set<BitSet> clades,
+                            Map<BitSet, Node> cladeNodes) {
 
         BitSet thisClade = new BitSet();
 
@@ -588,15 +611,24 @@ public class Network extends StateNode {
         return thisClade;
     }
 
-    private BitSet buildSegmentTree(NetworkEdge edge, int segmentIdx,
-                                  Map<BitSet,Node> cladeNodes, List<Node> nodeBin) {
+    /**
+     * Update segment tree below networkNode to match tree implied by network.
+     *
+     * @param networkNode node below which segment tree is updated
+     * @param segmentIdx  index of segment tree
+     * @param cladeNodes  map containing links from existing tree clades to tree nodes
+     * @param nodeBin     list containing node objects available for new tree clades
+     * @return clade corresponding to networkNode
+     */
+    BitSet buildSegmentTree(NetworkNode networkNode, int segmentIdx,
+                            Map<BitSet,Node> cladeNodes, List<Node> nodeBin) {
 
         BitSet thisClade = new BitSet();
         List<BitSet> childClades = new ArrayList<>();
 
-        for (NetworkEdge childEdge : edge.childNode.getChildEdges()) {
+        for (NetworkEdge childEdge : networkNode.getChildEdges()) {
             if (childEdge.hasSegments.get(segmentIdx)) {
-                BitSet childClade = buildSegmentTree(childEdge, segmentIdx, cladeNodes, nodeBin);
+                BitSet childClade = buildSegmentTree(childEdge.childNode, segmentIdx, cladeNodes, nodeBin);
                 thisClade.or(childClade);
                 childClades.add(childClade);
             }
@@ -605,21 +637,28 @@ public class Network extends StateNode {
         if (childClades.size() == 0) {
             // Leaf node
 
-            thisClade.set(edge.childNode.getTaxonIndex());
+            thisClade.set(networkNode.getTaxonIndex());
         }
 
         if (childClades.size() > 1) {
             // Internal node
 
+            Node treeNode;
             if (!cladeNodes.containsKey(thisClade)) {
-
-                Node node = nodeBin.get(nodeBin.size()-1);
-                nodeBin.remove(nodeBin.size()-1);
-
-                for (BitSet childClade : childClades) {
-                    node.addChild(cladeNodes.get(childClade));
-                }
+                treeNode = nodeBin.get(nodeBin.size() - 1);
+                nodeBin.remove(nodeBin.size() - 1);
+                cladeNodes.put(thisClade, treeNode);
+            } else {
+                treeNode = cladeNodes.get(thisClade);
             }
+
+            for (BitSet childClade : childClades) {
+                Node childNode = cladeNodes.get(childClade);
+                if (!treeNode.getChildren().contains(childNode))
+                    treeNode.addChild(childNode);
+            }
+
+            cladeNodes.get(thisClade).setHeight(networkNode.getHeight());
         }
 
         return thisClade;
