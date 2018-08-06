@@ -465,6 +465,8 @@ public class Network extends StateNode {
         }
     }
 
+    /** Segment tree updating: **/
+
     /**
      * Modify segmentTree so that it matches the current network state.
      *
@@ -528,8 +530,11 @@ public class Network extends StateNode {
         // Traverse segment tree in network, adding new nodes from
         // bin as required
 
-        buildSegmentTree(getRootEdge(), segmentIdx, cladeNodes, nodeBin);
+        BitSet rootClade = buildSegmentTree(getRootEdge(), segmentIdx, cladeNodes, nodeBin);
 
+        // Keep root up to date
+
+        segmentTree.setRoot(cladeNodes.get(rootClade));
     }
 
     private BitSet getSegTreeCladesFromNetwork(NetworkEdge edge, int segmentIdx,
@@ -552,7 +557,7 @@ public class Network extends StateNode {
             thisClade.set(edge.childNode.getTaxonIndex());
         }
 
-        if (childrenWithSeg == 0 || childrenWithSeg == 2) {
+        if (childrenWithSeg != 1) {
             // Node in segment tree
 
             clades.add(thisClade);
@@ -587,24 +592,34 @@ public class Network extends StateNode {
                                   Map<BitSet,Node> cladeNodes, List<Node> nodeBin) {
 
         BitSet thisClade = new BitSet();
+        List<BitSet> childClades = new ArrayList<>();
 
-        int childrenWithSeg = 0;
         for (NetworkEdge childEdge : edge.childNode.getChildEdges()) {
             if (childEdge.hasSegments.get(segmentIdx)) {
-                thisClade.or(buildSegmentTree(childEdge, segmentIdx, cladeNodes, nodeBin));
-                childrenWithSeg += 1;
+                BitSet childClade = buildSegmentTree(childEdge, segmentIdx, cladeNodes, nodeBin);
+                thisClade.or(childClade);
+                childClades.add(childClade);
             }
         }
 
-        if (childrenWithSeg == 0) {
+        if (childClades.size() == 0) {
             // Leaf node
 
             thisClade.set(edge.childNode.getTaxonIndex());
         }
 
-        if (childrenWithSeg == 2) {
+        if (childClades.size() > 1) {
             // Internal node
 
+            if (!cladeNodes.containsKey(thisClade)) {
+
+                Node node = nodeBin.get(nodeBin.size()-1);
+                nodeBin.remove(nodeBin.size()-1);
+
+                for (BitSet childClade : childClades) {
+                    node.addChild(cladeNodes.get(childClade));
+                }
+            }
         }
 
         return thisClade;
