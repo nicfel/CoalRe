@@ -1,6 +1,7 @@
 package coalre.network;
 
 import beast.evolution.alignment.TaxonSet;
+import beast.evolution.tree.Node;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
 import beast.util.Randomizer;
@@ -84,32 +85,57 @@ public class NetworkTest extends CoalReTestClass {
         Assert.assertEquals(network.toString(), copiedNetwork.toString());
     }
 
+    private Node extractSegmentTree(NetworkNode networkNode, int segmentIdx) {
+
+        List<Node> childNodes = new ArrayList<>();
+        for (NetworkEdge childEdge : networkNode.getChildEdges()) {
+            if (childEdge.hasSegments.get(segmentIdx))
+                childNodes.add(extractSegmentTree(childEdge.childNode, segmentIdx));
+        }
+
+        Node treeNode;
+
+        switch (childNodes.size()) {
+            case 0:
+                treeNode = new Node();
+                treeNode.setHeight(networkNode.getHeight());
+                treeNode.setID(networkNode.getTaxonLabel());
+                treeNode.setNr(networkNode.getTaxonIndex());
+                break;
+
+            case 1:
+                treeNode = childNodes.get(0);
+                break;
+
+            case 2:
+                treeNode = new Node();
+                treeNode.setHeight(networkNode.getHeight());
+                for (Node childNode : childNodes)
+                    treeNode.addChild(childNode);
+                break;
+
+            default:
+                throw new IllegalArgumentException("Segment tree contains polytomy.");
+        }
+
+        return treeNode;
+    }
+
     @Test
     public void segmentTreeUpdateTest() {
-//        Randomizer.setSeed(53);
+        int nSegs = 50;
+        TaxonSet taxonSet = getTaxonSet(100);
+        TraitSet traitSet = getSerialDateTraitSet(taxonSet, 1.0);
+        List<Tree> segTrees = getSegmentTreeObjects(nSegs, traitSet);
 
-        int nSegs = 8;
-        TaxonSet taxonSet = getTaxonSet(10);
-        TraitSet contempTraitset = getContempDateTraitSet(taxonSet);
-        List<Tree> segTrees = getSegmentTreeObjects(nSegs, contempTraitset);
-
-//        String newickString = "(((t0[&segments={0,1,2,3,4,5,6,7}]:1)#1[&segments={1,4}]:1,t1[&segments={0,1,2,3,4,5,6,7}]:2)[&segments={0,1,2,3,4,5,6,7}]:1,#1[&segments={0,2,3,5,6,7}]:2)[&segments={0,1,2,3,4,5,6,7}]:0.0;";
-//        Network network = new Network(newickString, taxonSet);
         Network network = getContempNetwork(segTrees, 2.0);
-
-        System.out.println(network);
-
-        Set<BitSet> networkClades = new HashSet<>();
-        Map<BitSet, NetworkNode> networkCladeNodes = new HashMap<>();
-        network.getSegTreeCladesFromNetwork(network.getRootEdge().childNode,
-                0, networkClades, networkCladeNodes);
-
-        System.out.println(networkClades);
-        System.out.println(networkCladeNodes);
 
         for (int segIdx=0; segIdx<nSegs; segIdx++) {
             network.updateSegmentTree(segTrees.get(segIdx), segIdx);
-            System.out.println(segTrees.get(segIdx).getRoot().toNewick() + ";");
+            String segTreeString= segTrees.get(segIdx).getRoot().toSortedNewick(new int[1], false);
+            String trueSegTreeString = extractSegmentTree(network.getRootEdge().childNode, segIdx).toSortedNewick(new int[1], false);
+
+            Assert.assertEquals(trueSegTreeString, segTreeString);
         }
     }
 }

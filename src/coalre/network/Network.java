@@ -497,18 +497,11 @@ public class Network extends StateNode {
         Map<BitSet, Node> cladeNodes = new HashMap<>();
         getSegTreeClades(segmentTree.getRoot(), cladesInTree, cladeNodes);
 
-        // Identify which clades need to be added, removed and conserved
-        // in order to update the Tree to match the segment tree embedded
-        // in the network.
-
-        Set<BitSet> addedClades = new HashSet<>(cladesInNetwork);
-        addedClades.removeAll(cladesInTree);
+        // Identify which clades need to be removed in order to update the
+        // Tree to match the segment tree embedded in the network.
 
         Set<BitSet> removedClades = new HashSet<>(cladesInTree);
         removedClades.removeAll(cladesInNetwork);
-
-        Set<BitSet> conservedClades = new HashSet<>(cladesInTree);
-        conservedClades.removeAll(removedClades);
 
         // Remove clades from Tree, placing node objects in a bin
 
@@ -643,6 +636,8 @@ public class Network extends StateNode {
         if (childClades.size() > 1) {
             // Internal node
 
+            // Retrieve/create tree node object
+
             Node treeNode;
             if (!cladeNodes.containsKey(thisClade)) {
                 treeNode = nodeBin.get(nodeBin.size() - 1);
@@ -651,6 +646,8 @@ public class Network extends StateNode {
             } else {
                 treeNode = cladeNodes.get(thisClade);
             }
+
+            // Update children (is there a more efficient way to do this??)
 
             Set<Node> trueChildNodes = new HashSet<>();
             for (BitSet childClade : childClades) {
