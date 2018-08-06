@@ -86,16 +86,16 @@ public class NetworkTest extends CoalReTestClass {
 
     @Test
     public void segmentTreeUpdateTest() {
-        Randomizer.setSeed(53);
+//        Randomizer.setSeed(53);
 
-        int nSegs = 5;
-        TaxonSet taxonSet = getTaxonSet(5);
+        int nSegs = 8;
+        TaxonSet taxonSet = getTaxonSet(10);
         TraitSet contempTraitset = getContempDateTraitSet(taxonSet);
         List<Tree> segTrees = getSegmentTreeObjects(nSegs, contempTraitset);
 
 //        String newickString = "(((t0[&segments={0,1,2,3,4,5,6,7}]:1)#1[&segments={1,4}]:1,t1[&segments={0,1,2,3,4,5,6,7}]:2)[&segments={0,1,2,3,4,5,6,7}]:1,#1[&segments={0,2,3,5,6,7}]:2)[&segments={0,1,2,3,4,5,6,7}]:0.0;";
 //        Network network = new Network(newickString, taxonSet);
-        Network network = getContempNetwork(segTrees, 0.5);
+        Network network = getContempNetwork(segTrees, 2.0);
 
         System.out.println(network);
 
@@ -109,7 +109,7 @@ public class NetworkTest extends CoalReTestClass {
 
         for (int segIdx=0; segIdx<nSegs; segIdx++) {
             network.updateSegmentTree(segTrees.get(segIdx), segIdx);
-            System.out.println(segTrees.get(segIdx).getRoot().toNewick());
+            System.out.println(segTrees.get(segIdx).getRoot().toNewick() + ";");
         }
     }
 }

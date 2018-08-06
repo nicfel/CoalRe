@@ -652,10 +652,19 @@ public class Network extends StateNode {
                 treeNode = cladeNodes.get(thisClade);
             }
 
+            Set<Node> trueChildNodes = new HashSet<>();
             for (BitSet childClade : childClades) {
                 Node childNode = cladeNodes.get(childClade);
                 if (!treeNode.getChildren().contains(childNode))
                     treeNode.addChild(childNode);
+
+                trueChildNodes.add(childNode);
+            }
+
+            List<Node> currentChildNodes = new ArrayList<>(treeNode.getChildren());
+            for (Node childNode : currentChildNodes) {
+                if (!trueChildNodes.contains(childNode))
+                    treeNode.removeChild(childNode);
             }
 
             cladeNodes.get(thisClade).setHeight(networkNode.getHeight());
