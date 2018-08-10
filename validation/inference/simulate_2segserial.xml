@@ -1,0 +1,75 @@
+<beast version="2.0"
+       namespace="beast.core
+                 :beast.core.util
+                 :beast.core.parameter
+                 :beast.evolution.alignment
+                 :beast.evolution.likelihood
+                 :beast.evolution.tree
+                 :beast.evolution.tree.coalescent
+                 :beast.evolution.sitemodel
+                 :beast.evolution.substitutionmodel
+                 :beast.evolution.operators
+                 :beast.math.distributions
+                 :feast.simulation
+                 :coalre.network
+                 :coalre.statistics
+                 :coalre.simulator
+                 :coalre.distribution
+                 :coalre.operators">
+
+    <run spec="GPSimulator" nSims="1">
+        <simulationObject id="network_truth" spec="SimulatedCoalescentNetwork" fileName="$(filebase).trueNetwork.tree">
+            <populationModel spec="ConstantPopulation">
+                <popSize spec="RealParameter" value="1.0"/>
+            </populationModel>
+
+            <reassortmentRate spec="RealParameter" value="0.5"/>
+
+            <segmentTree id="seg1tree_truth" spec="Tree">
+                <taxonset spec="TaxonSet" id="taxonSet">
+                    <taxon spec="Taxon" id="t1"/>
+                    <taxon spec="Taxon" id="t2"/>
+                    <taxon spec="Taxon" id="t3"/>
+                    <taxon spec="Taxon" id="t4"/>
+                    <taxon spec="Taxon" id="t5"/>
+                    <taxon spec="Taxon" id="t6"/>
+                    <taxon spec="Taxon" id="t7"/>
+                    <taxon spec="Taxon" id="t8"/>
+                    <taxon spec="Taxon" id="t9"/>
+                    <taxon spec="Taxon" id="t10"/>
+                </taxonset>
+                <trait spec="TraitSet" traitname="date-backward" id="traitSet">
+                    t1=0, t2=0.2, t3=0, t4=0, t5=0, t6=0, t7=0, t8=0, t9=0, t10=0
+                    <taxa idref="taxonSet"/>
+                </trait>
+            </segmentTree>
+            <segmentTree id="seg2tree_truth" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
+        </simulationObject>
+
+        <simulationObject id="seg1align" spec="SimulatedAlignment" outputFileName="$(filebase).seg1.alignment.nexus"
+                   sequenceLength="500" tree="@seg1tree_truth">
+            <siteModel spec="SiteModel">
+                <mutationRate spec="RealParameter" value="0.02"/>
+                <substModel spec="JukesCantor"/>
+            </siteModel>
+        </simulationObject>
+
+        <simulationObject id="seg2align" spec="SimulatedAlignment" outputFileName="$(filebase).seg2.alignment.nexus"
+                   sequenceLength="500" tree="@seg2tree_truth">
+            <siteModel spec="SiteModel">
+                <mutationRate spec="RealParameter" value="0.02"/>
+                <substModel spec="JukesCantor"/>
+            </siteModel>
+        </simulationObject>
+
+        <logger spec="Logger" fileName="$(filebase).trueSeg1.tree" logEvery="1">
+            <log idref="seg1tree_truth"/>
+        </logger>
+
+        <logger spec="Logger" fileName="$(filebase).trueSeg2.tree" logEvery="1">
+            <log idref="seg2tree_truth"/>
+        </logger>
+
+    </run>
+
+</beast>

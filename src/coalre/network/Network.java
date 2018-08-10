@@ -244,6 +244,7 @@ public class Network extends StateNode {
             childNodeCopy = new NetworkNode();
             childNodeCopy.setHeight(edge.childNode.getHeight());
             childNodeCopy.setTaxonLabel(edge.childNode.getTaxonLabel());
+            childNodeCopy.setTaxonIndex(edge.childNode.getTaxonIndex());
             seenNodes.put(edge.childNode, childNodeCopy);
         }
 

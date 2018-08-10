@@ -42,7 +42,13 @@ public abstract class NetworkOperator extends Operator {
 
     }
 
+//    static int count = 0;
+
     final public double proposal() {
+//        count += 1;
+//
+//        System.out.println("count = " + count);
+
         double logHR = networkProposal();
 
         if (logHR>Double.NEGATIVE_INFINITY) {

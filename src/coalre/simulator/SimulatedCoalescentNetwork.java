@@ -12,6 +12,8 @@ import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
 
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Comparator;
@@ -31,6 +33,9 @@ public class SimulatedCoalescentNetwork extends Network {
     public Input<Boolean> enableSegTreeUpdateInput = new Input<>("enableSegmentTreeUpdate",
             "If false, segment tree objects won't be updated to agree with simulated " +
                     "network. (Default true.)", true);
+
+    public Input<String> fileNameInput = new Input<>("fileName",
+            "Name of file to write simulated network to.");
 
     private PopulationFunction populationFunction;
     private RealParameter reassortmentRate;
@@ -81,8 +86,23 @@ public class SimulatedCoalescentNetwork extends Network {
 
         // Update segment trees:
         if (enableSegTreeUpdateInput.get()) {
-            for (int segIdx = 0; segIdx < nSegments; segIdx++)
-                updateSegmentTree(segmentTreesInput.get().get(segIdx), segIdx);
+            for (int segIdx = 0; segIdx < nSegments; segIdx++) {
+                Tree segmentTree = segmentTreesInput.get().get(segIdx);
+                updateSegmentTree(segmentTree, segIdx);
+                segmentTree.setEverythingDirty(false);
+            }
+        }
+
+        // Write simulated network to file if requested
+        if (fileNameInput.get() != null) {
+            try (PrintStream ps = new PrintStream(fileNameInput.get())) {
+
+                ps.println(toString());
+
+            } catch (FileNotFoundException ex) {
+                throw new RuntimeException("Error writing to output file '"
+                        + fileNameInput.get() + "'.");
+            }
         }
 
         super.initAndValidate();
