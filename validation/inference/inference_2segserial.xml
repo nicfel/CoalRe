@@ -132,6 +132,17 @@
         <operator spec="ScaleOperator" parameter="@clockRate" scaleFactor="0.5" weight="1.0"/>
         <operator spec="ScaleOperator" parameter="@popSize" scaleFactor="0.5" weight="1.0"/>
 
+
+        <operator id="upDownOperator" spec="NetworkScaleOperator"
+                  network="@network" weight="1.0">
+            <segmentTree idref="seg1tree"/>
+            <segmentTree idref="seg2tree"/>
+            <upParameter idref="popSize"/>
+            <downParameter idref="clockRate"/>
+            <downParameter idref="reassortmentRate"/>
+        </operator>
+
+
         <!-- Network Operators -->
 
         <operator spec="AddRemoveReassortment" network="@network" alpha="1.0" weight="1.0">
