@@ -7,6 +7,8 @@ import beast.core.Input;
 import beast.core.Input.Validate;
 import coalre.network.Network;
 
+import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,18 +29,19 @@ public class NetworkIntervals extends CalculationNode {
     @Override
     public void initAndValidate() {
         network = networkInput.get();
+
+        storedNetworkEventList = new ArrayList<>();
     }
 
     List<NetworkEvent> getNetworkEventList() {
-        if (eventListDirty) {
-            update();
-            eventListDirty = false;
-        }
+        update();
 
         return networkEventList;
     }
 
     void update() {
+        if (!eventListDirty)
+            return;
 
         networkEventList = network.getNodes().stream().map(n -> {
             NetworkEvent event = new NetworkEvent();
@@ -78,6 +81,8 @@ public class NetworkIntervals extends CalculationNode {
                     totalReassortmentObsProb -= event.node.getChildEdges().get(0).getReassortmentObsProb();
                     totalReassortmentObsProb += event.node.getParentEdges().get(0).getReassortmentObsProb();
                     totalReassortmentObsProb += event.node.getParentEdges().get(1).getReassortmentObsProb();
+
+                    event.reassortmentSegCount = event.node.getChildEdges().get(0).hasSegments.cardinality();
                     break;
 
                 case COALESCENCE:
@@ -91,6 +96,8 @@ public class NetworkIntervals extends CalculationNode {
             event.lineages = lineages;
             event.totalReassortmentObsProb = totalReassortmentObsProb;
         }
+
+        eventListDirty = false;
     }
 
     @Override
@@ -105,13 +112,15 @@ public class NetworkIntervals extends CalculationNode {
         List<NetworkEvent> tmp = networkEventList;
         networkEventList = storedNetworkEventList;
         storedNetworkEventList = tmp;
+
         super.restore();
     }
 
     @Override
     protected void store() {
-        storedNetworkEventList = networkEventList;
-        update();
+        storedNetworkEventList.clear();
+        storedNetworkEventList.addAll(networkEventList);
+
         super.store();
     }
 }

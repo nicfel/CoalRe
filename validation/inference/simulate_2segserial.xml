@@ -25,8 +25,7 @@
 
             <reassortmentRate spec="RealParameter" value="0.5"/>
 
-            <segmentTree id="seg1tree_truth" spec="Tree">
-                <taxonset spec="TaxonSet" id="taxonSet">
+            <taxonSet spec="TaxonSet" id="taxonSet">
                     <taxon spec="Taxon" id="t1"/>
                     <taxon spec="Taxon" id="t2"/>
                     <taxon spec="Taxon" id="t3"/>
@@ -37,12 +36,14 @@
                     <taxon spec="Taxon" id="t8"/>
                     <taxon spec="Taxon" id="t9"/>
                     <taxon spec="Taxon" id="t10"/>
-                </taxonset>
-                <trait spec="TraitSet" traitname="date-backward" id="traitSet">
-                    t1=0, t2=0.2, t3=0, t4=0, t5=0, t6=0, t7=0, t8=0, t9=0, t10=0
+            </taxonSet>
+
+            <traitSet spec="TraitSet" traitname="date-backward" id="traitSet">
+                    t1=0, t2=0.1, t3=0.2, t4=0.3, t5=0.4, t6=0.5, t7=0.6, t8=0.7, t9=0.8, t10=0.9
                     <taxa idref="taxonSet"/>
-                </trait>
-            </segmentTree>
+            </traitSet>
+
+            <segmentTree id="seg1tree_truth" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
             <segmentTree id="seg2tree_truth" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
         </simulationObject>
 
