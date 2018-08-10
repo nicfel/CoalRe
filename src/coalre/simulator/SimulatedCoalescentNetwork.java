@@ -30,6 +30,15 @@ public class SimulatedCoalescentNetwork extends Network {
     public Input<List<Tree>> segmentTreesInput = new Input<>("segmentTree",
             "One or more segment trees to initialize.", new ArrayList<>());
 
+    public Input<Integer> nSegmentsInput = new Input<>("nSegments",
+            "Number of segments. Used if no segment trees are supplied.");
+
+    public Input<TraitSet> traitSetInput = new Input<>("traitSet",
+            "Trait set used to assign leaf ages.");
+
+    public Input<TaxonSet> taxonSetInput = new Input<>("taxonSet",
+            "Taxon set used to define leaves");
+
     public Input<Boolean> enableSegTreeUpdateInput = new Input<>("enableSegmentTreeUpdate",
             "If false, segment tree objects won't be updated to agree with simulated " +
                     "network. (Default true.)", true);
@@ -43,31 +52,36 @@ public class SimulatedCoalescentNetwork extends Network {
     private int nSegments;
 
     public void initAndValidate() {
-        nSegments = segmentTreesInput.get().size();
+
+        if (nSegmentsInput.get() != null)
+            nSegments = nSegmentsInput.get();
+        else
+            nSegments = segmentTreesInput.get().size();
+
         populationFunction = populationFunctionInput.get();
         reassortmentRate = reassortmentRateInput.get();
 
         if (nSegments==0) {
-            throw new IllegalArgumentException("Need at least one segment tree!");
+            throw new IllegalArgumentException("Need at least one segment!");
         }
 
         // Set up sample nodes:
 
         List<NetworkNode> sampleNodes = new ArrayList<>();
 
-        TraitSet traitSet = segmentTreesInput.get().get(0).getDateTrait();
+        TraitSet traitSet = traitSetInput.get();
         TaxonSet taxonSet;
         if (traitSet != null)
             taxonSet = traitSet.taxaInput.get();
         else
-            taxonSet = segmentTreesInput.get().get(0).getTaxonset();
+            taxonSet = taxonSetInput.get();
 
         if (taxonSet == null)
-                throw new IllegalArgumentException("Segment trees must define" +
-                        " either a trait set or a taxon set.");
+                throw new IllegalArgumentException("Must define either a " +
+                        "trait set or a taxon set.");
 
-        for (int taxonIndex=0; taxonIndex<traitSet.taxaInput.get().getTaxonCount(); taxonIndex++) {
-            String taxonName = traitSet.taxaInput.get().getTaxonId(taxonIndex);
+        for (int taxonIndex=0; taxonIndex<taxonSet.getTaxonCount(); taxonIndex++) {
+            String taxonName = taxonSet.getTaxonId(taxonIndex);
 
             NetworkNode sampleNode = new NetworkNode();
             sampleNode.setTaxonLabel(taxonName);

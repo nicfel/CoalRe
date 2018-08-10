@@ -21,38 +21,39 @@
     <alignment id="seg1align" spec="AlignmentFromNexus" fileName="simulate_2segserial.seg1.alignment.nexus"/>
     <alignment id="seg2align" spec="AlignmentFromNexus" fileName="simulate_2segserial.seg2.alignment.nexus"/>
 
+    <taxonset id="taxonSet" spec="TaxonSet">
+        <taxon spec="Taxon" id="t1"/>
+        <taxon spec="Taxon" id="t2"/>
+        <taxon spec="Taxon" id="t3"/>
+        <taxon spec="Taxon" id="t4"/>
+        <taxon spec="Taxon" id="t5"/>
+        <taxon spec="Taxon" id="t6"/>
+        <taxon spec="Taxon" id="t7"/>
+        <taxon spec="Taxon" id="t8"/>
+        <taxon spec="Taxon" id="t9"/>
+        <taxon spec="Taxon" id="t10"/>
+    </taxonset>
+    <trait spec="TraitSet" traitname="date-backward" id="traitSet">
+        t1=0, t2=0.2, t3=0, t4=0, t5=0, t6=0, t7=0, t8=0, t9=0, t10=0
+        <taxa idref="taxonSet"/>
+    </trait>
+
     <run spec="MCMC" chainLength="100000000">
 
         <state>
-            <stateNode id="seg1tree" spec="Tree">
-                <taxonset id="taxonSet" spec="TaxonSet">
-                    <taxon spec="Taxon" id="t1"/>
-                    <taxon spec="Taxon" id="t2"/>
-                    <taxon spec="Taxon" id="t3"/>
-                    <taxon spec="Taxon" id="t4"/>
-                    <taxon spec="Taxon" id="t5"/>
-                    <taxon spec="Taxon" id="t6"/>
-                    <taxon spec="Taxon" id="t7"/>
-                    <taxon spec="Taxon" id="t8"/>
-                    <taxon spec="Taxon" id="t9"/>
-                    <taxon spec="Taxon" id="t10"/>
-                </taxonset>
-                <trait spec="TraitSet" traitname="date-backward" id="traitSet">
-                    t1=0, t2=0.2, t3=0, t4=0, t5=0, t6=0, t7=0, t8=0, t9=0, t10=0
-                    <taxa idref="taxonSet"/>
-                </trait>
-            </stateNode>
+            <stateNode id="seg1tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
             <stateNode id="seg2tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
 
-            <stateNode id="network" spec="SimulatedCoalescentNetwork" enableSegmentTreeUpdate="false">
+            <stateNode id="network" spec="SimulatedCoalescentNetwork"
+                       nSegments="2" enableSegmentTreeUpdate="false">
+
+                <traitSet idref="traitSet"/>
+
                 <populationModel spec="ConstantPopulation">
                     <popSize spec="RealParameter" value="1.0"/>
                 </populationModel>
 
                 <reassortmentRate spec="RealParameter" value="0.5"/>
-
-                <segmentTree id="dummyseg1tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
-                <segmentTree id="dummyseg2tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
             </stateNode>
         </state>
 
