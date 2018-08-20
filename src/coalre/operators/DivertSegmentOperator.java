@@ -6,7 +6,6 @@ import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
 
 import java.util.BitSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -33,13 +32,10 @@ public class DivertSegmentOperator extends NetworkOperator {
         BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
         logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
 
-
-        NetworkNode[] mrcaNodes = getSegmentMRCAs(sourceEdge, destEdge, segsToDivert);
-
         network.startEditing(this);
 
-        logHR += removeSegmentsFromAncestors(sourceEdge, segsToDivert, mrcaNodes);
-        logHR -= addSegmentsToAncestors(destEdge, segsToDivert, mrcaNodes);
+        logHR += removeSegmentsFromAncestors(sourceEdge, segsToDivert);
+        logHR -= addSegmentsToAncestors(destEdge, segsToDivert);
 
         if (!allEdgesAncestral())
             return Double.NEGATIVE_INFINITY;
@@ -56,6 +52,7 @@ public class DivertSegmentOperator extends NetworkOperator {
         return logHR;
     }
 
+
     /**
      * Remove segments from this edge and ancestors.
      *
@@ -64,18 +61,6 @@ public class DivertSegmentOperator extends NetworkOperator {
      * @return log probability of reverse operation
      */
     double removeSegmentsFromAncestors(NetworkEdge edge, BitSet segsToRemove) {
-        return removeSegmentsFromAncestors(edge, segsToRemove, null);
-    }
-
-    /**
-     * Remove segments from this edge and ancestors.
-     *
-     * @param edge edge at which to start removal
-     * @param segsToRemove segments to remove from edge and ancestors
-     * @param stopNodes seg-indexed array of nodes  at which removal will cease
-     * @return log probability of reverse operation
-     */
-    double removeSegmentsFromAncestors(NetworkEdge edge, BitSet segsToRemove, NetworkNode[] stopNodes) {
         double logP = 0.0;
 
         segsToRemove = (BitSet)segsToRemove.clone();
@@ -89,41 +74,21 @@ public class DivertSegmentOperator extends NetworkOperator {
         if (edge.isRootEdge())
             return logP;
 
-        if (stopNodes != null) {
-            for (int segIdx = segsToRemove.nextSetBit(0); segIdx != -1;
-                 segIdx = segsToRemove.nextSetBit(segIdx+1)) {
-
-                if (stopNodes[segIdx] != null && stopNodes[segIdx] == edge.parentNode)
-                    segsToRemove.clear(segIdx);
-            }
-        }
-
         if (edge.parentNode.isReassortment()) {
 
             logP += Math.log(0.5)*segsToRemove.cardinality();
 
-            logP += removeSegmentsFromAncestors(edge.parentNode.getParentEdges().get(0), segsToRemove, stopNodes);
-            logP += removeSegmentsFromAncestors(edge.parentNode.getParentEdges().get(1), segsToRemove, stopNodes);
+            logP += removeSegmentsFromAncestors(edge.parentNode.getParentEdges().get(0), segsToRemove);
+            logP += removeSegmentsFromAncestors(edge.parentNode.getParentEdges().get(1), segsToRemove);
 
         } else {
 
             segsToRemove.andNot(getSisterEdge(edge).hasSegments);
-            logP += removeSegmentsFromAncestors(edge.parentNode.getParentEdges().get(0), segsToRemove, stopNodes);
+            logP += removeSegmentsFromAncestors(edge.parentNode.getParentEdges().get(0), segsToRemove);
 
         }
 
         return logP;
-    }
-
-     /**
-     * Add segments to this edge and ancestors.
-     *
-     * @param edge edge at which to start addition
-     * @param segsToAdd segments to add to the edge and ancestors
-     * @return log probability of operation
-     */
-    double addSegmentsToAncestors(NetworkEdge edge, BitSet segsToAdd) {
-        return addSegmentsToAncestors(edge, segsToAdd, null);
     }
 
     /**
@@ -131,10 +96,9 @@ public class DivertSegmentOperator extends NetworkOperator {
      *
      * @param edge edge at which to start addition
      * @param segsToAdd segments to add to the edge and ancestors
-     * @param stopNodes seg-indexed array of nodes at which addition will stop
      * @return log probability of operation
      */
-    double addSegmentsToAncestors(NetworkEdge edge, BitSet segsToAdd, NetworkNode[] stopNodes) {
+    double addSegmentsToAncestors(NetworkEdge edge, BitSet segsToAdd) {
         double logP = 0.0;
 
         segsToAdd = (BitSet)segsToAdd.clone();
@@ -147,14 +111,6 @@ public class DivertSegmentOperator extends NetworkOperator {
 
         if (edge.isRootEdge())
             return logP;
-
-        if (stopNodes != null) {
-            for (int segIdx = segsToAdd.nextSetBit(0); segIdx != -1;
-                 segIdx = segsToAdd.nextSetBit(segIdx+1)) {
-                if (stopNodes[segIdx] != null && edge.parentNode == stopNodes[segIdx])
-                    segsToAdd.clear(segIdx);
-            }
-        }
 
         if (edge.parentNode.isReassortment()) {
 
@@ -171,12 +127,12 @@ public class DivertSegmentOperator extends NetworkOperator {
                 logP += Math.log(0.5);
             }
 
-            logP += addSegmentsToAncestors(edge.parentNode.getParentEdges().get(0), segsToAddLeft, stopNodes);
-            logP += addSegmentsToAncestors(edge.parentNode.getParentEdges().get(1), segsToAddRight, stopNodes);
+            logP += addSegmentsToAncestors(edge.parentNode.getParentEdges().get(0), segsToAddLeft);
+            logP += addSegmentsToAncestors(edge.parentNode.getParentEdges().get(1), segsToAddRight);
 
         } else {
 
-            logP += addSegmentsToAncestors(edge.parentNode.getParentEdges().get(0), segsToAdd, stopNodes);
+            logP += addSegmentsToAncestors(edge.parentNode.getParentEdges().get(0), segsToAdd);
         }
 
         return logP;
@@ -197,59 +153,6 @@ public class DivertSegmentOperator extends NetworkOperator {
         }
 
         return true;
-    }
-
-    private Set<NetworkNode> ancestralNodes = new HashSet<>();
-
-    public Set<NetworkNode> getAncestralNodes(NetworkEdge startEdge, int segIdx) {
-
-        ancestralNodes.clear();
-
-        NetworkEdge thisEdge = startEdge;
-
-        while (!thisEdge.isRootEdge()) {
-            ancestralNodes.add(startEdge.parentNode);
-
-            for (NetworkEdge parentEdge : thisEdge.parentNode.getParentEdges()) {
-                if (parentEdge.hasSegments.get(segIdx)) {
-                    thisEdge = parentEdge;
-                    break;
-                }
-            }
-        }
-
-        return ancestralNodes;
-    }
-
-    public NetworkNode getSegmentMRCA(NetworkEdge edge1, NetworkEdge edge2, int segIdx) {
-
-        Set<NetworkNode> ancestralNodes = getAncestralNodes(edge1, segIdx);
-
-        NetworkEdge thisEdge = edge2;
-
-        while (!thisEdge.isRootEdge()) {
-            if (ancestralNodes.contains(thisEdge.parentNode))
-                return thisEdge.parentNode;
-
-            for (NetworkEdge parentEdge : thisEdge.parentNode.getParentEdges()) {
-                if (parentEdge.hasSegments.get(segIdx)) {
-                    thisEdge = parentEdge;
-                    break;
-                }
-            }
-        }
-
-        return null;
-    }
-
-    public NetworkNode[] getSegmentMRCAs(NetworkEdge edge1, NetworkEdge edge2, BitSet segs) {
-        NetworkNode[] mrcaNodes = new NetworkNode[network.getSegmentCount()];
-
-        for (int segIdx=segs.nextSetBit(0); segIdx != -1; segIdx = segs.nextSetBit(segIdx+1)) {
-            mrcaNodes[segIdx] = getSegmentMRCA(edge1, edge2, segIdx);
-        }
-
-        return mrcaNodes;
     }
 
 }
