@@ -147,8 +147,9 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
         // Choose segments to divert to new edge
         BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
         logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
-        logHR += removeSegmentsFromAncestors(newEdge1, segsToDivert);
-        logHR -= addSegmentsToAncestors(reassortmentEdge, segsToDivert);
+        NetworkNode[] mrcaNodes = getSegmentMRCAs(newEdge1, reassortmentEdge, segsToDivert);
+        logHR += removeSegmentsFromAncestors(newEdge1, segsToDivert, mrcaNodes);
+        logHR -= addSegmentsToAncestors(reassortmentEdge, segsToDivert, mrcaNodes);
 
         if (!allEdgesAncestral())
             return Double.NEGATIVE_INFINITY;
@@ -221,8 +222,9 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 
         // Divert segments away from chosen edge
         BitSet segsToDivert = (BitSet) edgeToRemove.hasSegments.clone();
-        logHR += removeSegmentsFromAncestors(edgeToRemove, segsToDivert);
-        logHR -= addSegmentsToAncestors(edgeToRemoveSpouse, segsToDivert);
+        NetworkNode[] mrcaNodes = getSegmentMRCAs(edgeToRemove, edgeToRemoveSpouse, segsToDivert);
+        logHR += removeSegmentsFromAncestors(edgeToRemove, segsToDivert, mrcaNodes);
+        logHR -= addSegmentsToAncestors(edgeToRemoveSpouse, segsToDivert, mrcaNodes);
         logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments);
 
         // Remove edge and associated nodes
