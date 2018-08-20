@@ -56,12 +56,23 @@ public class DivertSegmentOperator extends NetworkOperator {
         return logHR;
     }
 
+    /**
+     * Remove segments from this edge and ancestors.
+     *
+     * @param edge edge at which to start removal
+     * @param segsToRemove segments to remove from edge and ancestors
+     * @return log probability of reverse operation
+     */
+    double removeSegmentsFromAncestors(NetworkEdge edge, BitSet segsToRemove) {
+        return removeSegmentsFromAncestors(edge, segsToRemove, null);
+    }
 
     /**
      * Remove segments from this edge and ancestors.
      *
      * @param edge edge at which to start removal
      * @param segsToRemove segments to remove from edge and ancestors
+     * @param stopNodes seg-indexed array of nodes  at which removal will cease
      * @return log probability of reverse operation
      */
     double removeSegmentsFromAncestors(NetworkEdge edge, BitSet segsToRemove, NetworkNode[] stopNodes) {
@@ -78,11 +89,13 @@ public class DivertSegmentOperator extends NetworkOperator {
         if (edge.isRootEdge())
             return logP;
 
-        for (int segIdx=segsToRemove.nextSetBit(0); segIdx != -1;
-             segIdx = segsToRemove.nextSetBit(segIdx)) {
+        if (stopNodes != null) {
+            for (int segIdx = segsToRemove.nextSetBit(0); segIdx != -1;
+                 segIdx = segsToRemove.nextSetBit(segIdx+1)) {
 
-            if (stopNodes[segIdx] != null && stopNodes[segIdx] == edge.parentNode)
-                segsToRemove.clear(segIdx);
+                if (stopNodes[segIdx] != null && stopNodes[segIdx] == edge.parentNode)
+                    segsToRemove.clear(segIdx);
+            }
         }
 
         if (edge.parentNode.isReassortment()) {
@@ -102,11 +115,23 @@ public class DivertSegmentOperator extends NetworkOperator {
         return logP;
     }
 
+     /**
+     * Add segments to this edge and ancestors.
+     *
+     * @param edge edge at which to start addition
+     * @param segsToAdd segments to add to the edge and ancestors
+     * @return log probability of operation
+     */
+    double addSegmentsToAncestors(NetworkEdge edge, BitSet segsToAdd) {
+        return addSegmentsToAncestors(edge, segsToAdd, null);
+    }
+
     /**
      * Add segments to this edge and ancestors.
      *
      * @param edge edge at which to start addition
      * @param segsToAdd segments to add to the edge and ancestors
+     * @param stopNodes seg-indexed array of nodes at which addition will stop
      * @return log probability of operation
      */
     double addSegmentsToAncestors(NetworkEdge edge, BitSet segsToAdd, NetworkNode[] stopNodes) {
@@ -123,9 +148,12 @@ public class DivertSegmentOperator extends NetworkOperator {
         if (edge.isRootEdge())
             return logP;
 
-        for (int segIdx = segsToAdd.nextSetBit(0); segIdx != -1; segIdx = segsToAdd.nextSetBit(segIdx)) {
-            if (stopNodes[segIdx] != null && edge.parentNode == stopNodes[segIdx])
-                segsToAdd.clear(segIdx);
+        if (stopNodes != null) {
+            for (int segIdx = segsToAdd.nextSetBit(0); segIdx != -1;
+                 segIdx = segsToAdd.nextSetBit(segIdx+1)) {
+                if (stopNodes[segIdx] != null && edge.parentNode == stopNodes[segIdx])
+                    segsToAdd.clear(segIdx);
+            }
         }
 
         if (edge.parentNode.isReassortment()) {
@@ -171,9 +199,11 @@ public class DivertSegmentOperator extends NetworkOperator {
         return true;
     }
 
+    private Set<NetworkNode> ancestralNodes = new HashSet<>();
+
     public Set<NetworkNode> getAncestralNodes(NetworkEdge startEdge, int segIdx) {
 
-        Set<NetworkNode> ancestralNodes = new HashSet<>();
+        ancestralNodes.clear();
 
         NetworkEdge thisEdge = startEdge;
 
@@ -215,7 +245,7 @@ public class DivertSegmentOperator extends NetworkOperator {
     public NetworkNode[] getSegmentMRCAs(NetworkEdge edge1, NetworkEdge edge2, BitSet segs) {
         NetworkNode[] mrcaNodes = new NetworkNode[network.getSegmentCount()];
 
-        for (int segIdx=segs.nextSetBit(0); segIdx != -1; segIdx = segs.nextSetBit(segIdx)) {
+        for (int segIdx=segs.nextSetBit(0); segIdx != -1; segIdx = segs.nextSetBit(segIdx+1)) {
             mrcaNodes[segIdx] = getSegmentMRCA(edge1, edge2, segIdx);
         }
 
