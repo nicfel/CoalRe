@@ -34,8 +34,8 @@ public class DivertSegmentOperator extends NetworkOperator {
 
         network.startEditing(this);
 
-        logHR += removeSegmentsFromAncestors(sourceEdge, segsToDivert);
         logHR -= addSegmentsToAncestors(destEdge, segsToDivert);
+        logHR += removeSegmentsFromAncestors(sourceEdge, segsToDivert);
 
         if (!allEdgesAncestral())
             return Double.NEGATIVE_INFINITY;

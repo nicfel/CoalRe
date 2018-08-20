@@ -1,9 +1,5 @@
 #+TITLE: Sampler Validation
 
-:PROPERTIES:
-:header-args: :session :results output graphics :exports both
-:END:
-
 * Simulator validation
 
 When reassortment is turned off, the simulator should draw trees from
@@ -53,15 +49,11 @@ lines(h2$mids, h2$density, col='red')
 
 * Validation code
 
-:PROPERTIES:
-:header-args: :session :results silent :exports both
-:END:
-  
 This code just computes and plots the sample distribution obtained via MCMC
 for a number of summary statistics and compares this with the results of direct
 simulation.
 
-#+BEGIN_SRC R
+#+BEGIN_SRC R :session :results none
   doCompare <- function(dsFileName, mcmcFileName) {
       dfs <- read.table(paste0("simulator/", dsFileName), header=T)
       df <- read.table(paste0("operators/", mcmcFileName), header=T)
@@ -143,7 +135,7 @@ doCompare("simulate_serial5taxon2seg.log",
 
 ** 5-taxon 3-segment networks
 
-#+BEGIN_SRC R :session :file addRemove5taxon3seg.png 
+#+BEGIN_SRC R :session :file addRemove5taxon3seg.png :results output graphics
   doCompare("simulate_serial5taxon3seg.log",
             "testAddRemove_serial5taxon3seg.log")
 #+END_SRC
