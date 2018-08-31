@@ -229,35 +229,7 @@ public class Network extends StateNode {
 
     @Override
     public StateNode copy() {
-        return new Network(copyEdge(rootEdge, new HashMap<>()));
-    }
-
-    private NetworkEdge copyEdge(NetworkEdge edge, Map<NetworkNode,NetworkNode> seenNodes) {
-
-        NetworkEdge edgeCopy = new NetworkEdge(null, null, (BitSet)edge.hasSegments.clone());
-        NetworkNode childNodeCopy;
-        boolean traverse = true;
-        if (seenNodes.containsKey(edge.childNode)) {
-            childNodeCopy = seenNodes.get(edge.childNode);
-            traverse = false;
-        } else {
-            childNodeCopy = new NetworkNode();
-            childNodeCopy.setHeight(edge.childNode.getHeight());
-            childNodeCopy.setTaxonLabel(edge.childNode.getTaxonLabel());
-            childNodeCopy.setTaxonIndex(edge.childNode.getTaxonIndex());
-            seenNodes.put(edge.childNode, childNodeCopy);
-        }
-
-        childNodeCopy.addParentEdge(edgeCopy);
-
-        if (traverse) {
-            for (NetworkEdge childEdge : edge.childNode.getChildEdges()) {
-                NetworkEdge childEdgeCopy = copyEdge(childEdge, seenNodes);
-                childNodeCopy.addChildEdge(childEdgeCopy);
-            }
-        }
-
-        return edgeCopy;
+        return new Network(rootEdge.getCopy());
     }
 
     @Override
@@ -287,7 +259,7 @@ public class Network extends StateNode {
 
     @Override
     protected void store() {
-        storedRootEdge = copyEdge(rootEdge, new HashMap<>());
+        storedRootEdge = rootEdge.getCopy();
     }
 
     @Override

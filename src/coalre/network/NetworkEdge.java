@@ -32,4 +32,36 @@ public class NetworkEdge {
         return parentNode == null;
     }
 
+    public NetworkEdge getCopy() {
+        return getCopy(new HashMap<>());
+    }
+
+    public NetworkEdge getCopy(Map<NetworkNode,NetworkNode> seenNodes) {
+
+        NetworkEdge edgeCopy = new NetworkEdge(null, null, (BitSet)hasSegments.clone());
+        NetworkNode childNodeCopy;
+        boolean traverse = true;
+        if (seenNodes.containsKey(childNode)) {
+            childNodeCopy = seenNodes.get(childNode);
+            traverse = false;
+        } else {
+            childNodeCopy = new NetworkNode();
+            childNodeCopy.setHeight(childNode.getHeight());
+            childNodeCopy.setTaxonLabel(childNode.getTaxonLabel());
+            childNodeCopy.setTaxonIndex(childNode.getTaxonIndex());
+            seenNodes.put(childNode, childNodeCopy);
+        }
+
+        childNodeCopy.addParentEdge(edgeCopy);
+
+        if (traverse) {
+            for (NetworkEdge childEdge : childNode.getChildEdges()) {
+                NetworkEdge childEdgeCopy = childEdge.getCopy(seenNodes);
+                childNodeCopy.addChildEdge(childEdgeCopy);
+            }
+        }
+
+        return edgeCopy;
+    }
+
 }
