@@ -6,7 +6,6 @@ import beast.evolution.tree.Node;
 import beast.evolution.tree.Tree;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -19,13 +18,13 @@ public class ObservedEventList extends CalculationNode {
             new ArrayList<>());
 
     private List<ObservedEvent> eventList;
-    private List<Node> nodeList;
+    private List<Pair<Node,Integer>> nodeIdxPairs;
 
     private boolean listIsDirty;
 
     public ObservedEventList() {
         eventList = new ArrayList<>();
-        nodeList = new ArrayList<>();
+        nodeIdxPairs = new ArrayList<>();
     };
 
     @Override
@@ -37,26 +36,50 @@ public class ObservedEventList extends CalculationNode {
         if (!listIsDirty)
             return;
 
-        nodeList.clear();
-        for (Tree segmentTree : segmentTreesInput.get()) {
-            nodeList.addAll(Arrays.asList(segmentTree.getNodesAsArray()));
+        nodeIdxPairs.clear();
+        for (int segIdx=0; segIdx<segmentTreesInput.get().size(); segIdx++) {
+            Node[] nodes = segmentTreesInput.get().get(segIdx).getNodesAsArray();
+            for (int i=0; i<nodes.length; i++) {
+                nodeIdxPairs.add(new Pair<>(nodes[i], segIdx));
+            }
         }
-        nodeList.sort(Comparator.comparingDouble(Node::getHeight));
+        nodeIdxPairs.sort(new Comparator<Pair<Node, Integer>>() {
+            @Override
+            public int compare(Pair<Node, Integer> o1, Pair<Node, Integer> o2) {
+                if (o1.value2 < o2.value2)
+                    return -1;
+                if (o1.value2 > o2.value2)
+                    return 1;
+                else
+                    return 0;
+            }
+        });
 
         ObservedEvent currentEvent = null;
         double currentTime = Double.NEGATIVE_INFINITY;
 
-        for (Node node : nodeList) {
+        for (Pair<Node,Integer> nodeIdxPair : nodeIdxPairs) {
+            Node node = nodeIdxPair.value1;
+            int segIdx = nodeIdxPair.value2;
+
             if (node.getHeight()>currentTime) {
                 currentTime = node.getHeight();
 
                 currentEvent = new ObservedEvent();
                 currentEvent.time = currentTime;
-                currentEvent.nodes.add(node);
+                currentEvent.segTreeNodes[segIdx] = node;
+
+                if (node.isLeaf()) {
+                    currentEvent.type = ObservedEvent.EventType.SAMPLE;
+                    currentEvent.taxonLabel = node.getID();
+                    currentEvent.taxonIndex = node.getNr();
+                } else {
+                    currentEvent.type = ObservedEvent.EventType.COALESCENCE;
+                }
 
                 eventList.add(currentEvent);
             } else {
-                currentEvent.nodes.add(node);
+                currentEvent.segTreeNodes[segIdx] = node;
             }
         }
 

@@ -128,9 +128,6 @@ public class MarginalCoalescentWithReassortment extends Distribution {
         return logP;
     }
 
-
-
-
     @Override
     public List<String> getArguments() {
         return null;
@@ -144,5 +141,10 @@ public class MarginalCoalescentWithReassortment extends Distribution {
     @Override
     public void sample(State state, Random random) {
         throw new UnsupportedOperationException("Not implemented.");
+    }
+
+    @Override
+    public boolean isStochastic() {
+        return true;
     }
 }

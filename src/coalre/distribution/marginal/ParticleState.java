@@ -78,7 +78,7 @@ class ParticleState {
         while (true) {
             int k = size();
 
-            List<LineageIdxPair> coalescibleLineagePairs = getCoalescibleLineagePairs();
+            List<Pair<Integer,Integer>> coalescibleLineagePairs = getCoalescibleLineagePairs();
             int allowed_coalescences = coalescibleLineagePairs.size();
             int forbidden_coalescences = size()*(size()-1)/2 - allowed_coalescences;
 
@@ -111,17 +111,8 @@ class ParticleState {
         return logConditionalP;
     }
 
-    private class LineageIdxPair {
-        int idx1, idx2;
-
-        public LineageIdxPair(int idx1, int idx2) {
-            this.idx1 = idx1;
-            this.idx2 = idx2;
-        }
-    }
-
-   List<LineageIdxPair> getCoalescibleLineagePairs() {
-       List<LineageIdxPair> idxPairs = new ArrayList<>();
+   List<Pair<Integer,Integer>> getCoalescibleLineagePairs() {
+       List<Pair<Integer,Integer>> idxPairs = new ArrayList<>();
 
        int allowed_coalescences = 0, forbidden_coalescences = 0;
        for (int i = 0; i < size(); i++) {
@@ -134,7 +125,7 @@ class ParticleState {
                    forbidden_coalescences += 1;
                } else {
                    allowed_coalescences += 1;
-                   idxPairs.add(new LineageIdxPair(i, j));
+                   idxPairs.add(new Pair<Integer,Integer>(i, j));
                }
            }
        }
@@ -194,16 +185,16 @@ class ParticleState {
         segmentNodeArrays.add(rightSegNodes);
     }
 
-    private void coalesce(double coalescentTime, List<LineageIdxPair> coalescibleLineagePairs) {
+    private void coalesce(double coalescentTime, List<Pair<Integer,Integer>> coalescibleLineagePairs) {
         // Select lineages to coalesce
 
-        LineageIdxPair coalescingPair = coalescibleLineagePairs.get(
+        Pair<Integer,Integer> coalescingPair = coalescibleLineagePairs.get(
                 Randomizer.nextInt(coalescibleLineagePairs.size()));
 
-        NetworkEdge lineageLeft = getNetworkLineage(coalescingPair.idx1);
-        Node[] segNodesLeft = getSegmentTreeNodes(coalescingPair.idx1);
-        NetworkEdge lineageRight = getNetworkLineage(coalescingPair.idx2);
-        Node[] segNodesRight = getSegmentTreeNodes(coalescingPair.idx2);
+        NetworkEdge lineageLeft = getNetworkLineage(coalescingPair.value1);
+        Node[] segNodesLeft = getSegmentTreeNodes(coalescingPair.value1);
+        NetworkEdge lineageRight = getNetworkLineage(coalescingPair.value2);
+        Node[] segNodesRight = getSegmentTreeNodes(coalescingPair.value2);
 
         // Create coalescent node
         NetworkNode coalescentNode = new NetworkNode();
@@ -250,10 +241,50 @@ class ParticleState {
 
         switch(event.type) {
             case SAMPLE:
+                return getObservedSampleProbability(event);
+
             case COALESCENCE:
+                return getObservedCoalescenceProbability(event, populationSize);
+
+            default:
+                throw new IllegalArgumentException("Unsupported event type.");
+        }
+    }
+
+    double getObservedSampleProbability(ObservedEvent event) {
+
+        // Create network node representing sample
+        NetworkNode networkNode = new NetworkNode();
+        networkNode.setHeight(event.time);
+        networkNode.setTaxonIndex(event.taxonIndex);
+        networkNode.setTaxonLabel(event.taxonLabel);
+
+        // Create new lineage
+        NetworkEdge networkEdge = new NetworkEdge(null, networkNode, new BitSet());
+
+        // Create segment node array
+        Node[] segNodeArray = new Node[nSegments];
+
+        for (int segIdx=0; segIdx<nSegments; segIdx++) {
+            segNodeArray[segIdx] = event.segTreeNodes[segIdx];
+
+            if (segNodeArray[segIdx] != null)
+                networkEdge.hasSegments.set(segIdx);
         }
 
+        // Add new lineage to particle state
+        lineages.add(networkEdge);
+        segmentNodeArrays.add(segNodeArray);
+
         return 0.0;
+    }
+
+    double getObservedCoalescenceProbability(ObservedEvent event, Function populationSize) {
+        double logP = 0.0;
+
+        
+
+        return logP;
     }
 
 }
