@@ -280,11 +280,56 @@ class ParticleState {
     }
 
     double getObservedCoalescenceProbability(ObservedEvent event, Function populationSize) {
-        double logP = 0.0;
 
-        
+        boolean foundCompatible = false;
+        int lineage1Idx = -1, lineage2Idx = -1;
 
-        return logP;
+        for (int i=0; i<getLineageCount() && !foundCompatible; i++) {
+            NetworkEdge lineage1 = lineages.get(i);
+            Node[] segNodes1 = segmentNodeArrays.get(i);
+            for (int j=0; j<i && !foundCompatible; j++) {
+                NetworkEdge lineage2 = lineages.get(j);
+                Node[] segNodes2 = segmentNodeArrays.get(j);
+
+                foundCompatible = true;
+                for (int segIdx=0; segIdx<nSegments; segIdx++) {
+
+                    if (event.segTreeNodes[segIdx] != null) {
+                        // Coalescence between lineage1 and lineage2 must produce coalescence in segIdx
+                        Node leftChild = event.segTreeNodes[segIdx].getChild(0);
+                        Node rightChild = event.segTreeNodes[segIdx].getChild(1);
+                        if ((!leftChild.equals(segNodes1[segIdx]) || !rightChild.equals(segNodes2[segIdx]))
+                                && (!leftChild.equals(segNodes2[segIdx]) || !rightChild.equals(segNodes1[segIdx]))) {
+                            foundCompatible = false;
+                            break;
+                        }
+
+                    } else {
+                        if (lineage1.hasSegments.get(segIdx) && lineage2.hasSegments.get(segIdx)) {
+                            foundCompatible = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (foundCompatible) {
+                    lineage1Idx = i;
+                    lineage2Idx = j;
+                }
+            }
+        }
+
+        if (foundCompatible) {
+            double logP = 1.0/populationSize.getArrayValue();
+
+            // TODO coalesce compatible lineages
+
+            return logP;
+
+        } else {
+
+            return Double.NEGATIVE_INFINITY;
+        }
     }
 
 }
