@@ -68,6 +68,10 @@ public class ObservedEventList extends CalculationNode {
         return eventList;
     }
 
+    public int getNSegments() {
+        return segmentTreesInput.get().size();
+    }
+
     @Override
     protected void restore() {
         super.restore();
