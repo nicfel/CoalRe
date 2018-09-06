@@ -101,9 +101,9 @@ class ParticleState {
             // Implement event
 
             if (Randomizer.nextDouble()*a_tot_allowed < a_coal_allowed)
-                coalesce(nextEventTime, coalescibleLineagePairs);
+                implementHiddenCoalescenceEvent(nextEventTime, coalescibleLineagePairs);
             else
-                reassort(nextEventTime);
+                implementReassortmentEvent(nextEventTime);
 
             currentTime = nextEventTime;
         }
@@ -133,7 +133,7 @@ class ParticleState {
        return idxPairs;
    }
 
-    void reassort(double time) {
+    void implementReassortmentEvent(double time) {
         int idx = Randomizer.nextInt(getLineageCount());
         NetworkEdge lineage = getNetworkLineage(idx);
         Node[] segmentNodes = getSegmentTreeNodes(idx);
@@ -154,85 +154,16 @@ class ParticleState {
         if (hasSegs_left.cardinality() == 0 || hasSegs_right.cardinality() == 0)
             return;
 
-        // Create reassortment node
-        NetworkNode networkNode = new NetworkNode();
-        networkNode.setHeight(time).addChildEdge(lineage);
-
-        // Create reassortment lineages
-        NetworkEdge leftLineage = new NetworkEdge(null, networkNode, hasSegs_left);
-        Node[] leftSegNodes = new Node[nSegments];
-        for (int segIdx = hasSegs_left.nextSetBit(0);
-             segIdx != -1; segIdx = hasSegs_left.nextSetBit(segIdx+1)) {
-            leftSegNodes[segIdx] = segmentNodes[segIdx];
-        }
-
-        NetworkEdge rightLineage = new NetworkEdge(null, networkNode, hasSegs_right);
-        Node[] rightSegNodes = new Node[nSegments];
-        for (int segIdx = hasSegs_right.nextSetBit(0);
-             segIdx != -1; segIdx = hasSegs_right.nextSetBit(segIdx+1)) {
-            rightSegNodes[segIdx] = segmentNodes[segIdx];
-        }
-
-        networkNode.addParentEdge(leftLineage);
-        networkNode.addParentEdge(rightLineage);
-
-        lineages.remove(idx);
-        lineages.add(leftLineage);
-        lineages.add(rightLineage);
-
-        segmentNodeArrays.remove(idx);
-        segmentNodeArrays.add(leftSegNodes);
-        segmentNodeArrays.add(rightSegNodes);
+        reassortLineage(idx, hasSegs_left, hasSegs_right, time);
     }
 
-    private void coalesce(double coalescentTime, List<Pair<Integer,Integer>> coalescibleLineagePairs) {
-        // Select lineages to coalesce
+    private void implementHiddenCoalescenceEvent(double coalescentTime, List<Pair<Integer,Integer>> coalescibleLineagePairs) {
+        // Select lineages to implementHiddenCoalescenceEvent
 
         Pair<Integer,Integer> coalescingPair = coalescibleLineagePairs.get(
                 Randomizer.nextInt(coalescibleLineagePairs.size()));
 
-        NetworkEdge lineageLeft = getNetworkLineage(coalescingPair.value1);
-        Node[] segNodesLeft = getSegmentTreeNodes(coalescingPair.value1);
-        NetworkEdge lineageRight = getNetworkLineage(coalescingPair.value2);
-        Node[] segNodesRight = getSegmentTreeNodes(coalescingPair.value2);
-
-        // Create coalescent node
-        NetworkNode coalescentNode = new NetworkNode();
-        coalescentNode.setHeight(coalescentTime)
-                .addChildEdge(lineageLeft)
-                .addChildEdge(lineageRight);
-        lineageLeft.parentNode = coalescentNode;
-        lineageRight.parentNode = coalescentNode;
-
-        // Merge segment flags:
-        BitSet hasSegments = new BitSet();
-        hasSegments.or(lineageLeft.hasSegments);
-        hasSegments.or(lineageRight.hasSegments);
-
-        // Merge segment node arrays:
-
-        Node[] segmentNodes = new Node[nSegments];
-        for (int segIdx = lineageLeft.hasSegments.nextSetBit(0);
-             segIdx != -1; segIdx = lineageLeft.hasSegments.nextSetBit(segIdx+1)) {
-            segmentNodes[segIdx] = segNodesLeft[segIdx];
-        }
-
-        for (int segIdx = lineageRight.hasSegments.nextSetBit(0);
-             segIdx != -1; segIdx = lineageRight.hasSegments.nextSetBit(segIdx+1)) {
-            segmentNodes[segIdx] = segNodesRight[segIdx];
-        }
-
-        // Create new lineage
-        NetworkEdge lineage = new NetworkEdge(null, coalescentNode, hasSegments);
-        coalescentNode.addParentEdge(lineage);
-
-        lineages.remove(lineageLeft);
-        lineages.remove(lineageRight);
-        lineages.add(lineage);
-
-        segmentNodeArrays.remove(segNodesLeft);
-        segmentNodeArrays.remove(segNodesRight);
-        segmentNodeArrays.add(segmentNodes);
+        coalesceLineages(coalescingPair.value1, coalescingPair.value2, coalescentTime);
     }
 
     double getObservedEventProbability(ObservedEvent event,
@@ -320,16 +251,96 @@ class ParticleState {
         }
 
         if (foundCompatible) {
-            double logP = 1.0/populationSize.getArrayValue();
 
-            // TODO coalesce compatible lineages
+            coalesceLineages(lineage1Idx, lineage2Idx, event.time);
 
-            return logP;
+            return 1.0/populationSize.getArrayValue();
 
         } else {
 
             return Double.NEGATIVE_INFINITY;
         }
+    }
+
+    private void coalesceLineages(int lineageIdx1, int lineageIdx2, double coalescenceTime) {
+        NetworkEdge lineage1 = lineages.get(lineageIdx1);
+        NetworkEdge lineage2 = lineages.get(lineageIdx2);
+
+        Node[]segNodes1 = segmentNodeArrays.get(lineageIdx1);
+        Node[]segNodes2 = segmentNodeArrays.get(lineageIdx2);
+
+        // Create coalescent node
+        NetworkNode coalescentNode = new NetworkNode();
+        coalescentNode.setHeight(coalescenceTime)
+                .addChildEdge(lineage1)
+                .addChildEdge(lineage2);
+        lineage1.parentNode = coalescentNode;
+        lineage2.parentNode = coalescentNode;
+
+        // Merge segment flags:
+        BitSet hasSegments = new BitSet();
+        hasSegments.or(lineage1.hasSegments);
+        hasSegments.or(lineage2.hasSegments);
+
+        // Merge segment node arrays:
+
+        Node[] segmentNodes = new Node[nSegments];
+        for (int segIdx = lineage1.hasSegments.nextSetBit(0);
+             segIdx != -1; segIdx = lineage1.hasSegments.nextSetBit(segIdx+1)) {
+            segmentNodes[segIdx] = segNodes1[segIdx];
+        }
+
+        for (int segIdx = lineage2.hasSegments.nextSetBit(0);
+             segIdx != -1; segIdx = lineage2.hasSegments.nextSetBit(segIdx+1)) {
+            segmentNodes[segIdx] = segNodes2[segIdx];
+        }
+
+        // Create new lineage
+        NetworkEdge lineage = new NetworkEdge(null, coalescentNode, hasSegments);
+        coalescentNode.addParentEdge(lineage);
+
+        lineages.remove(lineage1);
+        lineages.remove(lineage2);
+        lineages.add(lineage);
+
+        segmentNodeArrays.remove(segNodes1);
+        segmentNodeArrays.remove(segNodes2);
+        segmentNodeArrays.add(segmentNodes);
+    }
+
+    private void reassortLineage(int lineageIdx, BitSet leftSegs, BitSet rightSegs, double reassortmentTime) {
+        NetworkEdge lineage = lineages.get(lineageIdx);
+        Node[] segmentNodes = segmentNodeArrays.get(lineageIdx);
+
+        // Create reassortment node
+        NetworkNode networkNode = new NetworkNode();
+        networkNode.setHeight(reassortmentTime).addChildEdge(lineage);
+
+        // Create reassortment lineages
+        NetworkEdge leftLineage = new NetworkEdge(null, networkNode, leftSegs);
+        Node[] leftSegNodes = new Node[nSegments];
+        for (int segIdx = leftSegs.nextSetBit(0);
+             segIdx != -1; segIdx = leftSegs.nextSetBit(segIdx+1)) {
+            leftSegNodes[segIdx] = segmentNodes[segIdx];
+        }
+
+        NetworkEdge rightLineage = new NetworkEdge(null, networkNode, rightSegs);
+        Node[] rightSegNodes = new Node[nSegments];
+        for (int segIdx = rightSegs.nextSetBit(0);
+             segIdx != -1; segIdx = rightSegs.nextSetBit(segIdx+1)) {
+            rightSegNodes[segIdx] = segmentNodes[segIdx];
+        }
+
+        networkNode.addParentEdge(leftLineage);
+        networkNode.addParentEdge(rightLineage);
+
+        lineages.remove(lineageIdx);
+        lineages.add(leftLineage);
+        lineages.add(rightLineage);
+
+        segmentNodeArrays.remove(lineageIdx);
+        segmentNodeArrays.add(leftSegNodes);
+        segmentNodeArrays.add(rightSegNodes);
     }
 
 }
