@@ -53,6 +53,8 @@ public class MarginalCoalescentWithReassortment extends Distribution {
         populationSize = populationSizeInput.get();
 
         particleStates = new ParticleState[nParticles];
+        particleStatesPrime = new ParticleState[nParticles];
+        particleWeights = new double[nParticles];
         for (int p=0; p<nParticles; p++) {
             particleStates[p] = new ParticleState(eventList.getNSegments());
             particleStatesPrime[p] = new ParticleState(eventList.getNSegments());

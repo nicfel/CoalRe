@@ -65,7 +65,7 @@ public class ObservedEventList extends CalculationNode {
             if (node.getHeight()>currentTime) {
                 currentTime = node.getHeight();
 
-                currentEvent = new ObservedEvent();
+                currentEvent = new ObservedEvent(getNSegments());
                 currentEvent.time = currentTime;
                 currentEvent.segTreeNodes[segIdx] = node;
 

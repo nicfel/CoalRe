@@ -15,6 +15,9 @@ class ParticleState {
     private int nSegments;
 
     public ParticleState(int nSegments) {
+        lineages = new ArrayList<>();
+        segmentNodeArrays = new ArrayList<>();
+
         this.nSegments = nSegments;
     }
 

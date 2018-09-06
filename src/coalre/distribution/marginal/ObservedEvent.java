@@ -12,6 +12,10 @@ public class ObservedEvent {
     public double time;
     public Node[] segTreeNodes;
 
-    String taxonLabel;
-    int taxonIndex;
+    public String taxonLabel;
+    public int taxonIndex;
+
+    public ObservedEvent(int nSegments) {
+        segTreeNodes = new Node[nSegments];
+    }
 }

@@ -1,0 +1,94 @@
+<beast version="2.0"
+       namespace="beast.core
+                 :beast.core.util
+                 :beast.core.parameter
+                 :beast.evolution.alignment
+                 :beast.evolution.likelihood
+                 :beast.evolution.tree
+                 :beast.evolution.tree.coalescent
+                 :beast.evolution.sitemodel
+                 :beast.evolution.substitutionmodel
+                 :beast.evolution.operators
+                 :beast.math.distributions
+                 :feast.simulation
+                 :feast.mapping
+                 :coalre.network
+                 :coalre.distribution
+                 :coalre.distribution.marginal
+                 :coalre.statistics
+                 :coalre.simulator">
+
+    <network id="network" spec="SimulatedCoalescentNetwork" fileName="$(filebase).trueNetwork.nexus"
+             enableSegmentTreeUpdate="true">
+        <populationModel id="truePopModel" spec="ConstantPopulation">
+            <popSize id="truePopSize" spec="RealParameter" value="1.0"/>
+        </populationModel>
+
+        <reassortmentRate id="trueReassortmentRate" spec="RealParameter" value="1.0"/>
+
+        <segmentTree id="segment1" spec="Tree" trait="@traitSet" taxonset="@taxonSet"/>
+        <segmentTree id="segment2" spec="Tree" trait="@traitSet" taxonset="@taxonSet"/>
+        <segmentTree id="segment3" spec="Tree" trait="@traitSet" taxonset="@taxonSet"/>
+        <segmentTree id="segment4" spec="Tree" trait="@traitSet" taxonset="@taxonSet"/>
+        <segmentTree id="segment5" spec="Tree" trait="@traitSet" taxonset="@taxonSet"/>
+        <segmentTree id="segment6" spec="Tree" trait="@traitSet" taxonset="@taxonSet"/>
+        <segmentTree id="segment7" spec="Tree" trait="@traitSet" taxonset="@taxonSet"/>
+        <segmentTree id="segment8" spec="Tree" trait="@traitSet" taxonset="@taxonSet"/>
+
+        <traitSet spec="TraitSet" traitname="date-backward" id="traitSet">
+            <taxa spec="TaxonSet" id="taxonSet">
+                <taxon spec="Taxon" id="t1"/>
+                <taxon spec="Taxon" id="t2"/>
+                <taxon spec="Taxon" id="t3"/>
+                <taxon spec="Taxon" id="t4"/>
+                <taxon spec="Taxon" id="t5"/>
+            </taxa>
+
+            t1=0, t2=0.1, t3=0.2, t4=0.3, t5=0.4
+        </traitSet>
+    </network>
+
+    <run spec="DensityMapper">
+
+        <distribution id="marginalDensity" spec="MarginalCoalescentWithReassortment" nParticles="1000">
+            <populationSize idref="truePopSize"/>
+            <reassortmentRate idref="reassortmentRate"/>
+
+            <observedEventList spec="ObservedEventList">
+                <segmentTree idref="segment1"/>
+                <segmentTree idref="segment2"/>
+                <segmentTree idref="segment3"/>
+                <segmentTree idref="segment4"/>
+                <segmentTree idref="segment5"/>
+                <segmentTree idref="segment6"/>
+                <segmentTree idref="segment7"/>
+                <segmentTree idref="segment8"/>
+            </observedEventList>
+        </distribution>
+
+        <distribution id="networkDensity" spec="CoalescentWithReassortment">
+            <networkIntervals spec="NetworkIntervals">
+                <network idref="network"/>
+            </networkIntervals>
+
+            <populationModel idref="truePopModel"/>
+            <reassortmentRate idref="reassortmentRate"/>
+        </distribution>
+
+        <realParam id="reassortmentRate" spec="RealParameter"
+                   value="1.0" lower="0.1" upper="2.0"/>
+        <steps spec="IntegerParameter" value="11"/>
+
+        <logger spec="Logger" logEvery="1" fileName="$(filebase).log">
+            <log idref="reassortmentRate"/>
+            <log idref="networkDensity"/>
+            <!--log idref="marginalDensity"/-->
+        </logger>
+
+        <logger spec="Logger" logEvery="1">
+            <log idref="reassortmentRate"/>
+            <log idref="networkDensity"/>
+            <!--log idref="marginalDensity"/-->
+        </logger>
+    </run>
+</beast>
