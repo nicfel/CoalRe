@@ -83,8 +83,7 @@ public class MarginalCoalescentWithReassortment extends Distribution {
                         prevEventTime, event.time, reassortmentRate, populationSize);
 
                 if (particleWeights[p]>Double.NEGATIVE_INFINITY)
-                    particleWeights[p] += particleStates[p].getObservedEventProbability(event,
-                            reassortmentRate, populationSize);
+                    particleWeights[p] += particleStates[p].getObservedEventProbability(event, populationSize);
 
                 if (particleWeights[p] > maxWeight)
                     maxWeight = particleWeights[p];
