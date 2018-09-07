@@ -217,13 +217,13 @@
         <logger spec="Logger" logEvery="1" fileName="$(filebase).log">
             <log idref="reassortmentRate"/>
             <log idref="networkDensity"/>
-            <!--log idref="marginalDensity"/-->
+            <log idref="marginalDensity"/>
         </logger>
 
         <logger spec="Logger" logEvery="1">
             <log idref="reassortmentRate"/>
             <log idref="networkDensity"/>
-            <!--log idref="marginalDensity"/-->
+            <log idref="marginalDensity"/>
         </logger>
     </run>
 </beast>
