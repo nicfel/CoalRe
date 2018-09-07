@@ -18,4 +18,9 @@ public class ObservedEvent {
     public ObservedEvent(int nSegments) {
         segTreeNodes = new Node[nSegments];
     }
+
+    @Override
+    public String toString() {
+        return type + " (time " + time + ")";
+    }
 }

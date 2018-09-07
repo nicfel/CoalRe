@@ -43,17 +43,7 @@ public class ObservedEventList extends CalculationNode {
                 nodeIdxPairs.add(new Pair<>(nodes[i], segIdx));
             }
         }
-        nodeIdxPairs.sort(new Comparator<Pair<Node, Integer>>() {
-            @Override
-            public int compare(Pair<Node, Integer> o1, Pair<Node, Integer> o2) {
-                if (o1.value2 < o2.value2)
-                    return -1;
-                if (o1.value2 > o2.value2)
-                    return 1;
-                else
-                    return 0;
-            }
-        });
+        nodeIdxPairs.sort(Comparator.comparingDouble(p -> p.value1.getHeight()));
 
         ObservedEvent currentEvent = null;
         double currentTime = Double.NEGATIVE_INFINITY;
