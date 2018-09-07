@@ -339,14 +339,28 @@ class ParticleState {
         // Merge segment node arrays:
 
         Node[] segmentNodes = new Node[nSegments];
-        for (int segIdx = lineage1.hasSegments.nextSetBit(0);
-             segIdx != -1; segIdx = lineage1.hasSegments.nextSetBit(segIdx + 1)) {
-            segmentNodes[segIdx] = segNodes1[segIdx];
-        }
+        for (int segIdx=0; segIdx<nSegments; segIdx++) {
 
-        for (int segIdx = lineage2.hasSegments.nextSetBit(0);
-             segIdx != -1; segIdx = lineage2.hasSegments.nextSetBit(segIdx + 1)) {
-            segmentNodes[segIdx] = segNodes2[segIdx];
+            if (lineage1.hasSegments.get(segIdx)) {
+                if (lineage2.hasSegments.get(segIdx)) {
+                    if((segNodes1[segIdx].getParent() != segNodes2[segIdx].getParent())
+                        || (segNodes1[segIdx].getParent().getHeight() != coalescenceTime)) {
+
+                        throw new IllegalStateException("coalesceLineages attempting to " +
+                                "produce a coalescence that is incompatible with one or " +
+                                "more  segment trees.");
+                    }
+
+                    segmentNodes[segIdx] = segNodes1[segIdx].getParent();
+                } else {
+                    segmentNodes[segIdx] = segNodes1[segIdx];
+                }
+            } else {
+                if (lineage2.hasSegments.get(segIdx)) {
+                    segmentNodes[segIdx] = segNodes2[segIdx];
+                }
+            }
+
         }
 
         // Create new lineage

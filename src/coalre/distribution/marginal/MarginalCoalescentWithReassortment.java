@@ -5,8 +5,6 @@ import beast.core.Function;
 import beast.core.Input;
 import beast.core.State;
 import beast.util.Randomizer;
-import coalre.network.NetworkEdge;
-import coalre.network.NetworkNode;
 
 import java.util.*;
 
@@ -39,7 +37,7 @@ public class MarginalCoalescentWithReassortment extends Distribution {
 
     int nParticles;
     ParticleState[] particleStates, particleStatesPrime;
-    double[] particleWeights;
+    double[] logParticleWeights;
 
 
     public MarginalCoalescentWithReassortment() { }
@@ -54,11 +52,11 @@ public class MarginalCoalescentWithReassortment extends Distribution {
 
         particleStates = new ParticleState[nParticles];
         particleStatesPrime = new ParticleState[nParticles];
-        particleWeights = new double[nParticles];
+        logParticleWeights = new double[nParticles];
         for (int p=0; p<nParticles; p++) {
             particleStates[p] = new ParticleState(eventList.getNSegments());
             particleStatesPrime[p] = new ParticleState(eventList.getNSegments());
-            particleWeights[p] = 0.0;
+            logParticleWeights[p] = 0.0;
         }
     }
 
@@ -78,28 +76,33 @@ public class MarginalCoalescentWithReassortment extends Distribution {
 
             // Propagate particles
 
-            double maxWeight = Double.NEGATIVE_INFINITY;
+            double maxLogWeight = Double.NEGATIVE_INFINITY;
             for (int p=0; p<nParticles; p++) {
 
-                particleWeights[p] = particleStates[p].propagateParticleState(
+                logParticleWeights[p] = particleStates[p].propagateParticleState(
                         prevEventTime, event.time, reassortmentRate, populationSize);
 
-                if (particleWeights[p]>Double.NEGATIVE_INFINITY)
-                    particleWeights[p] += particleStates[p].getObservedEventProbability(event, populationSize);
+                if (logParticleWeights[p]>Double.NEGATIVE_INFINITY)
+                    logParticleWeights[p] += particleStates[p].getObservedEventProbability(event, populationSize);
 
-                if (particleWeights[p] > maxWeight)
-                    maxWeight = particleWeights[p];
+                if (logParticleWeights[p] > maxLogWeight)
+                    maxLogWeight = logParticleWeights[p];
+            }
+
+            if (maxLogWeight == Double.NEGATIVE_INFINITY) {
+                logP = Double.NEGATIVE_INFINITY;
+                break;
             }
 
             // Compute average weight
 
             double sumScaledWeights = 0.0;
             for (int p=0; p<nParticles; p++) {
-                particleWeights[p] = particleWeights[p] - maxWeight;
-                sumScaledWeights += Math.exp(particleWeights[p]);
+                logParticleWeights[p] = logParticleWeights[p] - maxLogWeight;
+                sumScaledWeights += Math.exp(logParticleWeights[p]);
             }
 
-            logP += Math.log(sumScaledWeights/nParticles) + maxWeight;
+            logP += Math.log(sumScaledWeights/nParticles) + maxLogWeight;
 
             // Resample particles
 
@@ -113,12 +116,12 @@ public class MarginalCoalescentWithReassortment extends Distribution {
             int pPrime = 0;
             for (int p=0; p<nParticles; p++) {
 
-                while (pPrime<nParticles && (u[pPrime]-accumulator < Math.exp(particleWeights[p]))) {
+                while (pPrime<nParticles && (u[pPrime]-accumulator < Math.exp(logParticleWeights[p]))) {
                     particleStates[p].copyParticleState(particleStatesPrime[pPrime]);
                     pPrime += 1;
                 }
 
-                accumulator += Math.exp(particleWeights[p]);
+                accumulator += Math.exp(logParticleWeights[p]);
             }
 
             ParticleState[] tmp = particleStates;
