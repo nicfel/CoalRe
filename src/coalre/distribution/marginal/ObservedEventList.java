@@ -49,19 +49,14 @@ public class ObservedEventList extends CalculationNode {
         // are not part of the same event - unlike coincident coalescent events.)
         nodeIdxPairs.sort(new Comparator<Pair<Node, Integer>>() {
             @Override
-            public int compare(Pair<Node, Integer> o1, Pair<Node, Integer> o2) {
+            public int compare(Pair<Node, Integer> p1, Pair<Node, Integer> p2) {
 
-                if (o1.value1.getHeight() < o2.value1.getHeight())
-                    return -1;
+                if (p1.value1.getHeight() < p2.value1.getHeight()) return -1;
+                if (p1.value1.getHeight() > p2.value1.getHeight()) return 1;
 
-                if (o1.value1.getHeight() > o2.value1.getHeight())
-                    return 1;
-
-                if (o1.value1.isLeaf() && o2.value1.isLeaf()) {
-                    if (o1.value1.getNr()<o2.value1.getNr())
-                        return -1;
-                    if (o1.value1.getNr()>o2.value1.getNr())
-                        return 1;
+                if (p1.value1.isLeaf() && p2.value1.isLeaf()) {
+                    if (p1.value1.getNr()<p2.value1.getNr()) return -1;
+                    if (p1.value1.getNr()>p2.value1.getNr()) return 1;
                 }
 
                 return 0;

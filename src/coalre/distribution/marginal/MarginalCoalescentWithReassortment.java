@@ -121,7 +121,9 @@ public class MarginalCoalescentWithReassortment extends Distribution {
                 accumulator += Math.exp(particleWeights[p]);
             }
 
+            ParticleState[] tmp = particleStates;
             particleStates = particleStatesPrime;
+            particleStatesPrime = tmp;
 
             prevEventTime = event.time;
         }
