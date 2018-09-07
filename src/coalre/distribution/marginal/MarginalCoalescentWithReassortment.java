@@ -113,7 +113,7 @@ public class MarginalCoalescentWithReassortment extends Distribution {
             int pPrime = 0;
             for (int p=0; p<nParticles; p++) {
 
-                while (u[pPrime]-accumulator < Math.exp(particleWeights[p])) {
+                while (pPrime<nParticles && (u[pPrime]-accumulator < Math.exp(particleWeights[p]))) {
                     particleStates[p].copyParticleState(particleStatesPrime[pPrime]);
                     pPrime += 1;
                 }
@@ -123,6 +123,7 @@ public class MarginalCoalescentWithReassortment extends Distribution {
 
             particleStates = particleStatesPrime;
 
+            prevEventTime = event.time;
         }
 
 
