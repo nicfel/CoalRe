@@ -44,7 +44,7 @@
                 <taxon spec="Taxon" id="t5"/>
             </taxa>
 
-            t1=0, t2=0.1, t3=0.2, t4=0.3, t5=0.4
+            t1=0, t2=0, t3=0.2, t4=0.3, t5=0.4
         </traitSet>
     </network>
 

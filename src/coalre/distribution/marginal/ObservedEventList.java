@@ -43,16 +43,40 @@ public class ObservedEventList extends CalculationNode {
                 nodeIdxPairs.add(new Pair<>(nodes[i], segIdx));
             }
         }
-        nodeIdxPairs.sort(Comparator.comparingDouble(p -> p.value1.getHeight()));
+
+        // Sort entries by their corresponding node ages and leaves by their node numbers.
+        // (Allows us to distinguish coincident samples on different lineages, which
+        // are not part of the same event - unlike coincident coalescent events.)
+        nodeIdxPairs.sort(new Comparator<Pair<Node, Integer>>() {
+            @Override
+            public int compare(Pair<Node, Integer> o1, Pair<Node, Integer> o2) {
+
+                if (o1.value1.getHeight() < o2.value1.getHeight())
+                    return -1;
+
+                if (o1.value1.getHeight() > o2.value1.getHeight())
+                    return 1;
+
+                if (o1.value1.isLeaf() && o2.value1.isLeaf()) {
+                    if (o1.value1.getNr()<o2.value1.getNr())
+                        return -1;
+                    if (o1.value1.getNr()>o2.value1.getNr())
+                        return 1;
+                }
+
+                return 0;
+            }
+        });
 
         ObservedEvent currentEvent = null;
         double currentTime = Double.NEGATIVE_INFINITY;
+        int currentTaxonIdx = -1;
 
         for (Pair<Node,Integer> nodeIdxPair : nodeIdxPairs) {
             Node node = nodeIdxPair.value1;
             int segIdx = nodeIdxPair.value2;
 
-            if (node.getHeight()>currentTime) {
+            if (node.getHeight()>currentTime || (node.isLeaf() && node.getNr() != currentTaxonIdx)) {
                 currentTime = node.getHeight();
 
                 currentEvent = new ObservedEvent(getNSegments());
@@ -63,6 +87,7 @@ public class ObservedEventList extends CalculationNode {
                     currentEvent.type = ObservedEvent.EventType.SAMPLE;
                     currentEvent.taxonLabel = node.getID();
                     currentEvent.taxonIndex = node.getNr();
+                    currentTaxonIdx = node.getNr();
                 } else {
                     currentEvent.type = ObservedEvent.EventType.COALESCENCE;
                 }
