@@ -4,6 +4,7 @@
 /.settings
 /CoalRe.iml
 /.idea
+/META-INF
 
 # Misc cruft
 .DS_Store
