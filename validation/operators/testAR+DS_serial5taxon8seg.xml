@@ -20,33 +20,24 @@
     <run spec="MCMC" chainLength="100000000">
 
         <state>
-            <stateNode id="network" spec="SimulatedCoalescentNetwork">
+            <stateNode id="network" spec="SimulatedCoalescentNetwork" nSegments="8" enableSegmentTreeUpdate="false">
                 <populationModel spec="ConstantPopulation">
                     <popSize spec="RealParameter" value="1.0"/>
                 </populationModel>
 
                 <reassortmentRate spec="RealParameter" value="1.0"/>
 
-                <segmentTree id="segment1" spec="Tree">
-                    <trait spec="TraitSet" traitname="date-backward" id="traitSet">
-                        <taxa spec="TaxonSet" id="taxonSet">
-                            <taxon spec="Taxon" id="t1"/>
-                            <taxon spec="Taxon" id="t2"/>
-                            <taxon spec="Taxon" id="t3"/>
-                            <taxon spec="Taxon" id="t4"/>
-                            <taxon spec="Taxon" id="t5"/>
-                        </taxa>
+                <traitSet spec="TraitSet" traitname="date-backward" id="traitSet">
+                    <taxa spec="TaxonSet" id="taxonSet">
+                        <taxon spec="Taxon" id="t1"/>
+                        <taxon spec="Taxon" id="t2"/>
+                        <taxon spec="Taxon" id="t3"/>
+                        <taxon spec="Taxon" id="t4"/>
+                        <taxon spec="Taxon" id="t5"/>
+                    </taxa>
 
-                        t1=0, t2=0.1, t3=0.2, t4=0.3, t5=0.4
-                    </trait>
-                </segmentTree>
-                <segmentTree id="segment2" spec="Tree" trait="@traitSet"/>
-                <segmentTree id="segment3" spec="Tree" trait="@traitSet"/>
-                <segmentTree id="segment4" spec="Tree" trait="@traitSet"/>
-                <segmentTree id="segment5" spec="Tree" trait="@traitSet"/>
-                <segmentTree id="segment6" spec="Tree" trait="@traitSet"/>
-                <segmentTree id="segment7" spec="Tree" trait="@traitSet"/>
-                <segmentTree id="segment8" spec="Tree" trait="@traitSet"/>
+                    t1=0, t2=0.1, t3=0.2, t4=0.3, t5=0.4
+                </traitSet>
             </stateNode>
         </state>
 
