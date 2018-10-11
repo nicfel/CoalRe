@@ -31,6 +31,10 @@ public class NetworkEdge {
     public boolean isRootEdge() {
         return parentNode == null;
     }
+    
+    public boolean isLeafEdge() {
+    	return childNode.isLeaf();
+    }
 
     public NetworkEdge getCopy() {
         return getCopy(new HashMap<>());

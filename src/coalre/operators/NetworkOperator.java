@@ -8,6 +8,7 @@ import beast.math.Binomial;
 import beast.util.Randomizer;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
+import coalre.network.NetworkNode;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -138,5 +139,10 @@ public abstract class NetworkOperator extends Operator {
 
         return sourceSegments.cardinality()*Math.log(0.5)
                 - Math.log(1.0 - 2.0*Math.pow(0.5, sourceSegments.cardinality()));
+    }
+    
+    public void replace(final NetworkNode node, final NetworkEdge child, final NetworkEdge replacement) {
+    	node.removeChildEdge(child);
+    	node.addChildEdge(replacement);
     }
 }
