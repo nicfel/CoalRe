@@ -1,5 +1,6 @@
 package coalre.operators;
 
+import beast.core.Input;
 import beast.evolution.tree.Node;
 import beast.util.Randomizer;
 import coalre.network.Network;
@@ -13,50 +14,31 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class NetworkExchange extends NetworkOperator {
+public class NetworkExchange extends DivertSegmentOperator {
+	final public Input<Boolean> isNarrowInput = new Input<>("isNarrow", "if true (default) a narrow exchange is performed, otherwise a wide exchange", true);
+	
+	//TODO: What is this doing??
+//    @Override
+//    public void initAndValidate() {
+//    }
 
     @Override
     public double networkProposal() {
         double logHR = 0.0;
-
-        List<NetworkEdge> sourceEdges = network.getEdges().stream()
-                .filter(e -> e.childNode.isReassortment())
-                .filter(e -> e.hasSegments.cardinality()>1)
-                .collect(Collectors.toList());
-
-        if (sourceEdges.isEmpty())
-            return Double.NEGATIVE_INFINITY;
-
-        logHR -= Math.log(1.0/sourceEdges.size());
-
-        NetworkEdge sourceEdge = sourceEdges.get(Randomizer.nextInt(sourceEdges.size()));
-        NetworkEdge destEdge = getSpouseEdge(sourceEdge);
-
-        BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
-        logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
-
-        network.startEditing(this);
-
-        logHR -= addSegmentsToAncestors(destEdge, segsToDivert);
-        logHR += removeSegmentsFromAncestors(sourceEdge, segsToDivert);
-
-        if (!allEdgesAncestral())
-            return Double.NEGATIVE_INFINITY;
-
-        logHR += getLogConditionedSubsetProb(destEdge.hasSegments);
-
-        int reverseSourceEdgeCount = (int)(network.getEdges().stream()
-                .filter(e -> e.childNode.isReassortment())
-                .filter(e -> e.hasSegments.cardinality()>1)
-                .count());
-
-        logHR += Math.log(1.0/reverseSourceEdgeCount);
+        
+        final Network network = networkInput.get(this);
+        
+        if (isNarrowInput.get()) {
+        	logHR = narrow(network);
+        } else {
+            logHR = wide(network);
+        }
 
         return logHR;
     }
     
     
-    public double narrow() {
+    public double narrow(final Network network) {
     	
 //    	List<NetworkNode> internalNodes = new ArrayList<>(network.getInternalNodes());
 //    	final int internalNodesCount = internalNodes.size();
@@ -64,51 +46,101 @@ public class NetworkExchange extends NetworkOperator {
 //            return Double.NEGATIVE_INFINITY;
 //        }
         
+    	System.out.println("yo");
         List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
         
         List<NetworkEdge> possibleGrandParentEdges = networkEdges.stream()
-        		.filter(e -> !e.isLeafEdge()).collect(Collectors.toList());
+        		.filter(e -> !e.isLeafEdge())
+        		.filter(e -> !e.isRootEdge())
+        		.filter(e -> e.childNode.isCoalescence()) // good idea?
+        		.collect(Collectors.toList());
         
-        NetworkNode grandParent = possibleGrandParentEdges.
-        		get(Randomizer.nextInt(possibleGrandParentEdges.size())).parentNode;
+        NetworkEdge grandParentEdge = possibleGrandParentEdges.
+        		get(Randomizer.nextInt(possibleGrandParentEdges.size()));
+        
+        NetworkNode grandParent = grandParentEdge.childNode;
         
         
         
-        List<NetworkEdge> possibleParentEdges = grandParent.getChildEdges();
+        List<NetworkEdge> possibleParentEdges = grandParent.getChildEdges(); // 2
+//        		.stream()
+//        		.filter(e -> !e.isLeafEdge()).collect(Collectors.toList());
         
         //TODO: Would this work?
-//        NetworkEdge parentEdge = possibleParentEdges.get(Randomizer.nextInt(possibleParentEdges.size()));
-//        NetworkEdge auntEdge = super.getSisterEdge(parentEdge);
+        final int parentId = Randomizer.nextInt(possibleParentEdges.size());
+        NetworkEdge parentEdge = possibleParentEdges.get(parentId);
+        NetworkEdge auntEdge = super.getSisterEdge(parentEdge);
+        
+        NetworkNode parent = parentEdge.childNode;
+        NetworkNode aunt = auntEdge.childNode;
+        
+//        System.out.println(possibleParentEdges.size());
+//        final int[] ids = new Random().ints(0, possibleParentEdges.size())
+//        		.distinct().limit(2).toArray();
+        
+        
+//        NetworkEdge parentEdge = possibleParentEdges.get(ids[0]);
+//        NetworkEdge auntEdge = possibleParentEdges.get(ids[1]);
+//        
 //        
 //        NetworkNode parent = parentEdge.childNode;
 //        NetworkNode aunt = auntEdge.childNode;
         
-        final int[] ids = new Random().ints(possibleParentEdges.size())
-        		.distinct().limit(2).toArray();
+        if (parent.getHeight() < aunt.getHeight()) {
+        	auntEdge = possibleParentEdges.get(parentId);
+        	parentEdge = super.getSisterEdge(auntEdge);
+        	
+        	parent = parentEdge.childNode;
+        	aunt = auntEdge.childNode;
+        } 
         
-        NetworkNode parent = possibleParentEdges.get(ids[0]).childNode;
-        NetworkNode uncle = possibleParentEdges.get(ids[1]).childNode;
-        
-        if (parent.getHeight() < uncle.getHeight()) {
-        	parent = possibleParentEdges.get(ids[1]).childNode;
-        	uncle = possibleParentEdges.get(ids[0]).childNode;
+        if( parent.isLeaf() ) {
+        	System.out.println("Doooesn't count");
+            // tree with dated tips
+            return Double.NEGATIVE_INFINITY;
         }
         
         // Hastings ratio not updated for now
+
+        List<NetworkEdge> possibleChildEdges = parent.getChildEdges();
+        final NetworkEdge childEdge = possibleChildEdges.get(Randomizer.nextInt(possibleChildEdges.size()));
+        exchangeEdges(childEdge, auntEdge, parent, grandParent);
+        
+        BitSet childSegs = childEdge.hasSegments;
+        BitSet auntSegs = auntEdge.hasSegments;
+        
+//        removeSegmentsFromAncestors(grandParentEdge, auntSegs);
+//        addSegmentsToAncestors(grandParentEdge, childSegs);
+//        
+//        removeSegmentsFromAncestors(parentEdge, childSegs);
+//        addSegmentsToAncestors(parentEdge, auntSegs);
+        
+        
  
         
     	
-    	return 0;
+    	return 1;
+    }
+    
+    public double wide(final Network network) {
+    	
+    	//TODO: Everything
+    	
+    	return 0.0;
     }
     
     
     /* exchange sub-nets whose root are i and j */
 
-    protected void exchangeNodes(NetworkEdge i, NetworkEdge j,
+    protected void exchangeEdges(NetworkEdge i, NetworkEdge j,
     		NetworkNode p, NetworkNode jP) {
         // precondition p -> i & jP -> j
-        replace(p, i, j);
-        replace(jP, j, i);
+//        replace(p, i, j);
+        p.removeChildEdge(i);
+        jP.removeChildEdge(j);
+        p.addChildEdge(j);
+        jP.addChildEdge(i);
+//        replace(jP, j, i);
         // postcondition p -> j & p -> i
     }
     
@@ -116,95 +148,7 @@ public class NetworkExchange extends NetworkOperator {
     
     
     
-    
-
-
-    /**
-     * Remove segments from this edge and ancestors.
-     *
-     * @param edge edge at which to start removal
-     * @param segsToRemove segments to remove from edge and ancestors
-     * @return log probability of reverse operation
-     */
-    double removeSegmentsFromAncestors(NetworkEdge edge, BitSet segsToRemove) {
-        double logP = 0.0;
-
-        segsToRemove = (BitSet)segsToRemove.clone();
-        segsToRemove.and(edge.hasSegments);
-
-        if (segsToRemove.isEmpty())
-            return logP;
-
-        edge.hasSegments.andNot(segsToRemove);
-
-        if (edge.isRootEdge())
-            return logP;
-
-        if (edge.parentNode.isReassortment()) {
-
-            logP += Math.log(0.5)*segsToRemove.cardinality();
-
-            logP += removeSegmentsFromAncestors(edge.parentNode.getParentEdges().get(0), segsToRemove);
-            logP += removeSegmentsFromAncestors(edge.parentNode.getParentEdges().get(1), segsToRemove);
-
-        } else {
-
-            segsToRemove.andNot(getSisterEdge(edge).hasSegments);
-            logP += removeSegmentsFromAncestors(edge.parentNode.getParentEdges().get(0), segsToRemove);
-
-        }
-
-        return logP;
-    }
-
-    /**
-     * Add segments to this edge and ancestors.
-     *
-     * @param edge edge at which to start addition
-     * @param segsToAdd segments to add to the edge and ancestors
-     * @return log probability of operation
-     */
-    double addSegmentsToAncestors(NetworkEdge edge, BitSet segsToAdd) {
-        double logP = 0.0;
-
-        segsToAdd = (BitSet)segsToAdd.clone();
-        segsToAdd.andNot(edge.hasSegments);
-
-        if (segsToAdd.isEmpty())
-            return logP;
-
-        edge.hasSegments.or(segsToAdd);
-
-        if (edge.isRootEdge())
-            return logP;
-
-        if (edge.parentNode.isReassortment()) {
-
-            BitSet segsToAddLeft = new BitSet();
-            BitSet segsToAddRight = new BitSet();
-
-            for (int segIdx=segsToAdd.nextSetBit(0); segIdx != -1;
-                    segIdx=segsToAdd.nextSetBit(segIdx+1)) {
-                if (Randomizer.nextBoolean())
-                    segsToAddLeft.set(segIdx);
-                else
-                    segsToAddRight.set(segIdx);
-
-                logP += Math.log(0.5);
-            }
-
-            logP += addSegmentsToAncestors(edge.parentNode.getParentEdges().get(0), segsToAddLeft);
-            logP += addSegmentsToAncestors(edge.parentNode.getParentEdges().get(1), segsToAddRight);
-
-        } else {
-
-            logP += addSegmentsToAncestors(edge.parentNode.getParentEdges().get(0), segsToAdd);
-        }
-
-        return logP;
-    }
-
-    /**
+       /**
      * Check that each edge is ancestral to at least one segment.
      *
      * @return true if all edges are ancestral.
