@@ -40,19 +40,12 @@ public class NetworkExchange extends DivertSegmentOperator {
     
     public double narrow(final Network network) {
     	
-//    	List<NetworkNode> internalNodes = new ArrayList<>(network.getInternalNodes());
-//    	final int internalNodesCount = internalNodes.size();
-//        if (internalNodesCount <= 1) {
-//            return Double.NEGATIVE_INFINITY;
-//        }
-        
-    	System.out.println("yo");
         List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
         
         List<NetworkEdge> possibleGrandParentEdges = networkEdges.stream()
         		.filter(e -> !e.isLeafEdge())
         		.filter(e -> !e.isRootEdge())
-        		.filter(e -> e.childNode.isCoalescence()) // good idea?
+        		.filter(e -> e.childNode.isCoalescence())
         		.collect(Collectors.toList());
         
         NetworkEdge grandParentEdge = possibleGrandParentEdges.
@@ -62,41 +55,24 @@ public class NetworkExchange extends DivertSegmentOperator {
         
         
         
-        List<NetworkEdge> possibleParentEdges = grandParent.getChildEdges(); // 2
-//        		.stream()
-//        		.filter(e -> !e.isLeafEdge()).collect(Collectors.toList());
+        List<NetworkEdge> possibleParentEdges = grandParent.getChildEdges();
         
-        //TODO: Would this work?
-        final int parentId = Randomizer.nextInt(possibleParentEdges.size());
-        NetworkEdge parentEdge = possibleParentEdges.get(parentId);
-        NetworkEdge auntEdge = super.getSisterEdge(parentEdge);
+        NetworkEdge parentEdge = possibleParentEdges.get(0);
+        NetworkEdge auntEdge = possibleParentEdges.get(1);
         
         NetworkNode parent = parentEdge.childNode;
         NetworkNode aunt = auntEdge.childNode;
-        
-//        System.out.println(possibleParentEdges.size());
-//        final int[] ids = new Random().ints(0, possibleParentEdges.size())
-//        		.distinct().limit(2).toArray();
-        
-        
-//        NetworkEdge parentEdge = possibleParentEdges.get(ids[0]);
-//        NetworkEdge auntEdge = possibleParentEdges.get(ids[1]);
-//        
-//        
-//        NetworkNode parent = parentEdge.childNode;
-//        NetworkNode aunt = auntEdge.childNode;
+
         
         if (parent.getHeight() < aunt.getHeight()) {
-        	auntEdge = possibleParentEdges.get(parentId);
-        	parentEdge = super.getSisterEdge(auntEdge);
+        	auntEdge = possibleParentEdges.get(0);
+        	parentEdge = possibleParentEdges.get(1);
         	
         	parent = parentEdge.childNode;
         	aunt = auntEdge.childNode;
         } 
         
         if( parent.isLeaf() || parent.isReassortment() ) {
-        	System.out.println("Doooesn't count");
-            // tree with dated tips
             return Double.NEGATIVE_INFINITY;
         }
         
@@ -106,20 +82,16 @@ public class NetworkExchange extends DivertSegmentOperator {
         final NetworkEdge childEdge = possibleChildEdges.get(Randomizer.nextInt(possibleChildEdges.size()));
         exchangeEdges(childEdge, auntEdge, parent, grandParent);
         
-        BitSet childSegs = childEdge.hasSegments;
-        BitSet auntSegs = auntEdge.hasSegments;
+        //TODO Figure out why segment moves not working. Currently segments are vanishing from trees.
         
-        removeSegmentsFromAncestors(grandParentEdge, auntSegs);
-        removeSegmentsFromAncestors(parentEdge, childSegs);
+//        BitSet childSegs = childEdge.hasSegments;
+//        BitSet auntSegs = auntEdge.hasSegments;
         
-        addSegmentsToAncestors(grandParentEdge, childSegs);
-        addSegmentsToAncestors(parentEdge, auntSegs);
-        
-
-        
-        
- 
-        
+//        removeSegmentsFromAncestors(grandParentEdge, auntSegs);
+//        removeSegmentsFromAncestors(parentEdge, childSegs);
+//        
+//        addSegmentsToAncestors(grandParentEdge, childSegs);
+//        addSegmentsToAncestors(parentEdge, auntSegs);
     	
     	return 1;
     }
@@ -136,15 +108,10 @@ public class NetworkExchange extends DivertSegmentOperator {
 
     protected void exchangeEdges(NetworkEdge i, NetworkEdge j,
     		NetworkNode p, NetworkNode jP) {
-        // precondition p -> i & jP -> j
-//        replace(p, i, j);
-    	System.out.println("Exchange happening");
         p.removeChildEdge(i);
         jP.removeChildEdge(j);
         p.addChildEdge(j);
         jP.addChildEdge(i);
-//        replace(jP, j, i);
-        // postcondition p -> j & p -> i
     }
     
     
