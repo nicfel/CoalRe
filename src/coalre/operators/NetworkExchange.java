@@ -94,7 +94,7 @@ public class NetworkExchange extends DivertSegmentOperator {
         	aunt = auntEdge.childNode;
         } 
         
-        if( parent.isLeaf() ) {
+        if( parent.isLeaf() || parent.isReassortment() ) {
         	System.out.println("Doooesn't count");
             // tree with dated tips
             return Double.NEGATIVE_INFINITY;
