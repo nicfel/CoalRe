@@ -109,11 +109,13 @@ public class NetworkExchange extends DivertSegmentOperator {
         BitSet childSegs = childEdge.hasSegments;
         BitSet auntSegs = auntEdge.hasSegments;
         
-//        removeSegmentsFromAncestors(grandParentEdge, auntSegs);
-//        addSegmentsToAncestors(grandParentEdge, childSegs);
-//        
-//        removeSegmentsFromAncestors(parentEdge, childSegs);
-//        addSegmentsToAncestors(parentEdge, auntSegs);
+        removeSegmentsFromAncestors(grandParentEdge, auntSegs);
+        removeSegmentsFromAncestors(parentEdge, childSegs);
+        
+        addSegmentsToAncestors(grandParentEdge, childSegs);
+        addSegmentsToAncestors(parentEdge, auntSegs);
+        
+
         
         
  
@@ -136,6 +138,7 @@ public class NetworkExchange extends DivertSegmentOperator {
     		NetworkNode p, NetworkNode jP) {
         // precondition p -> i & jP -> j
 //        replace(p, i, j);
+    	System.out.println("Exchange happening");
         p.removeChildEdge(i);
         jP.removeChildEdge(j);
         p.addChildEdge(j);
