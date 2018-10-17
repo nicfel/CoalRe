@@ -50,9 +50,7 @@ public class NetworkExchange extends DivertSegmentOperator {
         
         NetworkEdge grandParentEdge = possibleGrandParentEdges.
         		get(Randomizer.nextInt(possibleGrandParentEdges.size()));
-        
         NetworkNode grandParent = grandParentEdge.childNode;
-        
         
         
         List<NetworkEdge> possibleParentEdges = grandParent.getChildEdges();
@@ -79,28 +77,70 @@ public class NetworkExchange extends DivertSegmentOperator {
         // Hastings ratio not updated for now
 
         List<NetworkEdge> possibleChildEdges = parent.getChildEdges();
-        final NetworkEdge childEdge = possibleChildEdges.get(Randomizer.nextInt(possibleChildEdges.size()));
+        final int childId = Randomizer.nextInt(possibleChildEdges.size());
+        final int sisterId = (childId == 1) ? 0:1;
+        
+        final NetworkEdge childEdge = possibleChildEdges.get(childId);
+        final NetworkEdge sisterEdge = possibleChildEdges.get(sisterId);
+        
         exchangeEdges(childEdge, auntEdge, parent, grandParent);
         
-        //TODO Figure out why segment moves not working. Currently segments are vanishing from trees.
         
-//        BitSet childSegs = childEdge.hasSegments;
-//        BitSet auntSegs = auntEdge.hasSegments;
+        BitSet childSegs = childEdge.hasSegments;
+        BitSet sisterSegs = sisterEdge.hasSegments; 
+        BitSet auntSegs = auntEdge.hasSegments;
+        BitSet parentSegs = parentEdge.hasSegments;
         
-//        removeSegmentsFromAncestors(grandParentEdge, auntSegs);
-//        removeSegmentsFromAncestors(parentEdge, childSegs);
-//        
-//        addSegmentsToAncestors(grandParentEdge, childSegs);
-//        addSegmentsToAncestors(parentEdge, auntSegs);
-    	
+        removeSegmentsFromAncestors(grandParentEdge, auntSegs);
+        removeSegmentsFromAncestors(parentEdge, childSegs);     
+        
+
+        addSegmentsToAncestors(parentEdge, auntSegs);
+        addSegmentsToAncestors(parentEdge, sisterSegs);
+        addSegmentsToAncestors(grandParentEdge, childSegs);
+        addSegmentsToAncestors(grandParentEdge, parentSegs);
+         
     	return 1;
     }
     
     public double wide(final Network network) {
     	
-    	//TODO: Everything
+        List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
+        
+        List<NetworkEdge> possibleEdges = networkEdges.stream()
+        		.filter(e -> !e.isRootEdge())
+        		.collect(Collectors.toList());
+        
+        NetworkEdge iEdge = possibleEdges.
+        		get(Randomizer.nextInt(possibleEdges.size()));
+        NetworkNode i = iEdge.childNode;
+        
+        NetworkEdge jEdge = iEdge;
+        
+        while(jEdge == iEdge) {
+        	jEdge = possibleEdges.
+            		get(Randomizer.nextInt(possibleEdges.size()));
+        }
+        NetworkNode j = jEdge.childNode;
+        
+        final NetworkNode p = iEdge.parentNode;
+        final NetworkNode jP = jEdge.parentNode;
+        
+        
+        
+        if ((p != jP) && (i !=jP) && (j != p)
+        		&& (j.getHeight() < p.getHeight())
+        		&& (i.getHeight() < jP.getHeight()) 
+        		&& !p.isReassortment() 
+        		&& !jP.isReassortment()) {
+        	exchangeEdges(iEdge, jEdge, p, jP);
+        	return 0;
+        }
+        else {
+        	return Double.NEGATIVE_INFINITY;
+        }
+        	
     	
-    	return 0.0;
     }
     
     
