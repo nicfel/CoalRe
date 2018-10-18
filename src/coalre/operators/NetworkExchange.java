@@ -125,7 +125,19 @@ public class NetworkExchange extends DivertSegmentOperator {
         
         final NetworkNode p = iEdge.parentNode;
         final NetworkNode jP = jEdge.parentNode;
+        final NetworkEdge pEdge = p.getParentEdges().get(0);
+        final NetworkEdge jPEdge = jP.getParentEdges().get(0); 
         
+        BitSet iSisterSegs = null;
+        if (p.isCoalescence()) {        
+        	NetworkEdge iSisterEdge = super.getSisterEdge(iEdge);
+        	iSisterSegs = iSisterEdge.hasSegments; 
+        }
+        BitSet jSisterSegs = null;
+        if (jP.isCoalescence()) {
+        	NetworkEdge jSisterEdge = super.getSisterEdge(jEdge);	
+        	jSisterSegs = jSisterEdge.hasSegments;
+        }
         
         
         if ((p != jP) && (i !=jP) && (j != p)
@@ -134,6 +146,25 @@ public class NetworkExchange extends DivertSegmentOperator {
         		&& !p.isReassortment() 
         		&& !jP.isReassortment()) {
         	exchangeEdges(iEdge, jEdge, p, jP);
+
+            BitSet iSegs = iEdge.hasSegments;
+
+            BitSet jSegs = jEdge.hasSegments;
+
+            
+            
+            removeSegmentsFromAncestors(jPEdge, jSegs);
+            removeSegmentsFromAncestors(pEdge, iSegs);     
+            
+
+            addSegmentsToAncestors(pEdge, jSegs);
+            if (p.isCoalescence()) { 
+            addSegmentsToAncestors(pEdge, iSisterSegs);}
+            addSegmentsToAncestors(jPEdge, iSegs);
+            if (jP.isCoalescence()) {
+            addSegmentsToAncestors(jPEdge, jSisterSegs);}
+        	
+        	
         	return 0;
         }
         else {
