@@ -1,0 +1,71 @@
+<beast version="2.0"
+       namespace="beast.core
+                 :beast.core.util
+                 :beast.core.parameter
+                 :beast.evolution.alignment
+                 :beast.evolution.likelihood
+                 :beast.evolution.tree
+                 :beast.evolution.tree.coalescent
+                 :beast.evolution.sitemodel
+                 :beast.evolution.substitutionmodel
+                 :beast.evolution.operators
+                 :beast.math.distributions
+                 :feast.simulation
+                 :coalre.network
+                 :coalre.statistics
+                 :coalre.simulator
+                 :coalre.operators
+                 :coalre.distribution">
+
+    <run spec="MCMC" chainLength="10000000">
+
+        <state>
+            <stateNode id="network" spec="SimulatedCoalescentNetwork" nSegments="2" enableSegmentTreeUpdate="false">
+                <populationModel spec="ConstantPopulation">
+                    <popSize spec="RealParameter" value="1.0"/>
+                </populationModel>
+
+                <reassortmentRate spec="RealParameter" value="1.0"/>
+
+                <traitSet spec="TraitSet" traitname="date-backward" id="traitSet">
+                    <taxa spec="TaxonSet" id="taxonSet">
+                        <taxon spec="Taxon" id="t1"/>
+                        <taxon spec="Taxon" id="t2"/>
+                    </taxa>
+
+                    t1=0.0, t2=0.0
+                </traitSet>
+
+            </stateNode>
+        </state>
+
+        <distribution id="coalDensity" spec="CoalescentWithReassortment">
+            <networkIntervals spec="NetworkIntervals" network="@network"/>
+
+            <populationModel spec="ConstantPopulation">
+                <popSize spec="RealParameter" value="1.0"/>
+            </populationModel>
+
+            <reassortmentRate spec="RealParameter" value="1.0"/>
+        </distribution>
+
+	<operator spec="AddRemoveReassortment" network="@network" alpha="1.0" weight="1.0"/>
+
+
+	<operator spec="NetworkExchange" network="@network" isNarrow="true" weight="1.0"/>
+
+
+        <logger spec="Logger" logEvery="1000" mode="tree" fileName="$(filebase).trees">
+            <log idref="network"/>
+        </logger>
+
+        <logger spec="Logger" logEvery="100" fileName="$(filebase).log">
+            <log spec="NetworkStatsLogger" network="@network"/>
+        </logger>
+
+        <logger spec="Logger" logEvery="100">
+            <log spec="NetworkStatsLogger" network="@network"/>
+        </logger>
+    </run>
+
+</beast>
