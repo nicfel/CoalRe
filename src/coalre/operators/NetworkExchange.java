@@ -62,9 +62,12 @@ public class NetworkExchange extends DivertSegmentOperator {
 	 * 			if proposal should not be accepted
 	 */
 	public double narrow(final Network network) {
+		
+//		TODO validation for narrow doesn't pass
+//		possibly wrong HR calculation 
 		double logHR = 0.0;
 
-		final List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
+		List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
 
 		final List<NetworkEdge> possibleGrandParentEdges = networkEdges.stream()
 				.filter(e -> !e.isLeafEdge())
@@ -110,12 +113,22 @@ public class NetworkExchange extends DivertSegmentOperator {
 		// and remove from the old. Have to be careful not to remove segments
 		// of siblings.
 		final BitSet childSegs = childEdge.hasSegments;
+		final BitSet auntSegs = auntEdge.hasSegments;
+		
 		final BitSet childSegsToRemove = (BitSet)childSegs.clone();
 		childSegsToRemove.andNot(getSisterEdge(childEdge).hasSegments);
-
-		final BitSet auntSegs = auntEdge.hasSegments;
+		childSegsToRemove.andNot(auntSegs);
+		
 		final BitSet auntSegsToRemove = (BitSet)auntSegs.clone();
 		auntSegsToRemove.andNot(getSisterEdge(auntEdge).hasSegments);
+		auntSegsToRemove.andNot(childSegs);
+		
+		final BitSet childSegsToAdd = (BitSet)childSegs.clone();
+		childSegsToAdd.andNot(auntSegs);
+		
+		final BitSet auntSegsToAdd = (BitSet)auntSegs.clone();
+		auntSegsToAdd.andNot(childSegs);
+		
 		
 		int validGrandParents = 0;
 		for (int i=0; i < possibleGrandParents; i++) {
@@ -123,15 +136,20 @@ public class NetworkExchange extends DivertSegmentOperator {
 		}
 		logHR -= Math.log(1.0/validGrandParents);
 		
-//		final int c2 = meAndKidsNotLeaves(parent) + meAndKidsNotLeaves(aunt);
+		final int c2 = meAndKidsNotLeaves(parent) + meAndKidsNotLeaves(aunt);
 
 		exchangeEdges(childEdge, auntEdge, parent, grandParent);
 
 		logHR += removeSegmentsFromAncestors(grandParentEdge, auntSegsToRemove);
 		logHR += removeSegmentsFromAncestors(parentEdge, childSegsToRemove);
 
-		logHR -= addSegmentsToAncestors(parentEdge, auntSegs);
-		logHR -= addSegmentsToAncestors(grandParentEdge, childSegs);
+		logHR -= addSegmentsToAncestors(parentEdge, auntSegsToAdd);
+		logHR -= addSegmentsToAncestors(grandParentEdge, childSegsToAdd);
+        
+		if (!allEdgesAncestral())
+            return Double.NEGATIVE_INFINITY;
+		
+		networkEdges = new ArrayList<>(network.getEdges());
 		
 		final List<NetworkEdge> possibleGrandParentEdgesAfter = networkEdges.stream()
 				.filter(e -> !e.isLeafEdge())
@@ -147,11 +165,13 @@ public class NetworkExchange extends DivertSegmentOperator {
 			validGrandParentsAfter += kidsNotLeaves(possibleGrandParentEdgesAfter.get(i).childNode);
 		}
 		
-//		final int possibleGrandParentsAfter = validGrandParentsAfter //- c2 +
-//				meAndKidsNotLeaves(parent) + meAndKidsNotLeaves(aunt);
+//		System.out.println(validGrandParents==validGrandParentsAfter);
 		
-//		logHR += Math.log(1.0/possibleGrandParentsAfter);
-		logHR += Math.log(1.0/validGrandParentsAfter);
+		final int possibleGrandParentsAfter = validGrandParentsAfter - c2 +
+				meAndKidsNotLeaves(parent) + meAndKidsNotLeaves(aunt);
+		
+		logHR += Math.log(1.0/possibleGrandParentsAfter);
+//		logHR += Math.log(1.0/validGrandParentsAfter);
 
 		return logHR;
 	}
@@ -204,17 +224,28 @@ public class NetworkExchange extends DivertSegmentOperator {
 
 			final BitSet iSegsToRemove = (BitSet)iSegs.clone();
 			iSegsToRemove.andNot(getSisterEdge(iEdge).hasSegments);
+			iSegsToRemove.andNot(jSegs);
 
 			final BitSet jSegsToRemove = (BitSet)jSegs.clone();
 			jSegsToRemove.andNot(getSisterEdge(jEdge).hasSegments);
+			jSegsToRemove.andNot(iSegs);
+			
+			final BitSet iSegsToAdd = (BitSet)iSegs.clone();
+			iSegsToAdd.andNot(jSegs);
+			
+			final BitSet jSegsToAdd = (BitSet)jSegs.clone();
+			jSegsToAdd.andNot(iSegs);
 
 			exchangeEdges(iEdge, jEdge, p, jP);
 
 			logHR += removeSegmentsFromAncestors(jPEdge, jSegsToRemove);
 			logHR += removeSegmentsFromAncestors(pEdge, iSegsToRemove);
-
-			logHR -= addSegmentsToAncestors(pEdge, jSegs);
-			logHR -= addSegmentsToAncestors(jPEdge, iSegs);
+			
+			logHR -= addSegmentsToAncestors(jPEdge, iSegsToAdd);
+			logHR -= addSegmentsToAncestors(pEdge, jSegsToAdd);
+			
+	        if (!allEdgesAncestral())
+	            return Double.NEGATIVE_INFINITY;
 			
 			networkEdges = new ArrayList<>(network.getEdges());
 			
@@ -227,7 +258,7 @@ public class NetworkExchange extends DivertSegmentOperator {
 			final int nPossibleEdgesAfter = possibleEdgesAfter.size();
 			logHR += Math.log(1.0/(double)nPossibleEdgesAfter);
 
-
+	        
 			return logHR;
 		}
 		else {
