@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.sun.org.apache.xerces.internal.dom.ChildNode;
+
 import beast.core.Input;
 import beast.util.Randomizer;
 import coalre.network.Network;
@@ -39,7 +41,6 @@ public class NetworkExchange extends DivertSegmentOperator {
 		} else {
 			logHR = wide(network);
 		}
-
 		return logHR;
 	}
 
@@ -47,11 +48,6 @@ public class NetworkExchange extends DivertSegmentOperator {
 		return (n.getChildEdges().get(0).isLeafEdge() &&
 				n.getChildEdges().get(1).isLeafEdge()) ? 0:1;
 	}
-
-	private int meAndKidsNotLeaves(final NetworkNode n) {
-		return (n.isLeaf() ? 0 : kidsNotLeaves(n));
-	}
-
 
 
 	/**
@@ -88,7 +84,7 @@ public class NetworkExchange extends DivertSegmentOperator {
 		final List<NetworkEdge> possibleParentEdges = grandParent.getChildEdges();
 		NetworkEdge parentEdge = possibleParentEdges.get(0);
 		NetworkEdge auntEdge = possibleParentEdges.get(1);
-
+		
 		NetworkNode parent = parentEdge.childNode;
 		NetworkNode aunt = auntEdge.childNode;
 
@@ -105,9 +101,20 @@ public class NetworkExchange extends DivertSegmentOperator {
 			return Double.NEGATIVE_INFINITY;
 		}
 
-		final List<NetworkEdge> possibleChildEdges = parent.getChildEdges();
+		final List<NetworkEdge> possibleChildEdges = parent.getChildEdges().stream()
+				.filter(e -> !e.childNode.isReassortment())
+				.filter(e -> !e.childNode.isReassortment())
+				.collect(Collectors.toList());
+		
+		if( possibleChildEdges.size() < 1 ) {
+			return Double.NEGATIVE_INFINITY;
+		}
+		logHR -= Math.log(1.0/possibleChildEdges.size());
+		
 		final int childId = Randomizer.nextInt(possibleChildEdges.size());
 		final NetworkEdge childEdge = possibleChildEdges.get(childId);
+
+		
 
 		// After the exchange we want to add segments to the new ancestors
 		// and remove from the old. Have to be careful not to remove segments
@@ -136,15 +143,16 @@ public class NetworkExchange extends DivertSegmentOperator {
 		}
 		logHR -= Math.log(1.0/validGrandParents);
 		
-		final int c2 = meAndKidsNotLeaves(parent) + meAndKidsNotLeaves(aunt);
 
 		exchangeEdges(childEdge, auntEdge, parent, grandParent);
 
+		logHR -= addSegmentsToAncestors(parentEdge, auntSegsToAdd);
+		logHR -= addSegmentsToAncestors(grandParentEdge, childSegsToAdd);
+		
 		logHR += removeSegmentsFromAncestors(grandParentEdge, auntSegsToRemove);
 		logHR += removeSegmentsFromAncestors(parentEdge, childSegsToRemove);
 
-		logHR -= addSegmentsToAncestors(parentEdge, auntSegsToAdd);
-		logHR -= addSegmentsToAncestors(grandParentEdge, childSegsToAdd);
+
         
 		if (!allEdgesAncestral())
             return Double.NEGATIVE_INFINITY;
@@ -158,21 +166,27 @@ public class NetworkExchange extends DivertSegmentOperator {
 				.filter(e -> !e.childNode.getChildEdges().get(1).childNode.isReassortment())
 				.collect(Collectors.toList());
 		
-		final int possibleGrandParentsAfetr = possibleGrandParentEdgesAfter.size();
+		final int possibleGrandParentsAfter = possibleGrandParentEdgesAfter.size();
+		
 		
 		int validGrandParentsAfter = 0;
-		for (int i=0; i < possibleGrandParentsAfetr; i++) {
+		for (int i=0; i < possibleGrandParentsAfter; i++) {
 			validGrandParentsAfter += kidsNotLeaves(possibleGrandParentEdgesAfter.get(i).childNode);
 		}
 		
-//		System.out.println(validGrandParents==validGrandParentsAfter);
+		logHR += Math.log(1.0/validGrandParentsAfter);
 		
-		final int possibleGrandParentsAfter = validGrandParentsAfter - c2 +
-				meAndKidsNotLeaves(parent) + meAndKidsNotLeaves(aunt);
+		final List<NetworkEdge> possibleChildEdgesAfter = parent.getChildEdges().stream()
+				.filter(e -> !e.childNode.isReassortment())
+				.filter(e -> !e.childNode.isReassortment())
+				.collect(Collectors.toList());
 		
-		logHR += Math.log(1.0/possibleGrandParentsAfter);
-//		logHR += Math.log(1.0/validGrandParentsAfter);
+		if( possibleChildEdgesAfter.size() < 1 ) {
+			return Double.NEGATIVE_INFINITY;
+		}
+		logHR += Math.log(1.0/possibleChildEdgesAfter.size());
 
+		
 		return logHR;
 	}
 
@@ -238,11 +252,12 @@ public class NetworkExchange extends DivertSegmentOperator {
 
 			exchangeEdges(iEdge, jEdge, p, jP);
 
+			logHR -= addSegmentsToAncestors(jPEdge, iSegsToAdd);
+			logHR -= addSegmentsToAncestors(pEdge, jSegsToAdd);
+			
 			logHR += removeSegmentsFromAncestors(jPEdge, jSegsToRemove);
 			logHR += removeSegmentsFromAncestors(pEdge, iSegsToRemove);
 			
-			logHR -= addSegmentsToAncestors(jPEdge, iSegsToAdd);
-			logHR -= addSegmentsToAncestors(pEdge, jSegsToAdd);
 			
 	        if (!allEdgesAncestral())
 	            return Double.NEGATIVE_INFINITY;
@@ -257,7 +272,6 @@ public class NetworkExchange extends DivertSegmentOperator {
 			
 			final int nPossibleEdgesAfter = possibleEdgesAfter.size();
 			logHR += Math.log(1.0/(double)nPossibleEdgesAfter);
-
 	        
 			return logHR;
 		}
