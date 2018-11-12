@@ -21,7 +21,7 @@ public class AddRemoveWithEmptySegment extends DivertSegmentOperator {
     
     public Input<Double> lambdaInput = new Input<>("lambda",
             "lambda of th epoisson distribution for how many empty edges to add.",
-            50.0);
+            1.0);
 
 
     private double alpha;
@@ -41,9 +41,9 @@ public class AddRemoveWithEmptySegment extends DivertSegmentOperator {
         double logHR = 0.0;
         
         // Adds empty network edges (for reversibly removing all empty network edges)
-//        System.out.println(network.getExtendedNewick());
+//        System.out.println("in " + network.getExtendedNewick());
 
-        addEmptyNetworkSegments();
+        logHR += addEmptyNetworkSegments();
         
 //        System.out.println(network.getExtendedNewick());
         
@@ -57,7 +57,7 @@ public class AddRemoveWithEmptySegment extends DivertSegmentOperator {
 
         // removes all the empty network segments again
 //        System.out.println(network.getExtendedNewick());
-        RemoveAllEmptyNetworkSegments();
+        logHR += RemoveAllEmptyNetworkSegments();
 //        System.out.println(network.getExtendedNewick());
 //        System.exit(0);
 
@@ -68,10 +68,13 @@ public class AddRemoveWithEmptySegment extends DivertSegmentOperator {
     	double logHR = 0.0;
     	// randomly sample the number of edges to add
     	int nrEmptyEdges = (int) Randomizer.nextPoisson(lambdaInput.get());
-    	// TODO prob contribution of that
+    	
+    	logHR -= Math.log(Math.pow(lambdaInput.get(), nrEmptyEdges)) - lambdaInput.get() - Math.log(factorial(nrEmptyEdges));
+    	
     	for (int i = 0; i < nrEmptyEdges; i ++){
     		logHR += addEmptyReassortment();
     	}
+//    	System.out.println();
     	return logHR;
     }
     
@@ -83,7 +86,6 @@ public class AddRemoveWithEmptySegment extends DivertSegmentOperator {
 
         List<NetworkEdge> possibleSourceEdges = networkEdges.stream()
                 .filter(e -> !e.isRootEdge())
-                .filter(e -> e.hasSegments.cardinality()>=1)
                 .collect(Collectors.toList());
 
         NetworkEdge sourceEdge = possibleSourceEdges.get(Randomizer.nextInt(possibleSourceEdges.size()));
@@ -135,6 +137,7 @@ public class AddRemoveWithEmptySegment extends DivertSegmentOperator {
                 .filter(e -> e.childNode.isReassortment())
                 .filter(e -> e.parentNode.isCoalescence())
                 .count();
+        
         logHR += Math.log(1.0/nRemovableEdges);
 
         return logHR;
@@ -188,25 +191,15 @@ public class AddRemoveWithEmptySegment extends DivertSegmentOperator {
 		NetworkEdge reassortmentEdge = new NetworkEdge();
 		sourceNode.addParentEdge(reassortmentEdge);
 		destNode.addChildEdge(reassortmentEdge);
-		reassortmentEdge.hasSegments = new BitSet();
-		
-		// Choose segments to divert to new edge
-//		BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
-//		logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
-//		logHR -= addSegmentsToAncestors(reassortmentEdge, segsToDivert);
-//		logHR += removeSegmentsFromAncestors(newEdge1, segsToDivert);
-		
-		//if (!allEdgesAncestral()){
-		////return Double.NEGATIVE_INFINITY;
-		//logHR += removeAllEmptyEdgesAncestral();
-		//}
+		reassortmentEdge.hasSegments = new BitSet();		
 		
 		return logHR;
 	}
+    
 
     
     public double RemoveAllEmptyNetworkSegments() {
-    	double logHr = 0.0;
+//    	double logHr = 0.0;
     	
         List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
 
@@ -215,6 +208,8 @@ public class AddRemoveWithEmptySegment extends DivertSegmentOperator {
                 .filter(e -> e.hasSegments.cardinality()==0)
                 .collect(Collectors.toList());
         
+        double logHr = Math.log(Math.pow(lambdaInput.get(), edgesToRemove.size())) - lambdaInput.get() - Math.log(factorial(edgesToRemove.size()));
+                
         // TODO, see if ordering is costly, if yes, see if it's needed
         while (edgesToRemove.size()>0){
         	// get the node with the maximal height
@@ -243,29 +238,11 @@ public class AddRemoveWithEmptySegment extends DivertSegmentOperator {
         }
 
     	
-//    	System.out.println("........................");
-    	// goes through the network and removes all empty edges.
-//        Set<NetworkNode> nodeList = networkInput.get().getNodes();
-//        for (NetworkNode node : nodeList) {
-//            for (NetworkEdge parentEdge : node.getParentEdges()) {
-//                if (parentEdge.hasSegments.isEmpty()){
-////                	System.out.println("removed something");
-//                	System.out.println(network.getExtendedNewick());
-//                	logHr -= removeEmptyReassortmentEdge(parentEdge);     
-////                	System.out.println(node.getParentEdges());
-//                	if (node.getParentEdges().size()==0)
-//                		break;
-//                }
-//            }
-//        }
         return logHr;
     }
     
     double removeEmptyReassortmentEdge(NetworkEdge edgeToRemove) {
         double logHR = 0.0;
-
-//        NetworkEdge edgeToRemove = edgeToRemove;
-//        logHR -= Math.log(1.0/(removableEdges.size()));
 
         double sourceTime = edgeToRemove.childNode.getHeight();
         NetworkEdge sourceEdge = edgeToRemove.childNode.getChildEdges().get(0);
@@ -354,7 +331,6 @@ public class AddRemoveWithEmptySegment extends DivertSegmentOperator {
         if (!networkTerminatesAtMRCA()){
             return Double.NEGATIVE_INFINITY;
         }
-
 
 
         return logHR;
@@ -479,7 +455,7 @@ public class AddRemoveWithEmptySegment extends DivertSegmentOperator {
 
     double removeReassortment() {
         double logHR = 0.0;
-
+        
         List<NetworkEdge> removableEdges = network.getEdges().stream()
                 .filter(e -> !e.isRootEdge())
                 .filter(e -> e.childNode.isReassortment())
@@ -513,9 +489,13 @@ public class AddRemoveWithEmptySegment extends DivertSegmentOperator {
                 .filter(e -> !e.isRootEdge())
                 .filter(e -> e.hasSegments.cardinality()>=2)
                 .count();
-
-        logHR += Math.log(1.0/(double)nPossibleSourceEdges)
-                + Math.log(1.0/sourceEdge.getLength());
+        
+        // TODO: check with TIM. Doesn't work if the source edge is root edge after the move
+        if (!sourceEdge.isRootEdge())
+        	logHR += Math.log(1.0/(double)nPossibleSourceEdges)
+                	+ Math.log(1.0/sourceEdge.getLength());
+        else
+        	return Double.NEGATIVE_INFINITY;
 
         logHR += Math.log(1.0/finalNetworkEdges.size());
 
@@ -618,6 +598,12 @@ public class AddRemoveWithEmptySegment extends DivertSegmentOperator {
     }
     
 
+    private int factorial(int k){
+    	int f = 1;
+    	for (int i = 2; i <= k; i++)
+    		f*=k;
+    	return f;
+    }
 
 
 
