@@ -31,26 +31,10 @@
                 <taxon spec="Taxon" id="t3"/>
                 <taxon spec="Taxon" id="t4"/>
                 <taxon spec="Taxon" id="t5"/>
-                <taxon spec="Taxon" id="t6"/>
-                <taxon spec="Taxon" id="t7"/>
-                <taxon spec="Taxon" id="t8"/>
-                <taxon spec="Taxon" id="t9"/>
-                <taxon spec="Taxon" id="t10"/>
-                <taxon spec="Taxon" id="t11"/>
-                <taxon spec="Taxon" id="t12"/>
-                <taxon spec="Taxon" id="t13"/>
-                <taxon spec="Taxon" id="t14"/>
-                <taxon spec="Taxon" id="t15"/>
-                <taxon spec="Taxon" id="t16"/>
-                <taxon spec="Taxon" id="t17"/>
-                <taxon spec="Taxon" id="t18"/>
-                <taxon spec="Taxon" id="t19"/>
-                <taxon spec="Taxon" id="t20"/>
             </taxonSet>
 
             <traitSet spec="TraitSet" traitname="date-backward" id="traitSet">
-                t1=0, t2=0.1, t3=0.2, t4=0.3, t5=0.4, t6=0.5, t7=0.6, t8=0.7, t9=0.8, t10=0.9,
-                t11=0, t12=0.1, t13=0.2, t14=0.3, t15=0.4, t16=0.5, t17=0.6, t18=0.7, t19=0.8, t20=0.9
+                t1=0, t2=0.1, t3=0.2, t4=0.3, t5=0.4
                 <taxa idref="taxonSet"/>
             </traitSet>
 
