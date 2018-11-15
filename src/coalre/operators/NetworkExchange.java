@@ -147,9 +147,10 @@ public class NetworkExchange extends DivertSegmentOperator {
 		exchangeEdges(childEdge, auntEdge, parent, grandParent);
 
 		logHR -= addSegmentsToAncestors(parentEdge, auntSegsToAdd);
-		logHR -= addSegmentsToAncestors(grandParentEdge, childSegsToAdd);
+		// Nicola: Grand parents keep the same segments
+//		logHR -= addSegmentsToAncestors(grandParentEdge, childSegsToAdd);
 		
-		logHR += removeSegmentsFromAncestors(grandParentEdge, auntSegsToRemove);
+//		logHR += removeSegmentsFromAncestors(grandParentEdge, auntSegsToRemove);
 		logHR += removeSegmentsFromAncestors(parentEdge, childSegsToRemove);
 
 
