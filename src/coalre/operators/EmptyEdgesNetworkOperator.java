@@ -87,7 +87,7 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
     	}  
     	
     	
-    	logHR += Math.log(Math.pow(lambda, nrEmptyEdges)) - lambda - Math.log(factorial(nrEmptyEdges));
+    	logHR -= Math.log(Math.pow(lambda, nrEmptyEdges)) - lambda - Math.log(factorial(nrEmptyEdges));
     	
     	return logHR;
     }
@@ -280,7 +280,7 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
         } 
         
         // probability of adding n empty edges in reverse move
-        logHR -= Math.log(Math.pow(lambda, nrRemoved)) -lambda -  Math.log(factorial(nrRemoved));
+        logHR += Math.log(Math.pow(lambda, nrRemoved)) -lambda -  Math.log(factorial(nrRemoved));
         
         if (!allEdgesAncestral()){
         	//TODO change to Exception
