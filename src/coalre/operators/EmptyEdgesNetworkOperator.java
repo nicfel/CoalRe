@@ -25,7 +25,7 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
     
     public Input<Boolean> addRemoveEmptyEdgesInput = new Input<>("addRemoveEmptyEdges",
             "adds empty edges before calling the networkproposal and then removes all empty edges at the end again",
-            false);
+            true);
 
     private double emptyAlpha;
     private double lambda;
@@ -62,9 +62,10 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
         	logHR += RemoveAllEmptyNetworkSegments();
         }
         
-        // case there are empty 
-		if (!allEdgesAncestral())
+        // case there are empty edges, which can happen when addRemoveEmptyEdges is false
+		if (!allEdgesAncestral()){
             return Double.NEGATIVE_INFINITY;
+		}
 
 
         if (logHR>Double.NEGATIVE_INFINITY) {
