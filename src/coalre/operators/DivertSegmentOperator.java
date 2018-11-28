@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class DivertSegmentOperator extends NetworkOperator {
+public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 
     @Override
     public double networkProposal() {
@@ -136,23 +136,6 @@ public class DivertSegmentOperator extends NetworkOperator {
         }
 
         return logP;
-    }
-
-    /**
-     * Check that each edge is ancestral to at least one segment.
-     *
-     * @return true if all edges are ancestral.
-     */
-    public boolean allEdgesAncestral() {
-        Set<NetworkNode> nodeList = networkInput.get().getNodes();
-        for (NetworkNode node : nodeList) {
-            for (NetworkEdge parentEdge : node.getParentEdges()) {
-                if (parentEdge.hasSegments.isEmpty())
-                    return false;
-            }
-        }
-
-        return true;
     }
 
 }
