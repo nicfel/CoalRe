@@ -103,10 +103,6 @@ public class NetworkExchange extends DivertSegmentOperator {
 
 		
 		logHR += exchangeEdges(childEdge, auntEdge, parent, grandParent);
-
-		//TODO fix this workaround, too many states seem to be rejected  
-		if (!allEdgesAncestral())
-            return Double.NEGATIVE_INFINITY;
 		
 		networkEdges = new ArrayList<>(network.getEdges());
 		
@@ -124,7 +120,7 @@ public class NetworkExchange extends DivertSegmentOperator {
 	}
 
 	/**
-	 * Perform equivalent of narrow tree exchange on a network.
+	 * Perform equivalent of wide tree exchange on a network.
 	 *
 	 * @param	network
 	 * @return	log of Hastings Ratio, or Double.NEGATIVE_INFINITY
@@ -166,8 +162,6 @@ public class NetworkExchange extends DivertSegmentOperator {
 
 			logHR += exchangeEdges(iEdge, jEdge, p, jP);
 			
-	        if (!allEdgesAncestral())
-	            return Double.NEGATIVE_INFINITY;
 			
 			networkEdges = new ArrayList<>(network.getEdges());
 			
@@ -228,24 +222,6 @@ public class NetworkExchange extends DivertSegmentOperator {
 		logHR -= addSegmentsToAncestors(pEdge, jSegsToAdd);
 		
 		return logHR;
-	}
-
-
-	/**
-	 * Check that each edge is ancestral to at least one segment.
-	 *
-	 * @return true if all edges are ancestral.
-	 */
-	@Override
-	public boolean allEdgesAncestral() {
-		final Set<NetworkNode> nodeList = networkInput.get().getNodes();
-		for (final NetworkNode node : nodeList) {
-			for (final NetworkEdge parentEdge : node.getParentEdges()) {
-				if (parentEdge.hasSegments.isEmpty())
-					return false;
-			}
-		}
-		return true;
 	}
 
 }
