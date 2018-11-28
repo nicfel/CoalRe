@@ -61,6 +61,11 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
             
         	logHR += RemoveAllEmptyNetworkSegments();
         }
+        
+        // case there are empty 
+		if (!allEdgesAncestral())
+            return Double.NEGATIVE_INFINITY;
+
 
         if (logHR>Double.NEGATIVE_INFINITY) {
             for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)

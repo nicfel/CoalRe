@@ -37,9 +37,6 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
         logHR -= addSegmentsToAncestors(destEdge, segsToDivert);
         logHR += removeSegmentsFromAncestors(sourceEdge, segsToDivert);
 
-        if (!allEdgesAncestral())
-            return Double.NEGATIVE_INFINITY;
-
         logHR += getLogConditionedSubsetProb(destEdge.hasSegments);
 
         int reverseSourceEdgeCount = (int)(network.getEdges().stream()
