@@ -21,7 +21,7 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
     
     public Input<Double> lambdaInput = new Input<>("lambda",
             "lambda of the poisson distribution for how many empty edges to add.",
-            0.5);
+            0.1);
     
     public Input<Boolean> addRemoveEmptyEdgesInput = new Input<>("addRemoveEmptyEdges",
             "adds empty edges before calling the networkproposal and then removes all empty edges at the end again",
@@ -87,7 +87,7 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
     	}  
     	
     	
-    	logHR -= Math.log(Math.pow(lambda, nrEmptyEdges)) - lambda - Math.log(factorial(nrEmptyEdges));
+    	logHR += Math.log(Math.pow(lambda, nrEmptyEdges)) - lambda - Math.log(factorial(nrEmptyEdges));
     	
     	return logHR;
     }
@@ -280,7 +280,7 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
         } 
         
         // probability of adding n empty edges in reverse move
-        logHR += Math.log(Math.pow(lambda, nrRemoved)) -lambda -  Math.log(factorial(nrRemoved));
+        logHR -= Math.log(Math.pow(lambda, nrRemoved)) -lambda -  Math.log(factorial(nrRemoved));
         
         if (!allEdgesAncestral()){
         	//TODO change to Exception
