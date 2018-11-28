@@ -87,6 +87,7 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
         // HR contribution for reverse move
         int nRemovableEdges = (int) network.getEdges().stream()
                 .filter(e -> !e.isRootEdge())
+                .filter(e -> e.hasSegments.cardinality()>=1)
                 .filter(e -> e.childNode.isReassortment())
                 .filter(e -> e.parentNode.isCoalescence())
                 .count();
@@ -150,9 +151,6 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
         logHR -= addSegmentsToAncestors(reassortmentEdge, segsToDivert);
         logHR += removeSegmentsFromAncestors(newEdge1, segsToDivert);
 
-        if (!allEdgesAncestral())
-            return Double.NEGATIVE_INFINITY;
-
         return logHR;
     }
 
@@ -161,6 +159,7 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 
         List<NetworkEdge> removableEdges = network.getEdges().stream()
                 .filter(e -> !e.isRootEdge())
+                .filter(e -> e.hasSegments.cardinality()>=1)
                 .filter(e -> e.childNode.isReassortment())
                 .filter(e -> e.parentNode.isCoalescence())
                 .collect(Collectors.toList());
@@ -251,7 +250,7 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
             secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
         }
 
-        if (!allEdgesAncestral() || !networkTerminatesAtMRCA())
+        if (!networkTerminatesAtMRCA())
             return Double.NEGATIVE_INFINITY;
 
         return logHR;
