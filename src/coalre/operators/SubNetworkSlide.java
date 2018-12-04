@@ -21,7 +21,12 @@ import jdk.nashorn.internal.runtime.regexp.joni.Warnings;
 
 
 /**
- * Implements the subnet slide move.
+ * Implements the subnet slide move. General workflow:
+ * 1. Choose an edge to move and a child it will carry
+ * 2. Make a copy of subnet starting with this child edge
+ * 3. Attach a new coppy to the new parent with randomly drawn height
+ * 4. Rearrange segments
+ * 5. Delete subnet starting at the child in the old position
  */
 @Description("Moves the height of an internal node along the branch. " +
         "If it moves up, it can exceed the root and become a new root. " +
@@ -49,7 +54,6 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 	@Override
 	public double networkProposal() {
 
-//		System.out.println(network.getExtendedNewick());
 		double logHR = 0.0;
 		network.startEditing(this);
 		// 1. Choose a random edge, avoiding root
@@ -112,8 +116,6 @@ public class SubNetworkSlide extends DivertSegmentOperator {
                     if (newParent == null) break;
                 }
                 // the moved node 'p' would become a child of 'newParent'
-                
-
 
                 // 3.1.1 if creating a new root
                 if (newChildEdge.isRootEdge()) {
@@ -195,7 +197,6 @@ public class SubNetworkSlide extends DivertSegmentOperator {
                 
                 // 3.1.3 count the hypothetical sources of this destination.
                 final int possibleSources = intersectingEdges(newChildEdge, oldHeight, null);
-                //System.out.println("possible sources = " + possibleSources);
 
                 logHR += Math.log(1.0/possibleSources);
 
@@ -311,7 +312,6 @@ public class SubNetworkSlide extends DivertSegmentOperator {
         	return Double.NEGATIVE_INFINITY;
         
 
-
         
 		List<NetworkEdge> networkEdgesAfter = new ArrayList<>(network.getEdges());
 		
@@ -326,47 +326,7 @@ public class SubNetworkSlide extends DivertSegmentOperator {
         }
         
         logHR += Math.log(1.0/possibleNodesAfter);  
-        
-//        if (newChildEdge != null) {
-//    		BitSet childrenSegs = (BitSet)iEdge.hasSegments.clone();
-//    		childrenSegs.or(newChildEdge.hasSegments);
-//    		
-//            BitSet segsToRemove = (BitSet)ipEdge.hasSegments.clone();
-//            segsToRemove.andNot(childrenSegs);
-//            
-//            BitSet segsToAdd = (BitSet)newChildEdge.hasSegments.clone();
-//            segsToAdd.andNot(ipEdge.hasSegments);
-//            
-//            if(!segsToRemove.isEmpty())
-//            	logHR += removeSegmentsFromAncestors(ipEdge, segsToRemove);
-//            
-//            if (!segsToAdd.isEmpty())
-//            	logHR -= addSegmentsToAncestors(ipEdge, segsToAdd);	
-//            
-//            
-//            logHR += checkAncestralSegments(jEdge);
-//            logHR += checkAncestralSegments(iEdge);
-//            logHR += checkAncestralSegments(newChildEdge);
-//            logHR += checkAncestralSegments(ipEdge);
-//        }
-//        
-//        System.out.println(network.getRootEdge().hasSegments.length());
-//        System.out.println(network.getSegmentCount());
-//        if (network.getRootEdge().hasSegments.cardinality() < network.getSegmentCount()) {
-//        	return Double.NEGATIVE_INFINITY;
-//        }
-        
-        
-        
-//        if (!allEdgesAncestral()){
-//        	//TODO change to Exception
-//        	System.err.println("still has empty segments, should not happen ever!");
-////        	System.out.println(network.getExtendedNewick());
-////        	System.exit(0);
-//        	return Double.NEGATIVE_INFINITY;
-//        }
 
-//        System.out.println(network.getExtendedNewick());
 		return logHR;
 	}
 	
@@ -422,9 +382,6 @@ public class SubNetworkSlide extends DivertSegmentOperator {
     			logHR += removeSegmentsFromAncestors(parentEdge, segsToRemoveParent);
     		}
     	}
-    	
-    	
-    
     	return logHR;
     }
 	
@@ -466,18 +423,6 @@ public class SubNetworkSlide extends DivertSegmentOperator {
     	final NetworkNode parent = edge.parentNode;
     	
         if (parent.getHeight() < height) return 0;
-        
-        
-        // If the child or itself is a parent of reassortment node,
-        // can't carry move it past that reassortment child.
-//        if (node.isReassortment() && parent.getChildCount() > 1) {
-//        	final NetworkNode sisterChildNode = getSisterEdge(edge).childNode;
-//        	final NetworkNode spouseParentNode = getSpouseEdge(edge).parentNode;  	
-////        	System.out.println(spouseParentNode.getHeight());
-//        	if( sisterChildNode == spouseParentNode || parent == spouseParentNode) {
-//        		return 0;
-//        	}
-//        }
 
 
         if (node.getHeight() < height) {
@@ -508,9 +453,7 @@ public class SubNetworkSlide extends DivertSegmentOperator {
             		intersectingEdges(node.getChildEdges().get(1), height, directChildEdges);          
             return count;
         }
-    }
-    
-    
+    }  
     
     /**
      * Simple (but probably too expensive) check for a kind of invalid network
