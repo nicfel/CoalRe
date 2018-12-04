@@ -440,8 +440,7 @@ public class SubNetworkSlide extends DivertSegmentOperator {
         		return 2;
         	}
 
-        	count += intersectingEdges(node.getChildEdges().get(0).childNode.getChildEdges().get(0), height, directChildEdges);
-        	
+        	count += intersectingEdges(node.getChildEdges().get(0).childNode.getChildEdges().get(0), height, directChildEdges);        	
         	return count;
         }
         if (node.isLeaf()) {
