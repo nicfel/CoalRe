@@ -1,5 +1,6 @@
 package coalre.operators;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Comparator;
@@ -386,28 +387,7 @@ public class SubNetworkSlide extends DivertSegmentOperator {
     }
 	
 	
-    /**
-     * automatic parameter tuning *
-     */
-    @Override
-    public void optimize(final double logAlpha) {
-        if (optimiseInput.get()) {
-            double delta = calcDelta(logAlpha);
-            delta += Math.log(size);
-            final double f = Math.exp(delta);
-            if( limit > 0 ) {
-                final Network network = networkInput.get();
-                final double h = network.getRootEdge().childNode.getHeight();
-                final double k = Math.log(network.getLeafNodes().size()) / Math.log(2);
-                final double lim = (h / k) * limit;
-                if( f <= lim ) {
-                    size = f;
-                }
-            } else {
-               size = f;
-            }
-        }
-    }
+
 
 
     private double getDelta() {
@@ -495,5 +475,58 @@ public class SubNetworkSlide extends DivertSegmentOperator {
         }
 
         return true;
+    }
+    
+    /**
+     * automatic parameter tuning *
+     */
+    @Override
+    public void optimize(final double logAlpha) {
+        if (optimiseInput.get()) {
+            double delta = calcDelta(logAlpha);
+            delta += Math.log(size);
+            final double f = Math.exp(delta);
+            if( limit > 0 ) {
+                final Network network = networkInput.get();
+                final double h = network.getRootEdge().childNode.getHeight();
+                final double k = Math.log(network.getLeafNodes().size()) / Math.log(2);
+                final double lim = (h / k) * limit;
+                if( f <= lim ) {
+                    size = f;
+                }
+            } else {
+               size = f;
+            }
+        }
+    }
+
+    @Override
+    public double getCoercableParameterValue() {
+        return size;
+    }
+
+    @Override
+    public void setCoercableParameterValue(final double value) {
+        size = value;
+    }
+    
+    @Override
+    public String getPerformanceSuggestion() {
+        final double prob = m_nNrAccepted / (m_nNrAccepted + m_nNrRejected + 0.0);
+        final double targetProb = getTargetAcceptanceProbability();
+
+        double ratio = prob / targetProb;
+
+        if (ratio > 2.0) ratio = 2.0;
+        if (ratio < 0.5) ratio = 0.5;
+
+        final double newDelta = size * ratio;
+
+        final DecimalFormat formatter = new DecimalFormat("#.###");
+        if (prob < 0.10) {
+            return "Try decreasing size to about " + formatter.format(newDelta);
+        } else if (prob > 0.40) {
+            return "Try increasing size to about " + formatter.format(newDelta);
+        } else return "";
     }
 }
