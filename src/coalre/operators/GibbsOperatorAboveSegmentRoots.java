@@ -58,13 +58,21 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
         // keep only those that coexist at the time of maxHeight
         List<NetworkEdge> startingEdges = networkEdges.stream()
                 .filter(e -> !e.isRootEdge())
-                .filter(e -> e.childNode.getHeight()>maxHeight)
-                .collect(Collectors.toList());
+                .filter(e -> e.parentNode.getHeight()>maxHeight)
+                .filter(e -> e.childNode.getHeight()<=maxHeight)
+               .collect(Collectors.toList());
+        
+//        System.out.println("max " + maxHeight);
+//        for (int i = 0; i < startingEdges.size(); i++)
+//        	System.out.println(startingEdges.get(i).childNode.getHeight());
         
         if (startingEdges.size()==0)
         	return Double.NEGATIVE_INFINITY;
+        
+        
                 
-        // simulate the rest of the network starting from mxHeight
+//        System.out.println(network.getExtendedNewick());
+       // simulate the rest of the network starting from mxHeight
         double currentTime = maxHeight;
         double timeUntilNextSample = Double.POSITIVE_INFINITY;
         do {
@@ -93,6 +101,7 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
         while (startingEdges.size() > 1);
         
         network.setRootEdge(startingEdges.get(0));
+//        System.out.println(network.getExtendedNewick());
 
         
         return Double.POSITIVE_INFINITY;
