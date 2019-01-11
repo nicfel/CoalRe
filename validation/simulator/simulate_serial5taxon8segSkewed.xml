@@ -1,0 +1,62 @@
+<beast version="2.0"
+       namespace="beast.core
+                 :beast.core.util
+                 :beast.core.parameter
+                 :beast.evolution.alignment
+                 :beast.evolution.likelihood
+                 :beast.evolution.tree
+                 :beast.evolution.tree.coalescent
+                 :beast.evolution.sitemodel
+                 :beast.evolution.substitutionmodel
+                 :beast.evolution.operators
+                 :beast.math.distributions
+                 :feast.simulation
+                 :coalre.network
+                 :coalre.statistics
+                 :coalre.simulator">
+
+    <network id="network" spec="SimulatedCoalescentNetwork" enableSegmentTreeUpdate="false">
+        <populationModel spec="ConstantPopulation">
+            <popSize spec="RealParameter" value="1.0"/>
+        </populationModel>
+
+        <reassortmentRate spec="RealParameter" value="1.0"/>
+
+        <binomialProb spec="RealParameter" value="0.1"/>
+
+        <traitSet spec="TraitSet" traitname="date-backward" id="traitSet">
+            <taxa spec="TaxonSet" id="taxonSet">
+                <taxon spec="Taxon" id="t1"/>
+                <taxon spec="Taxon" id="t2"/>
+                <taxon spec="Taxon" id="t3"/>
+                <taxon spec="Taxon" id="t4"/>
+                <taxon spec="Taxon" id="t5"/>
+            </taxa>
+
+            t1=0, t2=0.1, t3=0.2, t4=0.3, t5=0.4
+        </traitSet>
+
+        <segmentTree id="segment1" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment2" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment3" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment4" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment5" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment6" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment7" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment8" spec="Tree" trait="@traitSet"/>
+    </network>
+
+    <run spec="GPSimulator" nSims="100000">
+
+        <simulationObject idref="network"/>
+
+        <logger spec="Logger" logEvery="100" mode="tree" fileName="$(filebase).trees">
+            <log idref="network"/>
+        </logger>
+
+        <logger spec="Logger" logEvery="1" fileName="$(filebase).log">
+            <log spec="NetworkStatsLogger" network="@network"/>
+            <log spec="ReassortmentStatsLogger" network="@network"/>
+        </logger>
+    </run>
+</beast>

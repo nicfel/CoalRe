@@ -15,7 +15,7 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ReassortmentStatLogger extends BEASTObject implements Loggable {
+public class ReassortmentStatsLogger extends BEASTObject implements Loggable {
 
 
     public Input<Network> networkInput = new Input<>("network",
@@ -32,7 +32,7 @@ public class ReassortmentStatLogger extends BEASTObject implements Loggable {
     boolean logObservable = false;
 
 
-    public ReassortmentStatLogger() { }
+    public ReassortmentStatsLogger() { }
 
     @Override
     public void initAndValidate() {
