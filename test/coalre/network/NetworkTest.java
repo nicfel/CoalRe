@@ -123,12 +123,12 @@ public class NetworkTest extends CoalReTestClass {
 
     @Test
     public void segmentTreeUpdateTest() {
-        int nSegs = 50;
-        TaxonSet taxonSet = getTaxonSet(100);
+        int nSegs = 5;
+        TaxonSet taxonSet = getTaxonSet(10);
         TraitSet traitSet = getSerialDateTraitSet(taxonSet, 1.0);
         List<Tree> segTrees = getSegmentTreeObjects(nSegs, traitSet);
 
-        Network network = getContempNetwork(segTrees, 2.0);
+        Network network = getContempNetwork(segTrees, 2.0, taxonSet);
 
         for (int segIdx=0; segIdx<nSegs; segIdx++) {
             network.updateSegmentTree(segTrees.get(segIdx), segIdx);

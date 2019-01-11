@@ -14,24 +14,24 @@ import java.util.*;
 
 public class AddRemoveReassortmentTest extends CoalReTestClass {
 
-    String networkString = "((#H0[&segments={1, 2, 4, 7}]:0.09623670174825327,t5" +
-            "[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.9532676725160347)" +
-            "[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.43959702603952655,(((#H1" +
-            "[&segments={0, 7}]:0.5444373856629039,((t3" +
-            "[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.2726291812245225,#H2" +
-            "[&segments={1, 3, 6}]:0.05445266311806374)" +
-            "[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.1272779784196949,t4" +
-            "[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.29990715964421755)" +
-            "[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.4250628592896515)" +
-            "[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.09731951917853188,(((t1" +
-            "[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.41817651810645873)#H2" +
-            "[&segments={0, 2, 4, 5, 7}]:0.06235611516450623)#H1" +
-            "[&segments={2, 4, 5}]:0.10585974103145479,t2" +
-            "[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.4863923743024199)" +
-            "[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.535897163809981)" +
-            "[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.13474143265538063)#H0" +
-            "[&segments={0, 3, 5, 6}]:0.5358337277877798)" +
-            "[&segments={0, 1, 2, 3, 4, 5, 6, 7}]:0.0;";
+    String networkString = "((#H0[&segments={1, 2, 4, 7},segsCarried=4]:0.09623670174825327,t5" +
+            "[&segments={0, 1, 2, 3, 4, 5, 6, 7},segsCarried=8]:0.9532676725160347)" +
+            "[&segments={0, 1, 2, 3, 4, 5, 6, 7},segsCarried=8]:0.43959702603952655,(((#H1" +
+            "[&segments={0, 7},segsCarried=2]:0.5444373856629039,((t3" +
+            "[&segments={0, 1, 2, 3, 4, 5, 6, 7},segsCarried=8]:0.2726291812245225,#H2" +
+            "[&segments={1, 3, 6},segsCarried=3]:0.05445266311806374)" +
+            "[&segments={0, 1, 2, 3, 4, 5, 6, 7},segsCarried=8]:0.1272779784196949,t4" +
+            "[&segments={0, 1, 2, 3, 4, 5, 6, 7},segsCarried=8]:0.29990715964421755)" +
+            "[&segments={0, 1, 2, 3, 4, 5, 6, 7},segsCarried=8]:0.4250628592896515)" +
+            "[&segments={0, 1, 2, 3, 4, 5, 6, 7},segsCarried=8]:0.09731951917853188,(((t1" +
+            "[&segments={0, 1, 2, 3, 4, 5, 6, 7},segsCarried=8]:0.41817651810645873)#H2" +
+            "[&segments={0, 2, 4, 5, 7},segsCarried=5]:0.06235611516450623)#H1" +
+            "[&segments={2, 4, 5},segsCarried=3]:0.10585974103145479,t2" +
+            "[&segments={0, 1, 2, 3, 4, 5, 6, 7},segsCarried=8]:0.4863923743024199)" +
+            "[&segments={0, 1, 2, 3, 4, 5, 6, 7},segsCarried=8]:0.535897163809981)" +
+            "[&segments={0, 1, 2, 3, 4, 5, 6, 7},segsCarried=8]:0.13474143265538063)#H0" +
+            "[&segments={0, 3, 5, 6},segsCarried=4]:0.5358337277877798)" +
+            "[&segments={0, 1, 2, 3, 4, 5, 6, 7},segsCarried=8]:0.0;";
 
     @Test
     public void testAddRemoveSegment() {
@@ -59,40 +59,6 @@ public class AddRemoveReassortmentTest extends CoalReTestClass {
 
         Assert.assertEquals(networkString, network.toString());
         Assert.assertEquals(logPadd, logPremove, 1e-10);
-    }
-
-    @Test
-    public void testAddRemoveMultipleSegments() {
-
-        Network network = getContempNetwork(10, 8, 1.0);
-        AddRemoveReassortment operator = new AddRemoveReassortment();
-        List<NetworkNode> leafNodes = new ArrayList<>(network.getLeafNodes());
-
-        try (PrintStream ps = new PrintStream("trees.txt")) {
-
-            for (int i = 0; i < 100; i++) {
-
-                NetworkNode sourceLeaf = leafNodes.get(Randomizer.nextInt(leafNodes.size()));
-                NetworkNode destLeaf;
-                do {
-                    destLeaf = leafNodes.get(Randomizer.nextInt(leafNodes.size()));
-                } while (destLeaf == sourceLeaf);
-
-                BitSet segs = sourceLeaf.getParentEdges().get(0).hasSegments;
-
-                BitSet segsToMove = operator.getRandomConditionedSubset(segs);
-
-                if (segsToMove != null) {
-                    operator.removeSegmentsFromAncestors(sourceLeaf.getParentEdges().get(0), segsToMove);
-                    operator.addSegmentsToAncestors(destLeaf.getParentEdges().get(0), segsToMove);
-                }
-
-                ps.println(network);
-            }
-        } catch (FileNotFoundException ex) {
-
-        }
-
     }
 
     @Test
