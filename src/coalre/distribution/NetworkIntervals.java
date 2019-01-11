@@ -3,12 +3,12 @@ package coalre.distribution;
 
 
 import beast.core.CalculationNode;
+import beast.core.Function;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import coalre.network.Network;
 
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,6 +19,9 @@ import java.util.stream.Collectors;
 public class NetworkIntervals extends CalculationNode {
     public Input<Network> networkInput = new Input<>("network",
             "network for which to calculate the intervals", Validate.REQUIRED);
+
+    public Input<Function> binomialProbInput = new Input<>("binomialProb",
+            "Probability of a given segment choosing a particular parent.");
 
     private Network network;
 
@@ -37,6 +40,12 @@ public class NetworkIntervals extends CalculationNode {
         update();
 
         return networkEventList;
+    }
+
+    public double getBinomialProb() {
+        return binomialProbInput.get() != null
+                ? binomialProbInput.get().getArrayValue()
+                : 0.5;
     }
 
     void update() {
@@ -73,23 +82,24 @@ public class NetworkIntervals extends CalculationNode {
             switch(event.type) {
                 case SAMPLE:
                     lineages += 1;
-                    totalReassortmentObsProb += event.node.getParentEdges().get(0).getReassortmentObsProb();
+                    totalReassortmentObsProb += event.node.getParentEdges().get(0).getReassortmentObsProb(getBinomialProb());
                     break;
 
                 case REASSORTMENT:
                     lineages += 1;
-                    totalReassortmentObsProb -= event.node.getChildEdges().get(0).getReassortmentObsProb();
-                    totalReassortmentObsProb += event.node.getParentEdges().get(0).getReassortmentObsProb();
-                    totalReassortmentObsProb += event.node.getParentEdges().get(1).getReassortmentObsProb();
+                    totalReassortmentObsProb -= event.node.getChildEdges().get(0).getReassortmentObsProb(getBinomialProb());
+                    totalReassortmentObsProb += event.node.getParentEdges().get(0).getReassortmentObsProb(getBinomialProb());
+                    totalReassortmentObsProb += event.node.getParentEdges().get(1).getReassortmentObsProb(getBinomialProb());
 
-                    event.reassortmentSegCount = event.node.getChildEdges().get(0).hasSegments.cardinality();
+                    event.segsToSort = event.node.getChildEdges().get(0).hasSegments.cardinality();
+                    event.segsSortedLeft = event.node.getParentEdges().get(0).hasSegments.cardinality();
                     break;
 
                 case COALESCENCE:
                     lineages -= 1;
-                    totalReassortmentObsProb -= event.node.getChildEdges().get(0).getReassortmentObsProb();
-                    totalReassortmentObsProb -= event.node.getChildEdges().get(1).getReassortmentObsProb();
-                    totalReassortmentObsProb += event.node.getParentEdges().get(0).getReassortmentObsProb();
+                    totalReassortmentObsProb -= event.node.getChildEdges().get(0).getReassortmentObsProb(getBinomialProb());
+                    totalReassortmentObsProb -= event.node.getChildEdges().get(1).getReassortmentObsProb(getBinomialProb());
+                    totalReassortmentObsProb += event.node.getParentEdges().get(0).getReassortmentObsProb(getBinomialProb());
                     break;
             }
 

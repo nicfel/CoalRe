@@ -1,11 +1,10 @@
 package coalre.distribution;
 
 import beast.core.Description;
+import beast.core.Function;
 import beast.core.Input;
-import beast.core.parameter.RealParameter;
 import beast.evolution.tree.coalescent.PopulationFunction;
 
-import java.util.BitSet;
 import java.util.List;
 
 
@@ -17,7 +16,7 @@ import java.util.List;
         " the framework of Mueller (2018).")
 public class CoalescentWithReassortment extends NetworkDistribution {
 	
-	public Input<RealParameter> reassortmentRateInput = new Input<>(
+	public Input<Function> reassortmentRateInput = new Input<>(
 	        "reassortmentRate",
             "reassortment rate (per lineage per unit time)",
             Input.Validate.REQUIRED);
@@ -28,19 +27,21 @@ public class CoalescentWithReassortment extends NetworkDistribution {
             Input.Validate.REQUIRED);
 
     private PopulationFunction populationFunction;
-    private RealParameter reassortmentRate;
+    private Function reassortmentRate;
+    private NetworkIntervals intervals;
 
     @Override
     public void initAndValidate(){
         populationFunction = populationFunctionInput.get();
         reassortmentRate = reassortmentRateInput.get();
+        intervals = networkIntervalsInput.get();
     }
 
     public double calculateLogP() {
     	logP = 0;
 
     	// Calculate tree intervals
-    	List<NetworkEvent> networkEventList = networkIntervalsInput.get().getNetworkEventList();
+    	List<NetworkEvent> networkEventList = intervals.getNetworkEventList();
 
     	NetworkEvent prevEvent = null;
 
@@ -72,8 +73,10 @@ public class CoalescentWithReassortment extends NetworkDistribution {
     
 	private double reassortment(NetworkEvent event) {
 
-        return Math.log(reassortmentRate.getValue())
-                + event.reassortmentSegCount*Math.log(0.5) + Math.log(2.0);
+        return Math.log(reassortmentRate.getArrayValue())
+                + event.segsSortedLeft * Math.log(intervals.getBinomialProb())
+                + (event.segsToSort-event.segsSortedLeft)*Math.log(1-intervals.getBinomialProb())
+                + Math.log(2.0);
 	}
 
 	private double coalesce(NetworkEvent event) {
@@ -85,7 +88,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
         double result = 0.0;
 
-        result += -reassortmentRate.getValue() * prevEvent.totalReassortmentObsProb
+        result += -reassortmentRate.getArrayValue() * prevEvent.totalReassortmentObsProb
                 * (nextEvent.time - prevEvent.time);
 
 		result += -0.5*prevEvent.lineages*(prevEvent.lineages-1)
