@@ -72,17 +72,17 @@ public abstract class CoalReTestClass {
         TraitSet traitSet = getContempDateTraitSet(taxonSet);
         List<Tree> segmentTrees = getSegmentTreeObjects(nSegments, traitSet);
 
-        return getContempNetwork(segmentTrees, reassortmentRate, taxonSet);
+        return getContempNetwork(segmentTrees, reassortmentRate, traitSet);
     }
 
-    protected Network getContempNetwork(List<Tree> segmentTrees, double reassortmentRate, TaxonSet taxonSet) {
+    protected Network getContempNetwork(List<Tree> segmentTrees, double reassortmentRate, TraitSet traitSet) {
         ConstantPopulation popFunc = new ConstantPopulation();
         popFunc.initByName("popSize", new RealParameter("1.0"));
 
         SimulatedCoalescentNetwork network = new SimulatedCoalescentNetwork();
         network.initByName(
                 "segmentTree", segmentTrees,
-                "taxonSet", taxonSet,
+                "traitSet", traitSet,
                 "populationModel", popFunc,
                 "reassortmentRate", new RealParameter(String.valueOf(reassortmentRate)),
                 "enableSegmentTreeUpdate", false);
