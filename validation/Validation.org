@@ -72,7 +72,7 @@ simulation.
 
       # Tree age/length plot
 
-      par(mfcol=c(2,1))
+      par(mfcol=c(3,1))
 
       maxLength <- max(quantile(df$network.totalLength, probs=0.99),
                        quantile(dfs$network.totalLength, probs=0.99),
@@ -114,6 +114,36 @@ simulation.
       legend("topright", inset=0.04,
             c("MCMC", "Direct simulation"), lty=1, pch=1, lwd=2,
             col=c("red","blue"))
+            
+    # Kolmogorov-Smirnov test for network statistics
+
+    H <- c()
+    L <- c()
+    R <- c()
+    l <- length(df$network.height)
+    
+    # For comparison to run faster, calculations need to be done at fewer ponts.
+    # It can be achieved by taking a fraction smaller than 0.01 below.
+    nPoints <- round(l*0.01)
+    by <- as.integer(l/nPoints)
+
+    for (i in seq(l, 0, by=-by)){
+        H <- append(H, log(ks.test(df$network.height[1:(l-i)], dfs$network.height)$statistic))
+        L <- append(L, log(ks.test(df$network.totalLength[1:(l-i)], dfs$network.totalLength)$statistic))
+        R <- append(L, log(ks.test(df$network.reassortmentNodeCount[1:(l-i)], dfs$network.reassortmentNodeCount)$statistic))
+    }
+
+    plot(seq(1, length(L)), L, type='l', col='red',  lwd=2,
+         xlab=paste("Number of logged iterations (minus burnin) / ", by),
+         ylab="Kolmogorov-Smirnov stat. (log scale)", 
+         main="Kolmogorov-Smirnov test for network statistics",
+         ylim=c(min(L, H, R), max(L, H, R)))
+
+    lines(seq(1, length(H)), H, col='blue', lwd=2, lty=2)
+    lines(seq(1, length(R)), R, lwd=2, lty=3)
+    legend("topright", inset=0.05,
+           c("Network length", "Network height", "Reassortment count"),
+           lty=c(2,2, 3), lwd=2, col=c("red","blue","black"))
   }
 #+END_SRC
 
