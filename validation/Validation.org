@@ -196,3 +196,55 @@ doCompare("simulate_serial5taxon8seg.log",
 
 #+RESULTS:
 [[file:scale5taxon8seg.png]]
+
+
+* NarrowExchange operator
+
+** 5-taxon 8-segment
+
+#+BEGIN_SRC R :session :file narrowExchange5taxon8seg.png :results graphics
+doCompare("simulate_serial5taxon8seg.log",
+          "testAR+NarrowExchange_serial5taxon8seg.log")
+#+END_SRC
+
+#+RESULTS:
+[[narrowExchange5taxon8seg.png]]
+
+
+* WideExchange operator
+
+** 5-taxon 8-segment
+
+#+BEGIN_SRC R :session :file wideExchange5taxon8seg.png :results graphics
+doCompare("simulate_serial5taxon8seg.log",
+          "testAR+WideExchange_serial5taxon8seg.log")
+#+END_SRC
+
+#+RESULTS:
+[[wideExchange5taxon8seg.png]]
+
+
+* Slide operator
+
+** 5-taxon 8-segment
+
+#+BEGIN_SRC R :session :file slide5taxon8seg.png :results graphics
+doCompare("simulate_serial5taxon8seg.log",
+          "testAR+Slide_serial5taxon8seg.log")
+#+END_SRC
+
+#+RESULTS:
+[[slide5taxon8seg.png]]
+
+
+* All above network operators
+
+** 5-taxon 8-segment
+
+#+BEGIN_SRC R :session :file all5taxon8seg.png :results graphics
+doCompare("simulate_serial5taxon8seg.log",
+          "testAll_serial5taxon8seg_1e8iter.log")
+#+END_SRC
+
+#+RESULTS:
+[[all5taxon8seg.png]]
