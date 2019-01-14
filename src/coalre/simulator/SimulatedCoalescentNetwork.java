@@ -1,5 +1,6 @@
 package coalre.simulator;
 
+import beast.core.Function;
 import beast.core.Input;
 import beast.core.Input.Validate;
 import beast.core.parameter.RealParameter;
@@ -23,6 +24,9 @@ public class SimulatedCoalescentNetwork extends Network {
 
     public Input<RealParameter> reassortmentRateInput = new Input<>("reassortmentRate",
             "Rate of reassortment (per lineage per unit time)", Validate.REQUIRED);
+
+    public Input<Function> binomialProbInput = new Input<>("binomialProb",
+            "Probability parameter in binomial reassortment distribution.");
 
     public Input<PopulationFunction> populationFunctionInput = new Input<>("populationModel",
             "Population model to use.", Validate.REQUIRED);
@@ -48,6 +52,7 @@ public class SimulatedCoalescentNetwork extends Network {
 
     private PopulationFunction populationFunction;
     private RealParameter reassortmentRate;
+    private Function binomialProb;
 
     private int nSegments;
 
@@ -60,6 +65,7 @@ public class SimulatedCoalescentNetwork extends Network {
 
         populationFunction = populationFunctionInput.get();
         reassortmentRate = reassortmentRateInput.get();
+        binomialProb = binomialProbInput.get();
 
         if (nSegments==0) {
             throw new IllegalArgumentException("Need at least one segment!");
@@ -120,6 +126,12 @@ public class SimulatedCoalescentNetwork extends Network {
         }
 
         super.initAndValidate();
+    }
+
+    private double getBinomialProb() {
+        return binomialProb != null
+                ? binomialProb.getArrayValue()
+                : 0.5;
     }
 
     /**
@@ -224,7 +236,7 @@ public class SimulatedCoalescentNetwork extends Network {
 
         for (int segIdx = lineage.hasSegments.nextSetBit(0);
              segIdx != -1; segIdx = lineage.hasSegments.nextSetBit(segIdx+1)) {
-            if (Randomizer.nextBoolean()) {
+            if (Randomizer.nextDouble() < getBinomialProb()) {
                 hasSegs_left.set(segIdx);
             } else {
                 hasSegs_right.set(segIdx);

@@ -36,6 +36,7 @@ public class SimulatedCoalescentNetworkTest extends CoalReTestClass {
             network.initByName(
                     "reassortmentRate", new RealParameter("1.0"),
                     "populationModel", populationFunction,
+                    "traitSet", dateTrait,
                     "segmentTree", segmentTrees.get(0),
                     "segmentTree", segmentTrees.get(1),
                     "segmentTree", segmentTrees.get(2),

@@ -128,7 +128,7 @@ public class NetworkTest extends CoalReTestClass {
         TraitSet traitSet = getSerialDateTraitSet(taxonSet, 1.0);
         List<Tree> segTrees = getSegmentTreeObjects(nSegs, traitSet);
 
-        Network network = getContempNetwork(segTrees, 2.0);
+        Network network = getContempNetwork(segTrees, 2.0, traitSet);
 
         for (int segIdx=0; segIdx<nSegs; segIdx++) {
             network.updateSegmentTree(segTrees.get(segIdx), segIdx);

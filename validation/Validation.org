@@ -1,13 +1,17 @@
 #+TITLE: Sampler Validation
 
+#+PROPERTY: header-args:R :exports both
+
 * Simulator validation
+
+** No reassortment
 
 When reassortment is turned off, the simulator should draw trees from
 a standard coalescent distribution. We can test this by comparing tree
 heights and lengths between our simulator and the regular RandomTree
 simulator under various population functions.
 
-#+BEGIN_SRC R :file sim_validation.png
+#+BEGIN_SRC R :file sim_validation.png :results graphics
 df <- read.table("simulator/simulate_without_reassortment.log", header=T)
 
 maxLength <- max(df$simulated_network.totalLength,
@@ -27,7 +31,7 @@ lines(h2$mids, h2$density, col='red')
 #+RESULTS:
 [[file:sim_validation.png]]
 
-#+BEGIN_SRC R :file sim_validation2.png
+#+BEGIN_SRC R :file sim_validation2.png :results graphics
 df <- read.table("simulator/simulate_without_reassortment_expGrowth.log", header=T)
 
 maxLength <- max(df$simulated_network.totalLength,
@@ -46,6 +50,10 @@ lines(h2$mids, h2$density, col='red')
 
 #+RESULTS:
 [[file:sim_validation2.png]]
+
+** Skewed reassortment
+   
+Need validation test for skewed reassortment model.
 
 * Validation code
 
@@ -115,7 +123,7 @@ simulation.
 
 ** Two-taxon two-segment networks
 
-#+BEGIN_SRC R :session :file addRemove2taxon2seg.png
+#+BEGIN_SRC R :session :file addRemove2taxon2seg.png :results graphics
 doCompare("simulate_contemp2taxon2seg.log",
           "testAddRemove_contemp2taxon2seg.log")
 #+END_SRC
@@ -125,7 +133,7 @@ doCompare("simulate_contemp2taxon2seg.log",
 
 ** 5-taxon 2-segment networks
 
-#+BEGIN_SRC R :session :file addRemove5taxon2seg.png
+#+BEGIN_SRC R :session :file addRemove5taxon2seg.png :results graphics
 doCompare("simulate_serial5taxon2seg.log",
           "testAddRemove_serial5taxon2seg.log")
 #+END_SRC
@@ -157,7 +165,7 @@ doCompare("simulate_serial5taxon8seg.log",
   
 ** 5-taxon 8-segment
 
-#+BEGIN_SRC R :session :file uniform5taxon8seg.png 
+#+BEGIN_SRC R :session :file uniform5taxon8seg.png :results graphics
 doCompare("simulate_serial5taxon8seg.log",
           "testAR+Unif_serial5taxon8seg.log")
 #+END_SRC
@@ -169,7 +177,7 @@ doCompare("simulate_serial5taxon8seg.log",
 
 ** 5-taxon 8-segment
 
-#+BEGIN_SRC R :session :file divertSeg5taxon8seg.png 
+#+BEGIN_SRC R :session :file divertSeg5taxon8seg.png :results graphics
 doCompare("simulate_serial5taxon8seg.log",
           "testAR+DS_serial5taxon8seg.log")
 #+END_SRC
@@ -181,7 +189,7 @@ doCompare("simulate_serial5taxon8seg.log",
 
 ** 5-taxon 8-segment
 
-#+BEGIN_SRC R :session :file scale5taxon8seg.png 
+#+BEGIN_SRC R :session :file scale5taxon8seg.png :results graphics
 doCompare("simulate_serial5taxon8seg.log",
           "testAR+NS_serial5taxon8seg.log")
 #+END_SRC

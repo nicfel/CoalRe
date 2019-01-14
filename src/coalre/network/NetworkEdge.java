@@ -17,11 +17,12 @@ public class NetworkEdge {
         this.hasSegments = hasSegments;
     }
 
-    public double getReassortmentObsProb() {
+    public double getReassortmentObsProb(double p) {
         // There are always two reassortment configurations that
         // produce an unobserved reassortment: 1111 and 0000
         // (assuming 4 segs on lineage)
-        return 1.0 - 2.0*Math.pow(0.5, hasSegments.cardinality());
+        return 1.0 - (Math.pow(p, hasSegments.cardinality())
+                + Math.pow(1.0-p, hasSegments.cardinality()));
     }
 
     public double getLength() {
