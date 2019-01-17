@@ -54,8 +54,8 @@ public class NetworkEdge {
             childNodeCopy.setHeight(childNode.getHeight());
             childNodeCopy.setTaxonLabel(childNode.getTaxonLabel());
             childNodeCopy.setTaxonIndex(childNode.getTaxonIndex());
-            childNodeCopy.setStateIndex(childNode.stateIndex);
-            childNodeCopy.setStateLabel(childNode.stateLabel);
+            childNodeCopy.setTypeIndex(childNode.typeIndex);
+            childNodeCopy.setTypeLabel(childNode.typeLabel);
             seenNodes.put(childNode, childNodeCopy);
         }
 

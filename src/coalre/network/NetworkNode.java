@@ -17,14 +17,14 @@ public class NetworkNode {
     protected int taxonIndex;
     
     /**
-     * Label of state corresponding to this node (used only for structured coalescent)
+     * Label of type corresponding to this node (used only for structured coalescent)
      */
-    protected String stateLabel;
+    protected String typeLabel;
     
     /**
-     * Index of state corresponding to this node (used only for structured coalescent)
+     * Index of type corresponding to this node (used only for structured coalescent)
      */
-    protected int stateIndex;
+    protected int typeIndex;
 
     /**
      * height of this node.
@@ -145,10 +145,26 @@ public class NetworkNode {
     }
     
     /**
+     * @return the label of the type (if any) corresponding to this node
+     */
+    public String getTypeLabel() {
+        return typeLabel;
+    }
+    
+    /**
+     * Sets the type corresponding to this node.
+     *
+     * @param stateLabel new state label
+     */
+    public void setTypeLabel(String typeLabel) {
+        this.typeLabel = typeLabel;
+    }
+    
+    /**
      * @return the label of the state (if any) corresponding to this node
      */
-    public String getStateLabel() {
-        return stateLabel;
+    public int getTypeIndex() {
+        return typeIndex;
     }
     
     /**
@@ -156,25 +172,7 @@ public class NetworkNode {
      *
      * @param stateLabel new state label
      */
-    public void setStateLabel(String stateLabel) {
-        this.stateLabel = stateLabel;
-    }
-    
-    /**
-     * @return the label of the state (if any) corresponding to this node
-     */
-    public int getStateIndex() {
-        return stateIndex;
-    }
-    
-    /**
-     * Sets the state corresponding to this node.
-     *
-     * @param stateLabel new state label
-     */
-    public void setStateIndex(int stateIndex) {
-        this.stateIndex = stateIndex;
-    }
-    
-    
+    public void setTypeIndex(int typeIndex) {
+        this.typeIndex = typeIndex;
+    }  
 }
