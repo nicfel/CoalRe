@@ -24,4 +24,9 @@
 *.state
 *.log
 *.trees
+*.tree
 *.nexus
+
+# Ignore generated R files
+.Rhistory
+/validation/*.png
