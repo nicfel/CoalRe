@@ -73,28 +73,29 @@ public class ReassortmentEventsLogger extends BEASTObject implements Loggable {
     		List<NetworkEdge> parentEdges = reassortmentNodes.get(k).getParentEdges();
     		List<NetworkEdge> childEdge = reassortmentNodes.get(k).getChildEdges();
     		
-    		final BitSet childSegment = childEdge.get(0).hasSegments;
-    		final BitSet parent1Segments = parentEdges.get(0).hasSegments;
-    		final BitSet parent2Segments = parentEdges.get(1).hasSegments;
+//    		BitSet childSegment = new BitSet();
+//    		BitSet parent1Segments = new BitSet();
+//    		BitSet parent2Segments = new BitSet();
+//    		childSegment = (BitSet) childEdge.get(0).hasSegments.clone();
+//    		childSegment = (BitSet) childEdge.get(0).hasSegments.clone();
+//    		childSegment = (BitSet) childEdge.get(0).hasSegments.clone();
+//    		
+    		final BitSet childSegment = (BitSet) childEdge.get(0).hasSegments.clone();
+    		final BitSet parent1Segments = (BitSet) parentEdges.get(0).hasSegments.clone();
+    		final BitSet parent2Segments = (BitSet) parentEdges.get(1).hasSegments.clone();
     		
     		int beforeEvent = 0, parentLineage1 = 0, parentLineage2 = 0;
     		
     		// count which edges go where
             for (int i = 0; i < segCount; i++){            	
-            	if (reassortmentNodes.get(k).getHeight()<rootHeights[i]){
-	            	if (childSegment.get(i)){
-	            		beforeEvent++;
-	            	}
-	            	if (parent1Segments.get(i)){
-	            		parentLineage1++;
-	            	}
-	            	if (parent2Segments.get(i)){
-	            		parentLineage2++;
-	            	}
+            	if (reassortmentNodes.get(k).getHeight()>rootHeights[i]){
+            		childSegment.set(i, false);
+            		parent1Segments.set(i, false);
+            		parent2Segments.set(i, false);
             	}
             } 
-            if (beforeEvent>1)
-            	out.print(beforeEvent + ":" + parentLineage1 + ":" + parentLineage2 + "\t");
+            if (childSegment.cardinality()>1)
+            	out.print(childSegment + ":" + parent1Segments + ":" + parent2Segments + ":" + reassortmentNodes.get(k).getHeight()  + "\t");
     	}
     	
 	}
