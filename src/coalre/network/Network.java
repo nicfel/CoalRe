@@ -132,7 +132,7 @@ public class Network extends StateNode {
      * @return Extended Newick representation of network
      */
     public String getExtendedNewick() {
-        return getExtendedNewick(rootEdge, new ArrayList<>(), false) + ";";
+        return getExtendedNewick(rootEdge, new ArrayList<>(), new ArrayList<>(), false) + ";";
     }
 
     /**
@@ -140,23 +140,42 @@ public class Network extends StateNode {
      *         segment presence annotation.
      */
     public String getExtendedNewickVerbose() {
-        return getExtendedNewick(rootEdge, new ArrayList<>(), true) + ";";
+        return getExtendedNewick(rootEdge, new ArrayList<>(), new ArrayList<>(), true) + ";";
     }
 
-    private String getExtendedNewick(NetworkEdge currentEdge, List<NetworkNode> seenReassortmentNodes,
-                                     boolean verbose) {
+    private String getExtendedNewick(NetworkEdge currentEdge, List<NetworkNode> seenReassortmentNodes, 
+    		List<Boolean> isTraverseEdge, boolean verbose) {
         StringBuilder result = new StringBuilder();
 
         boolean traverse = true;
         int hybridID = -1;
         if (currentEdge.childNode.isReassortment()) {
+        	
             hybridID = seenReassortmentNodes.indexOf(currentEdge.childNode);
-
             if (hybridID<0) {
-                traverse = false;
-                seenReassortmentNodes.add(currentEdge.childNode);
-                hybridID = seenReassortmentNodes.size()-1;
-            }
+	        	List<NetworkEdge> parentEdges = currentEdge.childNode.getParentEdges();
+	        	
+	        	// get the other edge
+	        	NetworkEdge otherEdge;
+	        	if (parentEdges.get(0).equals(currentEdge))
+	        		otherEdge = parentEdges.get(1);
+	        	else
+	        		otherEdge = parentEdges.get(0);
+	        	
+	        	// check which edge is the main edge
+	        	if (currentEdge.hasSegments.cardinality()<otherEdge.hasSegments.cardinality()){
+	                traverse = false;
+	                seenReassortmentNodes.add(currentEdge.childNode);
+	                isTraverseEdge.add(true);
+	                hybridID = seenReassortmentNodes.size()-1;
+	        	}else{
+	                seenReassortmentNodes.add(otherEdge.childNode);
+	                isTraverseEdge.add(false);
+	                hybridID = seenReassortmentNodes.size()-1;	        		
+	        	}
+            }else{
+            	traverse = isTraverseEdge.get(hybridID);
+            }        
         }
 
         if (traverse && !currentEdge.childNode.isLeaf()) {
@@ -169,7 +188,7 @@ public class Network extends StateNode {
                 else
                     result.append(",");
 
-                result.append(getExtendedNewick(childEdge, seenReassortmentNodes, verbose));
+                result.append(getExtendedNewick(childEdge, seenReassortmentNodes, isTraverseEdge, verbose));
             }
 
             result.append(")");
