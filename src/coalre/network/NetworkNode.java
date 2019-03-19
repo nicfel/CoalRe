@@ -3,6 +3,11 @@ package coalre.network;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+import beast.evolution.tree.TraitSet;
+import beast.evolution.tree.Tree;
 
 public class NetworkNode {
 
@@ -30,6 +35,13 @@ public class NetworkNode {
      * height of this node.
      */
     protected double height = Double.MAX_VALUE;
+    
+    
+    /**
+     * Arbitrarily labeled metadata on this node. Needed for network summary only
+     */
+    protected String metaDataString;
+
 
 
     List<NetworkEdge> children = new ArrayList<>();
@@ -175,4 +187,20 @@ public class NetworkNode {
     public void setTypeIndex(int typeIndex) {
         this.typeIndex = typeIndex;
     }  
+    
+
+    /**
+     * Set a meta data value
+     * @param pattern
+     * @param value
+     */
+    public void setMetaData(String metaDataString) {
+        this.metaDataString = metaDataString;
+    }
+    
+    public String getMetaData() {
+        return metaDataString;
+    }
+
+
 }

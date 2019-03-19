@@ -1,6 +1,7 @@
 package coalre.networkannotator;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import beast.evolution.tree.Node;
+import beast.math.statistic.DiscreteStatistics;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
@@ -23,10 +25,6 @@ public class NetworkCladeSystem {
 
 
     public NetworkCladeSystem() { 
-    }
-
-    public NetworkCladeSystem(Network targetTree) {
-        add(targetTree, true);
     }
     
     public void setLeafLabels(List<NetworkNode> leafNodes, int nrSegments){
@@ -46,13 +44,10 @@ public class NetworkCladeSystem {
         // Recurse over the tree and add all the clades (or increment their
         // frequency if already present). The root clade is added too (for
         // annotation purposes).
-//    	System.out.println(network.getExtendedNewick());
     	for (int i = 0; i < network.getSegmentCount(); i++){
     		addClades(network.getRootEdge().childNode, includeTips, i);
     	}
-//        System.out.println(cladeMap.get(7));
-//        System.exit(0);
-    }
+    }    
 
     private BitSet addClades(NetworkNode node, boolean includeTips, int segment) {
         BitSet bits = new BitSet();
@@ -60,11 +55,9 @@ public class NetworkCladeSystem {
         if (node.isLeaf()) {
 
             int index = getTaxonIndex(node);
-            bits.set(index);
+        	if (node.getParentEdges().get(0).hasSegments.get(segment))
+        		bits.set(index);
 
-//            if (includeTips) {
-//                addClade(bits, 0);
-//            }
 
         } else {
 
@@ -77,8 +70,9 @@ public class NetworkCladeSystem {
             
             if (node.isCoalescence() && 
             		node.getChildEdges().get(0).hasSegments.get(segment) &&
-            			node.getChildEdges().get(1).hasSegments.get(segment))
+            			node.getChildEdges().get(1).hasSegments.get(segment)){
             	addCoalescentClade(bits, segment);
+            }
         }
 
         return bits;
@@ -93,11 +87,14 @@ public class NetworkCladeSystem {
         clade.setCount(clade.getCount() + 1);
     }
     
-    public void collectAttributes(Network tree, Set<String> attributeNames) {
-        collectAttributes(tree.getRoot(), attributeNames);
+    
+    public void collectAttributes(Network network, Set<String> attributeNames) {
+    	for (int i = 0; i < network.getSegmentCount(); i++){
+    		collectAttributes(network.getRootEdge().childNode, attributeNames, i);
+    	}
     }
 
-    private BitSet collectAttributes(NetworkNode node, Set<String> attributeNames) {
+    private BitSet collectAttributes(NetworkNode node, Set<String> attributeNames, int segment) {
 
         BitSet bits = new BitSet();
 
@@ -105,35 +102,32 @@ public class NetworkCladeSystem {
 
             int index = getTaxonIndex(node);
             if (index < 0) {
-                throw new IllegalArgumentException("Taxon, " + node.getID() + ", not found in target tree");
+                throw new IllegalArgumentException("Taxon with height= " + node.getHeight() + ", not found in target tree");
             }
-            bits.set(2*index);
+        	if (node.getParentEdges().get(0).hasSegments.get(segment))
+        		bits.set(index);
 
         } else {
-
-            for (int i = 0; i < node.getChildCount(); i++) {
-
-            	NetworkNode node1 = node.getChild(i);
-
-                bits.or(collectAttributes(node1, attributeNames));
-            }
-
-            for (int i=1; i<bits.length(); i=i+2) {
-                bits.set(i, false);
-            }
-            if (node.isFake() && processSA) {
-                int index = getTaxonIndex(node.getDirectAncestorChild());
-                bits.set(2 * index + 1);
+           	
+        	// get the children of that node
+            List<NetworkEdge> childEdges = node.getChildEdges();
+            // add all children to the bitset
+            for (NetworkEdge childEdge : childEdges)
+            	if (childEdge.hasSegments.get(segment))
+            		bits.or(collectAttributes(childEdge.childNode, attributeNames, segment));
+            
+            if (node.isCoalescence() && 
+            		node.getChildEdges().get(0).hasSegments.get(segment) &&
+            			node.getChildEdges().get(1).hasSegments.get(segment)){
+            	collectAttributesForClade(bits, node, attributeNames, segment);
             }
         }
-
-        collectAttributesForClade(bits, node, attributeNames);
 
         return bits;
     }
 
-    private void collectAttributesForClade(BitSet bits, NetworkNode node, Set<String> attributeNames) {
-        Clade clade = cladeMap.get(bits);
+    private void collectAttributesForClade(BitSet bits, NetworkNode node, Set<String> attributeNames, int segment) {
+        Clade clade = cladeMap.get(segment).get(bits);
         if (clade != null) {
 
             if (clade.attributeValues == null) {
@@ -153,11 +147,12 @@ public class NetworkCladeSystem {
                         value = getBranchLength(node);
                         break;
                     default:
-                        value = node.getMetaData(attributeName);
-                        if (value instanceof String && ((String) value).startsWith("\"")) {
-                            value = ((String) value).replaceAll("\"", "");
-                        }
-                        break;
+                    	throw new IllegalArgumentException("Summary not implemented for values other than height and posterior");
+//                        value = node.getMetaData(attributeName);
+//                        if (value instanceof String && ((String) value).startsWith("\"")) {
+//                            value = ((String) value).replaceAll("\"", "");
+//                        }
+//                        break;
                 }
 
                 values[i] = value;
@@ -170,6 +165,139 @@ public class NetworkCladeSystem {
         }
     }
 
+    
+    
+    public void summarizeAttributes(Network network, Set<String> attributeNames, boolean useMean, int nrNetworks) {
+    	summarizeAttributes(network.getRootEdge().childNode, attributeNames, useMean, nrNetworks);
+    }
+
+    private List<BitSet> summarizeAttributes(NetworkNode node, Set<String> attributeNames, boolean useMean, int nrNetworks) {
+
+        List<BitSet> bits = new ArrayList<BitSet>();
+        for (int segment = 0; segment < cladeMap.size(); segment++){
+        	bits.add(new BitSet());
+        }
+        
+
+        if (node.isLeaf()) {
+
+            int index = getTaxonIndex(node);
+            if (index < 0) {
+                throw new IllegalArgumentException("Taxon with height= " + node.getHeight() + ", not found in target tree");
+            }
+            for (int segment = 0; segment < cladeMap.size(); segment++){
+            	if (node.getParentEdges().get(0).hasSegments.get(segment))
+            		bits.get(segment).set(index);
+            }
+
+        } else {
+           	
+        	// get the children of that node
+            List<NetworkEdge> childEdges = node.getChildEdges();
+            // add all children to the bitset
+            List<BitSet> newbits = new ArrayList<>();
+            for (NetworkEdge childEdge : childEdges){
+            	newbits = summarizeAttributes(childEdge.childNode, attributeNames, useMean, nrNetworks);
+
+            	for (int segment = 0; segment < cladeMap.size(); segment++){
+	            	if (childEdge.hasSegments.get(segment))
+	            		bits.get(segment).or(newbits.get(segment));
+	            }           	
+
+            } 
+            
+
+        }       
+
+        
+        if (node.isCoalescence())
+        	summarizeAttributesForClade(bits, node, attributeNames, useMean, nrNetworks);
+       
+
+        return bits;
+    }
+
+    private void summarizeAttributesForClade(List<BitSet> bits, NetworkNode node, 
+    		Set<String> attributeNames, boolean useMean, int nrNetworks) {
+
+    	List<NetworkEdge> childEdges = node.getChildEdges();
+    	
+        for (String attributeName : attributeNames) {
+            switch (attributeName) {
+            	case "height":
+            		node.setMetaData(",segposterior={");
+            		
+            		int avg_post = 0;
+            		int segcount = 0;
+            		
+            		List<Double> height = new ArrayList<>();
+
+            		for (int segment = 0; segment < cladeMap.size(); segment++){
+            			if (segment>0)
+				            node.setMetaData(node.getMetaData() + ",");
+
+            			if (childEdges.get(0).hasSegments.get(segment) &&
+            					childEdges.get(1).hasSegments.get(segment)){
+            				
+				    		List<Object[]> rawHeights = cladeMap.get(segment).get(bits.get(segment)).getAttributeValues();
+				            double[] heights = new double[rawHeights.size()];
+				            for (int i = 0; i < rawHeights.size(); i++)
+				            	height.add((double) rawHeights.get(i)[0]);
+				            
+				            segcount++;
+				            avg_post+=rawHeights.size();
+				            
+				            node.setMetaData(node.getMetaData() + (double)rawHeights.size()/(double)nrNetworks);
+//				            if (useMean){
+//				                node.setMetaData(node.getMetaData() + ",posterior." + segment + "="
+//				                		+DiscreteStatistics.mean(heights));
+//				            }else{
+//				                node.setHeight(DiscreteStatistics.median(heights));
+//				            }
+						}else{
+				            node.setMetaData(node.getMetaData() + "NA");
+						}
+					}
+            		double avg_pos_val = (double) avg_post/ (double) (nrNetworks*segcount);
+            		if (Double.isNaN(avg_pos_val)) avg_pos_val = 0.0;
+            		
+            		// Convert height to Array
+            		double[] heightarray = new double[height.size()];
+            		for (int i = 0; i < height.size(); i++)
+            			heightarray[i] = height.get(i);
+            		
+            		if (heightarray.length>0){
+						if (useMean){
+							node.setHeight(DiscreteStatistics.mean(heightarray));
+						}else{
+						    node.setHeight(DiscreteStatistics.median(heightarray));
+						}
+            		}
+
+            		double minHPD,maxHPD;
+            		if (heightarray.length>0){
+	                    Arrays.sort(heightarray);
+	                    minHPD = heightarray[(int)(0.025 * heightarray.length)];
+	                    maxHPD = heightarray[(int)(0.975 * heightarray.length)];
+            		}else{
+            			minHPD = node.getHeight();
+            			maxHPD = node.getHeight();
+            		}
+            		
+		            node.setMetaData(",avg_posterior=" + avg_pos_val +
+		            		",height_95%_HPD={" + minHPD + "," + maxHPD + "}" + 
+		            		node.getMetaData() + "}");
+
+                   
+                case "length":
+                    break;
+                default:
+                	throw new IllegalArgumentException("");
+            }
+        }
+    	
+    }
+    
     private Object getBranchLength(NetworkNode node) {
         if (node.isRoot()) {
             return 0;
@@ -177,6 +305,7 @@ public class NetworkCladeSystem {
         return node.getParent().getHeight() - node.getHeight();
     }
 
+    
     public Map<BitSet, Clade> getCoalescentCladeMap() {
         return coalescentCladeMap;
     }
@@ -185,22 +314,22 @@ public class NetworkCladeSystem {
         return reticulationCladeMap;
     }
 
-
     public void calculateCladeCredibilities(int nrSegments, int totalTreesUsed) {
     	for (int i = 0; i < nrSegments; i++){
 	        for (Clade clade : cladeMap.get(i).values()) {
 	
+	        	if (clade.getCount()==308)
+	        		System.out.println(clade);
 	            if (clade.getCount() > totalTreesUsed) {
 	
 	                throw new AssertionError("clade.getCount=(" + clade.getCount() +
 	                        ") should be <= totalTreesUsed = (" + totalTreesUsed + ")");
 	            }
-	
 	            clade.setCredibility(((double) clade.getCount()) / (double) totalTreesUsed);
 	        }
     	}
-    	System.out.println(cladeMap.get(0).values());
     }
+    
 
     public double getSumCladeCredibility(NetworkNode node, BitSet bits) {
 
@@ -334,34 +463,33 @@ public class NetworkCladeSystem {
     // Get tree clades as bitSets on target taxa
     // codes is an array of existing BitSet objects, which are reused
 
-    void getTreeCladeCodes(Network tree, BitSet[] codes) {
-        getTreeCladeCodes(tree.getRootEdge().childNode, codes);
-    }
-
-    int getTreeCladeCodes(NetworkNode node, BitSet[] codes) {
-        final int inode = node.getNr();
-        codes[inode].clear();
-        if (node.isLeaf()) {
-            int index = getTaxonIndex(node);//getTaxonIndex(node);
-            codes[inode].set(index);
-        } else {
-            for (int i = 0; i < node.getChildCount(); i++) {
-                final NetworkNode child = node.getChild(i);
-                final int childIndex = getTreeCladeCodes(child, codes);
-
-                codes[inode].or(codes[childIndex]);
-            }
-        }
-        return inode;
-    }
-    
+//    void getTreeCladeCodes(Network tree, BitSet[] codes) {
+//        getTreeCladeCodes(tree.getRootEdge().childNode, codes);
+//    }
+//
+//    int getTreeCladeCodes(NetworkNode node, BitSet[] codes) {
+//        final int inode = node.getNr();
+//        codes[inode].clear();
+//        if (node.isLeaf()) {
+//            int index = getTaxonIndex(node);//getTaxonIndex(node);
+//            codes[inode].set(index);
+//        } else {
+//            for (int i = 0; i < node.getChildCount(); i++) {
+//                final NetworkNode child = node.getChild(i);
+//                final int childIndex = getTreeCladeCodes(child, codes);
+//
+//                codes[inode].or(codes[childIndex]);
+//            }
+//        }
+//        return inode;
+//    }
+//    
     /**
      * get the index of a leaf node
      */ 
     private int getTaxonIndex(NetworkNode leaf){
     	return leafNodeMap.indexOf(leaf.getTaxonLabel());
     }
-
 
     public class Clade {
         public Clade(BitSet bits) {
@@ -408,7 +536,7 @@ public class NetworkCladeSystem {
 
         @Override
         public String toString() {
-            return "clade " + bits.toString() + " #" + count + " prob " + getCredibility();
+            return "clade " + bits.toString() + " #" + count + " count " + getCount();
         }
 
         int count;
@@ -416,10 +544,5 @@ public class NetworkCladeSystem {
         BitSet bits;
         List<Object[]> attributeValues = null;
     }
-
-//	public void setProcessSA(boolean processSA) {
-//		this.processSA = processSA;
-//	}
-
 
 }

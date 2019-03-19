@@ -55,7 +55,7 @@ public class ReassortmentAnnotator {
     private static class NetworkAnnotatorOptions {
         File inFile;
         File outFile = new File("summary.tree");
-        double burninPercentage = 0.0;
+        double burninPercentage = 10.0;
         double convSupportThresh = 50.0;
         SummaryStrategy summaryStrategy = SummaryStrategy.MEAN;
 
@@ -65,7 +65,6 @@ public class ReassortmentAnnotator {
                     "Input file: " + inFile + "\n" +
                     "Output file: " + outFile + "\n" +
                     "Burn-in percentage: " + burninPercentage + "%\n" +
-                    "Conversion support threshold: " + convSupportThresh + "%\n" +
                     "Node height and conv. site summary: " + summaryStrategy;
         }
     }
@@ -80,37 +79,20 @@ public class ReassortmentAnnotator {
         ReassortmentLogReader logReader = new ReassortmentLogReader(options.inFile,
                 options.burninPercentage);
 
-//        System.out.println(logReader.getACGCount() + " ACGs in file.");
+        System.out.println(logReader.getNetworkCount() + " Networks in file.");
 
         System.out.println("The first " + logReader.getBurnin() +
                  " (" + options.burninPercentage + "%) ACGs will be discarded " +
                 "to account for burnin.");
 
-        // Compute CF Clade probabilities
-
-        System.out.println("\nComputing CF clade credibilities...");
-
-        
-        // remove segments from edges where there isn't any genetic information about them
-//        for (Network network : logReader){
-//        	removeNonGeneticSegments(network);        	
-//        }
-
-        
-        // collapse Reticulation edges that don't carry any genetic footprint. This includes loop, 
-        // reticulation edges that end up on the same branch and parts that are above the root of all segment trees. 
-//        for (Network network : logReader){
-//        	collapseReticulations(network);        	
-//        }
-        
         // get the clades for each reassortment event in every network
         NetworkCladeSystem cladeSystem = new NetworkCladeSystem();
-
         
         // build the clades
         boolean first = true;
         int segments = -1;
         for (Network network : logReader){
+        	collapseReticulations(network);
         	if (first){
         		List<NetworkNode> leafNodes = new ArrayList<>();
             	for (NetworkNode networkNode : network.getNodes()){
@@ -125,54 +107,97 @@ public class ReassortmentAnnotator {
         	cladeSystem.add(network, true);        	
         }
         
+        System.out.println("\nComputing CF clade credibilities...");
         // calculate the segment tree clade credibilities
         cladeSystem.calculateCladeCredibilities(segments, logReader.getCorrectedNetworkCount());
-        System.out.println("xs");
         
         // get the network with the highest count
-      Network bestNetwork = null;
-      double bestScore = Double.NEGATIVE_INFINITY;
+        Network bestNetwork = null;
+        double bestScore = Double.NEGATIVE_INFINITY;
 
-      for (Network network : logReader ) {
-          double score = 0.0;
-          for (int i = 0; i < segments; i++){
-        	  score += cladeSystem.getLogCladeCredibility(i, network.getRootEdge().childNode, null);
-          }
-          if (score>bestScore) {
-        	  bestNetwork = network;
-              bestScore = score;
-          }
-      }
-      System.out.println(bestNetwork.getExtendedNewickVerbose());
-      
-      collapseReticulations(bestNetwork);
-      System.out.println(bestNetwork.getExtendedNewickVerbose());
-      removeNonGeneticSegments(bestNetwork);
-      System.out.println(bestNetwork.getExtendedNewickVerbose());
-
-      System.out.println(bestNetwork.getExtendedNewick());
-      System.out.println(bestScore);
-      System.exit(0);
-
-        
-    	
-        int[] reticulationCount = new int[logReader.getCorrectedNetworkCount()];
-        int c = 0;
-        
-//        boolean first = true;
-        for (Network network : logReader){
-        	reticulationCount[c] = getReticulationCount(network);
-        	c++;
+        for (Network network : logReader ) {
+        	double score = 0.0;
+        	for (int i = 0; i < segments; i++){
+        		score += cladeSystem.getLogCladeCredibility(i, network.getRootEdge().childNode, null);
+        	}
+        	if (score>bestScore) {
+        		bestNetwork = network;
+        		bestScore = score;
+        	}
         }
-        // get all networks that are closest to the either mean or median number of nodes
-        boolean[] useNetwork = summaryReticulationCountNetworks(options.summaryStrategy, reticulationCount);
-                
-        	
+  
+//        // collapse Reticulations if there is no genetic information to distinguish between them.
+//        collapseReticulations(bestNetwork);
         
-        System.out.println(Arrays.toString(useNetwork));
-        System.exit(0);
-        	// count all the 
-        	
+        // get the posterior probabilities of each coalescent network node
+        NetworkCladeSystem bestCladeSystem = new NetworkCladeSystem();
+        
+        // add leafnodes
+		List<NetworkNode> leafNodes = new ArrayList<>();
+    	for (NetworkNode networkNode : bestNetwork.getNodes()){
+    		if (networkNode.isLeaf()){
+    			leafNodes.add(networkNode);
+    		}
+		}
+    	segments = bestNetwork.getSegmentCount();
+    	bestCladeSystem.setLeafLabels(leafNodes, segments);
+    	
+    	// build clade system
+        bestCladeSystem.add(bestNetwork, true);
+
+        Set<String> attributeNames = new HashSet<>();
+		attributeNames.add("height");
+		
+        // print the network to file
+        System.out.println("\nCollect Atributes...");
+
+        for (Network network : logReader ) {
+    		bestCladeSystem.collectAttributes(network, attributeNames);
+    	}
+        
+        // remove edges w/o genetic information
+        removeNonGeneticSegments(bestNetwork);  
+
+        
+//    	if (summaryStrategy == SummaryStrategy.MEAN)
+    		bestCladeSystem.summarizeAttributes(bestNetwork, attributeNames, true, logReader.getCorrectedNetworkCount());
+//    	else
+//    		bestCladeSystem.summarizeAttributes(bestNetwork, attributeNames, false);
+        
+        // go through the best network and add the metadata to nodes
+        
+        
+        
+        
+        // print the network to file
+        System.out.println("\nWriting output to " + options.outFile.getName()
+        	+ "...");
+
+        try (PrintStream ps = new PrintStream(options.outFile)) {
+        	ps.print(logReader.getPreamble());
+        	ps.println("tree STATE_0 = " + bestNetwork.getExtendedNewickVerbose());
+
+        	String postamble = logReader.getPostamble();
+        	if (postamble.length() > 0)
+        		ps.println(postamble);
+        	else
+        		ps.println("End;");
+        }
+        
+//        int[] reticulationCount = new int[logReader.getCorrectedNetworkCount()];
+//        int c = 0;
+//        
+//        for (Network network : logReader){
+//        	reticulationCount[c] = getReticulationCount(network);
+//        	c++;
+//        }
+//        // get all networks that are closest to the either mean or median number of nodes
+//        boolean[] useNetwork = summaryReticulationCountNetworks(options.summaryStrategy, reticulationCount);
+//        
+//        System.out.println(Arrays.toString(useNetwork));
+//        System.exit(0);
+//        	// count all the 
+//        	
 //        	for (int i = 0; i < network.getSegmentCount(); i++){
 //        		Tree segmentTree = new Tree();
 //        		network.updateSegmentTree(segmentTree, i);
@@ -602,36 +627,36 @@ public class ReassortmentAnnotator {
      * @param root root of clonal frame to annotate
      * @param summaryStrategy strategy used when summarizing CF node ages/heights
      */
-    protected void annotateCF(HardwiredClusters cladeSystem,
-                              NetworkNode root, SummaryStrategy summaryStrategy) {
-
-        cladeSystem.applyToClades(root, (node, bits) -> {
-            List<Object[]> rawHeights =
-                    cladeSystem.getCoalescentCladeMap().get(bits).getAttributeValues();
-
-            double cladeCredibility = cladeSystem.getCoalescentCladeMap()
-                    .get(bits).getCredibility();
-
-            double[] heights = new double[rawHeights.size()];
-            for (int i = 0; i < rawHeights.size(); i++)
-                heights[i] = (double) rawHeights.get(i)[0];
-
-            if (summaryStrategy == SummaryStrategy.MEAN)
-                node.setHeight(DiscreteStatistics.mean(heights));
-            else
-                node.setHeight(DiscreteStatistics.median(heights));
-
-            Arrays.sort(heights);
-            double minHPD = heights[(int)(0.025 * heights.length)];
-            double maxHPD = heights[(int)(0.975 * heights.length)];
-
-//            node.metaDataString = "posterior=" + cladeCredibility
-//                    + ", height_95%_HPD={" + minHPD + "," + maxHPD + "}";
-
-            return null;
-        });
-    }
-
+//    protected void annotateCF(NetworkCladeSystem cladeSystem,
+//                              NetworkNode root, SummaryStrategy summaryStrategy) {
+//
+//        cladeSystem.applyToClades(root, (node, bits) -> {
+//            List<Object[]> rawHeights =
+//                    cladeSystem.getCoalescentCladeMap().get(bits).getAttributeValues();
+//
+//            double cladeCredibility = cladeSystem.getCoalescentCladeMap()
+//                    .get(bits).getCredibility();
+//
+//            double[] heights = new double[rawHeights.size()];
+//            for (int i = 0; i < rawHeights.size(); i++)
+//                heights[i] = (double) rawHeights.get(i)[0];
+//
+//            if (summaryStrategy == SummaryStrategy.MEAN)
+//                node.setHeight(DiscreteStatistics.mean(heights));
+//            else
+//                node.setHeight(DiscreteStatistics.median(heights));
+//
+//            Arrays.sort(heights);
+//            double minHPD = heights[(int)(0.025 * heights.length)];
+//            double maxHPD = heights[(int)(0.975 * heights.length)];
+//
+////            node.metaDataString = "posterior=" + cladeCredibility
+////                    + ", height_95%_HPD={" + minHPD + "," + maxHPD + "}";
+//
+//            return null;
+//        });
+//    }
+//
     /**
      * Add summarized conversions to given ACG.
      *
@@ -734,9 +759,9 @@ public class ReassortmentAnnotator {
         JDialog dialog = new JDialog((JDialog)null, true);
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.setLocationRelativeTo(null);
-        dialog.setTitle("ACGAnnotator");
+        dialog.setTitle("Reassortment Network Annotator");
 
-        JLabel logFileLabel = new JLabel("ACG log file:");
+        JLabel logFileLabel = new JLabel("Reassortment Network log file:");
         JLabel outFileLabel = new JLabel("Output file:");
         JLabel burninLabel = new JLabel("Burn-in percentage:");
         JLabel summaryMethodLabel = new JLabel("Position summary method:");

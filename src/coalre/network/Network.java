@@ -211,7 +211,10 @@ public class Network extends StateNode {
         }
         result.append(",segsCarried=").append(currentEdge.hasSegments.cardinality());
         if (currentEdge.childNode.getTypeLabel() != null) 
-        	result.append(",state=").append(currentEdge.childNode.getTypeLabel());        	
+        		result.append(",state=").append(currentEdge.childNode.getTypeLabel());
+        
+        if (currentEdge.childNode.metaDataString != null) 
+    			result.append(currentEdge.childNode.getMetaData());
 
         result.append("]");
 
