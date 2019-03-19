@@ -316,11 +316,12 @@ public class NetworkCladeSystem {
 
     public void calculateCladeCredibilities(int nrSegments, int totalTreesUsed) {
     	for (int i = 0; i < nrSegments; i++){
-	        for (Clade clade : cladeMap.get(i).values()) {
-	
-	        	if (clade.getCount()==308)
-	        		System.out.println(clade);
+	        for (Clade clade : cladeMap.get(i).values()) {	
+	        	
 	            if (clade.getCount() > totalTreesUsed) {
+	            	for (int j = 0; j < leafNodeMap.size();j++)
+	            		if (clade.bits.get(j))
+	            			System.err.println(leafNodeMap.get(j));
 	
 	                throw new AssertionError("clade.getCount=(" + clade.getCount() +
 	                        ") should be <= totalTreesUsed = (" + totalTreesUsed + ")");

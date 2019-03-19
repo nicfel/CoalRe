@@ -92,7 +92,6 @@ public class ReassortmentAnnotator {
         boolean first = true;
         int segments = -1;
         for (Network network : logReader){
-        	collapseReticulations(network);
         	if (first){
         		List<NetworkNode> leafNodes = new ArrayList<>();
             	for (NetworkNode networkNode : network.getNodes()){
@@ -104,8 +103,9 @@ public class ReassortmentAnnotator {
             	cladeSystem.setLeafLabels(leafNodes, segments);
         		first = false;
         	}
-        	cladeSystem.add(network, true);        	
+        	cladeSystem.add(network, true); 
         }
+        
         
         System.out.println("\nComputing CF clade credibilities...");
         // calculate the segment tree clade credibilities
@@ -126,7 +126,7 @@ public class ReassortmentAnnotator {
         	}
         }
   
-//        // collapse Reticulations if there is no genetic information to distinguish between them.
+        // collapse Reticulations if there is no genetic information to distinguish between them.
 //        collapseReticulations(bestNetwork);
         
         // get the posterior probabilities of each coalescent network node
