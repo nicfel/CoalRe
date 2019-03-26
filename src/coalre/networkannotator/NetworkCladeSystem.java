@@ -298,21 +298,21 @@ public class NetworkCladeSystem {
     	
     }
     
-    private Object getBranchLength(NetworkNode node) {
-        if (node.isRoot()) {
-            return 0;
-        }
-        return node.getParent().getHeight() - node.getHeight();
-    }
-
-    
-    public Map<BitSet, Clade> getCoalescentCladeMap() {
-        return coalescentCladeMap;
-    }
-    
-    public Map<BitSet, Clade> getReticulationCladeMap() {
-        return reticulationCladeMap;
-    }
+//    private Object getBranchLength(NetworkNode node) {
+//        if (node.isRoot()) {
+//            return 0;
+//        }
+//        return node.getParent().getHeight() - node.getHeight();
+//    }
+//
+//    
+//    public Map<BitSet, Clade> getCoalescentCladeMap() {
+//        return coalescentCladeMap;
+//    }
+//    
+//    public Map<BitSet, Clade> getReticulationCladeMap() {
+//        return reticulationCladeMap;
+//    }
 
     public void calculateCladeCredibilities(int nrSegments, int totalTreesUsed) {
     	for (int i = 0; i < nrSegments; i++){

@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * @author Nicola Felix Mueller
+ * @author Tim Vaughan and Nicola Felix Mueller
  */
 public class NetworkIntervals extends CalculationNode {
     public Input<Network> networkInput = new Input<>("network",

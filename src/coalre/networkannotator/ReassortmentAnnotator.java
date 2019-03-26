@@ -158,6 +158,9 @@ public class ReassortmentAnnotator {
         // remove edges w/o genetic information
         removeNonGeneticSegments(bestNetwork);  
 
+        // print the network to file
+        System.out.println("\nSummarize Atributes...");
+
         
 //    	if (summaryStrategy == SummaryStrategy.MEAN)
     		bestCladeSystem.summarizeAttributes(bestNetwork, attributeNames, true, logReader.getCorrectedNetworkCount());
