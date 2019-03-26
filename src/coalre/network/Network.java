@@ -276,9 +276,16 @@ public class Network extends StateNode {
     public void assignFromFragile(StateNode other) {
         Network otherNetwork = (Network) other;
 
+        // Save taxon indices.
+        Map<String, Integer> taxonToIndexMap = new HashMap<>();
+        getLeafNodes().forEach(n -> taxonToIndexMap.put(n.getTaxonLabel(), n.getTaxonIndex()));
+
         rootEdge = otherNetwork.rootEdge;
         storedRootEdge = null;
         segmentCount = null;
+
+        // Restore taxon indices
+        getLeafNodes().forEach(n -> n.setTaxonIndex(taxonToIndexMap.get(n.getTaxonLabel())));
     }
 
     @Override

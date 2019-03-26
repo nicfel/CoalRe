@@ -19,15 +19,15 @@ public class NetworkNode {
     /**
      * Index of taxon corresponding to this node (usually only used for leaves)
      */
-    protected int taxonIndex;
+    protected int taxonIndex = -1;
     
     /**
-     * Label of type corresponding to this node (used only for structured coalescent)
+     * Label of type corresponding to this node (used only for structured models)
      */
     protected String typeLabel;
     
     /**
-     * Index of type corresponding to this node (used only for structured coalescent)
+     * Index of type corresponding to this node (used only for structured models)
      */
     protected int typeIndex;
 
@@ -41,8 +41,6 @@ public class NetworkNode {
      * Arbitrarily labeled metadata on this node. Needed for network summary only
      */
     protected String metaDataString;
-
-
 
     List<NetworkEdge> children = new ArrayList<>();
     List<NetworkEdge> parents = new ArrayList<>();
