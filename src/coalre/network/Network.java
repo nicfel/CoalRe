@@ -259,17 +259,26 @@ public class Network extends StateNode {
 
     @Override
     public void assignTo(StateNode other) {
+        Network otherNetwork = (Network) other;
 
+        otherNetwork.rootEdge = rootEdge;
+        otherNetwork.storedRootEdge = null;
+        otherNetwork.segmentCount = null;
     }
 
     @Override
     public void assignFrom(StateNode other) {
-
+        assignFromFragile(other);
+        setID(other.getID());
     }
 
     @Override
     public void assignFromFragile(StateNode other) {
+        Network otherNetwork = (Network) other;
 
+        rootEdge = otherNetwork.rootEdge;
+        storedRootEdge = null;
+        segmentCount = null;
     }
 
     @Override
