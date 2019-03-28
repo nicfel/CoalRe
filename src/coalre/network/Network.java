@@ -684,5 +684,4 @@ public class Network extends StateNode {
         return thisClade;
 
     }
-
 }
