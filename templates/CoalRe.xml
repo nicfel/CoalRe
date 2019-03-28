@@ -20,7 +20,12 @@
             <![CDATA[
             <stateNode id="reassortmentRateCwR" spec="beast.core.parameter.RealParameter" value="0.1" estimate="true"/>
             <stateNode id="popSizeCwR" spec="beast.core.parameter.RealParameter" value="1.0" estimate="true"/>
-            <stateNode id="networkCwR" spec="coalre.network.simulator.SimulatedCoalescentNetwork" value="1.0" estimate="true"/>
+            <stateNode id="networkCwR" spec="coalre.simulator.SimulatedCoalescentNetwork" nSegments="1" estimate="true">
+                <reassortmentRate idref="reassortmentRateCwR"/>
+                <populationModel spec="beast.evolution.tree.coalescent.ConstantPopulation">
+                    <popSize idref="popSizeCwR"/>
+                </populationModel>
+            </stateNode>
 
             <plugin spec='coalre.util.DummyTreeDistribution' id="CoalescentWithReassortmentDummy.t:$(n)" tree='@Tree.t:$(n)'/>
 
@@ -41,20 +46,20 @@
             <operator id="popSizeCwRScale" spec="ScaleOperator"
                 parameter="@popSizeCwR" scaleFactor="0.5" weight="1.0"/>
 
-            <operator id="addRemoveReassortmentCwR" spec="AddRemoveReassortment"
+            <operator id="addRemoveReassortmentCwR" spec="coalre.operators.AddRemoveReassortment"
                       network="@networkCwR" alpha="1.0" weight="1.0"/>
 
-            <operator id="divertSegmentCwR" spec="DivertSegmentOperator"
-                      network="@networkCWR" weight="1.0"/>
+            <operator id="divertSegmentCwR" spec="coalre.operators.DivertSegmentOperator"
+                      network="@networkCwR" weight="1.0"/>
 
-            <operator id="uniformNetworkCwR" spec="UniformNetworkNodeHeightOperator"
-                      network="@networkCWR" weight="1.0"/>
+            <operator id="uniformNetworkCwR" spec="coalre.operators.UniformNetworkNodeHeightOperator"
+                      network="@networkCwR" weight="1.0"/>
 
-            <operator id="networkScaleCwR" id="NetworkScale" spec="NetworkScaleOperator"
-                      network="@networkCWR" weight="1.0"/>
+            <operator id="networkScaleCwR" spec="coalre.operators.NetworkScaleOperator"
+                      network="@networkCwR" weight="1.0"/>
 
-            <operator id="networkScaleRootCwR" id="NetworkScaleRootOnly" spec="NetworkScaleOperator"
-                      network="@networkCWR" scaleRootOnly="true" weight="1.0"/>
+            <operator id="networkScaleRootCwR" spec="coalre.operators.NetworkScaleOperator"
+                      network="@networkCwR" scaleRootOnly="true" weight="1.0"/>
             ]]>
 
             <connect srcID="CoalescentWithReassortmentDummy.t:$(n)" targetID="prior" inputName="distribution"

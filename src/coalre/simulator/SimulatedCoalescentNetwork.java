@@ -58,7 +58,7 @@ public class SimulatedCoalescentNetwork extends Network {
 
     public void initAndValidate() {
 
-        if (nSegmentsInput.get() != null)
+        if (segmentTreesInput.get().isEmpty())
             nSegments = nSegmentsInput.get();
         else
             nSegments = segmentTreesInput.get().size();
