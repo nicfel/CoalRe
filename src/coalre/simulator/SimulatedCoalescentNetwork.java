@@ -75,16 +75,22 @@ public class SimulatedCoalescentNetwork extends Network {
 
         List<NetworkNode> sampleNodes = new ArrayList<>();
 
-        TraitSet traitSet = traitSetInput.get();
-        TaxonSet taxonSet;
-        if (traitSet != null)
-            taxonSet = traitSet.taxaInput.get();
-        else
+        TaxonSet taxonSet = null;
+        if (!segmentTreesInput.get().isEmpty())
+            taxonSet = segmentTreesInput.get().get(0).getTaxonset();
+        else if (traitSetInput.get() != null)
+            taxonSet = traitSetInput.get().taxaInput.get();
+        else if (taxonSetInput.get() != null)
             taxonSet = taxonSetInput.get();
+        else
+            throw new IllegalArgumentException("Taxon set must be specified " +
+                    "using either taxonSet, traitSet or provided by a segmentTree input.");
 
-        if (taxonSet == null)
-                throw new IllegalArgumentException("Must define either a " +
-                        "trait set or a taxon set.");
+        TraitSet traitSet = null;
+        if (traitSetInput.get() != null)
+            traitSet = traitSetInput.get();
+        else if (!segmentTreesInput.get().isEmpty())
+            traitSet = segmentTreesInput.get().get(0).getDateTrait();
 
         for (int taxonIndex=0; taxonIndex<taxonSet.getTaxonCount(); taxonIndex++) {
             String taxonName = taxonSet.getTaxonId(taxonIndex);
@@ -95,6 +101,8 @@ public class SimulatedCoalescentNetwork extends Network {
 
             if (traitSet != null)
                 sampleNode.setHeight(traitSet.getValue(taxonName));
+            else if (!segmentTreesInput.get().isEmpty())
+                sampleNode.setHeight(segmentTreesInput.get().get(0).getNode(taxonIndex).getHeight());
             else
                 sampleNode.setHeight(0.0);
 
