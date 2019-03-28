@@ -6,6 +6,7 @@ import beast.core.CalculationNode;
 import beast.core.Function;
 import beast.core.Input;
 import beast.core.Input.Validate;
+import beast.core.parameter.RealParameter;
 import coalre.network.Network;
 
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ public class NetworkIntervals extends CalculationNode {
     public Input<Network> networkInput = new Input<>("network",
             "network for which to calculate the intervals", Validate.REQUIRED);
 
-    public Input<Function> binomialProbInput = new Input<>("binomialProb",
+    public Input<RealParameter> binomialProbInput = new Input<>("binomialProb",
             "Probability of a given segment choosing a particular parent.");
 
     private Network network;
