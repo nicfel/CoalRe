@@ -83,11 +83,30 @@
             <operator id="uniformNetworkCwR.alltrees" spec="coalre.operators.UniformNetworkNodeHeightOperator"
                       network="@networkCwR.alltrees" weight="1.0"/>
 
+            <operator id="networkWideExchangeCwR.alltrees" spec="coalre.operators.NetworkExchange"
+                      network="@networkCwR.alltrees" isNarrow="false" weight="1.0"/>
+
+            <operator id="networkNarrowExchangeCwR.alltrees" spec="coalre.operators.NetworkExchange"
+                      network="@networkCwR.alltrees" isNarrow="true" weight="1.0"/>
+
+            <operator id="subNetworkSlideCwR.alltrees" spec="coalre.operators.SubNetworkSlide"
+                      network="@networkCwR.alltrees" weight="1.0"/>
+
+            <operator id="networkGibbsCwR.alltrees" spec="coalre.operators.GibbsOperatorAboveSegmentRoots"
+                      network="@networkCwR.alltrees" weight="1.0">
+              <populationModel idref="constantPopSizeCwR.alltrees"/>
+              <reassortmentRate idref="reassortmentRateCwR.alltrees"/>
+            </operator>
+
+
             <operator id="networkScaleCwR.alltrees" spec="coalre.operators.NetworkScaleOperator"
                       network="@networkCwR.alltrees" weight="1.0"/>
 
             <operator id="networkScaleRootCwR.alltrees" spec="coalre.operators.NetworkScaleOperator"
                       network="@networkCwR.alltrees" scaleRootOnly="true" weight="1.0"/>
+
+            <operator id="networkUpDownCwR.alltrees" spec="coalre.operators.NetworkScaleOperator"
+                      network="@networkCwR.alltrees" weight="1.0"/>
             ]]>
 
             <connect method="coalre.util.BEAUtiConnector.customConnector"/>
@@ -119,6 +138,10 @@
                      if="inposterior(CoalescentWithReassortmentPrior.alltrees) and popSizeCwR.alltrees/estimate=true"/>
             <connect srcID="binomialProbCwRScale.alltrees" targetID="mcmc" inputName="operator"
                      if="inposterior(CoalescentWithReassortmentPrior.alltrees) and binomialProbCwR.alltrees/estimate=true"/>
+            <connect srcID="reassortmentRateCwR.alltrees" targetID="networkUpDownCwR.alltrees" inputName="downParameter"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and reassortmentRateCwR.alltrees/estimate=true"/>
+            <connect srcID="popSizeCwR.alltrees" targetID="networkUpDownCwR.alltrees" inputName="upParameter"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and popSizeCwR.alltrees/estimate=true"/>
 
             <connect srcID="addRemoveReassortmentCwR.alltrees" targetID="mcmc" inputName="operator"
                      if="inposterior(CoalescentWithReassortmentPrior.alltrees) and networkCwR.alltrees/estimate=true"/>
@@ -126,9 +149,19 @@
                      if="inposterior(CoalescentWithReassortmentPrior.alltrees) and networkCwR.alltrees/estimate=true"/>
             <connect srcID="uniformNetworkCwR.alltrees" targetID="mcmc" inputName="operator"
                      if="inposterior(CoalescentWithReassortmentPrior.alltrees) and networkCwR.alltrees/estimate=true"/>
+            <connect srcID="networkWideExchangeCwR.alltrees" targetID="mcmc" inputName="operator"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and networkCwR.alltrees/estimate=true"/>
+            <connect srcID="networkNarrowExchangeCwR.alltrees" targetID="mcmc" inputName="operator"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and networkCwR.alltrees/estimate=true"/>
+            <connect srcID="subNetworkSlideCwR.alltrees" targetID="mcmc" inputName="operator"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and networkCwR.alltrees/estimate=true"/>
+            <connect srcID="networkGibbsCwR.alltrees" targetID="mcmc" inputName="operator"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and networkCwR.alltrees/estimate=true"/>
             <connect srcID="networkScaleCwR.alltrees" targetID="mcmc" inputName="operator"
                      if="inposterior(CoalescentWithReassortmentPrior.alltrees) and networkCwR.alltrees/estimate=true"/>
             <connect srcID="networkScaleRootCwR.alltrees" targetID="mcmc" inputName="operator"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and networkCwR.alltrees/estimate=true"/>
+            <connect srcID="networkUpDownCwR.alltrees" targetID="mcmc" inputName="operator"
                      if="inposterior(CoalescentWithReassortmentPrior.alltrees) and networkCwR.alltrees/estimate=true"/>
 
             <connect srcID="Tree.t:$(n)" targetID="addRemoveReassortmentCwR.alltrees" inputName="segmentTree"
@@ -137,11 +170,20 @@
                      if="inposterior(CoalescentWithReassortmentDummy.t:$(n)) and Tree.t:$(n)/estimate=true"/>
             <connect srcID="Tree.t:$(n)" targetID="uniformNetworkCwR.alltrees" inputName="segmentTree"
                      if="inposterior(CoalescentWithReassortmentDummy.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+            <connect srcID="Tree.t:$(n)" targetID="networkWideExchangeCwR.alltrees" inputName="segmentTree"
+                     if="inposterior(CoalescentWithReassortmentDummy.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+            <connect srcID="Tree.t:$(n)" targetID="networkNarrowExchangeCwR.alltrees" inputName="segmentTree"
+                     if="inposterior(CoalescentWithReassortmentDummy.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+            <connect srcID="Tree.t:$(n)" targetID="subNetworkSlideCwR.alltrees" inputName="segmentTree"
+                     if="inposterior(CoalescentWithReassortmentDummy.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+            <connect srcID="Tree.t:$(n)" targetID="networkGibbsCwR.alltrees" inputName="segmentTree"
+                     if="inposterior(CoalescentWithReassortmentDummy.t:$(n)) and Tree.t:$(n)/estimate=true"/>
             <connect srcID="Tree.t:$(n)" targetID="networkScaleCwR.alltrees" inputName="segmentTree"
                      if="inposterior(CoalescentWithReassortmentDummy.t:$(n)) and Tree.t:$(n)/estimate=true"/>
             <connect srcID="Tree.t:$(n)" targetID="networkScaleRootCwR.alltrees" inputName="segmentTree"
                      if="inposterior(CoalescentWithReassortmentDummy.t:$(n)) and Tree.t:$(n)/estimate=true"/>
-
+            <connect srcID="Tree.t:$(n)" targetID="networkUpDownCwR.alltrees" inputName="segmentTree"
+                     if="inposterior(CoalescentWithReassortmentDummy.t:$(n)) and Tree.t:$(n)/estimate=true"/>
         </subtemplate>
 
     </mergewith>
