@@ -5,6 +5,7 @@
                  :beast.evolution.speciation
                  :beast.evolution.tree.coalescent
                  :beast.core.util
+                 :beast.core.parameter
                  :beast.evolution.nuc
                  :beast.evolution.operators
                  :beast.evolution.sitemodel
@@ -22,15 +23,15 @@
                      inlineInputs="coalre.distribution.CoalescentWithReassortment.networkIntervals"
                      suppressInputs="coalre.distribution.NetworkIntervals.network">
             <![CDATA[
-            <stateNode id="reassortmentRateCwR" spec="beast.core.parameter.RealParameter" value="0.1" estimate="true"/>
-            <stateNode id="popSizeCwR" spec="beast.core.parameter.RealParameter" value="1.0" estimate="true"/>
-            <stateNode id="binomialProbCwR" spec="beast.core.parameter.RealParameter" lower="0.0" upper="1.0" value="0.5" estimate="false"/>
+            <stateNode id="reassortmentRateCwR.alltrees" spec="beast.core.parameter.RealParameter" value="0.1" estimate="true"/>
+            <stateNode id="popSizeCwR.alltrees" spec="beast.core.parameter.RealParameter" value="1.0" estimate="true"/>
+            <stateNode id="binomialProbCwR.alltrees" spec="beast.core.parameter.RealParameter" lower="0.0" upper="1.0" value="0.5" estimate="false"/>
 
-            <stateNode id="networkCwR" spec="coalre.simulator.SimulatedCoalescentNetwork" nSegments="1"
+            <stateNode id="networkCwR.alltrees" spec="coalre.simulator.SimulatedCoalescentNetwork" nSegments="1"
                         enableSegmentTreeUpdate="false" estimate="true">
-                <reassortmentRate idref="reassortmentRateCwR"/>
+                <reassortmentRate spec="beast.core.parameter.RealParameter" value="0.0"/>
                 <populationModel spec="beast.evolution.tree.coalescent.ConstantPopulation">
-                    <popSize idref="popSizeCwR"/>
+                    <popSize spec="beast.core.parameter.RealParameter" value="1.0"/>
                 </populationModel>
 
                 <taxonSet spec="beast.evolution.alignment.TaxonSet" alignment="@$(n)"/>
@@ -38,107 +39,107 @@
 
             <prior spec="coalre.util.DummyTreeDistribution" id="CoalescentWithReassortmentDummy.t:$(n)" tree="@Tree.t:$(n)"/>
 
-            <prior spec="coalre.distribution.CoalescentWithReassortment" id="CoalescentWithReassortmentPrior">
-                <reassortmentRate idref="reassortmentRateCwR"/>
-                <populationModel spec="beast.evolution.tree.coalescent.ConstantPopulation">
-                    <popSize idref="popSizeCwR"/>
+            <prior spec="coalre.distribution.CoalescentWithReassortment" id="CoalescentWithReassortmentPrior.alltrees">
+                <reassortmentRate idref="reassortmentRateCwR.alltrees"/>
+                <populationModel id="constantPopSizeCwR.alltrees" spec="beast.evolution.tree.coalescent.ConstantPopulation">
+                    <popSize idref="popSizeCwR.alltrees"/>
                 </populationModel>
-                <networkIntervals id="networkIntervalsCwR" spec="coalre.distribution.NetworkIntervals">
-                    <network idref="networkCwR"/>
-                    <binomialProb idref="binomialProbCwR"/>
+                <networkIntervals id="networkIntervalsCwR.alltrees" spec="coalre.distribution.NetworkIntervals">
+                    <network idref="networkCwR.alltrees"/>
+                    <binomialProb idref="binomialProbCwR.alltrees"/>
                 </networkIntervals>
             </prior>
 
 
-            <prior id="popSizeCwRPrior" x="@popSizeCwR">
+            <prior id="popSizeCwRPrior.alltrees" x="@popSizeCwR.alltrees">
                 <distr spec="OneOnX"/>
             </prior>
 
-            <prior id="reassortmentRateCwRPrior" x="@reassortmentRateCwR">
+            <prior id="reassortmentRateCwRPrior.alltrees" x="@reassortmentRateCwR.alltrees">
                 <distr spec="OneOnX"/>
             </prior>
 
-            <prior id="binomialProbCwRPrior" x="@binomialProbCwR">
+            <prior id="binomialProbCwRPrior.alltrees" x="@binomialProbCwR.alltrees">
                 <distr spec="beast.math.distributions.Uniform" lower="0" upper="1"/>
             </prior>
 
 
-            <operator id="reassortmentRateCwRScale" spec="ScaleOperator"
-                parameter="@reassortmentRateCwR" scaleFactor="0.5" weight="1.0"/>
+            <operator id="reassortmentRateCwRScale.alltrees" spec="ScaleOperator"
+                parameter="@reassortmentRateCwR.alltrees" scaleFactor="0.5" weight="1.0"/>
 
-            <operator id="popSizeCwRScale" spec="ScaleOperator"
-                parameter="@popSizeCwR" scaleFactor="0.5" weight="1.0"/>
+            <operator id="popSizeCwRScale.alltrees" spec="ScaleOperator"
+                parameter="@popSizeCwR.alltrees" scaleFactor="0.5" weight="1.0"/>
 
-            <operator id="binomialProbCwRScale" spec="ScaleOperator"
-                parameter="@binomialProbCwR" scaleFactor="0.5" weight="1.0"/>
+            <operator id="binomialProbCwRScale.alltrees" spec="ScaleOperator"
+                parameter="@binomialProbCwR.alltrees" scaleFactor="0.5" weight="1.0"/>
 
 
-            <operator id="addRemoveReassortmentCwR" spec="coalre.operators.AddRemoveReassortment"
-                      network="@networkCwR" alpha="1.0" weight="1.0"/>
+            <operator id="addRemoveReassortmentCwR.alltrees" spec="coalre.operators.AddRemoveReassortment"
+                      network="@networkCwR.alltrees" alpha="1.0" weight="1.0"/>
 
-            <operator id="divertSegmentCwR" spec="coalre.operators.DivertSegmentOperator"
-                      network="@networkCwR" weight="1.0"/>
+            <operator id="divertSegmentCwR.alltrees" spec="coalre.operators.DivertSegmentOperator"
+                      network="@networkCwR.alltrees" weight="1.0"/>
 
-            <operator id="uniformNetworkCwR" spec="coalre.operators.UniformNetworkNodeHeightOperator"
-                      network="@networkCwR" weight="1.0"/>
+            <operator id="uniformNetworkCwR.alltrees" spec="coalre.operators.UniformNetworkNodeHeightOperator"
+                      network="@networkCwR.alltrees" weight="1.0"/>
 
-            <operator id="networkScaleCwR" spec="coalre.operators.NetworkScaleOperator"
-                      network="@networkCwR" weight="1.0"/>
+            <operator id="networkScaleCwR.alltrees" spec="coalre.operators.NetworkScaleOperator"
+                      network="@networkCwR.alltrees" weight="1.0"/>
 
-            <operator id="networkScaleRootCwR" spec="coalre.operators.NetworkScaleOperator"
-                      network="@networkCwR" scaleRootOnly="true" weight="1.0"/>
+            <operator id="networkScaleRootCwR.alltrees" spec="coalre.operators.NetworkScaleOperator"
+                      network="@networkCwR.alltrees" scaleRootOnly="true" weight="1.0"/>
             ]]>
 
-            <connect method="coalre.util.UpDownRemover.customConnector"/>
+            <connect method="coalre.util.BEAUtiConnector.customConnector"/>
 
             <connect srcID="CoalescentWithReassortmentDummy.t:$(n)" targetID="prior" inputName="distribution"
                      if="inposterior(CoalescentWithReassortmentDummy.t:$(n)) and Tree.t:$(n)/estimate=true"/>
-            <connect srcID="CoalescentWithReassortmentPrior" targetID="prior" inputName="distribution"
+            <connect srcID="CoalescentWithReassortmentPrior.alltrees" targetID="prior" inputName="distribution"
                      if="inposterior(CoalescentWithReassortmentDummy.t:$(n)) and Tree.t:$(n)/estimate=true"/>
 
-            <connect srcID="reassortmentRateCwRPrior" targetID="prior" inputName="distribution"
-                     if="inposterior(CoalescentWithReassortmentPrior) and reassortmentRateCwR/estimate=true"/>
-            <connect srcID="popSizeCwRPrior" targetID="prior" inputName="distribution"
-                     if="inposterior(CoalescentWithReassortmentPrior) and popSizeCwR/estimate=true"/>
-            <connect srcID="binomialProbCwRPrior" targetID="prior" inputName="distribution"
-                     if="inposterior(CoalescentWithReassortmentPrior) and binomialProbCwR/estimate=true"/>
+            <connect srcID="reassortmentRateCwRPrior.alltrees" targetID="prior" inputName="distribution"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and reassortmentRateCwR.alltrees/estimate=true"/>
+            <connect srcID="popSizeCwRPrior.alltrees" targetID="prior" inputName="distribution"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and popSizeCwR.alltrees/estimate=true"/>
+            <connect srcID="binomialProbCwRPrior.alltrees" targetID="prior" inputName="distribution"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and binomialProbCwR.alltrees/estimate=true"/>
 
-            <connect srcID="reassortmentRateCwR" targetID="state" inputName="stateNode"
-                     if="inposterior(CoalescentWithReassortmentPrior) and reassortmentRateCwR/estimate=true"/>
-            <connect srcID="popSizeCwR" targetID="state" inputName="stateNode"
-                     if="inposterior(CoalescentWithReassortmentPrior) and popSizeCwR/estimate=true"/>
-            <connect srcID="binomialProbCwR" targetID="state" inputName="stateNode"
-                     if="inposterior(CoalescentWithReassortmentPrior) and binomialProbCwR/estimate=true"/>
-            <connect srcID="networkCwR" targetID="state" inputName="stateNode"
-                     if="inposterior(CoalescentWithReassortmentPrior)"/>
+            <connect srcID="reassortmentRateCwR.alltrees" targetID="state" inputName="stateNode"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and reassortmentRateCwR.alltrees/estimate=true"/>
+            <connect srcID="popSizeCwR.alltrees" targetID="state" inputName="stateNode"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and popSizeCwR.alltrees/estimate=true"/>
+            <connect srcID="binomialProbCwR.alltrees" targetID="state" inputName="stateNode"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and binomialProbCwR.alltrees/estimate=true"/>
+            <connect srcID="networkCwR.alltrees" targetID="state" inputName="stateNode"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees)"/>
 
-            <connect srcID="reassortmentRateCwRScale" targetID="mcmc" inputName="operator"
-                     if="inposterior(CoalescentWithReassortmentPrior) and reassortmentRateCwR/estimate=true"/>
-            <connect srcID="popSizeCwRScale" targetID="mcmc" inputName="operator"
-                     if="inposterior(CoalescentWithReassortmentPrior) and popSizeCwR/estimate=true"/>
-            <connect srcID="binomialProbCwRScale" targetID="mcmc" inputName="operator"
-                     if="inposterior(CoalescentWithReassortmentPrior) and binomialProbCwR/estimate=true"/>
+            <connect srcID="reassortmentRateCwRScale.alltrees" targetID="mcmc" inputName="operator"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and reassortmentRateCwR.alltrees/estimate=true"/>
+            <connect srcID="popSizeCwRScale.alltrees" targetID="mcmc" inputName="operator"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and popSizeCwR.alltrees/estimate=true"/>
+            <connect srcID="binomialProbCwRScale.alltrees" targetID="mcmc" inputName="operator"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and binomialProbCwR.alltrees/estimate=true"/>
 
-            <connect srcID="addRemoveReassortmentCwR" targetID="mcmc" inputName="operator"
-                     if="inposterior(CoalescentWithReassortmentPrior) and networkCwR/estimate=true"/>
-            <connect srcID="divertSegmentCwR" targetID="mcmc" inputName="operator"
-                     if="inposterior(CoalescentWithReassortmentPrior) and networkCwR/estimate=true"/>
-            <connect srcID="uniformNetworkCwR" targetID="mcmc" inputName="operator"
-                     if="inposterior(CoalescentWithReassortmentPrior) and networkCwR/estimate=true"/>
-            <connect srcID="networkScaleCwR" targetID="mcmc" inputName="operator"
-                     if="inposterior(CoalescentWithReassortmentPrior) and networkCwR/estimate=true"/>
-            <connect srcID="networkScaleRootCwR" targetID="mcmc" inputName="operator"
-                     if="inposterior(CoalescentWithReassortmentPrior) and networkCwR/estimate=true"/>
+            <connect srcID="addRemoveReassortmentCwR.alltrees" targetID="mcmc" inputName="operator"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and networkCwR.alltrees/estimate=true"/>
+            <connect srcID="divertSegmentCwR.alltrees" targetID="mcmc" inputName="operator"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and networkCwR.alltrees/estimate=true"/>
+            <connect srcID="uniformNetworkCwR.alltrees" targetID="mcmc" inputName="operator"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and networkCwR.alltrees/estimate=true"/>
+            <connect srcID="networkScaleCwR.alltrees" targetID="mcmc" inputName="operator"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and networkCwR.alltrees/estimate=true"/>
+            <connect srcID="networkScaleRootCwR.alltrees" targetID="mcmc" inputName="operator"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and networkCwR.alltrees/estimate=true"/>
 
-            <connect srcID="Tree.t:$(n)" targetID="addRemoveReassortmentCwR" inputName="segmentTree"
+            <connect srcID="Tree.t:$(n)" targetID="addRemoveReassortmentCwR.alltrees" inputName="segmentTree"
                      if="inposterior(CoalescentWithReassortmentDummy.t:$(n)) and Tree.t:$(n)/estimate=true"/>
-            <connect srcID="Tree.t:$(n)" targetID="divertSegmentCwR" inputName="segmentTree"
+            <connect srcID="Tree.t:$(n)" targetID="divertSegmentCwR.alltrees" inputName="segmentTree"
                      if="inposterior(CoalescentWithReassortmentDummy.t:$(n)) and Tree.t:$(n)/estimate=true"/>
-            <connect srcID="Tree.t:$(n)" targetID="uniformNetworkCwR" inputName="segmentTree"
+            <connect srcID="Tree.t:$(n)" targetID="uniformNetworkCwR.alltrees" inputName="segmentTree"
                      if="inposterior(CoalescentWithReassortmentDummy.t:$(n)) and Tree.t:$(n)/estimate=true"/>
-            <connect srcID="Tree.t:$(n)" targetID="networkScaleCwR" inputName="segmentTree"
+            <connect srcID="Tree.t:$(n)" targetID="networkScaleCwR.alltrees" inputName="segmentTree"
                      if="inposterior(CoalescentWithReassortmentDummy.t:$(n)) and Tree.t:$(n)/estimate=true"/>
-            <connect srcID="Tree.t:$(n)" targetID="networkScaleRootCwR" inputName="segmentTree"
+            <connect srcID="Tree.t:$(n)" targetID="networkScaleRootCwR.alltrees" inputName="segmentTree"
                      if="inposterior(CoalescentWithReassortmentDummy.t:$(n)) and Tree.t:$(n)/estimate=true"/>
 
         </subtemplate>

@@ -684,4 +684,12 @@ public class Network extends StateNode {
         return thisClade;
 
     }
+
+    /**
+     * Will be used in the next version of BEAST to prevent date trait cloning
+     * from breaking the BEAuti model.
+     */
+    public boolean notCloneable() {
+        return true;
+    }
 }

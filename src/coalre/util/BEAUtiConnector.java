@@ -6,14 +6,22 @@ import beast.core.MCMC;
 import beast.core.Operator;
 import beast.evolution.likelihood.GenericTreeLikelihood;
 import beast.evolution.operators.UpDownOperator;
+import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
 import coalre.distribution.CoalescentWithReassortment;
 import coalre.simulator.SimulatedCoalescentNetwork;
 
-public class UpDownRemover {
+/**
+ * Class containing a static method used in the BEAUti template to tidy
+ * up some loose ends.
+ */
+public class BEAUtiConnector {
+
     public static boolean customConnector(BeautiDoc doc) {
 
         int segTreeCount = 0;
+
+        TraitSet traitSet = null;
 
         for (BEASTInterface p : doc.getPartitions("tree")) {
             String pId = BeautiDoc.parsePartition(p.getID());
@@ -40,14 +48,26 @@ public class UpDownRemover {
                 upDown.upInput.get().remove(segmentTree);
                 upDown.downInput.get().remove(segmentTree);
             }
+
+            // Extract trait set from one of the trees to use for network.
+
+            if (traitSet == null && segmentTree.hasDateTrait())
+                traitSet = segmentTree.getDateTrait();
         }
 
-        // Update number of segments for initializer.
 
-        if (doc.pluginmap.containsKey("networkCwR")) {
-            SimulatedCoalescentNetwork network = (SimulatedCoalescentNetwork) doc.pluginmap.get("networkCwR");
+        if (doc.pluginmap.containsKey("networkCwR.alltrees")) {
+            SimulatedCoalescentNetwork network = (SimulatedCoalescentNetwork) doc.pluginmap.get("networkCwR.alltrees");
+
+            // Update number of segments for initializer.
             network.nSegmentsInput.setValue(segTreeCount, network);
+
+            // Provide trait set from first segment tree to network initializer:
+            if (traitSet != null)
+                network.traitSetInput.setValue(traitSet, network);
         }
+
+
 
         return false;
     }
