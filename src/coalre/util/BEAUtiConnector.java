@@ -77,14 +77,14 @@ public class BEAUtiConnector {
                 // ours scales trees _up_, hence the up/down reversal.
                 for (BEASTObject o : upDown.upInput.get()) {
                     if (o instanceof RealParameter) {
-                        if (o.getID().contains("clock") && o.getID().endsWith(".c:" + pId))
+                        if (o.getID().contains("clock"))
                             parametersToScaleDown.add((RealParameter)o);
                     }
                 }
 
                 for (BEASTObject o : upDown.downInput.get()) {
                     if (o instanceof RealParameter) {
-                        if (o.getID().contains("clock") && o.getID().endsWith(".c:" + pId))
+                        if (o.getID().contains("clock"))
                             parametersToScaleUp.add((RealParameter)o);
                     }
                 }
