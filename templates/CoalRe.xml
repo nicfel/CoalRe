@@ -107,6 +107,14 @@
 
             <operator id="networkUpDownCwR.alltrees" spec="coalre.operators.NetworkScaleOperator"
                       network="@networkCwR.alltrees" weight="1.0"/>
+
+
+            <log id="networkCwRStatsLogger.alltrees" spec="coalre.statistics.NetworkStatsLogger" network="@networkCwR.alltrees"/>
+
+            <logger id="networkCwRLogger.alltrees" spec="Logger" logEvery="10000" mode="tree" fileName="$(filebase).network.trees">
+                <log idref="networkCwR.alltrees"/>
+            </logger>
+
             ]]>
 
             <connect method="coalre.util.BEAUtiConnector.customConnector"/>
@@ -184,6 +192,18 @@
                      if="inposterior(CoalescentWithReassortmentDummy.t:$(n)) and Tree.t:$(n)/estimate=true"/>
             <connect srcID="Tree.t:$(n)" targetID="networkUpDownCwR.alltrees" inputName="segmentTree"
                      if="inposterior(CoalescentWithReassortmentDummy.t:$(n)) and Tree.t:$(n)/estimate=true"/>
+
+            <connect srcID="reassortmentRateCwR.alltrees" targetID="tracelog" inputName="log"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and reassortmentRateCwR.alltrees/estimate=true"/>
+            <connect srcID="popSizeCwR.alltrees" targetID="tracelog" inputName="log"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and popSizeCwR.alltrees/estimate=true"/>
+            <connect srcID="binomialProbCwR.alltrees" targetID="tracelog" inputName="log"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and binomialProbCwR.alltrees/estimate=true"/>
+            <connect srcID="networkCwRStatsLogger.alltrees" targetID="tracelog" inputName="log"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and networkCwR.alltrees/estimate=true"/>
+
+            <connect srcID="networkCwRLogger.alltrees" targetID="mcmc" inputName="logger"
+                     if="inposterior(CoalescentWithReassortmentPrior.alltrees) and networkCwR.alltrees/estimate=true"/>
         </subtemplate>
 
     </mergewith>
