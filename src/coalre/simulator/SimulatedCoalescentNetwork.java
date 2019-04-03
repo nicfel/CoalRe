@@ -53,6 +53,7 @@ public class SimulatedCoalescentNetwork extends Network {
     private PopulationFunction populationFunction;
     private RealParameter reassortmentRate;
     private Function binomialProb;
+    
 
     private int nSegments;
 
@@ -74,6 +75,7 @@ public class SimulatedCoalescentNetwork extends Network {
         // Set up sample nodes:
 
         List<NetworkNode> sampleNodes = new ArrayList<>();
+    
 
         TraitSet traitSet = traitSetInput.get();
         TaxonSet taxonSet;
