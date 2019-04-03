@@ -145,4 +145,12 @@ public abstract class NetworkOperator extends Operator {
     	node.removeChildEdge(child);
     	node.addChildEdge(replacement);
     }
+
+    /**
+     * Will be used in the next version of BEAST to prevent date trait cloning
+     * from breaking the BEAuti model.
+     */
+    public boolean notCloneable() {
+        return true;
+    }
 }
