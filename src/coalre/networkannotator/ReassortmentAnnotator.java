@@ -17,20 +17,10 @@
 
 package coalre.networkannotator;
 
-import beast.app.treeannotator.CladeSystem;
-//import bacter.Conversion;
-//import bacter.ConversionGraph;
-//import bacter.Locus;
-//import bacter.util.BacterACGLogReader;
-import beast.app.util.Utils;
 import beast.core.util.Log;
-import beast.evolution.tree.Tree;
-import beast.math.statistic.DiscreteStatistics;
-import coalre.distribution.NetworkIntervals;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
-import coalre.network.SegmentTreeInitializer;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -39,7 +29,6 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * A rewrite of TreeAnnotator targeted at summarizing ACG logs
@@ -48,13 +37,13 @@ import java.util.stream.Collectors;
  * @author Tim Vaughan <tgvaughan@gmail.com>
  * @author Nicola Felix Müller <nicola.felix.mueller@gmail.com>
  */
-public class ReassortmentDistance {
+public class ReassortmentAnnotator {
 
     private enum SummaryStrategy { MEAN, MEDIAN }
 
     private static class NetworkAnnotatorOptions {
         File inFile;
-        File outFile = new File("reassortment_distances.txt");
+        File outFile = new File("summary.tree");
         double burninPercentage = 10.0;
         double convSupportThresh = 50.0;
         SummaryStrategy summaryStrategy = SummaryStrategy.MEAN;
@@ -69,7 +58,7 @@ public class ReassortmentDistance {
         }
     }
 
-    public ReassortmentDistance(NetworkAnnotatorOptions options) throws IOException {
+    public ReassortmentAnnotator(NetworkAnnotatorOptions options) throws IOException {
 
         // Display options:
         System.out.println(options + "\n");
@@ -85,87 +74,219 @@ public class ReassortmentDistance {
                  " (" + options.burninPercentage + "%) ACGs will be discarded " +
                 "to account for burnin.");
 
-	      System.out.println("\nWriting output to " + options.outFile.getName()
-	      + "...");
-
-
+        // get the clades for each reassortment event in every network
+        NetworkCladeSystem cladeSystem = new NetworkCladeSystem();
         
+        // build the clades
         boolean first = true;
         int segments = -1;
-        // compute the pairwise reassortment distances 
-        try (PrintStream ps = new PrintStream(options.outFile)) {
-	        for (Network network : logReader){
-	        	computeReassortmenDistance(network, ps);
-	        	ps.print("\n");
-	        }
-	        ps.close();
+        for (Network network : logReader){
+        	if (first){
+        		List<NetworkNode> leafNodes = new ArrayList<>();
+            	for (NetworkNode networkNode : network.getNodes()){
+            		if (networkNode.isLeaf()){
+            			leafNodes.add(networkNode);
+            		}
+        		}
+            	segments = network.getSegmentCount();
+            	cladeSystem.setLeafLabels(leafNodes, segments);
+        		first = false;
+        	}
+        	cladeSystem.add(network, true); 
         }
-        System.out.println("\nDone!");
-    }
-    
-    private void computeReassortmenDistance(Network network, PrintStream ps){
-    	// get all reassortment nodes
-    	
-//    	List<NetworkEdge> allEdges = network.getEdges().stream()
-//    			.filter(e -> !e.isRootEdge())
-//    			.collect(Collectors.toList());
-//    	double networkLength = 0.0;
-//    	
-//    	for( NetworkEdge edge : allEdges)
-//    		networkLength += edge.getLength();
-    	
-        List<NetworkEdge> sourceEdges = network.getEdges().stream()
-                .filter(e -> !e.isRootEdge())
-                .filter(e -> e.parentNode.isReassortment())
-                .collect(Collectors.toList());
-        // get the for each segment the MRCA between the reassortment node and the attachment point
-        List<NetworkEdge> parentEdges = new ArrayList<>();
-//        ps.print("\t");
-        for (NetworkEdge edge : sourceEdges){
-        	// get the reassortment node
-        	NetworkNode node = edge.parentNode;
-        	BitSet segmentsLeft = node.getParentEdges().get(0).hasSegments;
-        	BitSet segmentsRight = node.getParentEdges().get(1).hasSegments;
-        	
+        
+        
+        System.out.println("\nComputing CF clade credibilities...");
+        // calculate the segment tree clade credibilities
+        cladeSystem.calculateCladeCredibilities(segments, logReader.getCorrectedNetworkCount());
+        
+        // get the network with the highest count
+        Network bestNetwork = null;
+        double bestScore = Double.NEGATIVE_INFINITY;
 
-        	// Get the common ancestor between each pair of segments that was split in the reassortment event
-        	ps.print("\t"); 
-        	boolean isFirst = true; 
-        	for (int i = 0; i < segmentsLeft.size(); i++){
-        		for (int j = 0; j < segmentsRight.size();j++){
-        			if (segmentsLeft.get(i) && segmentsRight.get(j)){
-        				NetworkNode left = node.getParentEdges().get(0).parentNode;
-        				NetworkNode right =  node.getParentEdges().get(1).parentNode;
-        				// track both segments up the network to see when they share a common ancestor
-        				while (!left.equals(right)){
-        					if (left.getHeight()>right.getHeight()){
-        						right = getParentNode(right, j);
-        					}else{
-        						left = getParentNode(left,i);
-        					}        						
-        				}
-        				if (isFirst)
-        					isFirst = false;
-        				else
-        					ps.print(",");
-        					
-        				ps.print(i + "-" + j + ":" + (right.getHeight()-node.getHeight()));
-    				}
-    			}
-        	}	
+        for (Network network : logReader ) {
+        	double score = 0.0;
+        	for (int i = 0; i < segments; i++){
+        		score += cladeSystem.getLogCladeCredibility(i, network.getRootEdge().childNode, null);
+        	}
+        	if (score>bestScore) {
+        		bestNetwork = network;
+        		bestScore = score;
+        	}
         }
-       
-
-    }
-    
-    private NetworkNode getParentNode(NetworkNode node, int segment){
-    	for (NetworkEdge edge : node.getParentEdges()){
-    		if (edge.hasSegments.get(segment)){
-    			node = edge.parentNode;
-    			return node;
+  
+        // collapse Reticulations if there is no genetic information to distinguish between them.
+//        collapseReticulations(bestNetwork);
+        
+        // get the posterior probabilities of each coalescent network node
+        NetworkCladeSystem bestCladeSystem = new NetworkCladeSystem();
+        
+        // add leafnodes
+		List<NetworkNode> leafNodes = new ArrayList<>();
+    	for (NetworkNode networkNode : bestNetwork.getNodes()){
+    		if (networkNode.isLeaf()){
+    			leafNodes.add(networkNode);
     		}
+		}
+    	segments = bestNetwork.getSegmentCount();
+    	bestCladeSystem.setLeafLabels(leafNodes, segments);
+    	
+    	// build clade system
+        bestCladeSystem.add(bestNetwork, true);
+
+        Set<String> attributeNames = new HashSet<>();
+		attributeNames.add("height");
+		
+        // print the network to file
+        System.out.println("\nCollect Atributes...");
+
+        for (Network network : logReader ) {
+    		bestCladeSystem.collectAttributes(network, attributeNames);
     	}
-    	return null;
+        
+        // remove edges w/o genetic information
+        removeNonGeneticSegments(bestNetwork);  
+
+        // print the network to file
+        System.out.println("\nSummarize Atributes...");
+
+        
+//    	if (summaryStrategy == SummaryStrategy.MEAN)
+    		bestCladeSystem.summarizeAttributes(bestNetwork, attributeNames, true, logReader.getCorrectedNetworkCount());
+//    	else
+//    		bestCladeSystem.summarizeAttributes(bestNetwork, attributeNames, false);
+        
+        // go through the best network and add the metadata to nodes
+        
+        
+        
+        
+        // print the network to file
+        System.out.println("\nWriting output to " + options.outFile.getName()
+        	+ "...");
+
+        try (PrintStream ps = new PrintStream(options.outFile)) {
+        	ps.print(logReader.getPreamble());
+        	ps.println("tree STATE_0 = " + bestNetwork.getExtendedNewickVerbose());
+
+        	String postamble = logReader.getPostamble();
+        	if (postamble.length() > 0)
+        		ps.println(postamble);
+        	else
+        		ps.println("End;");
+        }
+        
+//        int[] reticulationCount = new int[logReader.getCorrectedNetworkCount()];
+//        int c = 0;
+//        
+//        for (Network network : logReader){
+//        	reticulationCount[c] = getReticulationCount(network);
+//        	c++;
+//        }
+//        // get all networks that are closest to the either mean or median number of nodes
+//        boolean[] useNetwork = summaryReticulationCountNetworks(options.summaryStrategy, reticulationCount);
+//        
+//        System.out.println(Arrays.toString(useNetwork));
+//        System.exit(0);
+//        	// count all the 
+//        	
+//        	for (int i = 0; i < network.getSegmentCount(); i++){
+//        		Tree segmentTree = new Tree();
+//        		network.updateSegmentTree(segmentTree, i);
+//        		System.out.println(segmentTree);
+////        		if (first)
+////        			cladeSystem.add(segmentTree);
+//        	}
+//            System.out.println(cladeSystem.leafNodeMap);
+//            System.out.println(cladeSystem.getCoalescentCladeMap());
+//            System.exit(0);
+//        }
+//
+//        cladeSystem.calculateCladeCredibilities(logReader.getCorrectedACGCount());
+//
+//        // Identify MCC CF topology
+//
+//        System.out.println("\nIdentifying MCC CF topology...");
+//
+//        ConversionGraph acgBest = null;
+//        double bestScore = Double.NEGATIVE_INFINITY;
+//
+//        for (ConversionGraph acg : logReader ) {
+//            double score = cladeSystem.getLogCladeCredibility(acg.getRoot(), null);
+//
+//            if (score>bestScore) {
+//                acgBest = acg.copy();
+//                bestScore = score;
+//            }
+//        }
+//
+//        if (acgBest == null)
+//            throw new IllegalStateException("Failed to find best tree topology.");
+//
+//        // Remove conversions
+//
+//        for (Locus locus : acgBest.getConvertibleLoci())
+//                acgBest.getConversions(locus).clear();
+//
+//        // Collect CF node heights
+//
+//        System.out.println("\nCollecting CF node heights and conversions...");
+//
+//        Set<String> attributeNames = new HashSet<>();
+//        attributeNames.add("height");
+//
+//        cladeSystem = new ACGCladeSystem(acgBest);
+//        for (ConversionGraph acg : logReader) {
+//            cladeSystem.collectAttributes(acg, attributeNames);
+//            cladeSystem.collectConversions(acg);
+//        }
+//        cladeSystem.removeClades(acgBest.getRoot(), true);
+//        cladeSystem.calculateCladeCredibilities(logReader.getCorrectedACGCount());
+//
+//        System.out.println("\nProducing summary CF...");
+//
+//        // Annotate node heights of winning CF topology
+//
+//        annotateCF(cladeSystem, acgBest.getRoot(), options.summaryStrategy);
+//
+//        System.out.println("\nAdding summary conversions...");
+//
+//        // Add conversion summaries
+//
+//        summarizeConversions(cladeSystem, acgBest, logReader.getCorrectedACGCount(),
+//                options.convSupportThresh /100.0,
+//                options.summaryStrategy);
+//
+//
+//        // Write output
+//
+//        System.out.println("\nWriting output to " + options.outFile.getName()
+//        + "...");
+//
+//        try (PrintStream ps = new PrintStream(options.outFile)) {
+//            ps.print(logReader.getPreamble());
+//            ps.println("tree STATE_0 = " + acgBest.getExtendedNewick(false));
+//
+//            String postamble = logReader.getPostamble();
+//            if (postamble.length() > 0)
+//                ps.println(postamble);
+//            else
+//                ps.println("End;");
+//        }
+//
+//        // Write gene flow output if desired
+//
+//        if (options.recordGeneFlow) {
+//            System.out.println("\nRecording gene flow log in file "
+//                    + options.geneFlowOutFile.getName()
+//                    + "...");
+//
+//            try (PrintStream ps = new PrintStream(options.geneFlowOutFile)) {
+//                writeGeneFlowFile(cladeSystem, acgBest, ps);
+//            }
+//        }
+
+        System.out.println("\nDone!");
     }
     
     private int getReticulationCount(Network network){
@@ -421,6 +542,202 @@ public class ReassortmentDistance {
         }
     }
 
+    /**
+     * Write gene flow statistics to given file
+     *
+     * @param cladeSystem
+     * @param acgBest
+     * @param ps
+     */
+//    private void writeGeneFlowFile(ACGCladeSystem cladeSystem,
+//                                   ConversionGraph acgBest, PrintStream ps) {
+//
+//        BitSet[] bitSets = cladeSystem.getBitSets(acgBest);
+//        List<Map<BitSet,Map<BitSet,Long>>> geneFlow = cladeSystem.getGeneFlowMaps();
+//
+//        // Give map from node leaf names to node numbers as comment
+//        ps.println("# Gene flow log file");
+//        ps.println("# ------------------");
+//        ps.println("#");
+//        ps.println("# Each column of this (tab-delimited) file contains the");
+//        ps.println("# number of nucleotides transfered by conversion between");
+//        ps.println("# a pair of clonal frame edges.");
+//        ps.println("#");
+//
+//        // Write header
+//        boolean isFirst = true;
+//        for (BitSet from : bitSets) {
+//            for (BitSet to : bitSets) {
+//                if (from.equals(to))
+//                    continue;
+//
+//                if (isFirst)
+//                    isFirst = false;
+//                else
+//                    ps.print("\t");
+//
+//                printBitSetHeader(ps, from);
+//                ps.print("_to_");
+//                printBitSetHeader(ps, to);
+//            }
+//        }
+//
+//        ps.println();
+//
+//        // Write data
+//        for (int i=0; i<geneFlow.size(); i++) {
+//
+//            isFirst = true;
+//            for (BitSet from : bitSets) {
+//                for (BitSet to : bitSets) {
+//                    if (from.equals(to))
+//                        continue;
+//
+//                    long flow = 0;
+//                    if (geneFlow.get(i).containsKey(from)
+//                        && geneFlow.get(i).get(from).containsKey(to))
+//                        flow = geneFlow.get(i).get(from).get(to);
+//
+//                    if (isFirst)
+//                        isFirst = false;
+//                    else
+//                        ps.print("\t");
+//
+//                    ps.print(flow);
+//                }
+//            }
+//
+//            ps.println();
+//        }
+//
+//    }
+//
+    /**
+     * Annotate nodes of given clonal frame with summarized height information.
+     *
+     * @param cladeSystem information summarizing ACG posterior
+     * @param root root of clonal frame to annotate
+     * @param summaryStrategy strategy used when summarizing CF node ages/heights
+     */
+//    protected void annotateCF(NetworkCladeSystem cladeSystem,
+//                              NetworkNode root, SummaryStrategy summaryStrategy) {
+//
+//        cladeSystem.applyToClades(root, (node, bits) -> {
+//            List<Object[]> rawHeights =
+//                    cladeSystem.getCoalescentCladeMap().get(bits).getAttributeValues();
+//
+//            double cladeCredibility = cladeSystem.getCoalescentCladeMap()
+//                    .get(bits).getCredibility();
+//
+//            double[] heights = new double[rawHeights.size()];
+//            for (int i = 0; i < rawHeights.size(); i++)
+//                heights[i] = (double) rawHeights.get(i)[0];
+//
+//            if (summaryStrategy == SummaryStrategy.MEAN)
+//                node.setHeight(DiscreteStatistics.mean(heights));
+//            else
+//                node.setHeight(DiscreteStatistics.median(heights));
+//
+//            Arrays.sort(heights);
+//            double minHPD = heights[(int)(0.025 * heights.length)];
+//            double maxHPD = heights[(int)(0.975 * heights.length)];
+//
+////            node.metaDataString = "posterior=" + cladeCredibility
+////                    + ", height_95%_HPD={" + minHPD + "," + maxHPD + "}";
+//
+//            return null;
+//        });
+//    }
+//
+    /**
+     * Add summarized conversions to given ACG.
+     *
+     * @param cladeSystem information summarizing ACG posterior
+     * @param acg conversion graph
+     * @param threshold significance threshold
+     * @param summaryStrategy strategy used when summarizing event ages/heights
+     */
+//    protected void summarizeConversions(ACGCladeSystem cladeSystem,
+//                                        ConversionGraph acg,
+//                                        int nACGs,
+//                                        double threshold,
+//                                        SummaryStrategy summaryStrategy) {
+//
+//        BitSet[] bitSets = cladeSystem.getBitSets(acg);
+//        for (int fromNr=0; fromNr<acg.getNodeCount(); fromNr++) {
+//            BitSet from = bitSets[fromNr];
+//            for (int toNr=0; toNr<acg.getNodeCount(); toNr++) {
+//                BitSet to = bitSets[toNr];
+//
+//                for (Locus locus : acg.getConvertibleLoci()) {
+//                    List<ACGCladeSystem.ConversionSummary> conversionSummaries =
+//                            cladeSystem.getConversionSummaries(from, to, locus,
+//                                    nACGs, threshold);
+//
+//                    for (ACGCladeSystem.ConversionSummary conversionSummary
+//                            : conversionSummaries) {
+//
+//
+//                        Conversion conv = new Conversion();
+//                        conv.setLocus(locus);
+//                        conv.setNode1(acg.getNode(fromNr));
+//                        conv.setNode2(acg.getNode(toNr));
+//
+//                        double posteriorSupport = conversionSummary.nIncludedACGs /(double)nACGs;
+//
+//                        double[] height1s = new double[conversionSummary.summarizedConvCount()];
+//                        double[] height2s = new double[conversionSummary.summarizedConvCount()];
+//                        double[] startSites = new double[conversionSummary.summarizedConvCount()];
+//                        double[] endSites = new double[conversionSummary.summarizedConvCount()];
+//                        for (int i=0; i<conversionSummary.summarizedConvCount(); i++) {
+//                            height1s[i] = conversionSummary.height1s.get(i);
+//                            height2s[i] = conversionSummary.height2s.get(i);
+//                            startSites[i] = conversionSummary.startSites.get(i);
+//                            endSites[i] = conversionSummary.ends.get(i);
+//                        }
+//
+//                        if (summaryStrategy == SummaryStrategy.MEAN) {
+//                            conv.setHeight1(DiscreteStatistics.mean(height1s));
+//                            conv.setHeight2(DiscreteStatistics.mean(height2s));
+//                            conv.setStartSite((int)Math.round(DiscreteStatistics.mean(startSites)));
+//                            conv.setEndSite((int) Math.round(DiscreteStatistics.mean(endSites)));
+//                        } else {
+//                            conv.setHeight1(DiscreteStatistics.median(height1s));
+//                            conv.setHeight2(DiscreteStatistics.median(height2s));
+//                            conv.setStartSite((int)Math.round(DiscreteStatistics.median(startSites)));
+//                            conv.setEndSite((int) Math.round(DiscreteStatistics.median(endSites)));
+//                        }
+//
+//                        Arrays.sort(height1s);
+//                        double minHeight1HPD = height1s[(int)(0.025 * height1s.length)];
+//                        double maxHeight1HPD = height1s[(int)(0.975 * height1s.length)];
+//
+//                        Arrays.sort(height2s);
+//                        double minHeight2HPD = height2s[(int)(0.025 * height2s.length)];
+//                        double maxHeight2HPD = height2s[(int)(0.975 * height2s.length)];
+//
+//                        Arrays.sort(startSites);
+//                        int minStartHPD = (int)startSites[(int)(0.025 * startSites.length)];
+//                        int maxStartHPD = (int)startSites[(int)(0.975 * startSites.length)];
+//
+//                        Arrays.sort(endSites);
+//                        int minEndHPD = (int)endSites[(int)(0.025 * endSites.length)];
+//                        int maxEndHPD = (int)endSites[(int)(0.975 * endSites.length)];
+//
+//                        conv.newickMetaDataBottom = "height_95%_HPD={" + minHeight1HPD + "," + maxHeight1HPD + "}";
+//                        conv.newickMetaDataMiddle = "posterior=" + posteriorSupport +
+//                                ", startSite_95%_HPD={" + minStartHPD + "," + maxStartHPD + "}" +
+//                                ", endSite_95%_HPD={" + minEndHPD + "," + maxEndHPD + "}";
+//                        conv.newickMetaDataTop = "height_95%_HPD={" + minHeight2HPD + "," + maxHeight2HPD + "}";
+//
+//                        acg.addConversion(conv);
+//                    }
+//                }
+//
+//            }
+//        }
+//    }
+//
     /**
      * Use a GUI to retrieve ACGAnnotator options.
      *
@@ -838,7 +1155,7 @@ public class ReassortmentDistance {
 
         // Run ACGAnnotator
         try {
-            new ReassortmentDistance(options);
+            new ReassortmentAnnotator(options);
 
         } catch (Exception e) {
             if (args.length == 0) {

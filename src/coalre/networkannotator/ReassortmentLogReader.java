@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package coalre.util;
+package coalre.networkannotator;
 
 //import bacter.ConversionGraph;
 //import bacter.Locus;
@@ -38,7 +38,6 @@ import coalre.network.Network;
  * automatically displays a progress bar on stdout.
  *
  * @author Tim Vaughan <tgvaughan@gmail.com>
- * @author Nicola Felix Müller <nicola.felix.mueller@gmail.com>
  */
 public class ReassortmentLogReader implements NetworkLogReader {
     File logFile;

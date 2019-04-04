@@ -1,4 +1,4 @@
-package coalre.util;
+package coalre.networkannotator;
 
 import coalre.network.Network;
 
