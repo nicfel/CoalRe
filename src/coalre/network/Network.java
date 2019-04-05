@@ -679,10 +679,12 @@ public class Network extends StateNode {
                 if (!trueChildNodes.contains(childNode))
                     treeNode.removeChild(childNode);
             }
+
         }
-        
-        cladeNodes.get(thisClade).setHeight(networkNode.getHeight());
-        
+
+        if (cladeNodes.get(thisClade).getHeight() != networkNode.getHeight())
+            cladeNodes.get(thisClade).setHeight(networkNode.getHeight());
+
         return thisClade;
 
     }    
