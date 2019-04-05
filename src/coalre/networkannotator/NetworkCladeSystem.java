@@ -180,7 +180,6 @@ public class NetworkCladeSystem {
         
 
         if (node.isLeaf()) {
-
             int index = getTaxonIndex(node);
             if (index < 0) {
                 throw new IllegalArgumentException("Taxon with height= " + node.getHeight() + ", not found in target tree");
@@ -189,7 +188,6 @@ public class NetworkCladeSystem {
             	if (node.getParentEdges().get(0).hasSegments.get(segment))
             		bits.get(segment).set(index);
             }
-
         } else {
            	
         	// get the children of that node
