@@ -642,14 +642,18 @@ public class Network extends StateNode {
                 childClades.add(childClade);
             }
         }
+        
+        if (childClades.size() == 1)
+        	return thisClade;
 
-        if (childClades.size() == 0) {
+        
+        if (childClades.isEmpty()) {
             // Leaf node
 
             thisClade.set(networkNode.getTaxonIndex());
-        }
 
-        if (childClades.size() > 1) {
+        } else {
+        	
             // Internal node
 
             // Retrieve/create tree node object
@@ -680,13 +684,12 @@ public class Network extends StateNode {
                     treeNode.removeChild(childNode);
             }
 
-        }
-
+        }        
+        
         if (cladeNodes.get(thisClade).getHeight() != networkNode.getHeight())
             cladeNodes.get(thisClade).setHeight(networkNode.getHeight());
-
+        
         return thisClade;
-
     }    
 
     /**
