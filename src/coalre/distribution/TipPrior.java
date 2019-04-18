@@ -33,18 +33,9 @@ public class TipPrior extends Distribution {
     public final Input<ParametricDistribution> distInput = new Input<>("distr",
             "distribution used to calculate prior over MRCA time, "
                     + "e.g. normal, beta, gamma. If not specified, monophyletic must be true");
-    public Input<List<Tree>> segmentTreesInput = new Input<>("segmentTree",
-            "Segment tree associated with network.",
-            new ArrayList<>());
     public Input<RealParameter> dateOffsetInput = new Input<>("dateOffset", 
     		"keeps track of how much the dates have change", Validate.REQUIRED);
 
-
-//    public final Input<Boolean> onlyUseTipsInput = new Input<>("tipsonly",
-//            "flag to indicate tip dates are to be used instead of the MRCA node. " +
-//                    "If set to true, the prior is applied to the height of all tips in the taxonset " +
-//                    "and the monophyletic flag is ignored. Default is false.", false);
-//    public final Input<Boolean> useOriginateInput = new Input<>("useOriginate", "Use parent of clade instead of clade. Cannot be used with tipsonly, or on the root.", false);
 
     /**
      * shadow members *
@@ -66,12 +57,15 @@ public class TipPrior extends Distribution {
     boolean initialised = false;
     
     NetworkNode operatingNode;
+    RealParameter dateOffset;
 
     @Override
     public void initAndValidate() {
         dist = distInput.get();
         network = networkInput.get();
+        dateOffset = dateOffsetInput.get();
         
+                                
         if (taxonsetInput.get().asStringList().size()!= 1) {
         	throw new IllegalArgumentException("TipPrior expects the number of tips to be 1");
         }
@@ -82,7 +76,8 @@ public class TipPrior extends Distribution {
         		break;
         	}
         }    
-        
+        MRCATime = dateOffsetInput.get().getArrayValue() - operatingNode.getHeight();
+
         initialised = false;
     }
 
@@ -104,11 +99,10 @@ public class TipPrior extends Distribution {
     	if (dist == null) {
     		return logP;
     	}
-    	
         for (final NetworkNode taxon : network.getLeafNodes()) {
-        	if (taxon.getTaxonLabel()==taxonsetInput.get().getTaxonId(0)){
+        	if (taxon.getTaxonLabel().equals(taxonsetInput.get().getTaxonId(0))){
         		operatingNode = taxon;
-                MRCATime = segmentTreesInput.get().get(0).getDate(operatingNode.getHeight() + dateOffsetInput.get().getArrayValue());
+                MRCATime = dateOffsetInput.get().getValue() - operatingNode.getHeight();
                 logP += dist.logDensity(MRCATime);
         		break;
         	}

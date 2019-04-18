@@ -68,18 +68,10 @@ public class TipReheight extends NetworkOperator {
         	throw new IllegalArgumentException("TipPrior expects the number of tips to be 1");
         }
         
-        segmentTreeNodes = new ArrayList<>();
-
         for (final NetworkNode taxon : network.getLeafNodes()) {
-        	if (taxon.getTaxonLabel()==taxonsetInput.get().getTaxonId(0)){
-        		operatingNode = taxon;
+        	if (taxon.getTaxonLabel().equals(taxonsetInput.get().getTaxonId(0))){
+        		operatingNode = taxon;       		
         		
-        		
-                for (Tree segmentTree : segmentTreesInput.get())
-                	for (Node node : segmentTree.getRoot().getAllLeafNodes())
-                		if (segmentTree.getTaxonId(node)==operatingNode.getTaxonLabel())
-                			segmentTreeNodes.add(node);
-                	
         		break;
         	}
         }    
@@ -94,7 +86,7 @@ public class TipReheight extends NetworkOperator {
 				
 		
         for (final NetworkNode taxon : network.getLeafNodes()) {
-        	if (taxon.getTaxonLabel()==taxonsetInput.get().getTaxonId(0)){
+        	if (taxon.getTaxonLabel().equals(taxonsetInput.get().getTaxonId(0))){
         		operatingNode = taxon;
         		
                 // 2. choose a delta to move
