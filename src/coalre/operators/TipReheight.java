@@ -128,8 +128,6 @@ public class TipReheight extends NetworkOperator {
                 	
                 	dateOffset.get().startEditing(this);
                 	dateOffset.get().setValue(dateOffset.get().getValue()+minHeight);
-
-
                 }
 
         		break;
