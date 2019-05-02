@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
  * A rewrite of TreeAnnotator that outputs reassortment distances 
  * @author Nicola Felix Müller <nicola.felix.mueller@gmail.com>
  */
-public class ReassortmentDistance {
+public class ReassortmentDistance extends ReassortmentAnnotator {
 
     private enum SummaryStrategy { MEAN, MEDIAN }
 
@@ -89,11 +89,7 @@ public class ReassortmentDistance {
 
 	      System.out.println("\nWriting output to " + options.outFile.getName()
 	      + "...");
-
-
         
-        boolean first = true;
-        int segments = -1;
         // compute the pairwise reassortment distances 
         try (PrintStream ps = new PrintStream(options.outFile)) {
 	        for (Network network : logReader){
@@ -103,9 +99,9 @@ public class ReassortmentDistance {
 	        	removeLoops(network);
 	        	// remove all empty edges in the segment
 	        	removeEmptyNetworkEdge(network);
-
+	        	
 	        	computeReassortmenDistance(network, ps);
-	        	ps.print("\n");
+	        	ps.print("\n"); 
 	        }
 	        ps.close();
         }
@@ -124,253 +120,120 @@ public class ReassortmentDistance {
         	NetworkNode node = edge.parentNode;
         	// get the segments going left and right
         	BitSet segmentsLeft = node.getParentEdges().get(0).hasSegments;
-        	BitSet segmentsRight = node.getParentEdges().get(1).hasSegments;
+        	BitSet segmentsRight = node.getParentEdges().get(1).hasSegments;        	
         	
-
         	// Get the common ancestor between each pair of segments that was split in the reassortment event
         	ps.print("\t"); 
         	boolean isFirst = true; 
         	for (int i = 0; i < segmentsLeft.size(); i++){
         		for (int j = 0; j < segmentsRight.size();j++){
         			if (segmentsLeft.get(i) && segmentsRight.get(j)){
-        				NetworkNode left = node.getParentEdges().get(0).parentNode;
-        				NetworkNode right =  node.getParentEdges().get(1).parentNode;
-        				
         				// keeps track of the mrca height
-        				double mrcaHeight = 0.0;
-        				
-        				// track both segments up the network to see when they share a common ancestor
-        				while (!left.equals(right)){
-        					if (left.getHeight()>right.getHeight()){
-        						right = getParentNode(right, j);
-        					}else{
-        						left = getParentNode(left,i);
-        					}
-        					if (left==null || right==null){
-        						mrcaHeight = network.getRootEdge().childNode.getHeight();
-        						mrcaHeight = Double.NaN;
-        						break;
-        					}
-        					mrcaHeight = right.getHeight()-node.getHeight();
-        				}
+        				double mrcaHeight = -1.0;
+        				// fix the left node and go right, until the left segment is found
+        				NetworkNode left = node.getParentEdges().get(0).parentNode;
+            			// follow the right segment until a node containing the left segment is met
+            			NetworkNode right = getAncestorEdgeWithSegment(node.getParentEdges().get(1).parentNode, i, j);
+
+            			if (right==null){
+            				mrcaHeight = Double.NaN;
+            			}else if (!left.equals(right)){        				
+	        				// track both segments up the network to see when they share a common ancestor
+	        				while (!left.equals(right)){
+	        					if (left.getHeight()>right.getHeight()){
+	        						right = getParentNode(right, i);
+	        					}else{
+	        						left = getParentNode(left,i);
+	        					}
+	        					if (left==null || right==null)
+	        						throw new IllegalArgumentException("root reached without finding common ancestor, shouldn't happen");
+
+	        					mrcaHeight = right.getHeight();
+	        				}
+            			}else{
+            				mrcaHeight = right.getHeight();
+            			}
+            			
         				if (isFirst)
         					isFirst = false;
         				else
         					ps.print(",");
-        					
-        				ps.print(i + "-" + j + ":" + mrcaHeight);
+        				
+        				
+        				if (mrcaHeight==-1.0){
+        					throw new IllegalArgumentException("common ancestor height not found, shouldn't happen");
+        				}
+        				
+        				ps.print(i + "-" + j + ":" + node.getHeight()  + ":" + mrcaHeight);
     				}
     			}
         	}	
+        	
+        	
+        	for (int i = 0; i < segmentsLeft.size(); i++){
+        		for (int j = 0; j < segmentsRight.size();j++){
+        			if (segmentsLeft.get(i) && segmentsRight.get(j)){
+        				// keeps track of the mrca height
+        				double mrcaHeight = 0.0;
+        				// fix the right node and go left, until the right segment is found
+        				NetworkNode right = node.getParentEdges().get(1).parentNode;
+            			// follow the right segment until a node containing the left segment is met
+            			NetworkNode left = getAncestorEdgeWithSegment(node.getParentEdges().get(0).parentNode, j, i);
+            			
+            			if (left==null){
+            				mrcaHeight = Double.NaN;
+            			}else  if (!left.equals(right)){        				
+	        				// track both segments up the network to see when they share a common ancestor
+	        				while (!left.equals(right)){
+	        					if (left.getHeight()>right.getHeight()){
+	        						right = getParentNode(right, j);
+	        					}else{
+	        						left = getParentNode(left,j);
+	        					}
+	        					if (left==null || right==null)
+	        						throw new IllegalArgumentException("root reached without finding common ancestor, shouldn't happen");
+	        					
+	        					mrcaHeight = right.getHeight();
+	        				}
+            			}else{
+            				mrcaHeight = right.getHeight();
+            			}
+            			
+        				if (isFirst)
+        					isFirst = false;
+        				else
+        					ps.print(",");
+        				
+        				
+        				if (mrcaHeight==-1.0){
+        					throw new IllegalArgumentException("common ancestor height not found, shouldn't happen");
+        				}
+
+        					
+        				ps.print(j + "-" + i + ":" + node.getHeight()  + ":" + mrcaHeight);
+        			}
+    			}
+        	}	
+
+        	
         }       
 
-       
-
     }
     
-    private boolean getIsAncestral(NetworkNode node1, NetworkNode node2){
-    	// checks if node1 is a direct ancestor of node2
-		if (node1.equals(node2))
-			return true;
-		
-		if (node2.getHeight()>node1.getHeight())
-			return false;
-		
-		// otherwise, check if any of the parents is an ancestor
-		boolean isAncestor = false;
+    private NetworkNode getAncestorEdgeWithSegment(NetworkNode node, int targetSegment, int hasSegment){
+    	if (node.isCoalescence() && node.getParentEdges().get(0).hasSegments.get(targetSegment))
+			return node;
 		
 		
-    	for (NetworkEdge parentEdge : node2.getParentEdges()){
-    		if (parentEdge.isRootEdge())
-    			return false;
-    					
-			if(getIsAncestral(node1, parentEdge.parentNode))
-				return true;
+    	for (NetworkEdge parentEdge : node.getParentEdges()){
+    		
+    		if (parentEdge.hasSegments.get(hasSegment)){
+    			return getAncestorEdgeWithSegment(parentEdge.parentNode, targetSegment, hasSegment);
+    		}
 		}
     	
-    	return isAncestor;
-    }
-    
-    
-    
-    /**
-     * removes segments from network edges for which there is no
-     * genetic information, i.e. segment that are above the segment tree root.
-     * @param network
-     */
-    private void removeNonGeneticSegmentEdges(Network network){
-    	// remove segments from edges if they are "above" the segment tree root
-    	for (int i = 0; i < network.getSegmentCount(); i++){
-    		removeSegmentFromEdge(network.getRootEdge(), i);
-    	}    	
-    }
-    
-    /**
-     * remove segment from edges and child edges until a coalescent event with both children
-     * carrying the segment is reached
-     * @param edge
-     * @param segIdx
-     */
-    private void removeSegmentFromEdge(NetworkEdge edge, int segIdx){
-    	// remove the segment from the edge
-    	edge.hasSegments.set(segIdx, false);
-    	
-    	// get all child segments
-    	List<NetworkEdge> childEdges = edge.childNode.getChildEdges();
-    	if (childEdges.size()==1){
-    		removeSegmentFromEdge(childEdges.get(0), segIdx);
-    	}else if (childEdges.size()==2){
-    		// check if both children carry the segment
-    		int carriesSegment = 0;
-    		for (NetworkEdge childEdge : childEdges)
-    			if (childEdge.hasSegments.get(segIdx))
-    				carriesSegment++;
-    		
-    		// if it carries the segment, return and do nothing
-    		if (carriesSegment==2){
-    			return;
-    		}else if (carriesSegment==1){
-        		for (NetworkEdge childEdge : childEdges)
-        			if (childEdge.hasSegments.get(segIdx))
-        				removeSegmentFromEdge(childEdge, segIdx);
-
-    		}else{
-        		throw new IllegalArgumentException("at least one of the childre should carry the segment");  			
-    		}		
-    	}else{
-    		throw new IllegalArgumentException("odd number of child edges");
-    	}
-    		
-    }
-
-    /**
-     * removes all reticulation edges that start and end at the same place
-     * @param network
-     */
-    private void removeLoops(Network network){
-    	List<NetworkNode> reticulationNodes = network.getNodes().stream()
-                .filter(e -> e.isReassortment())
-                .collect(Collectors.toList());
-    	// for each of these, check if the parents are the same node
-    	for (NetworkNode node : reticulationNodes){
-    		if (node.getParentEdges().get(0).parentNode.equals(node.getParentEdges().get(1).parentNode)){
-    			// if this is the case, put all segment from 1 onto 0
-    			for (int i = 0; i < network.getSegmentCount(); i++){
-    				if (node.getParentEdges().get(1).hasSegments.get(i)){
-    					node.getParentEdges().get(0).hasSegments.set(i, true);
-    					node.getParentEdges().get(1).hasSegments.set(i, false);
-    				}    					
-    			}
-    		}
-    	}
-    }
-
-    
-    /**
-     * removes segment with id segIdx from the network.
-     * @param network
-     * @param segIdx
-     */
-    private void removeSement(Network network, int segIdx){
-    	// get all networkNodes
-    	Set<NetworkEdge> networkEdges  = network.getEdges();
-    	
-    	// set carries segment nr segIdx to false for every node
-    	for (NetworkEdge edge : networkEdges){
-    		edge.hasSegments.set(segIdx, false);
-    	}
-    }
-    
-
-    /**
-     * removes all edges from the network that don't carry any segments
-     * @param network
-     */
-    private void removeEmptyNetworkEdge(Network network){
-        List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
-
-        List<NetworkEdge> removableEdges = networkEdges.stream()
-                .filter(e -> !e.isRootEdge())
-                .filter(e -> e.childNode.isReassortment())
-                .filter(e -> e.hasSegments.cardinality()==0)
-                .filter(e -> e.parentNode.isCoalescence())
-                .collect(Collectors.toList());
-        
-        while (removableEdges.size()>0){
-            int edgeInd = Randomizer.nextInt(removableEdges.size());     
-            
-        	removeEmptyReassortmentEdge(network, removableEdges.get(edgeInd));
-        	
-        	networkEdges = new ArrayList<>(network.getEdges());
-            
-            removableEdges = networkEdges.stream()
-                    .filter(e -> !e.isRootEdge())
-                    .filter(e -> e.childNode.isReassortment())
-                    .filter(e -> e.hasSegments.cardinality()==0)
-                    .filter(e -> e.parentNode.isCoalescence())
-                    .collect(Collectors.toList());            
-        } 
-
+    	return null;
     }    
-
-    private void removeEmptyReassortmentEdge(Network network, NetworkEdge edgeToRemove) {
-
-        NetworkNode nodeToRemove = edgeToRemove.childNode;
-        NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
-        NetworkNode edgeToRemoveSpouseParent = edgeToRemoveSpouse.parentNode;
-
-        // Remove edge and associated nodes
-        NetworkEdge edgeToExtend = nodeToRemove.getChildEdges().get(0);
-        nodeToRemove.removeChildEdge(edgeToExtend);
-        nodeToRemove.removeParentEdge(edgeToRemove);
-        nodeToRemove.removeParentEdge(edgeToRemoveSpouse);
-        edgeToRemoveSpouseParent.removeChildEdge(edgeToRemoveSpouse);
-        edgeToRemoveSpouseParent.addChildEdge(edgeToExtend);
-
-        NetworkNode secondNodeToRemove = edgeToRemove.parentNode;
-        NetworkEdge secondEdgeToExtend = getSisterEdge(edgeToRemove);
-
-        secondNodeToRemove.removeChildEdge(secondEdgeToExtend);
-        secondNodeToRemove.removeChildEdge(edgeToRemove);
-
-        if (secondNodeToRemove.getParentEdges().get(0).isRootEdge()) {
-            network.setRootEdge(secondEdgeToExtend);
-
-        } else {
-            NetworkEdge secondNodeToRemoveParentEdge = secondNodeToRemove.getParentEdges().get(0);
-            NetworkNode secondNodeToRemoveParent = secondNodeToRemoveParentEdge.parentNode;
-            secondNodeToRemoveParent.removeChildEdge(secondNodeToRemoveParentEdge);
-            secondNodeToRemove.removeParentEdge(secondNodeToRemoveParentEdge);
-
-            secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
-        }
-    } 
-
-    /**
-     * Retrieve sister of given edge
-     * @param childEdge child edge
-     * @return sister of given child edge
-     */
-    private NetworkEdge getSisterEdge(NetworkEdge childEdge) {
-        int idx = childEdge.parentNode.getChildEdges().indexOf(childEdge);
-        int otherIdx = (idx + 1) % 2;
-
-        return childEdge.parentNode.getChildEdges().get(otherIdx);
-    }
-
-    /**
-     * Retrieve spouse of given edge
-     * @param parentEdge parent edge
-     * @return spouse of given parent edge
-     */
-    private NetworkEdge getSpouseEdge(NetworkEdge parentEdge) {
-        int idx = parentEdge.childNode.getParentEdges().indexOf(parentEdge);
-        int otherIdx = (idx + 1) % 2;
-
-        return parentEdge.childNode.getParentEdges().get(otherIdx);
-    }
-  
-
     
     private NetworkNode getParentNode(NetworkNode node, int segment){
     	for (NetworkEdge edge : node.getParentEdges()){

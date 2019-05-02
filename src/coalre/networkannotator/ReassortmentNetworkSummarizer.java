@@ -46,6 +46,7 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         double burninPercentage = 10.0;
         double convSupportThresh = 50.0;
         SummaryStrategy summaryStrategy = SummaryStrategy.MEAN;
+        int[] removeSegments = new int[0];
 
         @Override
         public String toString() {
@@ -75,13 +76,14 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
 
         // get the clades for each reassortment event in every network
         NetworkCladeSystem cladeSystem = new NetworkCladeSystem();
+        // keeps track of the leave nodes
+        List<NetworkNode> leafNodes = new ArrayList<>();
         
         // build the clades
         boolean first = true;
         int segments = -1;
         for (Network network : logReader){
-        	if (first){
-        		List<NetworkNode> leafNodes = new ArrayList<>();
+        	if (first){        		
             	for (NetworkNode networkNode : network.getNodes()){
             		if (networkNode.isLeaf()){
             			leafNodes.add(networkNode);
@@ -97,22 +99,35 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         	// remove all loops
         	removeLoops(network);
         	// remove all empty edges in the segment
-        	removeEmptyNetworkEdge(network);        	
+        	removeEmptyNetworkEdge(network); 
+        	for (int i = 0; i < options.removeSegments.length; i++)
+        		removeSegment(network, options.removeSegments[i]);
 
-        	
         	cladeSystem.add(network, true); 
         }
-        
+
         
         System.out.println("\nComputing CF clade credibilities...");
         // calculate the segment tree clade credibilities
         cladeSystem.calculateCladeCredibilities(segments, logReader.getCorrectedNetworkCount());
+        
+
         
         // get the network with the highest count
         Network bestNetwork = null;
         double bestScore = Double.NEGATIVE_INFINITY;
 
         for (Network network : logReader ) {
+        	// remove all parts of the network that aren't informed by the genetic data
+        	removeNonGeneticSegmentEdges(network);
+        	// remove all loops
+        	removeLoops(network);
+        	// remove all empty edges in the segment
+        	removeEmptyNetworkEdge(network);  
+        	for (int i = 0; i < options.removeSegments.length; i++)
+        		removeSegment(network, options.removeSegments[i]);
+
+
         	double score = 0.0;
         	for (int i = 0; i < segments; i++){
         		score += cladeSystem.getLogCladeCredibility(i, network.getRootEdge().childNode, null);
@@ -121,52 +136,50 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         		bestNetwork = network;
         		bestScore = score;
         	}
-        }
-  
-        // collapse Reticulations if there is no genetic information to distinguish between them.
-//        collapseReticulations(bestNetwork);
-        
+        }        
         // get the posterior probabilities of each coalescent network node
         NetworkCladeSystem bestCladeSystem = new NetworkCladeSystem();
-        
+                
+    	for (int i = 0; i < options.removeSegments.length; i++)
+    		removeSegment(bestNetwork, options.removeSegments[i]);
         // add leafnodes
-		List<NetworkNode> leafNodes = new ArrayList<>();
-    	for (NetworkNode networkNode : bestNetwork.getNodes()){
-    		if (networkNode.isLeaf()){
-    			leafNodes.add(networkNode);
-    		}
-		}
     	segments = bestNetwork.getSegmentCount();
     	bestCladeSystem.setLeafLabels(leafNodes, segments);
-    	
+    	    	
     	// build clade system
         bestCladeSystem.add(bestNetwork, true);
-
+        
         Set<String> attributeNames = new HashSet<>();
 		attributeNames.add("height");
 		
         // print the network to file
         System.out.println("\nCollect Atributes...");
-
         for (Network network : logReader ) {
+        	// remove all parts of the network that aren't informed by the genetic data
+        	removeNonGeneticSegmentEdges(network);
+        	// remove all loops
+        	removeLoops(network);
+        	// remove all empty edges in the segment
+        	removeEmptyNetworkEdge(network);        
+        	for (int i = 0; i < options.removeSegments.length; i++)
+        		removeSegment(network, options.removeSegments[i]);
+
     		bestCladeSystem.collectAttributes(network, attributeNames);
     	}
-        
+                
         // print the network to file
-        System.out.println("\nSummarize Atributes...");
-
+//        System.out.println("\nSummarize Atributes...");
+//        System.out.println(bestNetwork.getExtendedNewick());
+//        System.out.println(bestCladeSystem.reassortmentCladeMap);
+//        System.out.println(bestNetwork);
+//        System.exit(0);
         
-//    	if (summaryStrategy == SummaryStrategy.MEAN)
+    	if (options.summaryStrategy == SummaryStrategy.MEAN)
     		bestCladeSystem.summarizeAttributes(bestNetwork, attributeNames, true, logReader.getCorrectedNetworkCount());
-//    	else
-//    		bestCladeSystem.summarizeAttributes(bestNetwork, attributeNames, false, logReader.getCorrectedNetworkCount());
-        
-        // go through the best network and add the metadata to nodes
-        
-        
-        
-        
-        // print the network to file
+    	else
+    		bestCladeSystem.summarizeAttributes(bestNetwork, attributeNames, false, logReader.getCorrectedNetworkCount());
+
+    	// print the network to file
         System.out.println("\nWriting output to " + options.outFile.getName()
         	+ "...");
 
@@ -184,23 +197,6 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         System.out.println("\nDone!");
     }    
     
-    private void printBitSetHeader(PrintStream ps, BitSet bitSet) {
-        boolean isFirst = true;
-        for (int b = bitSet.nextSetBit(0); b >= 0; b = bitSet.nextSetBit(b+1)) {
-
-            if (isFirst)
-                isFirst = false;
-            else
-                ps.print("_");
-
-            ps.print(b/2);
-
-            if (b == Integer.MAX_VALUE) {
-                break; // or (i+1) would overflow
-            }
-        }
-    }
-
     /**
      * Write gene flow statistics to given file
      *
@@ -753,14 +749,23 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
                     i += 1;
                     break;
 
-                case "-recordGeneFlow":
+                case "-removeSegments":
                     if (args.length<=i+1) {
-                        printUsageAndError("-recordGeneFlow must be followed by a file name.");
+                        printUsageAndError("-removeSegments must be followed by at least one number.");
                     }
 
+                    try {
+                    	String[] argarray = args[i + 1].split(",");
+                    	options.removeSegments = new int[argarray.length];
+                    	for (int j = 0; j < argarray.length; j++)
+                    		options.removeSegments[j] = Integer.parseInt(argarray[j]);
+                    } catch (NumberFormatException e) {
+                        printUsageAndError("removeSegments must be an array of integers separated by commas if more than one");
+                     }
 
                     i += 1;
                     break;
+
 
                 default:
                     printUsageAndError("Unrecognised command line option '" + args[i] + "'.");
