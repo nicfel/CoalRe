@@ -105,18 +105,27 @@ public class ReassortmentAnnotator {
     void removeLoops(Network network){
     	List<NetworkNode> reticulationNodes = network.getNodes().stream()
                 .filter(e -> e.isReassortment())
+                .filter(e -> e.getParentEdges().get(0).parentNode.equals(e.getParentEdges().get(1).parentNode))
+                .filter(e -> e.getParentEdges().get(1).hasSegments.cardinality()>0)
                 .collect(Collectors.toList());
+    	
     	// for each of these, check if the parents are the same node
-    	for (NetworkNode node : reticulationNodes){
-    		if (node.getParentEdges().get(0).parentNode.equals(node.getParentEdges().get(1).parentNode)){
-    			// if this is the case, put all segment from 1 onto 0
-    			for (int i = 0; i < network.getSegmentCount(); i++){
-    				if (node.getParentEdges().get(1).hasSegments.get(i)){
-    					node.getParentEdges().get(0).hasSegments.set(i, true);
-    					node.getParentEdges().get(1).hasSegments.set(i, false);
-    				}    					
-    			}
-    		}
+    	while (!reticulationNodes.isEmpty()){
+    		NetworkNode node = reticulationNodes.get(0);
+			// if this is the case, put all segment from 1 onto 0
+			for (int i = 0; i < network.getSegmentCount(); i++){
+				if (node.getParentEdges().get(1).hasSegments.get(i)){
+					node.getParentEdges().get(0).hasSegments.set(i, true);
+					node.getParentEdges().get(1).hasSegments.set(i, false);
+				}    					
+			}
+			
+			removeEmptyNetworkEdge(network);
+			reticulationNodes = network.getNodes().stream()
+	                .filter(e -> e.isReassortment())
+	                .filter(e -> e.getParentEdges().get(0).parentNode.equals(e.getParentEdges().get(1).parentNode))
+	                .filter(e -> e.getParentEdges().get(1).hasSegments.cardinality()>0)
+	                .collect(Collectors.toList());			
     	}
     }
 

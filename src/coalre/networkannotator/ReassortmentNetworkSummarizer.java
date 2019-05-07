@@ -94,24 +94,27 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         		first = false;
         	}
         	
+
         	// remove all parts of the network that aren't informed by the genetic data
         	removeNonGeneticSegmentEdges(network);
-        	// remove all loops
-        	removeLoops(network);
-        	// remove all empty edges in the segment
-        	removeEmptyNetworkEdge(network); 
         	for (int i = 0; i < options.removeSegments.length; i++)
         		removeSegment(network, options.removeSegments[i]);
 
+        	// remove all loops
+        	removeLoops(network);
+
+        	// remove all empty edges in the segment
+        	removeEmptyNetworkEdge(network); 
+        	
+
         	cladeSystem.add(network, true); 
         }
-
         
         System.out.println("\nComputing CF clade credibilities...");
-        // calculate the segment tree clade credibilities
-        cladeSystem.calculateCladeCredibilities(segments, logReader.getCorrectedNetworkCount());
         
-
+        // calculate the network clade credibilities
+        cladeSystem.calculateCladeCredibilities(logReader.getCorrectedNetworkCount());
+        
         
         // get the network with the highest count
         Network bestNetwork = null;
@@ -120,34 +123,35 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         for (Network network : logReader ) {
         	// remove all parts of the network that aren't informed by the genetic data
         	removeNonGeneticSegmentEdges(network);
-        	// remove all loops
-        	removeLoops(network);
-        	// remove all empty edges in the segment
-        	removeEmptyNetworkEdge(network);  
         	for (int i = 0; i < options.removeSegments.length; i++)
         		removeSegment(network, options.removeSegments[i]);
 
+        	// remove all loops
+        	removeLoops(network);
 
-        	double score = 0.0;
-        	for (int i = 0; i < segments; i++){
-        		score += cladeSystem.getLogCladeCredibility(i, network.getRootEdge().childNode, null);
-        	}
+        	// remove all empty edges in the segment
+        	removeEmptyNetworkEdge(network);  
+
+
+        	double score = cladeSystem.getLogCladeCredibility(network);
         	if (score>bestScore) {
         		bestNetwork = network;
         		bestScore = score;
         	}
         }        
+        
+        
         // get the posterior probabilities of each coalescent network node
         NetworkCladeSystem bestCladeSystem = new NetworkCladeSystem();
                 
-    	for (int i = 0; i < options.removeSegments.length; i++)
-    		removeSegment(bestNetwork, options.removeSegments[i]);
         // add leafnodes
     	segments = bestNetwork.getSegmentCount();
     	bestCladeSystem.setLeafLabels(leafNodes, segments);
     	    	
     	// build clade system
         bestCladeSystem.add(bestNetwork, true);
+        
+//        bestCladeSystem.printClades();
         
         Set<String> attributeNames = new HashSet<>();
 		attributeNames.add("height");
@@ -157,23 +161,19 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         for (Network network : logReader ) {
         	// remove all parts of the network that aren't informed by the genetic data
         	removeNonGeneticSegmentEdges(network);
+        	for (int i = 0; i < options.removeSegments.length; i++)
+        		removeSegment(network, options.removeSegments[i]);
+
         	// remove all loops
         	removeLoops(network);
         	// remove all empty edges in the segment
         	removeEmptyNetworkEdge(network);        
-        	for (int i = 0; i < options.removeSegments.length; i++)
-        		removeSegment(network, options.removeSegments[i]);
 
     		bestCladeSystem.collectAttributes(network, attributeNames);
     	}
-                
-        // print the network to file
-//        System.out.println("\nSummarize Atributes...");
-//        System.out.println(bestNetwork.getExtendedNewick());
-//        System.out.println(bestCladeSystem.reassortmentCladeMap);
-//        System.out.println(bestNetwork);
-//        System.exit(0);
         
+        // print the network to file
+        System.out.println("\nSummarize Atributes...");        
     	if (options.summaryStrategy == SummaryStrategy.MEAN)
     		bestCladeSystem.summarizeAttributes(bestNetwork, attributeNames, true, logReader.getCorrectedNetworkCount());
     	else

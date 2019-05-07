@@ -151,6 +151,7 @@ public class Network extends StateNode {
 
         boolean traverse = true;
         int hybridID = -1;
+        boolean printMetaData = true;
         if (currentEdge.childNode.isReassortment()) {
         	
             hybridID = seenReassortmentNodes.indexOf(currentEdge.childNode);
@@ -216,7 +217,7 @@ public class Network extends StateNode {
         		result.append(",state=").append(currentEdge.childNode.getTypeLabel());
         
         if (currentEdge.childNode.metaDataString != null) 
-    			result.append(currentEdge.childNode.getMetaData());
+			result.append(currentEdge.childNode.getMetaData());
 
         result.append("]");
 
