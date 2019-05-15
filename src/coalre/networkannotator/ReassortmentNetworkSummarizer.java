@@ -83,7 +83,9 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         // keeps track of the leave nodes
         List<NetworkNode> leafNodes = new ArrayList<>();
         
-        if (options.targetFile == null){
+        boolean onTarget = options.targetFile == null? false : true;
+        
+        if (!onTarget){
 	        // get the clades for each reassortment event in every network
 	        NetworkCladeSystem cladeSystem = new NetworkCladeSystem();
 	        
@@ -207,9 +209,9 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         // print the network to file
         System.out.println("\nSummarize Atributes...");        
     	if (options.summaryStrategy == SummaryStrategy.MEAN)
-    		bestCladeSystem.summarizeAttributes(bestNetwork, attributeNames, true, logReader.getCorrectedNetworkCount());
+    		bestCladeSystem.summarizeAttributes(bestNetwork, attributeNames, true, logReader.getCorrectedNetworkCount(), onTarget);
     	else
-    		bestCladeSystem.summarizeAttributes(bestNetwork, attributeNames, false, logReader.getCorrectedNetworkCount());
+    		bestCladeSystem.summarizeAttributes(bestNetwork, attributeNames, false, logReader.getCorrectedNetworkCount(), onTarget);
 
     	// print the network to file
         System.out.println("\nWriting output to " + options.outFile.getName()

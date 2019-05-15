@@ -525,17 +525,18 @@ public class NetworkCladeSystem {
         }    	
     }   
      
-    public void summarizeAttributes(Network network, Set<String> attributeNames, boolean useMean, int nrNetworks) {
+    public void summarizeAttributes(Network network, Set<String> attributeNames, boolean useMean, int nrNetworks, boolean onTarget) {
 		boolean[] followSegment = new boolean[network.getSegmentCount()];
 		for (int i=0;i<network.getSegmentCount();i++)followSegment[i] = false;
 		
 		followSegmentAlready = Arrays.copyOf(followSegment, followSegment.length);
 
     	// summarizes all coalescent events
-    	summarizeAttributes(network.getRootEdge().childNode, attributeNames, useMean, nrNetworks, network.getSegmentCount(), followSegment);    	
+    	summarizeAttributes(network.getRootEdge().childNode, attributeNames, useMean, nrNetworks, network.getSegmentCount(), followSegment, onTarget);    	
     }
     
-    private BitSet[] summarizeAttributes(NetworkNode node, Set<String> attributeNames, boolean useMean, int nrNetworks, int nrSegments, boolean[] followSegment_in) {
+    private BitSet[] summarizeAttributes(NetworkNode node, Set<String> attributeNames, boolean useMean, 
+    		int nrNetworks, int nrSegments, boolean[] followSegment_in, boolean onTarget) {
 
         BitSet[] bits = new BitSet[nrSegments];
         for (int i = 0; i < nrSegments; i++) bits[i] = new BitSet();
@@ -577,7 +578,7 @@ public class NetworkCladeSystem {
 						followSegmentout[i] = false;
 					}
 				}	
-				BitSet[] newBits = summarizeAttributes(childEdge.childNode, attributeNames, useMean, nrNetworks, nrSegments, followSegmentout);
+				BitSet[] newBits = summarizeAttributes(childEdge.childNode, attributeNames, useMean, nrNetworks, nrSegments, followSegmentout, onTarget);
             	for (int i = 0; i < nrSegments;i++){
 	            	if (childEdge.hasSegments.get(i)){
             			bits[i].or(newBits[i]);	   
@@ -585,9 +586,9 @@ public class NetworkCladeSystem {
             	}
             }            
             if (!node.isReassortment())
-            	summarizeAttributesForClade(bits, node, attributeNames, useMean, nrNetworks, nrSegments);   
+            	summarizeAttributesForClade(bits, node, attributeNames, useMean, nrNetworks, nrSegments, onTarget);   
             else{
-            	summarizeAttributesForReassortmentClade(bits, node, attributeNames, useMean, nrNetworks, nrSegments);
+            	summarizeAttributesForReassortmentClade(bits, node, attributeNames, useMean, nrNetworks, nrSegments, onTarget);
             }
 
         }        
@@ -604,7 +605,7 @@ public class NetworkCladeSystem {
     
 
     private void summarizeAttributesForClade(BitSet[] bits, NetworkNode node, 
-    		Set<String> attributeNames, boolean useMean, int nrNetworks, int nrSegments) {
+    		Set<String> attributeNames, boolean useMean, int nrNetworks, int nrSegments, boolean onTarget) {
 
 		BitSet[] newBits = new BitSet[nrSegments];
 		for (int i = 0 ; i < newBits.length; i++)
@@ -620,6 +621,9 @@ public class NetworkCladeSystem {
 			if (newBits[i]!=null)
 				allNull = false;
 		
+		// keeps track of the height of the target network,
+		Double targetHeight = null;
+
     	
     	if (!allNull){	    	
 	        for (String attributeName : attributeNames) {
@@ -636,16 +640,10 @@ public class NetworkCladeSystem {
 	            		}
 
 			            
-//			            node.setMetaData(node.getMetaData() + (double)rawHeights.size()/(double)nrNetworks);
-	//				            if (useMean){
-	//				                node.setMetaData(node.getMetaData() + ",posterior." + segment + "="
-	//				                		+DiscreteStatistics.mean(heights));
-	//				            }else{
-	//				                node.setHeight(DiscreteStatistics.median(heights));
-	//				            }
-
+	            		if(onTarget)
+	            			targetHeight = node.getHeight();            	
 			            
-	            		double avg_pos_val = (double) (cladeMap.get(bitsArray).getCount()-1)/ (double) (nrNetworks);
+	            		double posterior = (double) (cladeMap.get(bitsArray).getCount()-1)/ (double) (nrNetworks);
 	            			            		
 	            		// Convert height to Array
 	            		double[] heightarray = new double[height.size()];
@@ -670,10 +668,19 @@ public class NetworkCladeSystem {
 	            			maxHPD = node.getHeight();
 	            		}
 	            		
-			            node.setMetaData(",posterior=" + avg_pos_val +
-			            		",height_95%_HPD={" + minHPD + "," + maxHPD + "}" + 
+	            		
+	            		if (targetHeight!=null){
+	            			node.setMetaData(",posterior=" + posterior +
+	            					",targetHeight=" + targetHeight +
+	            					",height_95%_HPD={" + minHPD + "," + maxHPD + "}" + 
 			            		node.getMetaData() + "");
-//			            System.out.println(node.getMetaData());
+
+	            		}else{
+	            			node.setMetaData(",posterior=" + posterior +
+	            					",height_95%_HPD={" + minHPD + "," + maxHPD + "}" + 
+			            		node.getMetaData() + "");
+	            		}
+
 	                   
 	                case "length":
 	                    break;
@@ -687,7 +694,7 @@ public class NetworkCladeSystem {
     
     
     private void summarizeAttributesForReassortmentClade(BitSet[] bits, NetworkNode node, 
-    		Set<String> attributeNames, boolean useMean, int nrNetworks, int nrSegments) {
+    		Set<String> attributeNames, boolean useMean, int nrNetworks, int nrSegments, boolean onTarget) {
     	
     	// check if the first segment goes left or right
     	boolean isLeft = false;
@@ -721,6 +728,9 @@ public class NetworkCladeSystem {
 		for (int i = 0; i < bitsarray.length; i++)
 			if (bitsarray[i]!=null)
 				allNull = false;
+		
+		// keeps track of the height of the target network,
+		Double targetHeight = null;
     	
     	if (!allNull){
 	        for (String attributeName : attributeNames) {
@@ -735,12 +745,15 @@ public class NetworkCladeSystem {
 				    		List<Object[]> rawHeights = reassortmentCladeMap.get(keyArray).getAttributeValues();
 				            for (int i = 0; i < rawHeights.size(); i++)
 				            	height.add((double) rawHeights.get(i)[0]);
+	            		}else if(!onTarget){
+	            			throw new IllegalArgumentException("reassortment clade not found");
 	            		}
 	
-	//		            node.setMetaData(node.getMetaData() + (double)rawHeights.size()/(double)nrNetworks);
 	            		
 	            		double posterior = (double) (reassortmentCladeMap.get(keyArray).getCount()-1)/ (double) (nrNetworks);
 	            		
+	            		if(onTarget)
+	            			targetHeight = node.getHeight();
 	            		
 	            		// Convert height to Array
 	            		double[] heightarray = new double[height.size()];
@@ -765,10 +778,17 @@ public class NetworkCladeSystem {
 	            			maxHPD = node.getHeight();
 	            		}
 	            		
-	//            		System.out.println(node.getMetaData());
-			            node.setMetaData(",posterior=" + posterior +
-			            		",height_95%_HPD={" + minHPD + "," + maxHPD + "}" + 
+	            		if (targetHeight!=null){
+	            			node.setMetaData(",posterior=" + posterior +
+	            					",targetHeight=" + targetHeight +
+	            					",height_95%_HPD={" + minHPD + "," + maxHPD + "}" + 
 			            		node.getMetaData() + "");
+
+	            		}else{
+	            			node.setMetaData(",posterior=" + posterior +
+	            					",height_95%_HPD={" + minHPD + "," + maxHPD + "}" + 
+			            		node.getMetaData() + "");
+	            		}
 	
 	                case "length":
 	                    break;
