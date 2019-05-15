@@ -628,10 +628,12 @@ public class NetworkCladeSystem {
 	            		node.setMetaData("");
 	            			            		
 	            		List<Double> height = new ArrayList<>();
-	            			            		
-			    		List<Object[]> rawHeights = cladeMap.get(bitsArray).getAttributeValues();
-			            for (int i = 0; i < rawHeights.size(); i++)
-			            	height.add((double) rawHeights.get(i)[0]);
+	            		if(cladeMap.get(bitsArray).count>1){
+	            			// can happend when a target network is used
+				    		List<Object[]> rawHeights = cladeMap.get(bitsArray).getAttributeValues();
+				            for (int i = 0; i < rawHeights.size(); i++)
+				            	height.add((double) rawHeights.get(i)[0]);
+	            		}
 
 			            
 //			            node.setMetaData(node.getMetaData() + (double)rawHeights.size()/(double)nrNetworks);
@@ -728,9 +730,12 @@ public class NetworkCladeSystem {
 	            		
 	            		List<Double> height = new ArrayList<>();
 	            		
-			    		List<Object[]> rawHeights = reassortmentCladeMap.get(keyArray).getAttributeValues();
-			            for (int i = 0; i < rawHeights.size(); i++)
-			            	height.add((double) rawHeights.get(i)[0]);
+	            		if(reassortmentCladeMap.get(keyArray).count>1){
+	            			// can happend when a target network is used
+				    		List<Object[]> rawHeights = reassortmentCladeMap.get(keyArray).getAttributeValues();
+				            for (int i = 0; i < rawHeights.size(); i++)
+				            	height.add((double) rawHeights.get(i)[0]);
+	            		}
 	
 	//		            node.setMetaData(node.getMetaData() + (double)rawHeights.size()/(double)nrNetworks);
 	            		

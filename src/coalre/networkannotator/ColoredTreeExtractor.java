@@ -78,8 +78,6 @@ public class ColoredTreeExtractor extends ReassortmentAnnotator {
                  " (" + options.burninPercentage + "%) ACGs will be discarded " +
                 "to account for burnin.");
 
-//        // get the clades for each reassortment event in every network
-//        NetworkCladeSystem cladeSystem = new NetworkCladeSystem();
         // keeps track of the leave nodes
         List<String> leafNodes = new ArrayList<>();
                
@@ -142,14 +140,8 @@ public class ColoredTreeExtractor extends ReassortmentAnnotator {
         if (rootEdge.size()!=1)
         	throw new IllegalArgumentException("root of segment tree not found");
 
-        
-        nodeNr = leafNodes.size();
-    	// start with an empty tree node    	
-//		System.out.println(leafNodes);
-
     	Node root = getNextNode(rootEdge.get(0), network.getSegmentCount(), segment, leafNodes);
     	   	
-//    	System.out.println(root);
     	Tree tree = new Tree(root);
     	return tree;
     }

@@ -43,6 +43,7 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
     private static class NetworkAnnotatorOptions {
         File inFile;
         File outFile = new File("summary.tree");
+        File targetFile;
         double burninPercentage = 10.0;
         double convSupportThresh = 50.0;
         SummaryStrategy summaryStrategy = SummaryStrategy.MEAN;
@@ -74,72 +75,104 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         System.out.println("The first " + logReader.getBurnin() +
                  " (" + options.burninPercentage + "%) ACGs will be discarded " +
                 "to account for burnin.");
-
-        // get the clades for each reassortment event in every network
-        NetworkCladeSystem cladeSystem = new NetworkCladeSystem();
+        
+        // keeps track of the mcc network
+        Network bestNetwork = null;
+        // keeps track of the number of segments
+        int segments = -1;
         // keeps track of the leave nodes
         List<NetworkNode> leafNodes = new ArrayList<>();
         
-        // build the clades
-        boolean first = true;
-        int segments = -1;
-        for (Network network : logReader){
-        	if (first){        		
-            	for (NetworkNode networkNode : network.getNodes()){
-            		if (networkNode.isLeaf()){
-            			leafNodes.add(networkNode);
-            		}
+        if (options.targetFile == null){
+	        // get the clades for each reassortment event in every network
+	        NetworkCladeSystem cladeSystem = new NetworkCladeSystem();
+	        
+	        // build the clades
+	        boolean first = true;
+	        for (Network network : logReader){
+	        	if (first){        		
+	            	for (NetworkNode networkNode : network.getNodes()){
+	            		if (networkNode.isLeaf()){
+	            			leafNodes.add(networkNode);
+	            		}
+	        		}
+	            	segments = network.getSegmentCount();
+	            	cladeSystem.setLeafLabels(leafNodes, segments);
+	        		first = false;
+	        	}
+	
+	        	// remove all parts of the network that aren't informed by the genetic data
+	        	removeNonGeneticSegmentEdges(network);
+	        	for (int i = 0; i < options.removeSegments.length; i++)
+	        		removeSegment(network, options.removeSegments[i]);
+	
+	        	// remove all loops
+	        	removeLoops(network);
+	
+	        	// remove all empty edges in the segment
+	        	removeEmptyNetworkEdge(network); 
+	
+	        	cladeSystem.add(network, true); 
+	        }
+	        
+	        System.out.println("\nComputing CF clade credibilities...");
+	        
+	        // calculate the network clade credibilities
+	        cladeSystem.calculateCladeCredibilities(logReader.getCorrectedNetworkCount());
+	        
+	        
+	        // get the network with the highest count
+	        double bestScore = Double.NEGATIVE_INFINITY;
+	
+	        for (Network network : logReader ) {
+	        	// remove all parts of the network that aren't informed by the genetic data
+	        	removeNonGeneticSegmentEdges(network);
+	        	for (int i = 0; i < options.removeSegments.length; i++)
+	        		removeSegment(network, options.removeSegments[i]);
+	
+	        	// remove all loops
+	        	removeLoops(network);
+	
+	        	// remove all empty edges in the segment
+	        	removeEmptyNetworkEdge(network);  
+	
+	
+	        	double score = cladeSystem.getLogCladeCredibility(network);
+	        	if (score>bestScore) {
+	        		bestNetwork = network;
+	        		bestScore = score;
+	        	}
+	        }
+        }else{
+	        System.out.println("\nRead in target network...");
+
+            ReassortmentLogReader targetLogReader = new ReassortmentLogReader(options.targetFile, 0.0);
+            int c= 0;
+	        for (Network network : targetLogReader ) {
+	        	removeNonGeneticSegmentEdges(network);
+	        	for (int i = 0; i < options.removeSegments.length; i++)
+	        		removeSegment(network, options.removeSegments[i]);
+	
+	        	// remove all loops
+	        	removeLoops(network);
+	
+	        	// remove all empty edges in the segment
+	        	removeEmptyNetworkEdge(network);  
+
+	        	bestNetwork = network;
+	        	c++;
+	        }
+	        if (c!=1)
+	        	throw new IllegalArgumentException("more than one network found as target network");
+	        
+        	for (NetworkNode networkNode : bestNetwork.getNodes()){
+        		if (networkNode.isLeaf()){
+        			leafNodes.add(networkNode);
         		}
-            	segments = network.getSegmentCount();
-            	cladeSystem.setLeafLabels(leafNodes, segments);
-        		first = false;
-        	}
-
-        	// remove all parts of the network that aren't informed by the genetic data
-        	removeNonGeneticSegmentEdges(network);
-        	for (int i = 0; i < options.removeSegments.length; i++)
-        		removeSegment(network, options.removeSegments[i]);
-
-        	// remove all loops
-        	removeLoops(network);
-
-        	// remove all empty edges in the segment
-        	removeEmptyNetworkEdge(network); 
-
-        	cladeSystem.add(network, true); 
+    		}
         }
         
-        System.out.println("\nComputing CF clade credibilities...");
-        
-        // calculate the network clade credibilities
-        cladeSystem.calculateCladeCredibilities(logReader.getCorrectedNetworkCount());
-        
-        
-        // get the network with the highest count
-        Network bestNetwork = null;
-        double bestScore = Double.NEGATIVE_INFINITY;
 
-        for (Network network : logReader ) {
-        	// remove all parts of the network that aren't informed by the genetic data
-        	removeNonGeneticSegmentEdges(network);
-        	for (int i = 0; i < options.removeSegments.length; i++)
-        		removeSegment(network, options.removeSegments[i]);
-
-        	// remove all loops
-        	removeLoops(network);
-
-        	// remove all empty edges in the segment
-        	removeEmptyNetworkEdge(network);  
-
-
-        	double score = cladeSystem.getLogCladeCredibility(network);
-        	if (score>bestScore) {
-        		bestNetwork = network;
-        		bestScore = score;
-        	}
-        }        
-        
-        
         // get the posterior probabilities of each coalescent network node
         NetworkCladeSystem bestCladeSystem = new NetworkCladeSystem();
                 
@@ -778,6 +811,21 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
 
                     i += 1;
                     break;
+                    
+                case "-target":
+                    if (args.length<=i+1) {
+                        printUsageAndError("-target must be followed by a network file.");
+                    }
+
+                    try {
+                		options.targetFile = new File(args[i + 1]);
+                    } catch (NumberFormatException e) {
+                        printUsageAndError("removeSegments must be an array of integers separated by commas if more than one");
+                     }
+
+                    i += 1;
+                    break;
+
 
 
 
