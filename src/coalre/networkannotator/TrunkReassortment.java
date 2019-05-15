@@ -222,7 +222,6 @@ public class TrunkReassortment extends ReassortmentAnnotator {
         // the root and the most recent sampled individual. To do so, get all zero height edges
         List<NetworkEdge> zeroHeightEdges = network.getEdges().stream()
                 .filter(e -> e.isLeafEdge())
-                .filter(e -> e.childNode.getHeight()<0.0000001)
                 .collect(Collectors.toList());
         
 		allTrunkNodes = new ArrayList<>();
@@ -236,6 +235,7 @@ public class TrunkReassortment extends ReassortmentAnnotator {
     		double dist = 0.0;
 			getAllAncestralEdgesLeaveDist(zeroEdge.childNode, dist, minTipDistance);
     	}
+		
 		// drop every node in allTrunkNodes that is less far away from a leave than some threshold
 		for (int i = allTrunkNodes.size()-1; i>=0; i--){
 			if (leaveDistance.get(i)<minTipDistance){
@@ -284,8 +284,7 @@ public class TrunkReassortment extends ReassortmentAnnotator {
     			return;
     		}else{
     			getAllAncestralEdgesLeaveDist(parentEdge.parentNode, dist+parentEdge.getLength(), threshold);   			
-    		}
-			
+    		}			
 		}
     }
         

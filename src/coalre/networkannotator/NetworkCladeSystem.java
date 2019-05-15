@@ -28,7 +28,7 @@ public class NetworkCladeSystem {
     public List<String> leafNodeMap;
 
     public boolean[] followSegmentAlready;
-    private boolean started;
+    protected boolean started;
     public NetworkCladeSystem() { 
     }
     
@@ -149,7 +149,7 @@ public class NetworkCladeSystem {
      * @param segment
      * @param height
      */
-    private void addReassortmentClade(BitSet bits, int segment, Double height, boolean isLeft) {
+    protected void addReassortmentClade(BitSet bits, int segment, Double height, boolean isLeft) {
         DummyClade clade = newReassortmentCladeMap.get(segment).get(height);
         if (clade == null) {
             clade = new DummyClade(bits, height, isLeft);
@@ -192,7 +192,7 @@ public class NetworkCladeSystem {
     }   
 
     
-    private void buildReassortmentCladeMap(int nrSegments) {
+    protected void buildReassortmentCladeMap(int nrSegments) {
     	// get all unique reassortment node heights
     	List<Double> nodeHeights = new ArrayList<>();
     	List<Boolean[]> segmentDirection = new ArrayList<>();
@@ -867,7 +867,7 @@ public class NetworkCladeSystem {
     /**
      * get the index of a leaf node
      */ 
-    private int getTaxonIndex(NetworkNode leaf){
+    protected int getTaxonIndex(NetworkNode leaf){
     	return leafNodeMap.indexOf(leaf.getTaxonLabel());
     }
     

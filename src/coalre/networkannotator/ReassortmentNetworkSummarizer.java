@@ -47,6 +47,7 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         double convSupportThresh = 50.0;
         SummaryStrategy summaryStrategy = SummaryStrategy.MEAN;
         int[] removeSegments = new int[0];
+        int followSegment = Integer.MAX_VALUE;
 
         @Override
         public String toString() {
@@ -93,7 +94,6 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
             	cladeSystem.setLeafLabels(leafNodes, segments);
         		first = false;
         	}
-        	
 
         	// remove all parts of the network that aren't informed by the genetic data
         	removeNonGeneticSegmentEdges(network);
@@ -105,7 +105,6 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
 
         	// remove all empty edges in the segment
         	removeEmptyNetworkEdge(network); 
-        	
 
         	cladeSystem.add(network, true); 
         }
@@ -185,7 +184,7 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
 
         try (PrintStream ps = new PrintStream(options.outFile)) {
         	ps.print(logReader.getPreamble());
-        	ps.println("tree STATE_0 = " + bestNetwork.getExtendedNewickVerbose());
+        	ps.println("tree STATE_0 = " + bestNetwork.getExtendedNewickVerbose(options.followSegment));
 
         	String postamble = logReader.getPostamble();
         	if (postamble.length() > 0)
@@ -765,6 +764,21 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
 
                     i += 1;
                     break;
+                    
+                case "-followSegment":
+                    if (args.length<=i+1) {
+                        printUsageAndError("-followSegment must be followed by exactly one number.");
+                    }
+
+                    try {
+                		options.followSegment = Integer.parseInt(args[i + 1]);
+                    } catch (NumberFormatException e) {
+                        printUsageAndError("removeSegments must be an array of integers separated by commas if more than one");
+                     }
+
+                    i += 1;
+                    break;
+
 
 
                 default:
