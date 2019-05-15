@@ -44,14 +44,11 @@ import java.util.stream.Collectors;
  * @author Nicola Felix Müller <nicola.felix.mueller@gmail.com>
  */
 public class ColoredTreeExtractor extends ReassortmentAnnotator {
-	private int nodeNr;
-	
-    private enum SummaryStrategy { MEAN, MEDIAN }
 
     private static class NetworkAnnotatorOptions {
         File inFile;
         File outFile = new File("summary.tree");
-        double burninPercentage = 10.0;
+        double burninPercentage = 0;
         int[] removeSegments = new int[0];
         int outputSegment = -1;
 
@@ -99,7 +96,6 @@ public class ColoredTreeExtractor extends ReassortmentAnnotator {
             			leafNodes.add(networkNode.getTaxonLabel());
             		}
         		}
-//            	cladeSystem.setLeafLabels(leafNodes, network.getSegmentCount());
         	}
 
         	// remove all parts of the network that aren't informed by the genetic data
@@ -112,23 +108,21 @@ public class ColoredTreeExtractor extends ReassortmentAnnotator {
 
         	// remove all empty edges in the segment
         	removeEmptyNetworkEdge(network); 
-//        	System.out.println(network.getExtendedNewick());
+
         	// get the tree with single child nodes back
         	Tree tree = getSingleChildTree(network, options.outputSegment, leafNodes);
         	
         	if (first){
         		tree.init(ps);
+        		ps.print("\n");
         		first = false;
         	}
-        	c++;
+        	
         	
         	printTree(tree, ps, c);
+        	c++;
         	
         	ps.print("\n");
-        	
-//        	System.out.println(tree);
-//        	System.exit(0);
-        	
         }
    		ps.println("End;");
    		ps.close();
