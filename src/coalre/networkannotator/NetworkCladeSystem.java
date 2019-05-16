@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.swing.plaf.synth.SynthSeparatorUI;
 
@@ -59,9 +60,21 @@ public class NetworkCladeSystem {
 		newReassortmentCladeMap = new ArrayList<>();
 		for (int i = 0; i < network.getSegmentCount(); i++){
 			newCoalescentCladeMap.add(new HashMap<>());
-			newReassortmentCladeMap.add(new HashMap<>());
-			started = false;
-			addClades(network.getRootEdge().childNode, includeTips, i);
+			newReassortmentCladeMap.add(new HashMap<>());			
+			final int segment = i;
+			// get the segment root node
+	        List<NetworkNode> rootEdge = network.getNodes().stream()
+	                .filter(e -> e.isCoalescence())
+	                .filter(e -> !e.getParentEdges().get(0).hasSegments.get(segment))
+	                .filter(e -> e.getChildEdges().get(0).hasSegments.get(segment))
+	                .filter(e -> e.getChildEdges().get(1).hasSegments.get(segment))
+	                .collect(Collectors.toList());
+	        
+	        
+	        if (rootEdge.size()==1)
+	        	addClades(rootEdge.get(0), includeTips, i);
+	        else if (rootEdge.size()>1)
+	        	throw new IllegalArgumentException("segment tree root not found");	        
 		}
 		
 		// build the reassortment clades with all segments
@@ -70,22 +83,7 @@ public class NetworkCladeSystem {
     }    
 
     private BitSet addClades(NetworkNode node, boolean includeTips, int segment) {
-    	BitSet bits = new BitSet();
-    	
-    	if (!started && node.isCoalescence())
-    		if (node.getChildEdges().get(0).hasSegments.get(segment) &&
-    				node.getChildEdges().get(1).hasSegments.get(segment) &&
-    				node.getParentEdges().get(0).hasSegments.get(segment))
-    			return null;
-
-    	
-    	if (!started && node.isCoalescence())
-    		if (node.getChildEdges().get(0).hasSegments.get(segment) &&
-    				node.getChildEdges().get(1).hasSegments.get(segment) &&
-    				!node.getParentEdges().get(0).hasSegments.get(segment))
-    			started = true;
-    		
-        
+    	BitSet bits = new BitSet();       
 
         if (node.isLeaf()) {
 
@@ -100,22 +98,18 @@ public class NetworkCladeSystem {
             
             // add all children to the bitset
             for (NetworkEdge childEdge : childEdges){
-            	if (started){
-		        	if (childEdge.hasSegments.get(segment))
-		    			bits.or(addClades(childEdge.childNode, includeTips, segment));
-            	}else{
-            		addClades(childEdge.childNode, includeTips, segment);
-            	}
+	        	if (childEdge.hasSegments.get(segment))
+	    			bits.or(addClades(childEdge.childNode, includeTips, segment));
             	
             }
             
             // if node is coalescent, add the bitset if the coalescent event is observed on a segment tree
-            if (node.isCoalescence() && started){
+            if (node.isCoalescence()){
         		if (node.getChildEdges().get(0).hasSegments.get(segment) &&
         			node.getChildEdges().get(1).hasSegments.get(segment)){
         			addCoalescentClade(bits, segment, node.getHeight());
         		}    			
-            }else if (started){
+            }else{
             	if (node.getParentEdges().get(0).hasSegments.get(segment))
             		addReassortmentClade(bits, segment, node.getHeight(), false);
             	else if (node.getParentEdges().get(1).hasSegments.get(segment))
@@ -266,8 +260,22 @@ public class NetworkCladeSystem {
 		for (int i = 0; i < network.getSegmentCount(); i++){
 			newCoalescentCladeMap.add(new HashMap<>());
 			newReassortmentCladeMap.add(new HashMap<>());
-			started = false;
-			collectAttributes(network.getRootEdge().childNode, attributeNames, i);		
+			
+			
+			final int segment = i;
+			// get the segment root node
+	        List<NetworkNode> rootEdge = network.getNodes().stream()
+	                .filter(e -> e.isCoalescence())
+	                .filter(e -> !e.getParentEdges().get(0).hasSegments.get(segment))
+	                .filter(e -> e.getChildEdges().get(0).hasSegments.get(segment))
+	                .filter(e -> e.getChildEdges().get(1).hasSegments.get(segment))
+	                .collect(Collectors.toList());
+	        
+	        
+	        if (rootEdge.size()==1)
+	        	collectAttributes(rootEdge.get(0), attributeNames, i);
+	        else if (rootEdge.size()>1)
+	        	throw new IllegalArgumentException("segment tree root not found");	        
 		}		
 
 		collectAtributesCoalescentCladeMap(network.getSegmentCount(), attributeNames);
@@ -277,19 +285,6 @@ public class NetworkCladeSystem {
     private BitSet collectAttributes(NetworkNode node, Set<String> attributeNames, int segment) {
         BitSet bits = new BitSet();
         
-    	if (!started && node.isCoalescence())
-    		if (node.getChildEdges().get(0).hasSegments.get(segment) &&
-    				node.getChildEdges().get(1).hasSegments.get(segment) &&
-    				node.getParentEdges().get(0).hasSegments.get(segment))
-    			return null;
-
-    	
-    	if (!started && node.isCoalescence())
-    		if (node.getChildEdges().get(0).hasSegments.get(segment) &&
-    				node.getChildEdges().get(1).hasSegments.get(segment) &&
-    				!node.getParentEdges().get(0).hasSegments.get(segment))
-    			started = true;
-
         
         if (node.isLeaf()) {
 
@@ -307,20 +302,16 @@ public class NetworkCladeSystem {
             List<NetworkEdge> childEdges = node.getChildEdges();
             // add all children to the bitset
             for (NetworkEdge childEdge : childEdges){
-            	if (started){
-		        	if (childEdge.hasSegments.get(segment))
-		    			bits.or(collectAttributes(childEdge.childNode, attributeNames, segment));
-            	}else{
-            		collectAttributes(childEdge.childNode, attributeNames, segment);
-            	}
+	        	if (childEdge.hasSegments.get(segment))
+	    			bits.or(collectAttributes(childEdge.childNode, attributeNames, segment));
             }  
             
-            if (node.isCoalescence() && started){
+            if (node.isCoalescence()){
         		if(node.getChildEdges().get(0).hasSegments.get(segment) &&
         			node.getChildEdges().get(1).hasSegments.get(segment)){
         			collectAttributesForClade(bits, node, attributeNames, segment, node.getHeight());
         		}
-            } else if (started) {
+            } else {
             	if (node.getParentEdges().get(0).hasSegments.get(segment))
             		collectAttributesForReassortmentClade(bits, node, attributeNames, segment, node.getHeight(), false);
             	else if (node.getParentEdges().get(1).hasSegments.get(segment))
@@ -411,7 +402,8 @@ public class NetworkCladeSystem {
             
             newReassortmentCladeMap.get(segment).put(height, clade);
         }else{
-        	throw new IllegalArgumentException("reassortment clade should never be found");
+//        	System.err.println("reassortment clade should never be found");
+       	throw new IllegalArgumentException("reassortment clade should never be found");
         }
     }
 
@@ -556,7 +548,7 @@ public class NetworkCladeSystem {
         	
             // check if the node is the root of a segment tree, if so, follow the segment
             if (node.isCoalescence()){
-	           	 for (int i = 0; i < nrSegments;i++){
+	           	 for (int i = 0; i < nrSegments; i++){
 	           		if (node.getChildEdges().get(0).hasSegments.get(i) &&
 	           			node.getChildEdges().get(1).hasSegments.get(i) &&
 	           			!node.getParentEdges().get(0).hasSegments.get(i) &&
@@ -573,17 +565,22 @@ public class NetworkCladeSystem {
             // add all children to the bitset
             for (NetworkEdge childEdge : childEdges){
 				boolean[] followSegmentout = Arrays.copyOf(followSegment, followSegment.length);
+				boolean continuePath = false;
 				for (int i = 0; i < nrSegments;i++){
 					if (!childEdge.hasSegments.get(i)){
 						followSegmentout[i] = false;
 					}
+					if (followSegmentout[i] || !followSegmentAlready[i])
+						continuePath = true;
 				}	
-				BitSet[] newBits = summarizeAttributes(childEdge.childNode, attributeNames, useMean, nrNetworks, nrSegments, followSegmentout, onTarget);
-            	for (int i = 0; i < nrSegments;i++){
-	            	if (childEdge.hasSegments.get(i)){
-            			bits[i].or(newBits[i]);	   
+				if (continuePath){
+					BitSet[] newBits = summarizeAttributes(childEdge.childNode, attributeNames, useMean, nrNetworks, nrSegments, followSegmentout, onTarget);
+	            	for (int i = 0; i < nrSegments;i++){
+		            	if (childEdge.hasSegments.get(i)){
+	            			bits[i].or(newBits[i]);	   
+		            	}
 	            	}
-            	}
+				}
             }            
             if (!node.isReassortment())
             	summarizeAttributesForClade(bits, node, attributeNames, useMean, nrNetworks, nrSegments, onTarget);   
@@ -846,8 +843,19 @@ public class NetworkCladeSystem {
 		for (int i = 0; i < network.getSegmentCount(); i++){
 			newCoalescentCladeMap.add(new HashMap<>());
 			newReassortmentCladeMap.add(new HashMap<>());
-			started = false;
-			addClades(network.getRootEdge().childNode, false, i);
+			final int segment = i;
+			// get the segment root node
+	        List<NetworkNode> rootEdge = network.getNodes().stream()
+	                .filter(e -> e.isCoalescence())
+	                .filter(e -> !e.getParentEdges().get(0).hasSegments.get(segment))
+	                .filter(e -> e.getChildEdges().get(0).hasSegments.get(segment))
+	                .filter(e -> e.getChildEdges().get(1).hasSegments.get(segment))
+	                .collect(Collectors.toList());
+	        
+	        if (rootEdge.size()==1)
+	        	addClades(rootEdge.get(0), false, i);
+	        else if (rootEdge.size()>1)
+	        	throw new IllegalArgumentException("segment tree root not found");	        
 		}	
 		
 		return computeSumLogCladeCredibility(network.getSegmentCount());
@@ -883,7 +891,7 @@ public class NetworkCladeSystem {
     		// add the bits to a new reassortmentClade
             ReassortmentClade clade = cladeMap.get(bitsArray);
             if (clade == null) {
-                throw new IllegalArgumentException("coalesce clade not found");              
+                throw new IllegalArgumentException("coalescence clade not found");              
             } else {
             	logCladeCredibility += Math.log(clade.getCredibility())*clade.getNotNull();
             }   
