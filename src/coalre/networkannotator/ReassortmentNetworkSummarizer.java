@@ -204,7 +204,7 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         	// remove all empty edges in the segment
         	removeEmptyNetworkEdge(network);        
 
-    		bestCladeSystem.collectAttributes(network, attributeNames);
+    		bestCladeSystem.collectAttributes(network, attributeNames, true);
     	}
         
         // print the network to file

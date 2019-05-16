@@ -22,11 +22,15 @@ import coalre.network.NetworkNode;
  */
 public class NetworkCladeSystem {
 
+	
     protected List<Map<Double, DummyClade>> newCoalescentCladeMap = new ArrayList<>();
     protected Map<BitSetArray, ReassortmentClade> cladeMap = new HashMap<>();
     protected List<Map<Double, DummyClade>> newReassortmentCladeMap = new ArrayList<>();
     protected Map<BitSetArray, ReassortmentClade> reassortmentCladeMap = new HashMap<>();
     public List<String> leafNodeMap;
+    
+    protected Map<BitSet, DummyClade> leafCladeMap = new HashMap<>();
+
 
     public boolean[] followSegmentAlready;
     protected boolean started;
@@ -41,7 +45,7 @@ public class NetworkCladeSystem {
     public void setLeafLabels(List<NetworkNode> leafNodes, int nrSegments){
     	cladeMap = new HashMap<>();
     	reassortmentCladeMap = new HashMap<>();
-
+    	leafCladeMap = new HashMap<>();
     	
     	leafNodeMap = new ArrayList<String>();
     	for (NetworkNode leaf : leafNodes)
@@ -90,7 +94,6 @@ public class NetworkCladeSystem {
             int index = getTaxonIndex(node);
         	if (node.getParentEdges().get(0).hasSegments.get(segment))
     			bits.set(index);
-
         } else {
 
         	// get the children of that node
@@ -183,9 +186,8 @@ public class NetworkCladeSystem {
             }              
             clade.setCount(clade.getCount() + 1);
     	}    	
-    }   
-
-    
+    }       
+   
     protected void buildReassortmentCladeMap(int nrSegments) {
     	// get all unique reassortment node heights
     	List<Double> nodeHeights = new ArrayList<>();
@@ -254,7 +256,7 @@ public class NetworkCladeSystem {
     	
     }   
 
-    public void collectAttributes(Network network, Set<String> attributeNames) {
+    public void collectAttributes(Network network, Set<String> attributeNames, boolean includeTips) {
 		newCoalescentCladeMap = new ArrayList<>();
 		newReassortmentCladeMap = new ArrayList<>();
 		for (int i = 0; i < network.getSegmentCount(); i++){
@@ -273,16 +275,16 @@ public class NetworkCladeSystem {
 	        
 	        
 	        if (rootEdge.size()==1)
-	        	collectAttributes(rootEdge.get(0), attributeNames, i);
+	        	collectAttributes(rootEdge.get(0), attributeNames, includeTips, i);
 	        else if (rootEdge.size()>1)
 	        	throw new IllegalArgumentException("segment tree root not found");	        
 		}		
 
 		collectAtributesCoalescentCladeMap(network.getSegmentCount(), attributeNames);
-		collectAtributesReassortmentCladeMap(network.getSegmentCount(), attributeNames);
+		collectAtributesReassortmentCladeMap(network.getSegmentCount(), attributeNames);		
     }
     
-    private BitSet collectAttributes(NetworkNode node, Set<String> attributeNames, int segment) {
+    private BitSet collectAttributes(NetworkNode node, Set<String> attributeNames, boolean includeTips, int segment) {
         BitSet bits = new BitSet();
         
         
@@ -294,6 +296,9 @@ public class NetworkCladeSystem {
             }
         	if (node.getParentEdges().get(0).hasSegments.get(segment))
         			bits.set(index);
+        	
+        	if (includeTips && node.getParentEdges().get(0).hasSegments.get(segment))
+    			collectAttributesForLeaves(bits, node, attributeNames, segment, node.getHeight());
 
 
         } else {        	
@@ -303,7 +308,7 @@ public class NetworkCladeSystem {
             // add all children to the bitset
             for (NetworkEdge childEdge : childEdges){
 	        	if (childEdge.hasSegments.get(segment))
-	    			bits.or(collectAttributes(childEdge.childNode, attributeNames, segment));
+	    			bits.or(collectAttributes(childEdge.childNode, attributeNames, includeTips, segment));
             }  
             
             if (node.isCoalescence()){
@@ -359,6 +364,65 @@ public class NetworkCladeSystem {
 
         }
     }
+    
+    private void collectAttributesForLeaves(BitSet bits, NetworkNode node, Set<String> attributeNames, int segment, Double height) {
+    	DummyClade clade = leafCladeMap.get(bits);
+        if (clade == null) {
+        	
+        	clade = new DummyClade(bits, height, false);
+
+            clade.attributeValues = new ArrayList<>();
+            
+            int i = 0;
+            Object[] values = new Object[attributeNames.size()];
+            for (String attributeName : attributeNames) {
+
+                Object value;
+                switch (attributeName) {
+                    case "height":
+                        value = node.getHeight();
+                        break;
+                    case "length":
+//                        value = getBranchLength(node);
+//                        break;
+                    default:
+                    	throw new IllegalArgumentException("Summary not implemented for values other than height and posterior");
+                }
+
+                values[i] = value;
+
+                i++;
+            }
+            clade.attributeValues.add(values);
+            
+            leafCladeMap.put(bits, clade);
+        }else{
+            int i = 0;
+            Object[] values = new Object[attributeNames.size()];
+            for (String attributeName : attributeNames) {
+
+                Object value;
+                switch (attributeName) {
+                    case "height":
+                        value = node.getHeight();
+                        break;
+                    case "length":
+//                        value = getBranchLength(node);
+//                        break;
+                    default:
+                    	throw new IllegalArgumentException("Summary not implemented for values other than height and posterior");
+                }
+
+                values[i] = value;
+
+                i++;
+            }
+
+			clade.attributeValues.add(values);
+        		
+        }
+    }
+
     
     private void collectAttributesForReassortmentClade(BitSet bits, NetworkNode node,
     		Set<String> attributeNames, int segment, double height,  boolean isLeft) {
@@ -544,6 +608,7 @@ public class NetworkCladeSystem {
             	if (node.getParentEdges().get(0).hasSegments.get(i))
             		bits[i].set(index);
             }
+            summarizeAttributesForLeaf(bits, node, attributeNames, useMean, nrNetworks, nrSegments, onTarget);
         } else {
         	
             // check if the node is the root of a segment tree, if so, follow the segment
@@ -570,8 +635,10 @@ public class NetworkCladeSystem {
 					if (!childEdge.hasSegments.get(i)){
 						followSegmentout[i] = false;
 					}
-					if (followSegmentout[i] || !followSegmentAlready[i])
+//					if (followSegmentout[i])
 						continuePath = true;
+//					if (!followSegmentout[i] && !followSegmentAlready[i])
+//						continuePath = true;
 				}	
 				if (continuePath){
 					BitSet[] newBits = summarizeAttributes(childEdge.childNode, attributeNames, useMean, nrNetworks, nrSegments, followSegmentout, onTarget);
@@ -593,15 +660,7 @@ public class NetworkCladeSystem {
         return bits;
     }
     
-    
-    public void printClades(){
-    	for (BitSetArray bits : cladeMap.keySet()){
-    		System.out.println(Arrays.toString(cladeMap.get(bits).bits));
-    	}
-    }
-    
-
-    private void summarizeAttributesForClade(BitSet[] bits, NetworkNode node, 
+   private void summarizeAttributesForClade(BitSet[] bits, NetworkNode node, 
     		Set<String> attributeNames, boolean useMean, int nrNetworks, int nrSegments, boolean onTarget) {
 
 		BitSet[] newBits = new BitSet[nrSegments];
@@ -690,6 +749,79 @@ public class NetworkCladeSystem {
     	
     }
     
+    private void summarizeAttributesForLeaf(BitSet[] bits, NetworkNode node, 
+    		Set<String> attributeNames, boolean useMean, int nrNetworks, int nrSegments, boolean onTarget) {
+
+		BitSet newBits = new BitSet();
+		for (int i = 0 ; i < bits.length; i++)
+			if (bits[i].cardinality()>0 && 
+					node.getParentEdges().get(0).hasSegments.get(i)) newBits = bits[i];
+		
+		
+		// keeps track of the height of the target network,
+		Double targetHeight = null;
+
+    	
+        for (String attributeName : attributeNames) {
+            switch (attributeName) {
+            	case "height":
+            		node.setMetaData("");
+            			            		
+            		List<Double> height = new ArrayList<>();
+		    		List<Object[]> rawHeights = leafCladeMap.get(newBits).getAttributeValues();
+		            for (int i = 0; i < rawHeights.size(); i++)
+		            	height.add((double) rawHeights.get(i)[0]);
+
+		            
+            		if(onTarget)
+            			targetHeight = node.getHeight();            	
+            			            		
+            		// Convert height to Array
+            		double[] heightarray = new double[height.size()];
+            		for (int i = 0; i < height.size(); i++)
+            			heightarray[i] = height.get(i);
+            		
+            		if(!onTarget){
+	            		if (heightarray.length>0){
+							if (useMean){
+								node.setHeight(DiscreteStatistics.mean(heightarray));
+							}else{
+							    node.setHeight(DiscreteStatistics.median(heightarray));
+							}
+	            		}
+            		}
+
+            		double minHPD,maxHPD;
+            		if (heightarray.length>0){
+	                    Arrays.sort(heightarray);
+	                    minHPD = heightarray[(int)(0.025 * heightarray.length)];
+	                    maxHPD = heightarray[(int)(0.975 * heightarray.length)];
+            		}else{
+            			minHPD = node.getHeight();
+            			maxHPD = node.getHeight();
+            		}	            		
+            		
+            		if (targetHeight!=null){
+            			node.setMetaData(",targetHeight=" + targetHeight +
+            					",height_95%_HPD={" + minHPD + "," + maxHPD + "}" + 
+		            		node.getMetaData() + "");
+
+            		}else{
+            			node.setMetaData(",height_95%_HPD={" + minHPD + "," + maxHPD + "}" + 
+		            		node.getMetaData() + "");
+            		}
+
+                   
+                case "length":
+                    break;
+                default:
+                	throw new IllegalArgumentException("");
+            }
+        }
+    	
+    }
+    
+
     
     private void summarizeAttributesForReassortmentClade(BitSet[] bits, NetworkNode node, 
     		Set<String> attributeNames, boolean useMean, int nrNetworks, int nrSegments, boolean onTarget) {
