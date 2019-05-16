@@ -45,7 +45,6 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         File outFile = new File("summary.tree");
         File targetFile;
         double burninPercentage = 10.0;
-        double convSupportThresh = 50.0;
         SummaryStrategy summaryStrategy = SummaryStrategy.MEAN;
         int[] removeSegments = new int[0];
         int followSegment = Integer.MAX_VALUE;
@@ -55,9 +54,13 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
             return "Active options:\n" +
                     "Input file: " + inFile + "\n" +
                     "Output file: " + outFile + "\n" +
-                    "Burn-in percentage: " + burninPercentage + "%\n" +
-                    "Node height and conv. site summary: " + summaryStrategy;
-        }
+                    "Target Network file: " + targetFile + "\n" +
+                    "Burn-in percentage: " + burninPercentage + "\n" +
+                    "Node height and conv. site summary: " + summaryStrategy + "\n" +
+            		"Remove Segments for summary: " + Arrays.toString(removeSegments) + "\n" +
+            		"Follow segment in network file " + followSegment + "\n" +
+            		"(if = " + Integer.MAX_VALUE + " follows most segments at reassortment event)";
+       }
     }
 
     public ReassortmentNetworkSummarizer(NetworkAnnotatorOptions options) throws IOException {
@@ -185,8 +188,6 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
     	// build clade system
         bestCladeSystem.add(bestNetwork, true);
         
-//        bestCladeSystem.printClades();
-        
         Set<String> attributeNames = new HashSet<>();
 		attributeNames.add("height");
 		
@@ -229,204 +230,8 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         }        
 
         System.out.println("\nDone!");
-    }    
-    
-    /**
-     * Write gene flow statistics to given file
-     *
-     * @param cladeSystem
-     * @param acgBest
-     * @param ps
-     */
-//    private void writeGeneFlowFile(ACGCladeSystem cladeSystem,
-//                                   ConversionGraph acgBest, PrintStream ps) {
-//
-//        BitSet[] bitSets = cladeSystem.getBitSets(acgBest);
-//        List<Map<BitSet,Map<BitSet,Long>>> geneFlow = cladeSystem.getGeneFlowMaps();
-//
-//        // Give map from node leaf names to node numbers as comment
-//        ps.println("# Gene flow log file");
-//        ps.println("# ------------------");
-//        ps.println("#");
-//        ps.println("# Each column of this (tab-delimited) file contains the");
-//        ps.println("# number of nucleotides transfered by conversion between");
-//        ps.println("# a pair of clonal frame edges.");
-//        ps.println("#");
-//
-//        // Write header
-//        boolean isFirst = true;
-//        for (BitSet from : bitSets) {
-//            for (BitSet to : bitSets) {
-//                if (from.equals(to))
-//                    continue;
-//
-//                if (isFirst)
-//                    isFirst = false;
-//                else
-//                    ps.print("\t");
-//
-//                printBitSetHeader(ps, from);
-//                ps.print("_to_");
-//                printBitSetHeader(ps, to);
-//            }
-//        }
-//
-//        ps.println();
-//
-//        // Write data
-//        for (int i=0; i<geneFlow.size(); i++) {
-//
-//            isFirst = true;
-//            for (BitSet from : bitSets) {
-//                for (BitSet to : bitSets) {
-//                    if (from.equals(to))
-//                        continue;
-//
-//                    long flow = 0;
-//                    if (geneFlow.get(i).containsKey(from)
-//                        && geneFlow.get(i).get(from).containsKey(to))
-//                        flow = geneFlow.get(i).get(from).get(to);
-//
-//                    if (isFirst)
-//                        isFirst = false;
-//                    else
-//                        ps.print("\t");
-//
-//                    ps.print(flow);
-//                }
-//            }
-//
-//            ps.println();
-//        }
-//
-//    }
-//
-    /**
-     * Annotate nodes of given clonal frame with summarized height information.
-     *
-     * @param cladeSystem information summarizing ACG posterior
-     * @param root root of clonal frame to annotate
-     * @param summaryStrategy strategy used when summarizing CF node ages/heights
-     */
-//    protected void annotateCF(NetworkCladeSystem cladeSystem,
-//                              NetworkNode root, SummaryStrategy summaryStrategy) {
-//
-//        cladeSystem.applyToClades(root, (node, bits) -> {
-//            List<Object[]> rawHeights =
-//                    cladeSystem.getCoalescentCladeMap().get(bits).getAttributeValues();
-//
-//            double cladeCredibility = cladeSystem.getCoalescentCladeMap()
-//                    .get(bits).getCredibility();
-//
-//            double[] heights = new double[rawHeights.size()];
-//            for (int i = 0; i < rawHeights.size(); i++)
-//                heights[i] = (double) rawHeights.get(i)[0];
-//
-//            if (summaryStrategy == SummaryStrategy.MEAN)
-//                node.setHeight(DiscreteStatistics.mean(heights));
-//            else
-//                node.setHeight(DiscreteStatistics.median(heights));
-//
-//            Arrays.sort(heights);
-//            double minHPD = heights[(int)(0.025 * heights.length)];
-//            double maxHPD = heights[(int)(0.975 * heights.length)];
-//
-////            node.metaDataString = "posterior=" + cladeCredibility
-////                    + ", height_95%_HPD={" + minHPD + "," + maxHPD + "}";
-//
-//            return null;
-//        });
-//    }
-//
-    /**
-     * Add summarized conversions to given ACG.
-     *
-     * @param cladeSystem information summarizing ACG posterior
-     * @param acg conversion graph
-     * @param threshold significance threshold
-     * @param summaryStrategy strategy used when summarizing event ages/heights
-     */
-//    protected void summarizeConversions(ACGCladeSystem cladeSystem,
-//                                        ConversionGraph acg,
-//                                        int nACGs,
-//                                        double threshold,
-//                                        SummaryStrategy summaryStrategy) {
-//
-//        BitSet[] bitSets = cladeSystem.getBitSets(acg);
-//        for (int fromNr=0; fromNr<acg.getNodeCount(); fromNr++) {
-//            BitSet from = bitSets[fromNr];
-//            for (int toNr=0; toNr<acg.getNodeCount(); toNr++) {
-//                BitSet to = bitSets[toNr];
-//
-//                for (Locus locus : acg.getConvertibleLoci()) {
-//                    List<ACGCladeSystem.ConversionSummary> conversionSummaries =
-//                            cladeSystem.getConversionSummaries(from, to, locus,
-//                                    nACGs, threshold);
-//
-//                    for (ACGCladeSystem.ConversionSummary conversionSummary
-//                            : conversionSummaries) {
-//
-//
-//                        Conversion conv = new Conversion();
-//                        conv.setLocus(locus);
-//                        conv.setNode1(acg.getNode(fromNr));
-//                        conv.setNode2(acg.getNode(toNr));
-//
-//                        double posteriorSupport = conversionSummary.nIncludedACGs /(double)nACGs;
-//
-//                        double[] height1s = new double[conversionSummary.summarizedConvCount()];
-//                        double[] height2s = new double[conversionSummary.summarizedConvCount()];
-//                        double[] startSites = new double[conversionSummary.summarizedConvCount()];
-//                        double[] endSites = new double[conversionSummary.summarizedConvCount()];
-//                        for (int i=0; i<conversionSummary.summarizedConvCount(); i++) {
-//                            height1s[i] = conversionSummary.height1s.get(i);
-//                            height2s[i] = conversionSummary.height2s.get(i);
-//                            startSites[i] = conversionSummary.startSites.get(i);
-//                            endSites[i] = conversionSummary.ends.get(i);
-//                        }
-//
-//                        if (summaryStrategy == SummaryStrategy.MEAN) {
-//                            conv.setHeight1(DiscreteStatistics.mean(height1s));
-//                            conv.setHeight2(DiscreteStatistics.mean(height2s));
-//                            conv.setStartSite((int)Math.round(DiscreteStatistics.mean(startSites)));
-//                            conv.setEndSite((int) Math.round(DiscreteStatistics.mean(endSites)));
-//                        } else {
-//                            conv.setHeight1(DiscreteStatistics.median(height1s));
-//                            conv.setHeight2(DiscreteStatistics.median(height2s));
-//                            conv.setStartSite((int)Math.round(DiscreteStatistics.median(startSites)));
-//                            conv.setEndSite((int) Math.round(DiscreteStatistics.median(endSites)));
-//                        }
-//
-//                        Arrays.sort(height1s);
-//                        double minHeight1HPD = height1s[(int)(0.025 * height1s.length)];
-//                        double maxHeight1HPD = height1s[(int)(0.975 * height1s.length)];
-//
-//                        Arrays.sort(height2s);
-//                        double minHeight2HPD = height2s[(int)(0.025 * height2s.length)];
-//                        double maxHeight2HPD = height2s[(int)(0.975 * height2s.length)];
-//
-//                        Arrays.sort(startSites);
-//                        int minStartHPD = (int)startSites[(int)(0.025 * startSites.length)];
-//                        int maxStartHPD = (int)startSites[(int)(0.975 * startSites.length)];
-//
-//                        Arrays.sort(endSites);
-//                        int minEndHPD = (int)endSites[(int)(0.025 * endSites.length)];
-//                        int maxEndHPD = (int)endSites[(int)(0.975 * endSites.length)];
-//
-//                        conv.newickMetaDataBottom = "height_95%_HPD={" + minHeight1HPD + "," + maxHeight1HPD + "}";
-//                        conv.newickMetaDataMiddle = "posterior=" + posteriorSupport +
-//                                ", startSite_95%_HPD={" + minStartHPD + "," + maxStartHPD + "}" +
-//                                ", endSite_95%_HPD={" + minEndHPD + "," + maxEndHPD + "}";
-//                        conv.newickMetaDataTop = "height_95%_HPD={" + minHeight2HPD + "," + maxHeight2HPD + "}";
-//
-//                        acg.addConversion(conv);
-//                    }
-//                }
-//
-//            }
-//        }
-//    }
-//
+    }      
+ 
     /**
      * Use a GUI to retrieve ACGAnnotator options.
      *
@@ -444,10 +249,10 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
 
         JLabel logFileLabel = new JLabel("Reassortment Network log file:");
         JLabel outFileLabel = new JLabel("Output file:");
+        JLabel targetFileLabel = new JLabel("Target file:");
         JLabel burninLabel = new JLabel("Burn-in percentage:");
         JLabel summaryMethodLabel = new JLabel("Position summary method:");
-        JLabel thresholdLabel = new JLabel("Posterior conversion support threshold:");
-        JCheckBox geneFlowCheckBox = new JCheckBox("Record gene flow");
+        JLabel removeSegmentLabel = new JLabel("Removes segments from the summary:");
 
         JTextField inFilename = new JTextField(20);
         inFilename.setEditable(false);
@@ -457,12 +262,10 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         outFilename.setText(options.outFile.getName());
         outFilename.setEditable(false);
         JButton outFileButton = new JButton("Choose File");
-
-        JTextField gfOutFilename = new JTextField(20);
-        gfOutFilename.setEditable(false);
-        gfOutFilename.setEnabled(false);
-        JButton gfOutFileButton = new JButton("Choose File");
-        gfOutFileButton.setEnabled(false);
+        
+        JTextField targetFilename = new JTextField(20);
+        targetFilename.setEditable(false);
+        JButton targetFileButton = new JButton("Choose File");
 
         JSlider burninSlider = new JSlider(JSlider.HORIZONTAL,
                 0, 100, (int)(options.burninPercentage));
@@ -471,16 +274,13 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         burninSlider.setPaintTicks(true);
         burninSlider.setPaintLabels(true);
         burninSlider.setSnapToTicks(true);
+        
+        JTextField removeSegments = new JTextField(20);
+        removeSegments.setText("none");
+        removeSegments.setEditable(true);
+
 
         JComboBox<SummaryStrategy> heightMethodCombo = new JComboBox<>(SummaryStrategy.values());
-
-        JSlider thresholdSlider = new JSlider(JSlider.HORIZONTAL,
-                0, 100, (int)(options.convSupportThresh));
-        thresholdSlider.setMajorTickSpacing(50);
-        thresholdSlider.setMinorTickSpacing(10);
-        thresholdSlider.setPaintTicks(true);
-        thresholdSlider.setPaintLabels(true);
-        thresholdSlider.setSnapToTicks(true);
 
         Container cp = dialog.getContentPane();
         BoxLayout boxLayout = new BoxLayout(cp, BoxLayout.PAGE_AXIS);
@@ -497,21 +297,21 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
                 .addGroup(layout.createParallelGroup()
                         .addComponent(logFileLabel)
                         .addComponent(outFileLabel)
+                        .addComponent(targetFileLabel)
                         .addComponent(burninLabel)
                         .addComponent(summaryMethodLabel)
-                        .addComponent(thresholdLabel)
-                        .addComponent(geneFlowCheckBox))
+                        .addComponent(removeSegmentLabel))
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
                         .addComponent(inFilename)
                         .addComponent(outFilename)
+                        .addComponent(targetFilename)
                         .addComponent(burninSlider)
                         .addComponent(heightMethodCombo)
-                        .addComponent(thresholdSlider)
-                        .addComponent(gfOutFilename))
+                        .addComponent(removeSegments))
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
                         .addComponent(inFileButton)
                         .addComponent(outFileButton)
-                        .addComponent(gfOutFileButton)));
+                        .addComponent(targetFileButton)));
 
         layout.setVerticalGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup()
@@ -529,6 +329,13 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
                                 GroupLayout.PREFERRED_SIZE)
                         .addComponent(outFileButton))
                 .addGroup(layout.createParallelGroup()
+                        .addComponent(targetFileLabel)
+                        .addComponent(targetFilename,
+                                GroupLayout.PREFERRED_SIZE,
+                                GroupLayout.DEFAULT_SIZE,
+                                GroupLayout.PREFERRED_SIZE)
+                        .addComponent(targetFileButton))
+                .addGroup(layout.createParallelGroup()
                         .addComponent(burninLabel)
                         .addComponent(burninSlider,
                                 GroupLayout.PREFERRED_SIZE,
@@ -541,15 +348,11 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
                                 GroupLayout.DEFAULT_SIZE,
                                 GroupLayout.PREFERRED_SIZE))
                 .addGroup(layout.createParallelGroup()
-                        .addComponent(thresholdLabel)
-                        .addComponent(thresholdSlider,
+                        .addComponent(removeSegmentLabel)
+                        .addComponent(removeSegments,
                                 GroupLayout.PREFERRED_SIZE,
                                 GroupLayout.DEFAULT_SIZE,
-                                GroupLayout.PREFERRED_SIZE))
-                .addGroup(layout.createParallelGroup()
-                        .addComponent(geneFlowCheckBox)
-                        .addComponent(gfOutFilename)
-                        .addComponent(gfOutFileButton)));
+                                GroupLayout.PREFERRED_SIZE)));
 
         mainPanel.setBorder(new EtchedBorder());
         cp.add(mainPanel);
@@ -559,8 +362,13 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         JButton runButton = new JButton("Analyze");
         runButton.addActionListener((e) -> {
             options.burninPercentage = burninSlider.getValue();
-            options.convSupportThresh = thresholdSlider.getValue();
             options.summaryStrategy = (SummaryStrategy)heightMethodCombo.getSelectedItem();
+            if (!removeSegments.getText().contains("none")){
+            	String[] splitstr = removeSegments.getText().split("");
+            	options.removeSegments = new int[splitstr.length];
+            	for (int i = 0; i < splitstr.length; i++)
+            		options.removeSegments[i] = Integer.parseInt(splitstr[i]);
+            }
             dialog.setVisible(false);
         });
         runButton.setEnabled(false);
@@ -603,28 +411,24 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
                 outFilename.setText(outFileChooser.getSelectedFile().getName());
             }
         });
-
-        geneFlowCheckBox.addActionListener(e -> {
-            boolean newValue = geneFlowCheckBox.isSelected();
-            gfOutFilename.setEnabled(newValue);
-            gfOutFileButton.setEnabled(newValue);
-        });
-
-        JFileChooser gfOutFileChooser = new JFileChooser();
-        gfOutFileButton.addActionListener(e -> {
-            gfOutFileChooser.setDialogTitle("Select gene flow output file name.");
+        
+        JFileChooser targetFileChooser = new JFileChooser();
+        targetFileButton.addActionListener(e -> {
+            targetFileChooser.setDialogTitle("Select output file name.");
             if (options.inFile != null)
-                gfOutFileChooser.setCurrentDirectory(options.inFile);
+            	targetFileChooser.setCurrentDirectory(options.inFile);
             else
-                gfOutFileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+            	targetFileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
 
-            int returnVal = gfOutFileChooser.showOpenDialog(dialog);
+            targetFileChooser.setSelectedFile(options.outFile);
+            int returnVal = targetFileChooser.showOpenDialog(dialog);
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-                gfOutFilename.setText(gfOutFileChooser.getSelectedFile().getName());
+                options.targetFile = targetFileChooser.getSelectedFile();
+                outFilename.setText(targetFileChooser.getSelectedFile().getName());
             }
         });
-
+             			
         cp.add(buttonPanel);
 
         dialog.pack();
@@ -641,7 +445,7 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
     private static void setupGUIOutput() {
 
         JFrame frame = new JFrame();
-        frame.setTitle("ACGAnnotator");
+        frame.setTitle("Reassortment Network Annotator");
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         JTextArea textArea = new JTextArea(25, 80);
@@ -767,21 +571,6 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
                     }
 
                     printUsageAndError("-positions must be followed by either 'MEAN' or 'MEDIAN'.");
-
-                case "-threshold":
-                    if (args.length<=i+1) {
-                        printUsageAndError("-threshold must be followed by a number.");
-                    }
-
-                    try {
-                        options.convSupportThresh =
-                                Double.parseDouble(args[i + 1]);
-                    } catch (NumberFormatException e) {
-                        printUsageAndError("Threshold must be a number between 0 and 100.");
-                    }
-
-                    i += 1;
-                    break;
 
                 case "-removeSegments":
                     if (args.length<=i+1) {

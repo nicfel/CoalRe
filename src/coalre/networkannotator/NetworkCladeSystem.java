@@ -650,12 +650,14 @@ public class NetworkCladeSystem {
 	            		for (int i = 0; i < height.size(); i++)
 	            			heightarray[i] = height.get(i);
 	            		
-	            		if (heightarray.length>0){
-							if (useMean){
-								node.setHeight(DiscreteStatistics.mean(heightarray));
-							}else{
-							    node.setHeight(DiscreteStatistics.median(heightarray));
-							}
+	            		if(!onTarget){
+		            		if (heightarray.length>0){
+								if (useMean){
+									node.setHeight(DiscreteStatistics.mean(heightarray));
+								}else{
+								    node.setHeight(DiscreteStatistics.median(heightarray));
+								}
+		            		}
 	            		}
 	
 	            		double minHPD,maxHPD;
@@ -666,8 +668,7 @@ public class NetworkCladeSystem {
 	            		}else{
 	            			minHPD = node.getHeight();
 	            			maxHPD = node.getHeight();
-	            		}
-	            		
+	            		}	            		
 	            		
 	            		if (targetHeight!=null){
 	            			node.setMetaData(",posterior=" + posterior +
@@ -759,13 +760,15 @@ public class NetworkCladeSystem {
 	            		double[] heightarray = new double[height.size()];
 	            		for (int i = 0; i < height.size(); i++)
 	            			heightarray[i] = height.get(i);
-	            		
-	            		if (heightarray.length>0){
-							if (useMean){
-								node.setHeight(DiscreteStatistics.mean(heightarray));
-							}else{
-							    node.setHeight(DiscreteStatistics.median(heightarray));
-							}
+	            			            		
+	            		if(!onTarget){
+		            		if (heightarray.length>0){
+								if (useMean){
+									node.setHeight(DiscreteStatistics.mean(heightarray));
+								}else{
+								    node.setHeight(DiscreteStatistics.median(heightarray));
+								}
+		            		}
 	            		}
 	
 	            		double minHPD,maxHPD;
