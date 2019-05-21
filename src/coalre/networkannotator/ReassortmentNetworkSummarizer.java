@@ -106,22 +106,12 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
 	        		first = false;
 	        	}
 	
-	        	// remove all parts of the network that aren't informed by the genetic data
-	        	removeNonGeneticSegmentEdges(network);
-	        	for (int i = 0; i < options.removeSegments.length; i++)
-	        		removeSegment(network, options.removeSegments[i]);
-	
-	        	// remove all loops
-	        	removeLoops(network);
-	
-	        	// remove all empty edges in the segment
-	        	removeEmptyNetworkEdge(network); 
+	        	pruneNetwork(network, options.removeSegments);
 	
 	        	cladeSystem.add(network, true); 
 	        }
 	        
 	        System.out.println("\nComputing CF clade credibilities...");
-	        
 	        // calculate the network clade credibilities
 	        cladeSystem.calculateCladeCredibilities(logReader.getCorrectedNetworkCount());
 	        
@@ -130,18 +120,7 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
 	        double bestScore = Double.NEGATIVE_INFINITY;
 	
 	        for (Network network : logReader ) {
-	        	// remove all parts of the network that aren't informed by the genetic data
-	        	removeNonGeneticSegmentEdges(network);
-	        	for (int i = 0; i < options.removeSegments.length; i++)
-	        		removeSegment(network, options.removeSegments[i]);
-	
-	        	// remove all loops
-	        	removeLoops(network);
-	
-	        	// remove all empty edges in the segment
-	        	removeEmptyNetworkEdge(network);  
-	
-	
+	        	pruneNetwork(network, options.removeSegments);	
 	        	double score = cladeSystem.getLogCladeCredibility(network);
 	        	if (score>bestScore) {
 	        		bestNetwork = network;
@@ -154,16 +133,7 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
             ReassortmentLogReader targetLogReader = new ReassortmentLogReader(options.targetFile, 0.0);
             int c= 0;
 	        for (Network network : targetLogReader ) {
-	        	removeNonGeneticSegmentEdges(network);
-	        	for (int i = 0; i < options.removeSegments.length; i++)
-	        		removeSegment(network, options.removeSegments[i]);
-	
-	        	// remove all loops
-	        	removeLoops(network);
-	
-	        	// remove all empty edges in the segment
-	        	removeEmptyNetworkEdge(network);  
-
+	        	pruneNetwork(network, options.removeSegments);
 	        	bestNetwork = network;
 	        	c++;
 	        }
@@ -194,16 +164,7 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         // print the network to file
         System.out.println("\nCollect Atributes...");
         for (Network network : logReader ) {
-        	// remove all parts of the network that aren't informed by the genetic data
-        	removeNonGeneticSegmentEdges(network);
-        	for (int i = 0; i < options.removeSegments.length; i++)
-        		removeSegment(network, options.removeSegments[i]);
-
-        	// remove all loops
-        	removeLoops(network);
-        	// remove all empty edges in the segment
-        	removeEmptyNetworkEdge(network);        
-
+        	pruneNetwork(network, options.removeSegments);
     		bestCladeSystem.collectAttributes(network, attributeNames, true);
     	}
         

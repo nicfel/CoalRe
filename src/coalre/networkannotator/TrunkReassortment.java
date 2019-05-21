@@ -96,16 +96,7 @@ public class TrunkReassortment extends ReassortmentAnnotator {
         // compute the pairwise reassortment distances 
         try (PrintStream ps = new PrintStream(options.outFile)) {
 	        for (Network network : logReader){	        	
-	        	// remove all parts of the network that aren't informed by the genetic data
-	        	removeNonGeneticSegmentEdges(network);
-	        	// remove all loops
-	        	removeLoops(network);
-	        	// remove segment from network if this is specified
-	        	for (int i = 0; i < options.removeSegments.length; i++)
-	        		removeSegment(network, options.removeSegments[i]);
-	        	// remove all empty edges in the segment
-	        	removeEmptyNetworkEdge(network);	        	
-        	
+	        	pruneNetwork(network, options.removeSegments);
 	        	if (options.trunkDefinition == TrunkDefinition.MostRecentSample)
 	        		computeTrunkReassortment(network, ps);
 	        	else

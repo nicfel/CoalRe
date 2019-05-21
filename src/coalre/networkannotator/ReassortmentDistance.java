@@ -83,7 +83,6 @@ public class ReassortmentDistance extends ReassortmentAnnotator {
         System.out.println(options + "\n");
 
         // Initialise reader
-
         ReassortmentLogReader logReader = new ReassortmentLogReader(options.inFile,
                 options.burninPercentage);
 
@@ -99,16 +98,7 @@ public class ReassortmentDistance extends ReassortmentAnnotator {
         // compute the pairwise reassortment distances 
         try (PrintStream ps = new PrintStream(options.outFile)) {
 	        for (Network network : logReader){
-            	// remove all parts of the network that aren't informed by the genetic data
-            	removeNonGeneticSegmentEdges(network);
-            	for (int i = 0; i < options.removeSegments.length; i++)
-            		removeSegment(network, options.removeSegments[i]);
-
-            	// remove all loops
-            	removeLoops(network);
-            	// remove all empty edges in the segment
-            	removeEmptyNetworkEdge(network);        
-	        	
+	        	pruneNetwork(network, options.removeSegments);
 	        	computeReassortmenDistance(network, ps, options.minTipDistance);
 	        	ps.print("\n"); 
 	        }
@@ -126,6 +116,7 @@ public class ReassortmentDistance extends ReassortmentAnnotator {
         
 		allTrunkNodes = new ArrayList<>();
 		leaveDistance = new ArrayList<>();
+		
 		// get all leave edges
         List<NetworkEdge> leaveEdges = network.getEdges().stream()
                 .filter(e -> e.isLeafEdge())
@@ -155,13 +146,10 @@ public class ReassortmentDistance extends ReassortmentAnnotator {
         	BitSet segmentsLeft = node.getParentEdges().get(0).hasSegments;
         	BitSet segmentsRight = node.getParentEdges().get(1).hasSegments;  
         	
-        	
-        	       	
         	// Get the common ancestor between each pair of segments that was split in the reassortment event
         	ps.print("\t");
         	
         	ps.print(isTrunk + ":" + segmentsLeft.toString().replace(",", " ") + ":" + segmentsRight.toString().replace(",", " ") + ",");
-        	
         	
         	boolean isFirst = true; 
         	for (int i = 0; i < segmentsLeft.size(); i++){
@@ -197,7 +185,6 @@ public class ReassortmentDistance extends ReassortmentAnnotator {
         					isFirst = false;
         				else
         					ps.print(",");
-        				
         				
         				if (mrcaHeight==-1.0){
         					throw new IllegalArgumentException("common ancestor height not found, shouldn't happen");
