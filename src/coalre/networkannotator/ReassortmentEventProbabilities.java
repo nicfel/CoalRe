@@ -98,16 +98,7 @@ public class ReassortmentEventProbabilities extends ReassortmentAnnotator {
         		first = false;
         	}
 
-        	// remove all parts of the network that aren't informed by the genetic data
-        	removeNonGeneticSegmentEdges(network);
-        	for (int i = 0; i < options.removeSegments.length; i++)
-        		removeSegment(network, options.removeSegments[i]);
-
-        	// remove all loops
-        	removeLoops(network);
-
-        	// remove all empty edges in the segment
-        	removeEmptyNetworkEdge(network); 
+        	pruneNetwork(network, options.removeSegments);
 
         	cladeSystem.add(network, true, attributeNames); 
         }

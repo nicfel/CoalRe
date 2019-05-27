@@ -17,27 +17,10 @@
 
 package coalre.networkannotator;
 
-import beast.app.treeannotator.CladeSystem;
-import beast.app.util.Utils;
-import beast.core.util.Log;
-import beast.evolution.tree.Tree;
-import beast.math.statistic.DiscreteStatistics;
 import beast.util.Randomizer;
-import coalre.distribution.NetworkIntervals;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
-import coalre.network.SegmentTreeInitializer;
-
-import javax.swing.*;
-import javax.swing.border.EtchedBorder;
-import javax.swing.plaf.synth.SynthSeparatorUI;
-
-import com.sun.org.apache.xerces.internal.util.SynchronizedSymbolTable;
-
-import java.awt.*;
-import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,12 +31,34 @@ import java.util.stream.Collectors;
  */
 public class ReassortmentAnnotator {
 
+	/**
+	 * performs all the removing things steps
+	 * @param network
+	 * @param segmentToRemove
+	 */
+	void pruneNetwork(Network network, int[] segmentToRemove){
+    	// remove all parts of the network that aren't informed by the genetic data
+    	removeNonGeneticSegmentEdges(network);
+    	for (int i = 0; i < segmentToRemove.length; i++)
+    		removeSegment(network, segmentToRemove[i]);
+
+    	// remove all loops
+    	removeLoops(network);
+    	// remove all empty edges in the segment
+    	removeEmptyNetworkEdge(network);      
+    	// remove all loops
+    	removeLoops(network);
+
+    	// remove all empty edges in the segment
+    	removeEmptyNetworkEdge(network);  
+	}
+	
     /**
      * removes segments from network edges for which there is no
      * genetic information, i.e. segment that are above the segment tree root.
      * @param network
      */
-    void removeNonGeneticSegmentEdges(Network network){
+    private void removeNonGeneticSegmentEdges(Network network){
     	// remove segments from edges if they are "above" the segment tree root
     	for (int i = 0; i < network.getSegmentCount(); i++){
     		removeSegmentFromEdge(network.getRootEdge(), i);
@@ -66,7 +71,7 @@ public class ReassortmentAnnotator {
      * @param edge
      * @param segIdx
      */
-    void removeSegmentFromEdge(NetworkEdge edge, int segIdx){
+    private void removeSegmentFromEdge(NetworkEdge edge, int segIdx){
     	// remove the segment from the edge
     	edge.hasSegments.set(segIdx, false);
     	
@@ -102,7 +107,7 @@ public class ReassortmentAnnotator {
      * removes all reticulation edges that start and end at the same place
      * @param network
      */
-    void removeLoops(Network network){
+    private void removeLoops(Network network){
     	List<NetworkNode> reticulationNodes = network.getNodes().stream()
                 .filter(e -> e.isReassortment())
                 .filter(e -> e.getParentEdges().get(0).parentNode.equals(e.getParentEdges().get(1).parentNode))
@@ -134,7 +139,7 @@ public class ReassortmentAnnotator {
      * @param network
      * @param segIdx
      */
-    void removeSegment(Network network, int segIdx){
+    private void removeSegment(Network network, int segIdx){
     	// get all networkNodes
     	Set<NetworkEdge> networkEdges  = network.getEdges();
     	
@@ -148,7 +153,7 @@ public class ReassortmentAnnotator {
      * removes all edges from the network that don't carry any segments
      * @param network
      */
-    void removeEmptyNetworkEdge(Network network){
+    private void removeEmptyNetworkEdge(Network network){
         List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
 
         List<NetworkEdge> removableEdges = networkEdges.stream()
@@ -175,7 +180,7 @@ public class ReassortmentAnnotator {
 
     }    
 
-    void removeEmptyReassortmentEdge(Network network, NetworkEdge edgeToRemove) {
+    private void removeEmptyReassortmentEdge(Network network, NetworkEdge edgeToRemove) {
 
         NetworkNode nodeToRemove = edgeToRemove.childNode;
         NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
