@@ -24,7 +24,7 @@ public abstract class NetworkOperator extends Operator {
             "Segment tree associated with network.",
             new ArrayList<>());
 
-    Network network;
+    protected Network network;
     List<Tree> segmentTrees;
 
     @Override
