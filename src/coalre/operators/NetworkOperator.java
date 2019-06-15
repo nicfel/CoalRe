@@ -94,7 +94,7 @@ public abstract class NetworkOperator extends Operator {
     }
 
     /**
-     * Chooses a number of segments form a subset of the provided source segments.
+     * Chooses a number of segments from a subset of the provided source segments.
      * A first segment is chosen uniformly at random will definitely be included in the subset.
      * Another segment chosen uniformly at random will not be included in the subset.
      * Each of the remaining segments are included in the subset with probability 0.5.

@@ -660,7 +660,7 @@ public class NetworkCladeSystem {
         return bits;
     }
     
-   private void summarizeAttributesForClade(BitSet[] bits, NetworkNode node, 
+    private void summarizeAttributesForClade(BitSet[] bits, NetworkNode node, 
     		Set<String> attributeNames, boolean useMean, int nrNetworks, int nrSegments, boolean onTarget) {
 
 		BitSet[] newBits = new BitSet[nrSegments];
@@ -820,9 +820,7 @@ public class NetworkCladeSystem {
         }
     	
     }
-    
-
-    
+        
     private void summarizeAttributesForReassortmentClade(BitSet[] bits, NetworkNode node, 
     		Set<String> attributeNames, boolean useMean, int nrNetworks, int nrSegments, boolean onTarget) {
     	
@@ -932,14 +930,6 @@ public class NetworkCladeSystem {
     	
     }
     
-
-//    private Object getBranchLength(NetworkNode node) {
-//        if (node.getParentEdges.get(0).isRoot()) {
-//            return 0;
-//        }
-//        return node.getParent().getHeight() - node.getHeight();
-//    }
-
     public void calculateCladeCredibilities(int totalTreesUsed) {
         for (ReassortmentClade clade : cladeMap.values()) {	        	
             if (clade.getCount() > totalTreesUsed) {
@@ -967,8 +957,7 @@ public class NetworkCladeSystem {
 
     	
     }
-    
-    
+        
     public double getLogCladeCredibility(Network network){
     	newCoalescentCladeMap = new ArrayList<>();
 		newReassortmentCladeMap = new ArrayList<>();
@@ -1009,8 +998,7 @@ public class NetworkCladeSystem {
     		}
     	}    	
     	
-    	for (int i = 0; i < nodeHeights.size(); i++){    		
-    		
+    	for (int i = 0; i < nodeHeights.size(); i++){   		
     		// make a bit set array that is empty if a segment goes left
     		BitSet[] bits = new BitSet[nrSegments];
     		for (int j = 0; j < nrSegments; j++){
@@ -1027,8 +1015,9 @@ public class NetworkCladeSystem {
             } else {
             	logCladeCredibility += Math.log(clade.getCredibility())*clade.getNotNull();
             }   
-    	}           	
-
+    	} 
+    	
+    	
         return logCladeCredibility;
     }
     
@@ -1038,8 +1027,7 @@ public class NetworkCladeSystem {
     protected int getTaxonIndex(NetworkNode leaf){
     	return leafNodeMap.indexOf(leaf.getTaxonLabel());
     }
-    
-    
+        
     /**
      * clade needed to temporarily store reassortment clades before putting them all together
      *
@@ -1082,7 +1070,6 @@ public class NetworkCladeSystem {
         boolean isLeft;
         List<Object[]> attributeValues = null;
     }
-
 
     public class ReassortmentClade {
         public ReassortmentClade(BitSet[] bits) {
@@ -1154,8 +1141,7 @@ public class NetworkCladeSystem {
         int[] split;
         List<Object[]> attributeValues = null;
     }
-    
-    
+        
     public class BitSetArray {
         public BitSetArray(BitSet[] bits) {
             this.bits = Arrays.copyOf(bits, bits.length);

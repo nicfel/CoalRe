@@ -38,7 +38,7 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
     }
 
     @Override
-    final public double proposal() {
+    public double proposal() {
        
         double logHR = 0.0;   
         

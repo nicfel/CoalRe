@@ -12,6 +12,21 @@ import java.util.stream.Collectors;
 
 public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 
+    public double proposal() {
+//      count += 1;
+//
+//      System.out.println("count = " + count);
+
+      double logHR = networkProposal();
+
+      if (logHR>Double.NEGATIVE_INFINITY) {
+          for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
+              network.updateSegmentTree(segmentTrees.get(segIdx), segIdx);
+      }
+
+      return logHR;
+  }
+
     @Override
     public double networkProposal() {
         double logHR = 0.0;
@@ -28,11 +43,15 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 
         NetworkEdge sourceEdge = sourceEdges.get(Randomizer.nextInt(sourceEdges.size()));
         NetworkEdge destEdge = getSpouseEdge(sourceEdge);
-
+        
         BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
         logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
+               
+//        if (segsToDivert.cardinality()==sourceEdge.hasSegments.cardinality())
+//        	return Double.NEGATIVE_INFINITY;
 
         network.startEditing(this);
+        
 
         logHR -= addSegmentsToAncestors(destEdge, segsToDivert);
         logHR += removeSegmentsFromAncestors(sourceEdge, segsToDivert);
@@ -41,7 +60,7 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 
         int reverseSourceEdgeCount = (int)(network.getEdges().stream()
                 .filter(e -> e.childNode.isReassortment())
-                .filter(e -> e.hasSegments.cardinality()>1)
+                .filter(e -> e.hasSegments.cardinality()>0)
                 .count());
 
         logHR += Math.log(1.0/reverseSourceEdgeCount);
@@ -134,5 +153,28 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 
         return logP;
     }
+    
+    protected BitSet getRandomUnconditionedSubset(BitSet sourceSegments) {
+        BitSet destSegments = new BitSet();
+
+        do {
+            destSegments.clear();
+
+            for (int segIdx = sourceSegments.nextSetBit(0); segIdx != -1;
+                 segIdx = sourceSegments.nextSetBit(segIdx + 1)) {
+
+                if (Randomizer.nextBoolean())
+                    destSegments.set(segIdx);
+            }
+
+        } while (destSegments.cardinality() == 0);
+
+        return destSegments;
+    }
+
+    protected double getLogUnconditionedSubsetProb(BitSet sourceSegments) {
+        return sourceSegments.cardinality()*Math.log(0.5);
+    }
+
 
 }
