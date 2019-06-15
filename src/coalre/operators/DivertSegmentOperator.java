@@ -60,7 +60,7 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 
         int reverseSourceEdgeCount = (int)(network.getEdges().stream()
                 .filter(e -> e.childNode.isReassortment())
-                .filter(e -> e.hasSegments.cardinality()>0)
+                .filter(e -> e.hasSegments.cardinality()>1)
                 .count());
 
         logHR += Math.log(1.0/reverseSourceEdgeCount);
