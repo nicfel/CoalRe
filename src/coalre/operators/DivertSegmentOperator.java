@@ -12,28 +12,15 @@ import java.util.stream.Collectors;
 
 public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 
-    public double proposal() {
-//      count += 1;
-//
-//      System.out.println("count = " + count);
-
-      double logHR = networkProposal();
-
-      if (logHR>Double.NEGATIVE_INFINITY) {
-          for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
-              network.updateSegmentTree(segmentTrees.get(segIdx), segIdx);
-      }
-
-      return logHR;
-  }
-
     @Override
     public double networkProposal() {
         double logHR = 0.0;
 
+//        System.out.println(network.getExtendedNewick());
+
         List<NetworkEdge> sourceEdges = network.getEdges().stream()
                 .filter(e -> e.childNode.isReassortment())
-                .filter(e -> e.hasSegments.cardinality()>1)
+                .filter(e -> e.hasSegments.cardinality()>0)
                 .collect(Collectors.toList());
 
         if (sourceEdges.isEmpty())
@@ -44,11 +31,18 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
         NetworkEdge sourceEdge = sourceEdges.get(Randomizer.nextInt(sourceEdges.size()));
         NetworkEdge destEdge = getSpouseEdge(sourceEdge);
         
-        BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
-        logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
-               
-//        if (segsToDivert.cardinality()==sourceEdge.hasSegments.cardinality())
+//        if (sourceEdge.hasSegments.cardinality()==0)
 //        	return Double.NEGATIVE_INFINITY;
+        
+        BitSet segsToDivert = getRandomUnconditionedSubset(sourceEdge.hasSegments);
+        logHR -= getLogUnconditionedSubsetProb(sourceEdge.hasSegments);
+
+//        System.out.println(sourceEdge.hasSegments);
+//        System.out.println(segsToDivert);
+//        System.exit(0);
+        
+        if (segsToDivert.cardinality()==0)
+        	return Double.NEGATIVE_INFINITY;
 
         network.startEditing(this);
         
@@ -56,15 +50,17 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
         logHR -= addSegmentsToAncestors(destEdge, segsToDivert);
         logHR += removeSegmentsFromAncestors(sourceEdge, segsToDivert);
 
-        logHR += getLogConditionedSubsetProb(destEdge.hasSegments);
+        logHR += getLogUnconditionedSubsetProb(destEdge.hasSegments);
 
         int reverseSourceEdgeCount = (int)(network.getEdges().stream()
                 .filter(e -> e.childNode.isReassortment())
-                .filter(e -> e.hasSegments.cardinality()>1)
+                .filter(e -> e.hasSegments.cardinality()>0)
                 .count());
 
         logHR += Math.log(1.0/reverseSourceEdgeCount);
 
+//        System.out.println(network.getExtendedNewick());
+//        System.exit(0);
         return logHR;
     }
 
@@ -157,17 +153,14 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
     protected BitSet getRandomUnconditionedSubset(BitSet sourceSegments) {
         BitSet destSegments = new BitSet();
 
-        do {
-            destSegments.clear();
+        destSegments.clear();
 
-            for (int segIdx = sourceSegments.nextSetBit(0); segIdx != -1;
-                 segIdx = sourceSegments.nextSetBit(segIdx + 1)) {
+        for (int segIdx = sourceSegments.nextSetBit(0); segIdx != -1;
+             segIdx = sourceSegments.nextSetBit(segIdx + 1)) {
 
-                if (Randomizer.nextBoolean())
-                    destSegments.set(segIdx);
-            }
-
-        } while (destSegments.cardinality() == 0);
+            if (Randomizer.nextBoolean())
+                destSegments.set(segIdx);
+        }
 
         return destSegments;
     }
