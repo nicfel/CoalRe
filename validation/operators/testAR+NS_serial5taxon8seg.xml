@@ -64,7 +64,7 @@
             <log idref="network"/>
         </logger>
 
-        <logger spec="Logger" logEvery="100" fileName="$(filebase).log">
+        <logger spec="Logger" logEvery="10000" fileName="$(filebase).log">
             <log spec="NetworkStatsLogger" network="@network"/>
         </logger>
 

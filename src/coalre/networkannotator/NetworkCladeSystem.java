@@ -586,14 +586,23 @@ public class NetworkCladeSystem {
 		for (int i=0;i<network.getSegmentCount();i++)followSegment[i] = false;
 		
 		followSegmentAlready = Arrays.copyOf(followSegment, followSegment.length);
-
+		
+		//
+		Map<NetworkNode, BitSet[]> passedBitSet = new HashMap<>();
+		
+		
     	// summarizes all coalescent events
-    	summarizeAttributes(network.getRootEdge().childNode, attributeNames, useMean, nrNetworks, network.getSegmentCount(), followSegment, onTarget);    	
+    	summarizeAttributes(network.getRootEdge().childNode, attributeNames, useMean, nrNetworks, network.getSegmentCount(), followSegment, onTarget, passedBitSet);    	
     }
     
     private BitSet[] summarizeAttributes(NetworkNode node, Set<String> attributeNames, boolean useMean, 
-    		int nrNetworks, int nrSegments, boolean[] followSegment_in, boolean onTarget) {
+    		int nrNetworks, int nrSegments, boolean[] followSegment_in, boolean onTarget, Map<NetworkNode, BitSet[]> passedBitSet) {
 
+		// check if the node was already passed
+    	if (passedBitSet.get(node)!=null)
+    		return passedBitSet.get(node);
+
+    	
         BitSet[] bits = new BitSet[nrSegments];
         for (int i = 0; i < nrSegments; i++) bits[i] = new BitSet();
         
@@ -630,32 +639,28 @@ public class NetworkCladeSystem {
             // add all children to the bitset
             for (NetworkEdge childEdge : childEdges){
 				boolean[] followSegmentout = Arrays.copyOf(followSegment, followSegment.length);
-				boolean continuePath = false;
+
 				for (int i = 0; i < nrSegments;i++){
 					if (!childEdge.hasSegments.get(i)){
 						followSegmentout[i] = false;
 					}
-//					if (followSegmentout[i])
-						continuePath = true;
-//					if (!followSegmentout[i] && !followSegmentAlready[i])
-//						continuePath = true;
-				}	
-				if (continuePath){
-					BitSet[] newBits = summarizeAttributes(childEdge.childNode, attributeNames, useMean, nrNetworks, nrSegments, followSegmentout, onTarget);
-	            	for (int i = 0; i < nrSegments;i++){
-		            	if (childEdge.hasSegments.get(i)){
-	            			bits[i].or(newBits[i]);	   
-		            	}
+				}				
+				
+				BitSet[] newBits = summarizeAttributes(childEdge.childNode, attributeNames, useMean, nrNetworks, nrSegments, followSegmentout, onTarget, passedBitSet);
+            	for (int i = 0; i < nrSegments;i++){
+	            	if (childEdge.hasSegments.get(i)){
+            			bits[i].or(newBits[i]);	   
 	            	}
-				}
+            	}
+            	passedBitSet.put(node, bits);
+				
             }            
             if (!node.isReassortment())
             	summarizeAttributesForClade(bits, node, attributeNames, useMean, nrNetworks, nrSegments, onTarget);   
             else{
             	summarizeAttributesForReassortmentClade(bits, node, attributeNames, useMean, nrNetworks, nrSegments, onTarget);
             }
-
-        }        
+        }  
         
         return bits;
     }

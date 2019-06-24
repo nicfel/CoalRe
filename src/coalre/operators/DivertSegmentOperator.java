@@ -16,8 +16,6 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
     public double networkProposal() {
         double logHR = 0.0;
 
-//        System.out.println(network.getExtendedNewick());
-
         List<NetworkEdge> sourceEdges = network.getEdges().stream()
                 .filter(e -> e.childNode.isReassortment())
                 .filter(e -> e.hasSegments.cardinality()>0)
@@ -31,15 +29,8 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
         NetworkEdge sourceEdge = sourceEdges.get(Randomizer.nextInt(sourceEdges.size()));
         NetworkEdge destEdge = getSpouseEdge(sourceEdge);
         
-//        if (sourceEdge.hasSegments.cardinality()==0)
-//        	return Double.NEGATIVE_INFINITY;
-        
         BitSet segsToDivert = getRandomUnconditionedSubset(sourceEdge.hasSegments);
         logHR -= getLogUnconditionedSubsetProb(sourceEdge.hasSegments);
-
-//        System.out.println(sourceEdge.hasSegments);
-//        System.out.println(segsToDivert);
-//        System.exit(0);
         
         if (segsToDivert.cardinality()==0)
         	return Double.NEGATIVE_INFINITY;
@@ -58,9 +49,6 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
                 .count());
 
         logHR += Math.log(1.0/reverseSourceEdgeCount);
-
-//        System.out.println(network.getExtendedNewick());
-//        System.exit(0);
         return logHR;
     }
 

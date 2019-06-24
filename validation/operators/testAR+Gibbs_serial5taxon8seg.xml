@@ -31,7 +31,7 @@
           <stateNode id="PB2.tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
 
             <stateNode id="network" spec="SimulatedCoalescentNetwork" nSegments="8" enableSegmentTreeUpdate="false">
-                <populationModel spec="ConstantPopulation"  id="popModel">
+                <populationModel spec="ConstantPopulation" id="popModel">
                     <popSize spec="RealParameter" value="1.0"/>
                 </populationModel>
 
@@ -74,8 +74,6 @@
         </distribution>
 
 
-
-
         <operator spec="AddRemoveReassortment" network="@network" alpha="1.0" weight="1.0">
           <segmentTree idref="HA.tree"/>
           <segmentTree idref="MP.tree"/>
@@ -87,100 +85,32 @@
           <segmentTree idref="PB2.tree"/>
         </operator>
 
-    	<operator spec="DivertSegmentOperator" network="@network" weight="1.0">
-        <segmentTree idref="HA.tree"/>
-        <segmentTree idref="MP.tree"/>
-        <segmentTree idref="NA.tree"/>
-        <segmentTree idref="NP.tree"/>
-        <segmentTree idref="NS1.tree"/>
-        <segmentTree idref="PA.tree"/>
-        <segmentTree idref="PB1.tree"/>
-        <segmentTree idref="PB2.tree"/>
-      </operator>
+        <operator id="GibbsOperatorAboveSegmentRoots" spec="GibbsOperatorAboveSegmentRoots" network="@network" weight="3.0">
+          <segmentTree idref="HA.tree"/>
+          <segmentTree idref="MP.tree"/>
+          <segmentTree idref="NA.tree"/>
+          <segmentTree idref="NP.tree"/>
+          <segmentTree idref="NS1.tree"/>
+          <segmentTree idref="PA.tree"/>
+          <segmentTree idref="PB1.tree"/>
+          <segmentTree idref="PB2.tree"/>
+          <populationModel idref="popModel"/>
+          <reassortmentRate idref="reassortmentRate"/>
+        </operator>
 
-    	<operator spec="UniformNetworkNodeHeightOperator" network="@network" weight="1.0">
-        <segmentTree idref="HA.tree"/>
-        <segmentTree idref="MP.tree"/>
-        <segmentTree idref="NA.tree"/>
-        <segmentTree idref="NP.tree"/>
-        <segmentTree idref="NS1.tree"/>
-        <segmentTree idref="PA.tree"/>
-        <segmentTree idref="PB1.tree"/>
-        <segmentTree idref="PB2.tree"/>
-      </operator>
-
-      <operator id="NetworkScale" spec="NetworkScaleOperator"
-                network="@network" weight="1.0">
-                  <segmentTree idref="HA.tree"/>
-                  <segmentTree idref="MP.tree"/>
-                  <segmentTree idref="NA.tree"/>
-                  <segmentTree idref="NP.tree"/>
-                  <segmentTree idref="NS1.tree"/>
-                  <segmentTree idref="PA.tree"/>
-                  <segmentTree idref="PB1.tree"/>
-                  <segmentTree idref="PB2.tree"/>
-                </operator>
-
-      <operator id="NetworkScaleRootOnly" spec="NetworkScaleOperator"
-                network="@network" scaleRootOnly="true" weight="1.0">
-                  <segmentTree idref="HA.tree"/>
-                  <segmentTree idref="MP.tree"/>
-                  <segmentTree idref="NA.tree"/>
-                  <segmentTree idref="NP.tree"/>
-                  <segmentTree idref="NS1.tree"/>
-                  <segmentTree idref="PA.tree"/>
-                  <segmentTree idref="PB1.tree"/>
-                  <segmentTree idref="PB2.tree"/>
-                </operator>
-
-    	<operator spec="NetworkExchange" network="@network" isNarrow="false" weight="1.0">
-        <segmentTree idref="HA.tree"/>
-        <segmentTree idref="MP.tree"/>
-        <segmentTree idref="NA.tree"/>
-        <segmentTree idref="NP.tree"/>
-        <segmentTree idref="NS1.tree"/>
-        <segmentTree idref="PA.tree"/>
-        <segmentTree idref="PB1.tree"/>
-        <segmentTree idref="PB2.tree"/>
-      </operator>
-
-    	<operator spec="NetworkExchange" network="@network" isNarrow="true" weight="1.0">
-        <segmentTree idref="HA.tree"/>
-        <segmentTree idref="MP.tree"/>
-        <segmentTree idref="NA.tree"/>
-        <segmentTree idref="NP.tree"/>
-        <segmentTree idref="NS1.tree"/>
-        <segmentTree idref="PA.tree"/>
-        <segmentTree idref="PB1.tree"/>
-        <segmentTree idref="PB2.tree"/>
-      </operator>
-
-    	<operator spec="SubNetworkSlide" network="@network" weight="1.0">
-        <segmentTree idref="HA.tree"/>
-        <segmentTree idref="MP.tree"/>
-        <segmentTree idref="NA.tree"/>
-        <segmentTree idref="NP.tree"/>
-        <segmentTree idref="NS1.tree"/>
-        <segmentTree idref="PA.tree"/>
-        <segmentTree idref="PB1.tree"/>
-        <segmentTree idref="PB2.tree"/>
-      </operator>
-
-      <operator id="GibbsOperatorAboveSegmentRoots" spec="GibbsOperatorAboveSegmentRoots" network="@network" weight="3.0">
-        <segmentTree idref="HA.tree"/>
-        <segmentTree idref="MP.tree"/>
-        <segmentTree idref="NA.tree"/>
-        <segmentTree idref="NP.tree"/>
-        <segmentTree idref="NS1.tree"/>
-        <segmentTree idref="PA.tree"/>
-        <segmentTree idref="PB1.tree"/>
-        <segmentTree idref="PB2.tree"/>
-        <populationModel idref="popModel"/>
-        <reassortmentRate idref="reassortmentRate"/>
-      </operator>
+        <!-- <operator spec="DivertSegmentOperator" network="@network" weight="10.0">
+          <segmentTree idref="HA.tree"/>
+          <segmentTree idref="MP.tree"/>
+          <segmentTree idref="NA.tree"/>
+          <segmentTree idref="NP.tree"/>
+          <segmentTree idref="NS1.tree"/>
+          <segmentTree idref="PA.tree"/>
+          <segmentTree idref="PB1.tree"/>
+          <segmentTree idref="PB2.tree"/>
+        </operator> -->
 
 
-        <logger spec="Logger" logEvery="10000" mode="tree" fileName="$(filebase).trees">
+        <logger spec="Logger" logEvery="1000" mode="tree" fileName="$(filebase).trees">
             <log idref="network"/>
         </logger>
 
