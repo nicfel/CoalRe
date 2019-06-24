@@ -75,25 +75,25 @@
 
 
             <operator id="addRemoveReassortmentCwR.alltrees" spec="coalre.operators.AddRemoveReassortment"
-                      network="@networkCwR.alltrees" alpha="1.0" weight="1.0"/>
+                      network="@networkCwR.alltrees" alpha="1.0" weight="10.0"/>
 
             <operator id="divertSegmentCwR.alltrees" spec="coalre.operators.DivertSegmentOperator"
-                      network="@networkCwR.alltrees" weight="1.0"/>
+                      network="@networkCwR.alltrees" weight="5.0"/>
 
             <operator id="uniformNetworkCwR.alltrees" spec="coalre.operators.UniformNetworkNodeHeightOperator"
-                      network="@networkCwR.alltrees" weight="1.0"/>
+                      network="@networkCwR.alltrees" weight="5.0"/>
 
             <operator id="networkWideExchangeCwR.alltrees" spec="coalre.operators.NetworkExchange"
-                      network="@networkCwR.alltrees" isNarrow="false" weight="1.0"/>
+                      network="@networkCwR.alltrees" isNarrow="false" weight="10.0"/>
 
             <operator id="networkNarrowExchangeCwR.alltrees" spec="coalre.operators.NetworkExchange"
-                      network="@networkCwR.alltrees" isNarrow="true" weight="1.0"/>
+                      network="@networkCwR.alltrees" isNarrow="true" weight="10.0"/>
 
             <operator id="subNetworkSlideCwR.alltrees" spec="coalre.operators.SubNetworkSlide"
-                      network="@networkCwR.alltrees" weight="1.0"/>
+                      network="@networkCwR.alltrees" weight="30.0"/>
 
             <operator id="networkGibbsCwR.alltrees" spec="coalre.operators.GibbsOperatorAboveSegmentRoots"
-                      network="@networkCwR.alltrees" weight="1.0">
+                      network="@networkCwR.alltrees" weight="3.0">
               <populationModel idref="constantPopSizeCwR.alltrees"/>
               <reassortmentRate idref="reassortmentRateCwR.alltrees"/>
             </operator>
@@ -208,5 +208,3 @@
 
     </mergewith>
 </beast>
-
-
