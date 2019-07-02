@@ -17,34 +17,28 @@
 
 package coalre.networkannotator;
 
-import beast.app.treeannotator.CladeSystem;
+import beast.core.util.Log;
+import coalre.network.Network;
+import coalre.network.NetworkEdge;
+import coalre.network.NetworkNode;
+
+import javax.swing.*;
+import javax.swing.border.EtchedBorder;
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.List;
+import java.util.stream.Collectors;
+
 //import bacter.Conversion;
 //import bacter.ConversionGraph;
 //import bacter.Locus;
 //import bacter.util.BacterACGLogReader;
-import beast.app.util.Utils;
-import beast.core.util.Log;
-import beast.evolution.tree.Tree;
-import beast.math.statistic.DiscreteStatistics;
-import beast.util.Randomizer;
-import coalre.distribution.NetworkIntervals;
-import coalre.network.Network;
-import coalre.network.NetworkEdge;
-import coalre.network.NetworkNode;
-import coalre.network.SegmentTreeInitializer;
-
-import javax.swing.*;
-import javax.swing.border.EtchedBorder;
-import javax.swing.plaf.synth.SynthSeparatorUI;
-
-import com.sun.org.apache.xerces.internal.util.SynchronizedSymbolTable;
-
-import java.awt.*;
-import java.io.*;
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * A rewrite of TreeAnnotator that outputs reassortment distances 

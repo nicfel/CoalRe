@@ -1,24 +1,18 @@
 package coalre.operators;
 
+import beast.core.Description;
+import beast.core.Input;
+import beast.util.Randomizer;
+import coalre.network.Network;
+import coalre.network.NetworkEdge;
+import coalre.network.NetworkNode;
+
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
-
-import com.sun.xml.internal.bind.v2.runtime.output.StAXExStreamWriterOutput;
-
-import beast.core.Description;
-import beast.core.Input;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.Tree;
-import beast.util.Randomizer;
-import coalre.network.Network;
-import coalre.network.NetworkEdge;
-import coalre.network.NetworkNode;
-import jdk.nashorn.internal.runtime.regexp.joni.Warnings;
 
 
 /**
