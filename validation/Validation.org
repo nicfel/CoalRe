@@ -1,6 +1,6 @@
 #+TITLE: Sampler Validation
 
-#+PROPERTY: header-args:R :exports both
+#+PROPERTY: header-args:R :exports both :tangle yes
 
 * Simulator validation
 
