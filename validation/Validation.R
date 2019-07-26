@@ -1,32 +1,15 @@
-df <- read.table("simulator/simulate_without_reassortment.log", header=T)
+library(ggplot2)
+library(colorblindr)
+library(grid)
+library(gridExtra)
+library(coda)
 
-maxLength <- max(df$simulated_network.totalLength,
-                df$simulated_tree.treeLength)
-breaks <- seq(0, maxLength, length.out=50)
+# clear workspace
+rm(list = ls())
+# Set the directory to the directory of the file
+this.dir <- dirname(parent.frame(2)$ofile)
+setwd(this.dir)
 
-h1 <- hist(df$simulated_network.totalLength, plot=F,
-          breaks=breaks)
-h2 <- hist(df$simulated_tree.treeLength, plot=F,
-          breaks=breaks)
-
-plot(h1$mids, h1$density, 'l', col='blue',
-    main="Tree length comparison (constant population size)")
-lines(h2$mids, h2$density, col='red')
-
-df <- read.table("simulator/simulate_without_reassortment_expGrowth.log", header=T)
-
-maxLength <- max(df$simulated_network.totalLength,
-                df$simulated_tree.treeLength)
-breaks <- seq(0, maxLength, length.out=50)
-
-h1 <- hist(df$simulated_network.totalLength, plot=F,
-          breaks=breaks)
-h2 <- hist(df$simulated_tree.treeLength, plot=F,
-          breaks=breaks)
-
-plot(h1$mids, h1$density, 'l', col='blue',
-    main="Tree length comparison (exponential growth)")
-lines(h2$mids, h2$density, col='red')
 
 doCompare <- function(dsFileName, mcmcFileName) {
     dfs <- read.table(paste0("simulator/", dsFileName), header=T)
@@ -37,6 +20,8 @@ doCompare <- function(dsFileName, mcmcFileName) {
     df <- df[-(1:ceiling(0.1*N)),]
 
     # Tree age/length plot
+    pdf(gsub(".log", ".pdf", mcmcFileName), width = 10, height = 10) 
+    
 
     par(mfcol=c(3,1))
 
@@ -98,7 +83,6 @@ doCompare <- function(dsFileName, mcmcFileName) {
       L <- append(L, log(ks.test(df$network.totalLength[1:(l-i)], dfs$network.totalLength)$statistic))
       R <- append(L, log(ks.test(df$network.reassortmentNodeCount[1:(l-i)], dfs$network.reassortmentNodeCount)$statistic))
   }
-
   plot(seq(1, length(L)), L, type='l', col='red',  lwd=2,
        xlab=paste("Number of logged iterations (minus burnin) / ", by),
        ylab="Kolmogorov-Smirnov stat. (log scale)", 
@@ -110,16 +94,8 @@ doCompare <- function(dsFileName, mcmcFileName) {
   legend("topright", inset=0.05,
          c("Network length", "Network height", "Reassortment count"),
          lty=c(2,2, 3), lwd=2, col=c("red","blue","black"))
+  dev.off()
 }
-
-doCompare("simulate_contemp2taxon2seg.log",
-          "testAddRemove_contemp2taxon2seg.log")
-
-doCompare("simulate_serial5taxon2seg.log",
-          "testAddRemove_serial5taxon2seg.log")
-
-doCompare("simulate_serial5taxon3seg.log",
-          "testAddRemove_serial5taxon3seg.log")
 
 doCompare("simulate_serial5taxon8seg.log",
           "testAddRemove_serial5taxon8seg.log")
@@ -143,4 +119,6 @@ doCompare("simulate_serial5taxon8seg.log",
           "testAR+Slide_serial5taxon8seg.log")
 
 doCompare("simulate_serial5taxon8seg.log",
-          "testAll_serial5taxon8seg_1e8iter.log")
+          "testAR+Gibbs_serial5taxon8seg.log")
+
+
