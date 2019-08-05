@@ -1,6 +1,4 @@
-<addon name="CoalRe" version="0.0.2">
-            <depends on="BEAST" atleast="2.5.0"/>
-
-            <!-- Add other dependencies as necessary. -->
-            </addon>
+<addon name="CoalRe" version="0.0.3">
+  <depends on="BEAST" atleast="2.5.0"/>
+</addon>
         
