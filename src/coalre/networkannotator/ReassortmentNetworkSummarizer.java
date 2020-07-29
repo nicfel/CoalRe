@@ -206,7 +206,7 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         JDialog dialog = new JDialog((JDialog)null, true);
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.setLocationRelativeTo(null);
-        dialog.setTitle("Reassortment Network Annotator");
+        dialog.setTitle("Reassortment Network Summarizer");
 
         JLabel logFileLabel = new JLabel("Reassortment Network log file:");
         JLabel outFileLabel = new JLabel("Output file:");
