@@ -25,6 +25,8 @@ public class Network extends StateNode {
 
     protected Integer segmentCount = null;
     
+    public String[] segmentNames;
+    
     public Network() {
     }
 
@@ -224,11 +226,29 @@ public class Network extends StateNode {
         }
 
         result.append("[&");
-        result.append("segments=").append(currentEdge.hasSegments);
+        if (segmentNames!=null) {
+    		result.append("segments={");
+    		String str = "rem";
+            for (int segIdx=0; segIdx<getSegmentCount(); segIdx++) {
+            	if (currentEdge.hasSegments.get(segIdx)) {
+            		str = str+ "," + segmentNames[segIdx];
+            	}
+            }
+        	result.append(str.replace("rem,", ""));
+        	result.append("}");
+        }else {
+        	result.append("segments=").append(currentEdge.hasSegments);
+        }
         if (verbose) {
             for (int segIdx=0; segIdx<getSegmentCount(); segIdx++) {
-                result.append(",seg").append(segIdx).append("=")
-                        .append(currentEdge.hasSegments.get(segIdx));
+                if (segmentNames!=null) {
+	                result.append(",").append(segmentNames[segIdx]).append("=")
+	                        .append(currentEdge.hasSegments.get(segIdx));
+                }else {
+	                result.append(",seg").append(segIdx).append("=")
+                    	.append(currentEdge.hasSegments.get(segIdx));
+
+                }
             }
         }
         result.append(",segsCarried=").append(currentEdge.hasSegments.cardinality());
@@ -249,6 +269,13 @@ public class Network extends StateNode {
     }
 
     public void fromExtendedNewick(String newickStr) {
+    	
+    	if (newickStr.split(";").length==2) {
+    		String segmentString = newickStr.split(";")[0];
+    		newickStr = newickStr.split(";")[1] + ";";
+    		
+    		segmentNames = segmentString.replace("[", "").replace("]", "").replace(" ", "").split(",");
+    	}
 
         CharStream inputStream = CharStreams.fromString(newickStr);
         NetworkLexer lexer = new NetworkLexer(inputStream);
@@ -266,7 +293,10 @@ public class Network extends StateNode {
 
     @Override
 	public String toString() {
-        return getExtendedNewick();
+    	if (segmentNames!=null)
+    		return Arrays.toString(segmentNames) + ";" + getExtendedNewick();
+    	else
+    		return getExtendedNewick();
     }
 
     @Override
@@ -353,12 +383,12 @@ public class Network extends StateNode {
     @Override
     public void init(PrintStream out) {
         out.println("#nexus");
-        out.println("begin trees;");
+        out.println("Begin trees;");
     }
 
     @Override
     public void close(PrintStream out) {
-        out.println("end trees;");
+        out.println("End;");
     }
 
     @Override
@@ -482,9 +512,19 @@ public class Network extends StateNode {
 
                     if (attribCtx.attribValue().vector() == null)
                         continue;
-
-                    for (NetworkParser.AttribValueContext attribValueCtx : attribCtx.attribValue().vector().attribValue())
-                        hasSegments.set(Integer.valueOf(attribValueCtx.getText()));
+                    
+                    if (segmentNames!=null) {
+	                    for (NetworkParser.AttribValueContext attribValueCtx : attribCtx.attribValue().vector().attribValue()) {
+	                    	for (int i = 0; i < segmentNames.length;i++) {
+	                    		if (segmentNames[i].contentEquals(attribValueCtx.getText()))
+	                    			hasSegments.set(i);
+	                    	}
+	                    }
+                    }else {
+	                    for (NetworkParser.AttribValueContext attribValueCtx : attribCtx.attribValue().vector().attribValue()) {
+	                    	hasSegments.set(Integer.valueOf(attribValueCtx.getText()));
+	                    }
+                    }
 
                     segmentsProcessed = true;
                     break;
