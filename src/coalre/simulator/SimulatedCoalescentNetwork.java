@@ -78,12 +78,12 @@ public class SimulatedCoalescentNetwork extends Network {
     
 
         TaxonSet taxonSet = null;
-        if (!segmentTreesInput.get().isEmpty())
-            taxonSet = segmentTreesInput.get().get(0).getTaxonset();
-        else if (traitSetInput.get() != null)
+        if (traitSetInput.get() != null)
             taxonSet = traitSetInput.get().taxaInput.get();
         else if (taxonSetInput.get() != null)
             taxonSet = taxonSetInput.get();
+        else if (!segmentTreesInput.get().isEmpty())
+        	taxonSet = segmentTreesInput.get().get(0).getTaxonset();
         else
             throw new IllegalArgumentException("Taxon set must be specified " +
                     "using either taxonSet, traitSet or provided by a segmentTree input.");
