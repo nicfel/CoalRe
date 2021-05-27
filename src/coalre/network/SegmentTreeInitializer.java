@@ -31,10 +31,24 @@ public class SegmentTreeInitializer extends BEASTObject implements StateNodeInit
         if (segmentTrees.size() != nSegments)
             throw new IllegalArgumentException("Number of segment trees must match number of segments.");
         
-        networkInput.get().segmentNames = new String[nSegments];
-        // initialize names of segments
+        networkInput.get().baseName = segmentTreesInput.get().get(0).getID();
+        for (int segIdx=1; segIdx<nSegments; segIdx++) {
+    		String newBase = "";
+        	for (int i = 0; i < segmentTreesInput.get().get(segIdx).getID().length(); i++) {
+        		if (i>=networkInput.get().baseName.length()) {
+        			networkInput.get().baseName = newBase;
+        		}            			
+				if (networkInput.get().baseName.substring(0,i+1).contentEquals(segmentTreesInput.get().get(segIdx).getID().substring(0, i+1))) {
+					newBase = networkInput.get().baseName.substring(0,i+1);
+				}
+				
+        	}
+        	networkInput.get().baseName = newBase;
+        }         
+
+        networkInput.get().segmentNames = new String[nSegments];        
         for (int segIdx=0; segIdx<nSegments; segIdx++) {
-        	networkInput.get().segmentNames[segIdx] = segmentTrees.get(segIdx).getID().split("\\.")[0];
+        	networkInput.get().segmentNames[segIdx] = segmentTreesInput.get().get(segIdx).getID().replace(networkInput.get().baseName, "");
         }
     }
 
