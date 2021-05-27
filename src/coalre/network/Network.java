@@ -26,6 +26,9 @@ public class Network extends StateNode {
     protected Integer segmentCount = null;
     
     public String[] segmentNames;
+    public String baseName;
+ 
+    
     
     public Network() {
     }
@@ -274,7 +277,12 @@ public class Network extends StateNode {
     		String segmentString = newickStr.split(";")[0];
     		newickStr = newickStr.split(";")[1] + ";";
     		
-    		segmentNames = segmentString.replace("[", "").replace("]", "").replace(" ", "").split(",");
+    		String[] tmp = segmentString.replace("[", "").replace("]", "").replace(" ", "").split(",");
+    		segmentNames = new String[tmp.length-1];
+    		baseName = tmp[0];
+			for (int i = 1; i < tmp.length;i++) {
+				segmentNames[i-1] = tmp[i];
+			}
     	}
 
         CharStream inputStream = CharStreams.fromString(newickStr);
@@ -293,10 +301,15 @@ public class Network extends StateNode {
 
     @Override
 	public String toString() {
-    	if (segmentNames!=null)
-    		return Arrays.toString(segmentNames) + ";" + getExtendedNewick();
-    	else
+    	if (segmentNames!=null) {
+    		String[] tmp = new String[segmentNames.length+1];
+    		tmp[0] = baseName;
+    		for (int i = 0; i < segmentNames.length;i++)
+    			tmp[i+1] = segmentNames[i];
+    		return Arrays.toString(tmp) + ";" + getExtendedNewick();
+    	}else {
     		return getExtendedNewick();
+    	}
     }
 
     @Override

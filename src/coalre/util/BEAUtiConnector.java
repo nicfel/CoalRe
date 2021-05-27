@@ -11,6 +11,7 @@ import beast.evolution.operators.UpDownOperator;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
 import coalre.distribution.CoalescentWithReassortment;
+import coalre.network.SegmentTreeInitializer;
 import coalre.operators.NetworkScaleOperator;
 import coalre.simulator.SimulatedCoalescentNetwork;
 
@@ -32,6 +33,7 @@ public class BEAUtiConnector {
 
         Set<RealParameter> parametersToScaleUp = new HashSet<>();
         Set<RealParameter> parametersToScaleDown = new HashSet<>();
+        Set<Tree> segmentTrees = new HashSet<>();
 
         for (BEASTInterface p : doc.getPartitions("tree")) {
             String pId = BeautiDoc.parsePartition(p.getID());
@@ -47,6 +49,7 @@ public class BEAUtiConnector {
 
             GenericTreeLikelihood likelihood = (GenericTreeLikelihood) p;
             Tree segmentTree = (Tree) likelihood.treeInput.get();
+            segmentTrees.add(segmentTree);
 
             // Remove segment trees from standard up/down operators.
 
@@ -130,9 +133,12 @@ public class BEAUtiConnector {
             // Provide trait set from first segment tree to network initializer:
             if (traitSet != null)
                 network.traitSetInput.setValue(traitSet, network);
+            
+            network.segmentTreesInput.get().clear();
+            network.segmentTreesInput.get().addAll(segmentTrees);
+
         }
-
-
+        
 
         return false;
     }

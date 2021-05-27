@@ -9,6 +9,7 @@ import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
 import beast.evolution.tree.coalescent.PopulationFunction;
 import beast.util.Randomizer;
+import cern.colt.Arrays;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
@@ -59,10 +60,33 @@ public class SimulatedCoalescentNetwork extends Network {
 
     public void initAndValidate() {
 
-        if (segmentTreesInput.get().isEmpty())
+        if (segmentTreesInput.get().isEmpty()) {
             nSegments = nSegmentsInput.get();
-        else
+        }else {
             nSegments = segmentTreesInput.get().size();
+            segmentNames = new String[nSegments];
+            // initialize names of segments
+            baseName = segmentTreesInput.get().get(0).getID();
+            for (int segIdx=1; segIdx<nSegments; segIdx++) {
+        		String newBase = "";
+            	for (int i = 0; i < segmentTreesInput.get().get(segIdx).getID().length(); i++) {
+            		if (i>=baseName.length()) {
+            			baseName = newBase;
+            		}            			
+    				if (baseName.substring(0,i+1).contentEquals(segmentTreesInput.get().get(segIdx).getID().substring(0, i+1))) {
+    					newBase = baseName.substring(0,i+1);
+    				}
+    				
+            	}
+            	baseName = newBase;
+            }         
+
+            
+            for (int segIdx=0; segIdx<nSegments; segIdx++) {
+            	segmentNames[segIdx] = segmentTreesInput.get().get(segIdx).getID().replace(baseName, "");
+            }
+            segmentTreesInput.get().clear();
+        }
 
         populationFunction = populationFunctionInput.get();
         reassortmentRate = reassortmentRateInput.get();
