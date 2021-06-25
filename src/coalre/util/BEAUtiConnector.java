@@ -1,16 +1,15 @@
 package coalre.util;
 
 import beast.app.beauti.BeautiDoc;
-import beast.core.BEASTInterface;
-import beast.core.BEASTObject;
-import beast.core.MCMC;
-import beast.core.Operator;
+import beast.core.*;
 import beast.core.parameter.RealParameter;
 import beast.evolution.likelihood.GenericTreeLikelihood;
 import beast.evolution.operators.UpDownOperator;
+import beast.evolution.tree.RandomTree;
 import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
 import coalre.distribution.CoalescentWithReassortment;
+import coalre.network.SegmentTreeInitializer;
 import coalre.operators.NetworkScaleOperator;
 import coalre.simulator.SimulatedCoalescentNetwork;
 
@@ -47,6 +46,20 @@ public class BEAUtiConnector {
 
             GenericTreeLikelihood likelihood = (GenericTreeLikelihood) p;
             Tree segmentTree = (Tree) likelihood.treeInput.get();
+
+
+            // Tell each segment tree initializer which segment index it's
+            // initializing.  (Better way to do this?)
+            SegmentTreeInitializer segmentTreeInitializer =
+                    (SegmentTreeInitializer) doc.pluginmap.get("segmentTreeInitializerCwR.t:" + pId);
+            segmentTreeInitializer.segmentIndexInput.setValue(segTreeCount-1, segmentTreeInitializer);
+
+            // Ensure segment tree initializers come first in list:
+            // (This is a hack to ensure that the RandomTree initializers
+            // are the ones removed by StateNodeInitializerListInputEditor.customConnector().)
+            mcmc.initialisersInput.get().remove(segmentTreeInitializer);
+            mcmc.initialisersInput.get().add(0, segmentTreeInitializer);
+
 
             // Remove segment trees from standard up/down operators.
 
@@ -131,8 +144,6 @@ public class BEAUtiConnector {
             if (traitSet != null)
                 network.traitSetInput.setValue(traitSet, network);
         }
-
-
 
         return false;
     }
