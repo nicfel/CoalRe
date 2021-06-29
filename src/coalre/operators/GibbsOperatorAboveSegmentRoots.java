@@ -23,6 +23,10 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
 
     public Input<PopulationFunction> populationFunctionInput = new Input<>("populationModel",
             "Population model to use.", Validate.REQUIRED);
+    
+    public Input<RealParameter> binomialProbInput = new Input<>("binomialProb",
+            "Probability of a given segment choosing a particular parent.");
+
 
     private int nSegments;
     
@@ -174,11 +178,20 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
 
         for (int segIdx = lineage.hasSegments.nextSetBit(0);
              segIdx != -1; segIdx = lineage.hasSegments.nextSetBit(segIdx+1)) {
-            if (Randomizer.nextBoolean()) {
-                hasSegs_left.set(segIdx);
-            } else {
-                hasSegs_right.set(segIdx);
-            }
+        	if (binomialProbInput.get()==null) {
+	            if (Randomizer.nextBoolean()) {
+	                hasSegs_left.set(segIdx);
+	            } else {
+	                hasSegs_right.set(segIdx);
+	            }
+        	}else {
+	            if (Randomizer.nextDouble()>binomialProbInput.get().getArrayValue()) {
+	                hasSegs_left.set(segIdx);
+	            } else {
+	                hasSegs_right.set(segIdx);
+	            }
+
+        	}
         }
 
         // Stop here if reassortment event is unobservable

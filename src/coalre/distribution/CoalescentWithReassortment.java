@@ -1,5 +1,6 @@
 package coalre.distribution;
 
+import beast.core.CalculationNode;
 import beast.core.Description;
 import beast.core.Function;
 import beast.core.Input;
@@ -39,7 +40,6 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
     public double calculateLogP() {
     	logP = 0;
-
     	// Calculate tree intervals
     	List<NetworkEvent> networkEventList = intervals.getNetworkEventList();
 
@@ -66,17 +66,31 @@ public class CoalescentWithReassortment extends NetworkDistribution {
        			break;
 
         	prevEvent = event;
-        }
-        
+        }        
 		return logP;
     }
     
 	private double reassortment(NetworkEvent event) {
-
+//        lp+=Math.log(reassortmentRate.getArrayValue())
+//                + event.segsSortedLeft * Math.log(intervals.getBinomialProb())
+//                + (event.segsToSort-event.segsSortedLeft)*Math.log(1-intervals.getBinomialProb())
+//                + Math.log(2.0);
+		
+		double binomval = Math.pow(intervals.getBinomialProb(), event.segsSortedLeft)
+				* Math.pow(1-intervals.getBinomialProb(), event.segsToSort-event.segsSortedLeft) 
+				+ Math.pow(intervals.getBinomialProb(), event.segsToSort-event.segsSortedLeft)
+				* Math.pow(1-intervals.getBinomialProb(), event.segsSortedLeft); 
+				
+        
         return Math.log(reassortmentRate.getArrayValue())
-                + event.segsSortedLeft * Math.log(intervals.getBinomialProb())
-                + (event.segsToSort-event.segsSortedLeft)*Math.log(1-intervals.getBinomialProb())
-                + Math.log(2.0);
+                + Math.log(binomval);
+
+
+
+//        return Math.log(reassortmentRate.getArrayValue())
+//                + event.segsSortedLeft * Math.log(intervals.getBinomialProb())
+//                + (event.segsToSort-event.segsSortedLeft)*Math.log(1-intervals.getBinomialProb())
+//                + Math.log(2.0);
 	}
 
 	private double coalesce(NetworkEvent event) {
@@ -96,4 +110,16 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 		
 		return result;
 	}
+	
+    @Override
+    protected boolean requiresRecalculation() {    	
+    	if (((CalculationNode) reassortmentRate).isDirtyCalculation())
+    		return true;
+    	if (((CalculationNode) populationFunction).isDirtyCalculation())
+    		return true;
+    	
+        return super.requiresRecalculation();
+    }
+    
+
 }

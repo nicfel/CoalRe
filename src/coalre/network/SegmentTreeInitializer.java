@@ -37,14 +37,17 @@ public class SegmentTreeInitializer extends BEASTObject implements StateNodeInit
         	for (int i = 0; i < segmentTreesInput.get().get(segIdx).getID().length(); i++) {
         		if (i>=networkInput.get().baseName.length()) {
         			networkInput.get().baseName = newBase;
-        		}            			
+        			break;
+        		}    
 				if (networkInput.get().baseName.substring(0,i+1).contentEquals(segmentTreesInput.get().get(segIdx).getID().substring(0, i+1))) {
 					newBase = networkInput.get().baseName.substring(0,i+1);
+				}else {
+					break;
 				}
 				
         	}
         	networkInput.get().baseName = newBase;
-        }         
+        }      
 
         networkInput.get().segmentNames = new String[nSegments];        
         for (int segIdx=0; segIdx<nSegments; segIdx++) {

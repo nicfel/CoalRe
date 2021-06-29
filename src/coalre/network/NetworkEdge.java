@@ -18,6 +18,7 @@ public class NetworkEdge {
     }
 
     public double getReassortmentObsProb(double p) {
+//    	System.out.println(p);
         // There are always two reassortment configurations that
         // produce an unobserved reassortment: 1111 and 0000
         // (assuming 4 segs on lineage)

@@ -44,6 +44,7 @@ public class NetworkIntervals extends CalculationNode {
     }
 
     public double getBinomialProb() {
+//    	return 0.5;
         return binomialProbInput.get() != null
                 ? binomialProbInput.get().getArrayValue()
                 : 0.5;
@@ -85,7 +86,6 @@ public class NetworkIntervals extends CalculationNode {
                     lineages += 1;
                     totalReassortmentObsProb += event.node.getParentEdges().get(0).getReassortmentObsProb(getBinomialProb());
                     break;
-
                 case REASSORTMENT:
                     lineages += 1;
                     totalReassortmentObsProb -= event.node.getChildEdges().get(0).getReassortmentObsProb(getBinomialProb());
@@ -95,7 +95,6 @@ public class NetworkIntervals extends CalculationNode {
                     event.segsToSort = event.node.getChildEdges().get(0).hasSegments.cardinality();
                     event.segsSortedLeft = event.node.getParentEdges().get(0).hasSegments.cardinality();
                     break;
-
                 case COALESCENCE:
                     lineages -= 1;
                     totalReassortmentObsProb -= event.node.getChildEdges().get(0).getReassortmentObsProb(getBinomialProb());
@@ -110,19 +109,32 @@ public class NetworkIntervals extends CalculationNode {
 
         eventListDirty = false;
     }
+    
+    
 
     @Override
     protected boolean requiresRecalculation() {
         eventListDirty = true;
-
         return true;
+    }
+    
+    protected boolean isDirty() {
+    	//TODO proper dirty calculations
+//    	if (binomialProbInput.get().somethingIsDirty())
+//    		return true;
+//    	if (networkInput.get().somethingIsDirty() || eventListDirty)
+//    		return true;
+    	return true;
+//    	return networkInput.get().somethingIsDirty();
     }
 
     @Override
     protected void restore() {
+    	
         List<NetworkEvent> tmp = networkEventList;
         networkEventList = storedNetworkEventList;
         storedNetworkEventList = tmp;
+        
 
         super.restore();
     }
@@ -131,7 +143,6 @@ public class NetworkIntervals extends CalculationNode {
     protected void store() {
         storedNetworkEventList.clear();
         storedNetworkEventList.addAll(networkEventList);
-
         super.store();
     }
 }
