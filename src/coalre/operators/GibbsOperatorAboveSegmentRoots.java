@@ -46,6 +46,7 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
 
     @Override
     public double networkProposal() {
+
     	return resimulate();
     	
     }
@@ -66,21 +67,13 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
                 .filter(e -> e.childNode.getHeight()<=maxHeight)
                .collect(Collectors.toList());
         
-//        System.out.println("max " + maxHeight);
-//        for (int i = 0; i < startingEdges.size(); i++)
-//        	System.out.println(startingEdges.get(i).childNode.getHeight());
-        
         if (startingEdges.size()==0)
         	return Double.NEGATIVE_INFINITY;
         
-        
-                
-//        System.out.println(network.getExtendedNewick());
        // simulate the rest of the network starting from mxHeight
         double currentTime = maxHeight;
         double timeUntilNextSample = Double.POSITIVE_INFINITY;
         do {
-
             // get the current propensities
             int k = startingEdges.size();
 
