@@ -358,7 +358,7 @@ public class Network extends StateNode {
 
     @Override
     public void close(PrintStream out) {
-        out.println("end trees;");
+        out.println("End;");
     }
 
     @Override
