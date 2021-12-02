@@ -1,4 +1,4 @@
-<addon name="CoalRe" version="0.0.6">
+<addon name="CoalRe" version="0.0.7">
   <depends on="BEAST" atleast="2.5.0"/>
   <depends on="feast" atleast="7.2.0"/>
   <addonapp class="coalre.networkannotator.ReassortmentNetworkSummarizer"
