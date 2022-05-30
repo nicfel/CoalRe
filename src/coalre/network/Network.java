@@ -306,7 +306,7 @@ public class Network extends StateNode {
     		tmp[0] = baseName;
     		for (int i = 0; i < segmentNames.length;i++)
     			tmp[i+1] = segmentNames[i];
-    		return Arrays.toString(tmp) + ";" + getExtendedNewick();
+    		return getExtendedNewick();
     	}else {
     		return getExtendedNewick();
     	}

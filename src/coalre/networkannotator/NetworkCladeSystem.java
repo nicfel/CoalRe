@@ -617,9 +617,6 @@ public class NetworkCladeSystem {
             	if (node.getParentEdges().get(0).hasSegments.get(i))
             		bits[i].set(index);
             }
-            System.out.println(cladeMap);
-            System.out.println(node.getTaxonLabel() + " " + index + " " + Arrays.toString(bits));
-            System.out.println(node.getParentEdges().get(0).hasSegments);
             summarizeAttributesForLeaf(bits, node, attributeNames, useMean, nrNetworks, nrSegments, onTarget);
         } else {
         	
@@ -652,17 +649,15 @@ public class NetworkCladeSystem {
 				BitSet[] newBits = summarizeAttributes(childEdge.childNode, attributeNames, useMean, nrNetworks, nrSegments, followSegmentout, onTarget, passedBitSet);
             	for (int i = 0; i < nrSegments;i++){
 	            	if (childEdge.hasSegments.get(i)){
-	            		System.out.println(i + " " + newBits[i]);
             			bits[i].or(newBits[i]);	   
 	            	}
             	}
             	passedBitSet.put(node, bits);
 				
             }            
-            if (!node.isReassortment()) {
-            	System.out.println(Arrays.toString(bits));
+            if (!node.isReassortment())
             	summarizeAttributesForClade(bits, node, attributeNames, useMean, nrNetworks, nrSegments, onTarget);   
-            }else{
+            else{
             	summarizeAttributesForReassortmentClade(bits, node, attributeNames, useMean, nrNetworks, nrSegments, onTarget);
             }
         }  
@@ -689,8 +684,6 @@ public class NetworkCladeSystem {
 		
 		// keeps track of the height of the target network,
 		Double targetHeight = null;
-		
-
 
     	
     	if (!allNull){	    	

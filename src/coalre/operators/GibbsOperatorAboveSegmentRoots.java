@@ -82,6 +82,7 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
             double timeToNextCoal = populationFunction.getInverseIntensity(
                     transformedTimeToNextCoal + currentTransformedTime) - currentTime;
 
+            
             double timeToNextReass = k>=1 ? Randomizer.nextExponential(k*reassortmentRate.getValue()) : Double.POSITIVE_INFINITY;
 
             // next event time

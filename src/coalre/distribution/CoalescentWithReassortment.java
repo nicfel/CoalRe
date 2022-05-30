@@ -19,23 +19,37 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 	
 	public Input<Function> reassortmentRateInput = new Input<>(
 	        "reassortmentRate",
-            "reassortment rate (per lineage per unit time)",
-            Input.Validate.REQUIRED);
+            "reassortment rate (per lineage per unit time)");
 
 	public Input<PopulationFunction> populationFunctionInput = new Input<>(
 	        "populationModel",
             "Population model.",
             Input.Validate.REQUIRED);
+	
+	public Input<PopulationFunction> timeVaryingReassortmentRatesInput = new Input<>(
+	        "timeVaryingReassortmentRates",
+            "reassortment rates that vary over time",
+            Input.Validate.XOR, reassortmentRateInput);
+
 
     public PopulationFunction populationFunction;
     private Function reassortmentRate;
+    public PopulationFunction timeVaryingReassortmentRates;
+
     public NetworkIntervals intervals;
+    
+    private boolean isTimeVarying = false;
 
     @Override
     public void initAndValidate(){
         populationFunction = populationFunctionInput.get();
-        reassortmentRate = reassortmentRateInput.get();
         intervals = networkIntervalsInput.get();
+        if (reassortmentRateInput.get()!=null) {
+        	reassortmentRate = reassortmentRateInput.get();
+        }else {
+        	isTimeVarying = true;
+        	timeVaryingReassortmentRates = timeVaryingReassortmentRatesInput.get();
+        }
     }
 
     public double calculateLogP() {
@@ -80,10 +94,13 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 				* Math.pow(1-intervals.getBinomialProb(), event.segsToSort-event.segsSortedLeft) 
 				+ Math.pow(intervals.getBinomialProb(), event.segsToSort-event.segsSortedLeft)
 				* Math.pow(1-intervals.getBinomialProb(), event.segsSortedLeft); 
-				
-        
-        return Math.log(reassortmentRate.getArrayValue())
-                + Math.log(binomval);
+				        
+		if (isTimeVarying)
+			return Math.log(timeVaryingReassortmentRates.getPopSize(event.time))
+					+ Math.log(binomval);
+		else
+			return Math.log(reassortmentRate.getArrayValue())
+					+ Math.log(binomval);
 
 
 
@@ -102,8 +119,14 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
         double result = 0.0;
 
-        result += -reassortmentRate.getArrayValue() * prevEvent.totalReassortmentObsProb
-                * (nextEvent.time - prevEvent.time);
+//        System.out.println(timeVaryingReassortmentRates.getIntegral(prevEvent.time, nextEvent.time));
+//        System.out.println(nextEvent.time - prevEvent.time);
+		if (isTimeVarying)
+	        result += -prevEvent.totalReassortmentObsProb 
+	        	* timeVaryingReassortmentRates.getIntegral(prevEvent.time, nextEvent.time);
+		else
+	        result += -reassortmentRate.getArrayValue() * prevEvent.totalReassortmentObsProb
+	                * (nextEvent.time - prevEvent.time);
 
 		result += -0.5*prevEvent.lineages*(prevEvent.lineages-1)
                 * populationFunction.getIntegral(prevEvent.time, nextEvent.time);
@@ -113,8 +136,13 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 	
     @Override
     protected boolean requiresRecalculation() {    	
-    	if (((CalculationNode) reassortmentRate).isDirtyCalculation())
-    		return true;
+    	if (isTimeVarying) {
+	    	if (((CalculationNode) timeVaryingReassortmentRates).isDirtyCalculation())
+	    		return true;
+    	}else{
+	    	if (((CalculationNode) reassortmentRate).isDirtyCalculation())
+	    		return true;
+    	}
     	if (((CalculationNode) populationFunction).isDirtyCalculation())
     		return true;
     	
