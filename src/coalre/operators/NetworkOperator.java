@@ -47,8 +47,6 @@ public abstract class NetworkOperator extends Operator {
             for (int i = 0; i < network.getSegmentCount(); i++) {
             	for (int j = 0; j < segmentTreesInput.get().size(); j++) {
             		if (segmentTreesInput.get().get(j).getID().contentEquals(network.baseName + network.segmentNames[i])) {
-            			System.out.println(getID());
-            			System.out.println(segmentTreesInput.get().get(j).getID() + " " + j);
             			segmentTreeMap[i] = j;
             			c++;
             		}

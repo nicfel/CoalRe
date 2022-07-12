@@ -39,6 +39,8 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 
     @Override
     public double proposal() {
+    	
+		System.out.println(getID());
        
         double logHR = 0.0;   
         
@@ -66,7 +68,6 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 		if (!allEdgesAncestral()){
             return Double.NEGATIVE_INFINITY;
 		}
-
 
         if (logHR>Double.NEGATIVE_INFINITY) {
             for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)

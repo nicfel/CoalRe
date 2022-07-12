@@ -49,7 +49,7 @@ public class Network extends StateNode {
     
 
     @Override
-    public void initAndValidate() { }
+    public void initAndValidate() {System.out.println(toString()); }
 
     /**
      * @return the root edge of the network
@@ -233,7 +233,7 @@ public class Network extends StateNode {
     		String str = "rem";
             for (int segIdx=0; segIdx<getSegmentCount(); segIdx++) {
             	if (currentEdge.hasSegments.get(segIdx)) {
-            		str = str+ "," + segmentNames[segIdx];
+            		str = str+ ",\"" + segmentNames[segIdx].replace(",", "") + "\"";
             	}
             }
         	result.append(str.replace("rem,", ""));
