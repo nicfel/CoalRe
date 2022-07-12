@@ -18,48 +18,41 @@ public class SegmentTreeInitializer extends BEASTObject implements StateNodeInit
     public Input<List<Tree>> segmentTreesInput = new Input<>("segmentTree",
             "Segment tree to initialize.", new ArrayList<>());
 
+    public Input<Integer> segmentIndexInput = new Input<>("segmentIndex",
+            "If only one segment tree is provided, this is its index.");
+
     int nSegments;
     Network network;
     List<Tree> segmentTrees;
+    Integer segmentIndex;
 
     @Override
     public void initAndValidate() {
         network = networkInput.get();
         segmentTrees = segmentTreesInput.get();
         nSegments = network.getSegmentCount();
+        segmentIndex = segmentIndexInput.get();
 
-        if (segmentTrees.size() != nSegments)
-            throw new IllegalArgumentException("Number of segment trees must match number of segments.");
-        
-        networkInput.get().baseName = segmentTreesInput.get().get(0).getID();
-        for (int segIdx=1; segIdx<nSegments; segIdx++) {
-    		String newBase = "";
-        	for (int i = 0; i < segmentTreesInput.get().get(segIdx).getID().length(); i++) {
-        		if (i>=networkInput.get().baseName.length()) {
-        			networkInput.get().baseName = newBase;
-        			break;
-        		}    
-				if (networkInput.get().baseName.substring(0,i+1).contentEquals(segmentTreesInput.get().get(segIdx).getID().substring(0, i+1))) {
-					newBase = networkInput.get().baseName.substring(0,i+1);
-				}else {
-					break;
-				}
-				
-        	}
-        	networkInput.get().baseName = newBase;
-        }      
-
-        networkInput.get().segmentNames = new String[nSegments];        
-        for (int segIdx=0; segIdx<nSegments; segIdx++) {
-        	networkInput.get().segmentNames[segIdx] = segmentTreesInput.get().get(segIdx).getID().replace(networkInput.get().baseName, "");
+        if (segmentIndex == null) {
+            if (segmentTrees.size() != nSegments)
+                throw new IllegalArgumentException("Number of segment trees must match number of segments.");
+        } else {
+            if (segmentTrees.size() != 1)
+                throw new IllegalArgumentException("Must only provide one segment tree when segmentIndex is specified.");
+            if (segmentIndex >= nSegments)
+                throw new IllegalArgumentException("Illegal segment index given.");
         }
     }
 
     @Override
     public void initStateNodes() {
 
-        for (int segIdx=0; segIdx<nSegments; segIdx++) {
-            network.updateSegmentTree(segmentTrees.get(segIdx), segIdx);
+        if (segmentIndex != null) {
+            network.updateSegmentTree(segmentTrees.get(0), segmentIndexInput.get());
+        } else {
+            for (int segIdx = 0; segIdx < nSegments; segIdx++) {
+                network.updateSegmentTree(segmentTrees.get(segIdx), segIdx);
+            }
         }
 
     }

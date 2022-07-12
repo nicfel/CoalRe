@@ -40,6 +40,11 @@
             <init id="networkCwR.segmentInitializer" spec="SegmentTreeInitializer" network="@networkCwR.alltrees">
             </init>
 
+            <init id="segmentTreeInitializerCwR.t:$(n)" spec="coalre.network.SegmentTreeInitializer"
+                  network="@networkCwR.alltrees">
+                  <segmentTree idref="Tree.t:$(n)"/>
+            </init>
+
             <prior spec="coalre.util.DummyTreeDistribution" id="CoalescentWithReassortmentDummy.t:$(n)" tree="@Tree.t:$(n)"/>
 
             <prior spec="coalre.distribution.CoalescentWithReassortment" id="CoalescentWithReassortmentPrior.alltrees">
@@ -119,6 +124,9 @@
             </logger>
 
             ]]>
+
+            <connect srcID="segmentTreeInitializerCwR.t:$(n)" targetID="mcmc" inputName="init"
+                     if="inposterior(CoalescentWithReassortmentDummy.t:$(n)) and Tree.t:$(n)/estimate=true"/>
 
             <connect method="coalre.util.BEAUtiConnector.customConnector"/>
 

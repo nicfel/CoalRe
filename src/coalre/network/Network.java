@@ -3,7 +3,6 @@ package coalre.network;
 import beast.core.StateNode;
 import beast.evolution.alignment.TaxonSet;
 import beast.evolution.tree.Node;
-import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
 import coalre.network.parser.NetworkBaseVisitor;
 import coalre.network.parser.NetworkLexer;
@@ -665,6 +664,57 @@ public class Network extends StateNode {
     }
 
     /**
+     * Cached arrays containing mapping between tree node numbers and
+     * network node numbers.
+     */
+    Map<Tree, int[]> nodeNrArrays = new HashMap<>();
+
+    /**
+     * Retrieve an array representing a mapping from segment tree node
+     * numbers and network node numbers.  The array has the property
+     * that network_node_number = array[tree_node_number].
+     *
+     * @param segmentTree segment tree
+     * @return node number array
+     */
+    int[] getTreeNodeNumberArray(Tree segmentTree) {
+        if (nodeNrArrays.keySet().contains(segmentTree))
+            return nodeNrArrays.get(segmentTree);
+
+        int[] nodeNumberMap = new int[getLeafNodes().size()];
+
+        for (int treeNodeNr=0; treeNodeNr<nodeNumberMap.length; treeNodeNr++) {
+            Node treeNode = segmentTree.getNode(treeNodeNr);
+            String taxonID = segmentTree.getTaxonId(treeNode);
+
+            Optional<NetworkNode> maybeNetworkNode =
+                    getLeafNodes().stream()
+                            .filter(l -> l.getTaxonLabel().equals(taxonID))
+                            .findFirst();
+
+            if (maybeNetworkNode.isPresent())
+                nodeNumberMap[treeNodeNr] = maybeNetworkNode.get().getTaxonIndex();
+            else
+                throw new IllegalArgumentException("Segment tree "
+                        + segmentTree.getID() + " contains taxon not present in network.");
+        }
+
+        nodeNrArrays.put(segmentTree, nodeNumberMap);
+        return nodeNumberMap;
+    }
+
+    /**
+     * Retrieve network node number for a given segment tree node
+     * @param treeNode segment tree node
+     * @return corresponding network node number
+     */
+    int getNetworkNodeNr(Node treeNode) {
+        return treeNode.getTree().getTaxonset() == null
+                ? treeNode.getNr()
+                : getTreeNodeNumberArray(treeNode.getTree())[treeNode.getNr()];
+    }
+
+    /**
      * Identify which clades are present in the segment tree below node
      *
      * @param node          node below which clades are identified
@@ -679,7 +729,7 @@ public class Network extends StateNode {
         BitSet thisClade = new BitSet();
 
         if (node.isLeaf()) {
-            thisClade.set(node.getNr());
+            thisClade.set(getNetworkNodeNr(node));
 
         } else {
             for (Node child : node.getChildren()) {

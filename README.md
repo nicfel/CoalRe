@@ -1,6 +1,9 @@
 CoalRe
 ======
 
+[![Build Status](https://github.com/nicfel/CoalRe/workflows/Unit%2Fintegration%20tests/badge.svg)](https://github.com/nicfel/CoalRe/actions?query=workflow%3A%22Unit%2Fintegration+tests%22)
+
+
 BEAST 2 package for inference under the coalescent with reassortment,
 applicable to segmented viral genomes.
 

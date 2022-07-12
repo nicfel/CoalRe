@@ -1,0 +1,10 @@
+name: Unit/integration tests
+on: [ push, pull_request, workflow_dispatch ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: docker build -t tests .
+      - run: docker run tests
