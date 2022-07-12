@@ -36,6 +36,9 @@
 
                 <taxonSet spec="beast.evolution.alignment.TaxonSet" alignment="@$(n)"/>
             </stateNode>
+            
+            <init id="networkCwR.segmentInitializer" spec="SegmentTreeInitializer" network="@networkCwR.alltrees">
+            </init>
 
             <init id="segmentTreeInitializerCwR.t:$(n)" spec="coalre.network.SegmentTreeInitializer"
                   network="@networkCwR.alltrees">

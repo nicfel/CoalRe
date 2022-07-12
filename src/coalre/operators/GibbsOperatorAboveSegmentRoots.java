@@ -23,6 +23,10 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
 
     public Input<PopulationFunction> populationFunctionInput = new Input<>("populationModel",
             "Population model to use.", Validate.REQUIRED);
+    
+    public Input<RealParameter> binomialProbInput = new Input<>("binomialProb",
+            "Probability of a given segment choosing a particular parent.");
+
 
     private int nSegments;
     
@@ -42,6 +46,7 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
 
     @Override
     public double networkProposal() {
+
     	return resimulate();
     	
     }
@@ -62,21 +67,13 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
                 .filter(e -> e.childNode.getHeight()<=maxHeight)
                .collect(Collectors.toList());
         
-//        System.out.println("max " + maxHeight);
-//        for (int i = 0; i < startingEdges.size(); i++)
-//        	System.out.println(startingEdges.get(i).childNode.getHeight());
-        
         if (startingEdges.size()==0)
         	return Double.NEGATIVE_INFINITY;
         
-        
-                
-//        System.out.println(network.getExtendedNewick());
        // simulate the rest of the network starting from mxHeight
         double currentTime = maxHeight;
         double timeUntilNextSample = Double.POSITIVE_INFINITY;
         do {
-
             // get the current propensities
             int k = startingEdges.size();
 
@@ -85,6 +82,7 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
             double timeToNextCoal = populationFunction.getInverseIntensity(
                     transformedTimeToNextCoal + currentTransformedTime) - currentTime;
 
+            
             double timeToNextReass = k>=1 ? Randomizer.nextExponential(k*reassortmentRate.getValue()) : Double.POSITIVE_INFINITY;
 
             // next event time
@@ -174,11 +172,20 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
 
         for (int segIdx = lineage.hasSegments.nextSetBit(0);
              segIdx != -1; segIdx = lineage.hasSegments.nextSetBit(segIdx+1)) {
-            if (Randomizer.nextBoolean()) {
-                hasSegs_left.set(segIdx);
-            } else {
-                hasSegs_right.set(segIdx);
-            }
+        	if (binomialProbInput.get()==null) {
+	            if (Randomizer.nextBoolean()) {
+	                hasSegs_left.set(segIdx);
+	            } else {
+	                hasSegs_right.set(segIdx);
+	            }
+        	}else {
+	            if (Randomizer.nextDouble()>binomialProbInput.get().getArrayValue()) {
+	                hasSegs_left.set(segIdx);
+	            } else {
+	                hasSegs_right.set(segIdx);
+	            }
+
+        	}
         }
 
         // Stop here if reassortment event is unobservable

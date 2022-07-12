@@ -6,6 +6,7 @@ import beast.core.util.Log;
 import beast.evolution.tree.Tree;
 import beast.math.Binomial;
 import beast.util.Randomizer;
+import cern.colt.Arrays;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
@@ -26,6 +27,7 @@ public abstract class NetworkOperator extends Operator {
 
     protected Network network;
     List<Tree> segmentTrees;
+    int[] segmentTreeMap;
 
     @Override
     public void initAndValidate() {
@@ -39,6 +41,23 @@ public abstract class NetworkOperator extends Operator {
             if (segmentTrees.size() != network.getSegmentCount())
                 throw new IllegalArgumentException("Number of segment trees provided " +
                         "to operator must match number of segments in network.");
+            // ensure the order of the segment trees is correct
+            segmentTreeMap = new int[network.getSegmentCount()];
+            int c=0;
+            for (int i = 0; i < network.getSegmentCount(); i++) {
+            	for (int j = 0; j < segmentTreesInput.get().size(); j++) {
+            		if (segmentTreesInput.get().get(j).getID().contentEquals(network.baseName + network.segmentNames[i])) {
+            			System.out.println(getID());
+            			System.out.println(segmentTreesInput.get().get(j).getID() + " " + j);
+            			segmentTreeMap[i] = j;
+            			c++;
+            		}
+            	}
+            }
+            if (c!=network.getSegmentCount()) {
+            	throw new IllegalArgumentException("not all segments found");
+            }
+
         }
 
     }
@@ -54,7 +73,7 @@ public abstract class NetworkOperator extends Operator {
 
         if (logHR>Double.NEGATIVE_INFINITY) {
             for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
-                network.updateSegmentTree(segmentTrees.get(segIdx), segIdx);
+                network.updateSegmentTree(segmentTrees.get(segmentTreeMap[segIdx]), segmentTreeMap[segIdx]);
         }
 
         return logHR;

@@ -5,6 +5,7 @@ import beast.core.Input;
 import beast.core.StateNode;
 import beast.core.StateNodeInitialiser;
 import beast.evolution.tree.Tree;
+import cern.colt.Arrays;
 
 import java.util.ArrayList;
 import java.util.List;
