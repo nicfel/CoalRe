@@ -37,7 +37,7 @@ public class NetworkIntervals extends CalculationNode {
         storedNetworkEventList = new ArrayList<>();
     }
 
-    List<NetworkEvent> getNetworkEventList() {
+    public List<NetworkEvent> getNetworkEventList() {
         update();
 
         return networkEventList;

@@ -13,12 +13,12 @@ public class NetworkEvent {
     /**
      * Number of segments on a reassorting lineage.
      */
-    int segsToSort;
+    public int segsToSort;
 
     /**
      * Number of segments sent to the first parent.
      */
-    int segsSortedLeft;
+    public int segsSortedLeft;
 
     public int lineages;
     public double totalReassortmentObsProb;

@@ -26,9 +26,9 @@ public class CoalescentWithReassortment extends NetworkDistribution {
             "Population model.",
             Input.Validate.REQUIRED);
 
-    private PopulationFunction populationFunction;
+    public PopulationFunction populationFunction;
     private Function reassortmentRate;
-    private NetworkIntervals intervals;
+    public NetworkIntervals intervals;
 
     @Override
     public void initAndValidate(){
