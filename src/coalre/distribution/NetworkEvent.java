@@ -28,4 +28,10 @@ public class NetworkEvent {
      * May not point to a compatible node at other times.
      */
     public NetworkNode node;
+    
+    @Override
+    public String toString() {
+		return type +":"+ lineages +":" +totalReassortmentObsProb;
+    	
+    }
 }
