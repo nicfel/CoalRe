@@ -41,23 +41,16 @@ public class ReassortmentAnnotator {
     	removeNonGeneticSegmentEdges(network);
     	for (int i = 0; i < segmentToRemove.length; i++)
     		removeSegment(network, segmentToRemove[i]);
-    	
-    	
-    	System.out.println(network);
 
     	// remove all loops
     	removeLoops(network);
-    	System.out.println(network);
-
     	// remove all empty edges in the segment
     	removeEmptyNetworkEdge(network);      
     	// remove all loops
     	removeLoops(network);
 
-
     	// remove all empty edges in the segment
     	removeEmptyNetworkEdge(network);  
-
 	}
 	
     /**
@@ -121,41 +114,23 @@ public class ReassortmentAnnotator {
                 .filter(e -> e.getParentEdges().get(1).hasSegments.cardinality()>0)
                 .collect(Collectors.toList());
     	
-    	int counter = 0;
-    	
     	// for each of these, check if the parents are the same node
     	while (!reticulationNodes.isEmpty()){
     		NetworkNode node = reticulationNodes.get(0);
-			// if this is the case, put all segments from 1 onto 0
+			// if this is the case, put all segment from 1 onto 0
 			for (int i = 0; i < network.getSegmentCount(); i++){
-				if (node.getChildEdges().get(0).hasSegments.get(i)){
-					System.out.println("moved " + i);
+				if (node.getParentEdges().get(1).hasSegments.get(i)){
 					node.getParentEdges().get(0).hasSegments.set(i, true);
 					node.getParentEdges().get(1).hasSegments.set(i, false);
-				}    		
+				}    					
 			}
-			System.out.println(network.getSegmentCount());
-			System.out.println(node.getHeight());
-			System.out.println(node.getChildEdges().get(0).hasSegments);
-			System.out.println(node.getParentEdges().get(0).hasSegments);
-			System.out.println(node.getParentEdges().get(1).hasSegments);
-			
-//			System.out.println(network);
 			
 			removeEmptyNetworkEdge(network);
 			reticulationNodes = network.getNodes().stream()
 	                .filter(e -> e.isReassortment())
 	                .filter(e -> e.getParentEdges().get(0).parentNode.equals(e.getParentEdges().get(1).parentNode))
 	                .filter(e -> e.getParentEdges().get(1).hasSegments.cardinality()>0)
-	                .collect(Collectors.toList());		
-			counter++;
-			
-			if (counter>10) {
-				System.err.println(network);
-	    		throw new IllegalArgumentException("tried to remove " + counter + " loops, but still not done " + reticulationNodes.size() + " loops left");
-
-			}
-			
+	                .collect(Collectors.toList());			
     	}
     }
 
