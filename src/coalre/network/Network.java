@@ -113,8 +113,14 @@ public class Network extends StateNode {
      * @return number of segments represented on network
      */
     public int getSegmentCount() {
-        if (segmentCount == null)
-            segmentCount = getLeafNodes().iterator().next().getParentEdges().get(0).hasSegments.cardinality();
+        if (segmentCount == null) {
+        	// allow for different number of segments on different leaves
+        	BitSet totsegment = new BitSet();
+        	for (NetworkNode n : getLeafNodes()) {
+        		totsegment.or(n.getParentEdges().get(0).hasSegments);
+        	}   
+            segmentCount = totsegment.cardinality();
+        }
 
         return segmentCount;
     }
