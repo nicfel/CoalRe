@@ -41,11 +41,11 @@ public class SegmentTreeInitializer extends BEASTObject implements StateNodeInit
             if (segmentIndex >= nSegments)
                 throw new IllegalArgumentException("Illegal segment index given.");
         }
+
     }
 
     @Override
     public void initStateNodes() {
-
         if (segmentIndex != null) {
             network.updateSegmentTree(segmentTrees.get(0), segmentIndexInput.get());
         } else {
@@ -53,7 +53,6 @@ public class SegmentTreeInitializer extends BEASTObject implements StateNodeInit
                 network.updateSegmentTree(segmentTrees.get(segIdx), segIdx);
             }
         }
-
     }
 
     @Override

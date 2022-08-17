@@ -22,7 +22,7 @@ public class Network extends StateNode {
 
     protected NetworkEdge storedRootEdge;
 
-    protected Integer segmentCount = null;
+    public Integer segmentCount = null;
     
     public Network() {
     }
@@ -628,7 +628,7 @@ public class Network extends StateNode {
         if (nodeNrArrays.keySet().contains(segmentTree))
             return nodeNrArrays.get(segmentTree);
 
-        int[] nodeNumberMap = new int[getLeafNodes().size()];
+        int[] nodeNumberMap = new int[segmentTree.getLeafNodeCount()];
 
         for (int treeNodeNr=0; treeNodeNr<nodeNumberMap.length; treeNodeNr++) {
             Node treeNode = segmentTree.getNode(treeNodeNr);

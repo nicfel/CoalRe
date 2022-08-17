@@ -36,7 +36,7 @@ public class ReassortmentAnnotator {
 	 * @param network
 	 * @param segmentToRemove
 	 */
-	void pruneNetwork(Network network, int[] segmentToRemove){
+	protected void pruneNetwork(Network network, int[] segmentToRemove){
     	// remove all parts of the network that aren't informed by the genetic data
     	removeNonGeneticSegmentEdges(network);
     	for (int i = 0; i < segmentToRemove.length; i++)

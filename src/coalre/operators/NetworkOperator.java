@@ -49,6 +49,13 @@ public abstract class NetworkOperator extends Operator {
 //        count += 1;
 //
 //        System.out.println("count = " + count);
+    	
+//        System.out.println(network);
+        
+//        for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
+//            System.out.println(segmentTrees.get(segIdx) +";");
+//        System.out.println("=========");
+
 
         double logHR = networkProposal();
 
@@ -56,6 +63,13 @@ public abstract class NetworkOperator extends Operator {
             for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
                 network.updateSegmentTree(segmentTrees.get(segIdx), segIdx);
         }
+        
+//        System.out.println(network);
+//        System.out.println(".............");
+//        
+//        for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
+//            System.out.println(segmentTrees.get(segIdx) +";");
+
 
         return logHR;
     }

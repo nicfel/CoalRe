@@ -14,6 +14,18 @@ public class NetworkEvent {
      * Number of segments on a reassorting lineage.
      */
     public int segsToSort;
+    
+    /**
+     * Which segments went left, needed for plasmids.
+     */
+    public BitSet segsLeft;
+    
+    /**
+     * whcih segments went right, needed for plasmids.
+     */
+    public BitSet segsRight;
+
+
 
     /**
      * Number of segments sent to the first parent.
