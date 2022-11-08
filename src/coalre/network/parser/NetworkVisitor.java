@@ -1,4 +1,4 @@
-// Generated from /Users/vaughant/code/beast_and_friends/CoalRe/src/coalre/network/parser/Network.g4 by ANTLR 4.7
+// Generated from /Users/vaughant/code/beast_and_friends/CoalRe/src/coalre/network/parser/Network.g4 by ANTLR 4.10.1
 package coalre.network.parser;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 

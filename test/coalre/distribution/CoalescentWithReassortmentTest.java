@@ -1,11 +1,12 @@
 package coalre.distribution;
 
-import beast.core.parameter.RealParameter;
-import beast.evolution.tree.coalescent.ConstantPopulation;
+import beast.base.inference.parameter.RealParameter;
+import beast.base.evolution.tree.coalescent.ConstantPopulation;
 import coalre.CoalReTestClass;
 import coalre.network.Network;
-import junit.framework.Assert;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class CoalescentWithReassortmentTest extends CoalReTestClass {
 
@@ -28,6 +29,6 @@ public class CoalescentWithReassortmentTest extends CoalReTestClass {
                 "reassortmentRate", new RealParameter("1.0"),
                 "populationModel", populationFunction);
 
-        Assert.assertEquals(-16.258280263919616, coalWR.calculateLogP(), 1e-10);
+        assertEquals(-16.258280263919616, coalWR.calculateLogP(), 1e-10);
     }
 }

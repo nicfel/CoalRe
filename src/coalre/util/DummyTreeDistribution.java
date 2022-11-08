@@ -1,6 +1,6 @@
 package coalre.util;
 
-import beast.evolution.tree.TreeDistribution;
+import beast.base.evolution.tree.TreeDistribution;
 
 /**
  * Dummy object used only by BEAUti template.

@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 import javax.swing.plaf.synth.SynthSeparatorUI;
 
-import beast.math.statistic.DiscreteStatistics;
+import beast.base.util.DiscreteStatistics;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;

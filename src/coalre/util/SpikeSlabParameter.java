@@ -1,10 +1,10 @@
 package coalre.util;
 
-import beast.core.BEASTObject;
-import beast.core.Function;
-import beast.core.Input;
-import beast.core.parameter.BooleanParameter;
-import beast.core.parameter.RealParameter;
+import beast.base.core.BEASTObject;
+import beast.base.core.Function;
+import beast.base.core.Input;
+import beast.base.inference.parameter.BooleanParameter;
+import beast.base.inference.parameter.RealParameter;
 
 public class SpikeSlabParameter extends BEASTObject implements Function {
 

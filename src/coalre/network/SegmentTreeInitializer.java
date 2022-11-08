@@ -1,10 +1,10 @@
 package coalre.network;
 
-import beast.core.BEASTObject;
-import beast.core.Input;
-import beast.core.StateNode;
-import beast.core.StateNodeInitialiser;
-import beast.evolution.tree.Tree;
+import beast.base.core.BEASTObject;
+import beast.base.core.Input;
+import beast.base.inference.StateNode;
+import beast.base.inference.StateNodeInitialiser;
+import beast.base.evolution.tree.Tree;
 import cern.colt.Arrays;
 
 import java.util.ArrayList;

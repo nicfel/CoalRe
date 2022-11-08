@@ -1,10 +1,10 @@
 package coalre.network;
 
-import beast.evolution.alignment.TaxonSet;
-import beast.evolution.tree.Node;
-import beast.evolution.tree.TraitSet;
-import beast.evolution.tree.Tree;
-import beast.util.Randomizer;
+import beast.base.evolution.alignment.TaxonSet;
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.TraitSet;
+import beast.base.evolution.tree.Tree;
+import beast.base.util.Randomizer;
 import coalre.CoalReTestClass;
 import org.junit.Assert;
 import org.junit.Test;
