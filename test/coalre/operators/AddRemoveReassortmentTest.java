@@ -1,6 +1,5 @@
 package coalre.operators;
 
-import beast.util.Randomizer;
 import coalre.CoalReTestClass;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
@@ -8,8 +7,6 @@ import coalre.network.NetworkNode;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
 import java.util.*;
 
 public class AddRemoveReassortmentTest extends CoalReTestClass {

@@ -1,10 +1,10 @@
 package coalre.distribution;
 
-import beast.core.CalculationNode;
-import beast.core.Description;
-import beast.core.Function;
-import beast.core.Input;
-import beast.evolution.tree.coalescent.PopulationFunction;
+import beast.base.inference.CalculationNode;
+import beast.base.core.Description;
+import beast.base.core.Function;
+import beast.base.core.Input;
+import beast.base.evolution.tree.coalescent.PopulationFunction;
 
 import java.util.List;
 

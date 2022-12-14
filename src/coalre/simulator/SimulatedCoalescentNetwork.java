@@ -1,14 +1,14 @@
 package coalre.simulator;
 
-import beast.core.Function;
-import beast.core.Input;
-import beast.core.Input.Validate;
-import beast.core.parameter.RealParameter;
-import beast.evolution.alignment.TaxonSet;
-import beast.evolution.tree.TraitSet;
-import beast.evolution.tree.Tree;
-import beast.evolution.tree.coalescent.PopulationFunction;
-import beast.util.Randomizer;
+import beast.base.core.Function;
+import beast.base.core.Input;
+import beast.base.core.Input.Validate;
+import beast.base.inference.parameter.RealParameter;
+import beast.base.evolution.alignment.TaxonSet;
+import beast.base.evolution.tree.TraitSet;
+import beast.base.evolution.tree.Tree;
+import beast.base.evolution.tree.coalescent.PopulationFunction;
+import beast.base.util.Randomizer;
 import cern.colt.Arrays;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;

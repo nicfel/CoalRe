@@ -1,5 +1,5 @@
 <beast version="2.0"
-       namespace="beast.core
+       namespace="beast.pkgmgmt:beast.base.core:beast.base.inference
                  :beast.core.util
                  :beast.core.parameter
                  :beast.evolution.alignment

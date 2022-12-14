@@ -1,6 +1,39 @@
-<addon name="CoalRe" version="0.0.7">
-  <depends on="BEAST" atleast="2.5.0"/>
-  <depends on="feast" atleast="7.2.0"/>
+<package name="CoalRe" version="1.0.0">
+  <depends on='BEAST.base' atleast='2.7.2'/>
+  <depends on='BEAST.app' atleast='2.7.2'/>
+
   <addonapp class="coalre.networkannotator.ReassortmentNetworkSummarizer"
             description="ReassortmentNetworkSummarizer"/>
-</addon>
+
+
+
+      <service type="beast.base.core.BEASTInterface">
+        <provider classname="coalre.distribution.CoalescentWithReassortment"/>
+        <provider classname="coalre.distribution.emptyNetworkEdgesPrior"/>
+        <provider classname="coalre.distribution.NetworkDistribution"/>
+        <provider classname="coalre.distribution.NetworkIntervals"/>
+        <provider classname="coalre.distribution.TipPrior"/>
+        <provider classname="coalre.network.Network"/>
+        <provider classname="coalre.network.SegmentTreeInitializer"/>
+        <provider classname="coalre.operators.AddRemoveReassortment"/>
+        <provider classname="coalre.operators.AddRemoveReassortmentCoalescent"/>
+        <provider classname="coalre.operators.DivertSegmentOperator"/>
+        <provider classname="coalre.operators.GibbsOperatorAboveSegmentRoots"/>
+        <provider classname="coalre.operators.MultiTipDatesRandomWalker"/>
+        <provider classname="coalre.operators.NetworkExchange"/>
+        <provider classname="coalre.operators.NetworkScaleOperator"/>
+        <provider classname="coalre.operators.SubNetworkSlide"/>
+        <provider classname="coalre.operators.TipReheight"/>
+        <provider classname="coalre.operators.UniformNetworkNodeHeightOperator"/>
+        <provider classname="coalre.simulator.SimulatedCoalescentNetwork"/>
+        <provider classname="coalre.statistics.NetworkStatsLogger"/>
+        <provider classname="coalre.statistics.ReassortmentEventsLogger"/>
+        <provider classname="coalre.statistics.ReassortmentStatsLogger"/>
+        <provider classname="coalre.util.DateOffsetInitializer"/>
+        <provider classname="coalre.util.DummyTreeDistribution"/>
+        <provider classname="coalre.util.SpikeSlabParameter"/>
+        <provider classname="coalre.util.WeightedSumDistribution"/>
+    </service>
+
+</package>
+

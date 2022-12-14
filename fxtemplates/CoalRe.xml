@@ -23,22 +23,20 @@
                      inlineInputs="coalre.distribution.CoalescentWithReassortment.networkIntervals"
                      suppressInputs="coalre.distribution.NetworkIntervals.network">
             <![CDATA[
-            <stateNode id="reassortmentRateCwR.alltrees" spec="beast.core.parameter.RealParameter" value="0.1" estimate="true"/>
-            <stateNode id="popSizeCwR.alltrees" spec="beast.core.parameter.RealParameter" value="1.0" estimate="true"/>
-            <stateNode id="binomialProbCwR.alltrees" spec="beast.core.parameter.RealParameter" lower="0.0" upper="1.0" value="0.5" estimate="false"/>
+            <stateNode id="reassortmentRateCwR.alltrees" spec="beast.base.inference.parameter.RealParameter" value="0.1" estimate="true"/>
+            <stateNode id="popSizeCwR.alltrees" spec="beast.base.inference.parameter.RealParameter" value="1.0" estimate="true"/>
+            <stateNode id="binomialProbCwR.alltrees" spec="beast.base.inference.parameter.RealParameter" lower="0.0" upper="1.0" value="0.5" estimate="false"/>
 
             <stateNode id="networkCwR.alltrees" spec="coalre.simulator.SimulatedCoalescentNetwork" nSegments="1"
                         enableSegmentTreeUpdate="false" estimate="true">
-                <reassortmentRate spec="beast.core.parameter.RealParameter" value="0.0"/>
-                <populationModel spec="beast.evolution.tree.coalescent.ConstantPopulation">
-                    <popSize spec="beast.core.parameter.RealParameter" value="1.0"/>
+                <reassortmentRate spec="beast.base.inference.parameter.RealParameter" value="0.0"/>
+                <populationModel spec="beast.base.evolution.tree.coalescent.ConstantPopulation">
+                    <popSize spec="beast.base.inference.parameter.RealParameter" value="1.0"/>
                 </populationModel>
 
-                <taxonSet spec="beast.evolution.alignment.TaxonSet" alignment="@$(n)"/>
+                <taxonSet spec="beast.base.evolution.alignment.TaxonSet" alignment="@$(n)"/>
             </stateNode>
             
-            <init id="networkCwR.segmentInitializer" spec="SegmentTreeInitializer" network="@networkCwR.alltrees">
-            </init>
 
             <init id="segmentTreeInitializerCwR.t:$(n)" spec="coalre.network.SegmentTreeInitializer"
                   network="@networkCwR.alltrees">
@@ -49,7 +47,7 @@
 
             <prior spec="coalre.distribution.CoalescentWithReassortment" id="CoalescentWithReassortmentPrior.alltrees">
                 <reassortmentRate idref="reassortmentRateCwR.alltrees"/>
-                <populationModel id="constantPopSizeCwR.alltrees" spec="beast.evolution.tree.coalescent.ConstantPopulation">
+                <populationModel id="constantPopSizeCwR.alltrees" spec="beast.base.evolution.tree.coalescent.ConstantPopulation">
                     <popSize idref="popSizeCwR.alltrees"/>
                 </populationModel>
                 <networkIntervals id="networkIntervalsCwR.alltrees" spec="coalre.distribution.NetworkIntervals">
@@ -68,7 +66,7 @@
             </prior>
 
             <prior id="binomialProbCwRPrior.alltrees" x="@binomialProbCwR.alltrees">
-                <distr spec="beast.math.distributions.Uniform" lower="0" upper="1"/>
+                <distr spec="beast.base.inference.distribution.Uniform" lower="0" upper="1"/>
             </prior>
 
 

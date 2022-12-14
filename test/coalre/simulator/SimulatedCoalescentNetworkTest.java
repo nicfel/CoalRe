@@ -1,15 +1,14 @@
 package coalre.simulator;
 
-import beast.core.parameter.RealParameter;
-import beast.evolution.tree.TraitSet;
-import beast.evolution.tree.Tree;
-import beast.evolution.tree.coalescent.ConstantPopulation;
-import beast.util.Randomizer;
+import beast.base.inference.parameter.RealParameter;
+import beast.base.evolution.tree.TraitSet;
+import beast.base.evolution.tree.Tree;
+import beast.base.evolution.tree.coalescent.ConstantPopulation;
+import beast.base.util.Randomizer;
 import coalre.CoalReTestClass;
 import coalre.statistics.NetworkStatsLogger;
 import org.junit.Assert;
 import org.junit.Test;
-import test.beast.beast2vs1.trace.DiscreteStatistics;
 
 import java.util.List;
 
@@ -17,6 +16,8 @@ public class SimulatedCoalescentNetworkTest extends CoalReTestClass {
 
     @Test
     public void testSimulator() {
+    	
+    	
         Randomizer.setSeed(1);
 
         TraitSet dateTrait = getContempDateTraitSet(getTaxonSet(10));
@@ -51,10 +52,11 @@ public class SimulatedCoalescentNetworkTest extends CoalReTestClass {
             networkHeights[i] = NetworkStatsLogger.getTotalHeight(network);
             networkLengths[i] = NetworkStatsLogger.getTotalEdgeLength(network);
         }
+        
 
-        double meanCount = DiscreteStatistics.mean(reassortmentNodeCounts);
-        double meanHeight = DiscreteStatistics.mean(networkHeights);
-        double meanLength = DiscreteStatistics.mean(networkLengths);
+        double meanCount = SimulatedCoalescentNetworkTest.mean(reassortmentNodeCounts);
+        double meanHeight = SimulatedCoalescentNetworkTest.mean(networkHeights);
+        double meanLength = SimulatedCoalescentNetworkTest.mean(networkLengths);
 
         System.out.println(meanCount);
         System.out.println(meanHeight);
@@ -64,4 +66,24 @@ public class SimulatedCoalescentNetworkTest extends CoalReTestClass {
         Assert.assertEquals(2.93, meanHeight, 0.1);
         Assert.assertEquals(10.21, meanLength, 0.5);
     }
+    
+    
+    /**
+     * Same as DiscreteStatistics.mean
+     */
+    public static double mean(double[] x) {
+        double m = 0;
+        int count = x.length;
+        for (double aX : x) {
+            if (Double.isNaN(aX)) {
+                count--;
+            } else {
+                m += aX;
+            }
+        }
+
+        return m / count;
+    }
+    
+    
 }

@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import beast.evolution.tree.TraitSet;
-import beast.evolution.tree.Tree;
+import beast.base.evolution.tree.TraitSet;
+import beast.base.evolution.tree.Tree;
 
 public class NetworkNode {
 

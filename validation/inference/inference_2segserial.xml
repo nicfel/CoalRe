@@ -1,5 +1,5 @@
 <beast version="2.0"
-       namespace="beast.core
+       namespace="beast.pkgmgmt:beast.base.core:beast.base.inference
                  :beast.core.util
                  :beast.core.parameter
                  :beast.evolution.alignment
@@ -108,18 +108,18 @@
 
                 <distribution id="parametersPrior" spec="CompoundDistribution">
                     <distribution spec="Prior" x="@reassortmentRate">
-                        <!--distr spec="beast.math.distributions.Uniform" lower="0.0" upper="10.0"/-->
-                        <distr spec="beast.math.distributions.OneOnX"/>
+                        <!--distr spec="beast.base.inference.distribution.Uniform" lower="0.0" upper="10.0"/-->
+                        <distr spec="beast.base.inference.distribution.OneOnX"/>
                     </distribution>
 
                     <distribution spec="Prior" x="@clockRate">
-                        <!--distr spec="beast.math.distributions.Uniform" lower="0.0" upper="1.0"/-->
-                        <distr spec="beast.math.distributions.OneOnX"/>
+                        <!--distr spec="beast.base.inference.distribution.Uniform" lower="0.0" upper="1.0"/-->
+                        <distr spec="beast.base.inference.distribution.OneOnX"/>
                     </distribution>
 
                     <distribution spec="Prior" x="@popSize">
-                        <!--distr spec="beast.math.distributions.Uniform" lower="0.0" upper="10.0"/-->
-                        <distr spec="beast.math.distributions.OneOnX"/>
+                        <!--distr spec="beast.base.inference.distribution.Uniform" lower="0.0" upper="10.0"/-->
+                        <distr spec="beast.base.inference.distribution.OneOnX"/>
                     </distribution>
                 </distribution>
             </distribution>
