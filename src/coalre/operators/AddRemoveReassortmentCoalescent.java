@@ -351,9 +351,4 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 //        }
 //    }
 
-    
-<<<<<<< HEAD
-}
-=======
-}
->>>>>>> origin/master
+ }
