@@ -44,7 +44,10 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
        
         double logHR = 0.0;   
         
-        
+//        System.out.println("b");
+//        System.out.println(network);        
+
+
         // Adds empty network edges
         if (addRemoveEmptyEdgesInput.get()){
         	logHR += addEmptyNetworkSegments();
@@ -55,6 +58,8 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
          
         // calls the operator
         logHR += networkProposal();
+        
+
 
         // removes all the empty network edges in the network again
         if (addRemoveEmptyEdgesInput.get()){
@@ -73,6 +78,15 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
             for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
                 network.updateSegmentTree(segmentTrees.get(segIdx), segIdx);
         }        
+        
+//        System.out.println(getID());
+//        System.out.println(network);
+//        System.out.println("....");
+        
+//        for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
+//            System.out.println(segmentTrees.get(segIdx) +";");
+
+
                 		
         return logHR;
     }

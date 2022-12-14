@@ -52,9 +52,7 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 
         logHR -= Math.log(1.0/(double)possibleSourceEdges.size())
                 + Math.log(1.0/sourceEdge.getLength());
-        
-        coalescentDistr.intervals.eventListDirty = true;
-        
+                
     	// Calculate tree intervals
     	List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
 
@@ -226,11 +224,7 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
         NetworkEdge destEdge = getSisterEdge(edgeToRemove);
         if (destEdge.childNode == edgeToRemove.childNode)
             destEdge = sourceEdge;
-        double destTime = edgeToRemove.parentNode.getHeight();
-        
-        
-        coalescentDistr.intervals.eventListDirty = true;
-        
+        double destTime = edgeToRemove.parentNode.getHeight();        
     	// Calculate tree intervals
     	List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
 
@@ -358,4 +352,8 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 //    }
 
     
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/master

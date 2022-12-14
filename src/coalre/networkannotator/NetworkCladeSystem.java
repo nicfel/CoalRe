@@ -581,7 +581,7 @@ public class NetworkCladeSystem {
         }    	
     }   
      
-    public void summarizeAttributes(Network network, Set<String> attributeNames, boolean useMean, int nrNetworks, boolean onTarget) {
+    public void summarizeAttributes(Network network, Set<String> attributeNames, int method, int nrNetworks, boolean onTarget) {
 		boolean[] followSegment = new boolean[network.getSegmentCount()];
 		for (int i=0;i<network.getSegmentCount();i++)followSegment[i] = false;
 		
@@ -592,10 +592,10 @@ public class NetworkCladeSystem {
 		
 		
     	// summarizes all coalescent events
-    	summarizeAttributes(network.getRootEdge().childNode, attributeNames, useMean, nrNetworks, network.getSegmentCount(), followSegment, onTarget, passedBitSet);    	
+    	summarizeAttributes(network.getRootEdge().childNode, attributeNames, method, nrNetworks, network.getSegmentCount(), followSegment, onTarget, passedBitSet);    	
     }
     
-    private BitSet[] summarizeAttributes(NetworkNode node, Set<String> attributeNames, boolean useMean, 
+    private BitSet[] summarizeAttributes(NetworkNode node, Set<String> attributeNames, int method, 
     		int nrNetworks, int nrSegments, boolean[] followSegment_in, boolean onTarget, Map<NetworkNode, BitSet[]> passedBitSet) {
 
 		// check if the node was already passed
@@ -617,7 +617,7 @@ public class NetworkCladeSystem {
             	if (node.getParentEdges().get(0).hasSegments.get(i))
             		bits[i].set(index);
             }
-            summarizeAttributesForLeaf(bits, node, attributeNames, useMean, nrNetworks, nrSegments, onTarget);
+            summarizeAttributesForLeaf(bits, node, attributeNames, method, nrNetworks, nrSegments, onTarget);
         } else {
         	
             // check if the node is the root of a segment tree, if so, follow the segment
@@ -646,7 +646,7 @@ public class NetworkCladeSystem {
 					}
 				}				
 				
-				BitSet[] newBits = summarizeAttributes(childEdge.childNode, attributeNames, useMean, nrNetworks, nrSegments, followSegmentout, onTarget, passedBitSet);
+				BitSet[] newBits = summarizeAttributes(childEdge.childNode, attributeNames, method, nrNetworks, nrSegments, followSegmentout, onTarget, passedBitSet);
             	for (int i = 0; i < nrSegments;i++){
 	            	if (childEdge.hasSegments.get(i)){
             			bits[i].or(newBits[i]);	   
@@ -656,9 +656,9 @@ public class NetworkCladeSystem {
 				
             }            
             if (!node.isReassortment())
-            	summarizeAttributesForClade(bits, node, attributeNames, useMean, nrNetworks, nrSegments, onTarget);   
+            	summarizeAttributesForClade(bits, node, attributeNames, method, nrNetworks, nrSegments, onTarget);   
             else{
-            	summarizeAttributesForReassortmentClade(bits, node, attributeNames, useMean, nrNetworks, nrSegments, onTarget);
+            	summarizeAttributesForReassortmentClade(bits, node, attributeNames, method, nrNetworks, nrSegments, onTarget);
             }
         }  
         
@@ -666,7 +666,7 @@ public class NetworkCladeSystem {
     }
     
     private void summarizeAttributesForClade(BitSet[] bits, NetworkNode node, 
-    		Set<String> attributeNames, boolean useMean, int nrNetworks, int nrSegments, boolean onTarget) {
+    		Set<String> attributeNames, int method , int nrNetworks, int nrSegments, boolean onTarget) {
 
 		BitSet[] newBits = new BitSet[nrSegments];
 		for (int i = 0 ; i < newBits.length; i++)
@@ -713,9 +713,9 @@ public class NetworkCladeSystem {
 	            		
 	            		if(!onTarget){
 		            		if (heightarray.length>0){
-								if (useMean){
+								if (method == 0){
 									node.setHeight(DiscreteStatistics.mean(heightarray));
-								}else{
+								}else if (method==1){
 								    node.setHeight(DiscreteStatistics.median(heightarray));
 								}
 		            		}
@@ -755,7 +755,7 @@ public class NetworkCladeSystem {
     }
     
     private void summarizeAttributesForLeaf(BitSet[] bits, NetworkNode node, 
-    		Set<String> attributeNames, boolean useMean, int nrNetworks, int nrSegments, boolean onTarget) {
+    		Set<String> attributeNames, int method, int nrNetworks, int nrSegments, boolean onTarget) {
 
 		BitSet newBits = new BitSet();
 		for (int i = 0 ; i < bits.length; i++)
@@ -788,9 +788,9 @@ public class NetworkCladeSystem {
             		
             		if(!onTarget){
 	            		if (heightarray.length>0){
-							if (useMean){
+							if (method==1){
 								node.setHeight(DiscreteStatistics.mean(heightarray));
-							}else{
+							}else if (method==2){
 							    node.setHeight(DiscreteStatistics.median(heightarray));
 							}
 	            		}
@@ -827,7 +827,7 @@ public class NetworkCladeSystem {
     }
         
     private void summarizeAttributesForReassortmentClade(BitSet[] bits, NetworkNode node, 
-    		Set<String> attributeNames, boolean useMean, int nrNetworks, int nrSegments, boolean onTarget) {
+    		Set<String> attributeNames, int method, int nrNetworks, int nrSegments, boolean onTarget) {
     	
     	// check if the first segment goes left or right
     	boolean isLeft = false;
@@ -895,9 +895,9 @@ public class NetworkCladeSystem {
 	            			            		
 	            		if(!onTarget){
 		            		if (heightarray.length>0){
-								if (useMean){
+								if (method==1){
 									node.setHeight(DiscreteStatistics.mean(heightarray));
-								}else{
+								}else if (method==2){
 								    node.setHeight(DiscreteStatistics.median(heightarray));
 								}
 		            		}
@@ -949,14 +949,14 @@ public class NetworkCladeSystem {
         }
         
         for (ReassortmentClade clade : reassortmentCladeMap.values()) {	        	
-            if (clade.getCount() > totalTreesUsed) {
-            	for (int j = 0; j < leafNodeMap.size();j++)
-            		if (clade.bits[0].get(j))
-            			System.err.println(leafNodeMap.get(j));
-
-                throw new AssertionError("clade.getCount=(" + clade.getCount() +
-                        ") should be <= totalTreesUsed = (" + totalTreesUsed + ")");
-            }
+//            if (clade.getCount() > totalTreesUsed) {
+//            	for (int j = 0; j < leafNodeMap.size();j++)
+//            		if (clade.bits[0].get(j))
+//            			System.err.println(leafNodeMap.get(j));
+//
+//                throw new AssertionError("clade.getCount=(" + clade.getCount() +
+//                        ") should be <= totalTreesUsed = (" + totalTreesUsed + ")");
+//            }
             clade.setCredibility(((double) clade.getCount()) / (double) totalTreesUsed);
         }
 

@@ -13,12 +13,24 @@ public class NetworkEvent {
     /**
      * Number of segments on a reassorting lineage.
      */
-    int segsToSort;
+    public int segsToSort;
+    
+    /**
+     * Which segments went left, needed for plasmids.
+     */
+    public BitSet segsLeft;
+    
+    /**
+     * whcih segments went right, needed for plasmids.
+     */
+    public BitSet segsRight;
+
+
 
     /**
      * Number of segments sent to the first parent.
      */
-    int segsSortedLeft;
+    public int segsSortedLeft;
 
     public int lineages;
     public double totalReassortmentObsProb;
@@ -31,6 +43,6 @@ public class NetworkEvent {
     
     @Override
     public String toString() {
-    	return type + ":" + time;
+		return type +":"+ lineages +":" +totalReassortmentObsProb;
     }
 }

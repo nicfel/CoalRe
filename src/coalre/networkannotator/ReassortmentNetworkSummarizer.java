@@ -38,7 +38,7 @@ import java.util.List;
  */
 public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
 
-    private enum SummaryStrategy { MEAN, MEDIAN }
+    private enum SummaryStrategy { MEAN, MEDIAN, MCC_node_height }
 
     private static class NetworkAnnotatorOptions {
         File inFile;
@@ -170,9 +170,11 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         // print the network to file
         System.out.println("\nSummarize Atributes...");        
     	if (options.summaryStrategy == SummaryStrategy.MEAN)
-    		bestCladeSystem.summarizeAttributes(bestNetwork, attributeNames, true, logReader.getCorrectedNetworkCount(), onTarget);
+    		bestCladeSystem.summarizeAttributes(bestNetwork, attributeNames, 1, logReader.getCorrectedNetworkCount(), onTarget);
+    	else if (options.summaryStrategy == SummaryStrategy.MEDIAN)
+    		bestCladeSystem.summarizeAttributes(bestNetwork, attributeNames, 2, logReader.getCorrectedNetworkCount(), onTarget);
     	else
-    		bestCladeSystem.summarizeAttributes(bestNetwork, attributeNames, false, logReader.getCorrectedNetworkCount(), onTarget);
+    		bestCladeSystem.summarizeAttributes(bestNetwork, attributeNames, 3, logReader.getCorrectedNetworkCount(), onTarget);
 
     	// print the network to file
         System.out.println("\nWriting output to " + options.outFile.getName()
@@ -443,9 +445,9 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
     }
 
     public static String helpMessage =
-            "ACGAnnotator - produces summaries of Bacter ACG log files.\n"
+            "ACGAnnotator - produces summaries of Reassortment Network log files.\n"
                     + "\n"
-                    + "Usage: appstore ACGAnnotator [-help | [options] logFile [outputFile]\n"
+                    + "Usage: appstore ReassortmentNetworkSummarizer [-help | [options] logFile [outputFile]\n"
                     + "\n"
                     + "Option                   Description\n"
                     + "--------------------------------------------------------------\n"
@@ -530,8 +532,23 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
                         i += 1;
                         break;
                     }
+                    
+                    if (args[i+1].toLowerCase().equals("none")) {
+                        options.summaryStrategy = SummaryStrategy.MCC_node_height;
 
-                    printUsageAndError("-positions must be followed by either 'MEAN' or 'MEDIAN'.");
+                        i += 1;
+                        break;
+                    }
+                    
+                    if (args[i+1].toLowerCase().equals("mcc")) {
+                        options.summaryStrategy = SummaryStrategy.MCC_node_height;
+
+                        i += 1;
+                        break;
+                    }
+
+
+                    printUsageAndError("-positions must be followed by either 'MEAN' or 'MEDIAN' or 'MCC'.");
 
                 case "-removeSegments":
                     if (args.length<=i+1) {
