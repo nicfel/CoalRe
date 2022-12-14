@@ -78,6 +78,7 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
                 network.updateSegmentTree(segmentTrees.get(segIdx), segIdx);
         }        
         
+//        System.out.println(getID());
 //        System.out.println(network);
 //        System.out.println("....");
         

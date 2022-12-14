@@ -64,6 +64,9 @@ public abstract class NetworkOperator extends Operator {
                 network.updateSegmentTree(segmentTrees.get(segIdx), segIdx);
         }
         
+//        System.out.println(getID());
+//        System.out.println(network);
+        
 //        System.out.println(network);
 //        System.out.println(".............");
 //        
