@@ -25,5 +25,13 @@ public class NetworkDistribution extends Distribution {
     @Override
     public void sample(State state, Random random) {
     }
+    
+    @Override
+    protected boolean requiresRecalculation() {
+    	if (networkIntervalsInput.get().isDirty())
+    		return true;
+    	return false;
+    }
+
 
 }

@@ -44,6 +44,5 @@ public class NetworkEvent {
     @Override
     public String toString() {
 		return type +":"+ lineages +":" +totalReassortmentObsProb;
-    	
     }
 }

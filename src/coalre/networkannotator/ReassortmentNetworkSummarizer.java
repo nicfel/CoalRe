@@ -167,7 +167,6 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         	pruneNetwork(network, options.removeSegments);
     		bestCladeSystem.collectAttributes(network, attributeNames, true);
     	}
-        
         // print the network to file
         System.out.println("\nSummarize Atributes...");        
     	if (options.summaryStrategy == SummaryStrategy.MEAN)
@@ -182,6 +181,7 @@ public class ReassortmentNetworkSummarizer extends ReassortmentAnnotator {
         	+ "...");
 
         try (PrintStream ps = new PrintStream(options.outFile)) {
+            System.out.println(bestNetwork);
         	ps.print(logReader.getPreamble());
         	ps.println("tree STATE_0 = " + bestNetwork.getExtendedNewickVerbose(options.followSegment));
 

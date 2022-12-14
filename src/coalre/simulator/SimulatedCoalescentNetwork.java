@@ -9,6 +9,7 @@ import beast.evolution.tree.TraitSet;
 import beast.evolution.tree.Tree;
 import beast.evolution.tree.coalescent.PopulationFunction;
 import beast.util.Randomizer;
+import cern.colt.Arrays;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
@@ -59,10 +60,30 @@ public class SimulatedCoalescentNetwork extends Network {
 
     public void initAndValidate() {
 
-        if (segmentTreesInput.get().isEmpty())
+        if (segmentTreesInput.get().isEmpty()) {
             nSegments = nSegmentsInput.get();
-        else
+        }else {
             nSegments = segmentTreesInput.get().size();
+            segmentNames = new String[nSegments];
+            // initialize names of segments
+            baseName = "Tree.t:";
+//            baseName = segmentTreesInput.get().get(0).getID();
+//            for (int segIdx=1; segIdx<nSegments; segIdx++) {
+//        		String newBase = "";
+//            	for (int i = 0; i < baseName.length(); i++) {
+//    				if (baseName.substring(0,i+1).contentEquals(segmentTreesInput.get().get(segIdx).getID().substring(0, i+1))) {
+//    					newBase = baseName.substring(0,i+1);
+//    				}
+//    				
+//            	}
+//            	baseName = newBase;
+//            }
+            
+            for (int segIdx=0; segIdx<nSegments; segIdx++) {
+            	segmentNames[segIdx] = segmentTreesInput.get().get(segIdx).getID().replace(baseName, "");
+            }
+            segmentTreesInput.get().clear();
+        }
 
         populationFunction = populationFunctionInput.get();
         reassortmentRate = reassortmentRateInput.get();
@@ -78,12 +99,12 @@ public class SimulatedCoalescentNetwork extends Network {
     
 
         TaxonSet taxonSet = null;
-        if (!segmentTreesInput.get().isEmpty())
-            taxonSet = segmentTreesInput.get().get(0).getTaxonset();
-        else if (traitSetInput.get() != null)
+        if (traitSetInput.get() != null)
             taxonSet = traitSetInput.get().taxaInput.get();
         else if (taxonSetInput.get() != null)
             taxonSet = taxonSetInput.get();
+        else if (!segmentTreesInput.get().isEmpty())
+        	taxonSet = segmentTreesInput.get().get(0).getTaxonset();
         else
             throw new IllegalArgumentException("Taxon set must be specified " +
                     "using either taxonSet, traitSet or provided by a segmentTree input.");
@@ -149,6 +170,7 @@ public class SimulatedCoalescentNetwork extends Network {
      * @param sampleNodes network nodes corresponding to samples.
      */
     public void simulateNetwork(List<NetworkNode> sampleNodes) {
+    	System.out.println("resample");
 
         List<NetworkNode> remainingSampleNodes = new ArrayList<>(sampleNodes);
         List<NetworkEdge> extantLineages = new ArrayList<>();

@@ -613,7 +613,7 @@ public class NetworkCladeSystem {
             if (index < 0) {
                 throw new IllegalArgumentException("Taxon with height= " + node.getHeight() + ", not found in target tree");
             }
-            for (int i = 0; i < cladeMap.size(); i++){
+            for (int i = 0; i < nrSegments; i++){
             	if (node.getParentEdges().get(0).hasSegments.get(i))
             		bits[i].set(index);
             }

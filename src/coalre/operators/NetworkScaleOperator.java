@@ -62,6 +62,8 @@ public class NetworkScaleOperator extends NetworkOperator {
         upParameters = upParametersInput.get();
         downParameters = downParametersInput.get();
     }
+    
+    int c1=0,c2=0;
 
     @Override
     public double networkProposal() {
@@ -90,6 +92,7 @@ public class NetworkScaleOperator extends NetworkOperator {
             }
 
         } else {
+        	c1++;
 
             // Scale network nodes
 
@@ -100,10 +103,16 @@ public class NetworkScaleOperator extends NetworkOperator {
 
             if (f < 1.0) {
                 for (NetworkNode leaf : network.getLeafNodes()) {
-                    if (leaf.getParentEdges().get(0).parentNode.getHeight() < leaf.getHeight())
+                    if (leaf.getParentEdges().get(0).parentNode.getHeight() < leaf.getHeight()) {
+                    	c2++;
+                    	
                         return Double.NEGATIVE_INFINITY;
+                    }
                 }
             }
+            
+//            System.out.println(c2/(double) c1);
+
 
         }
 
@@ -124,7 +133,6 @@ public class NetworkScaleOperator extends NetworkOperator {
         } catch (IllegalArgumentException ex) {
             return Double.NEGATIVE_INFINITY;
         }
-
         return Math.log(f)*(count-2);
     }
     

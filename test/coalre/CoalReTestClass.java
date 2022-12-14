@@ -60,6 +60,7 @@ public abstract class CoalReTestClass {
         for (int seg=0; seg<nSegments; seg++) {
             Tree tree = new Tree();
             tree.initByName("trait", traitSet, "taxonset", traitSet.taxaInput.get());
+            tree.setID("tree"+seg);
             segmentTrees.add(tree);
         }
 

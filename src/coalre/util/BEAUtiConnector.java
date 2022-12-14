@@ -31,6 +31,7 @@ public class BEAUtiConnector {
 
         Set<RealParameter> parametersToScaleUp = new HashSet<>();
         Set<RealParameter> parametersToScaleDown = new HashSet<>();
+        Set<Tree> segmentTrees = new HashSet<>();
 
         for (BEASTInterface p : doc.getPartitions("tree")) {
             String pId = BeautiDoc.parsePartition(p.getID());
@@ -46,6 +47,7 @@ public class BEAUtiConnector {
 
             GenericTreeLikelihood likelihood = (GenericTreeLikelihood) p;
             Tree segmentTree = (Tree) likelihood.treeInput.get();
+            segmentTrees.add(segmentTree);
 
 
             // Tell each segment tree initializer which segment index it's
@@ -143,8 +145,12 @@ public class BEAUtiConnector {
             // Provide trait set from first segment tree to network initializer:
             if (traitSet != null)
                 network.traitSetInput.setValue(traitSet, network);
-        }
+          
+            network.segmentTreesInput.get().clear();
+            network.segmentTreesInput.get().addAll(segmentTrees);
 
+        }
+        
         return false;
     }
 }
