@@ -1,10 +1,11 @@
 package coalre.distribution;
 
-import beast.core.parameter.RealParameter;
-import beast.evolution.tree.coalescent.ConstantPopulation;
+import beast.base.inference.parameter.RealParameter;
+import beast.base.evolution.tree.coalescent.ConstantPopulation;
 import coalre.CoalReTestClass;
 import coalre.network.Network;
-import junit.framework.Assert;
+
+import org.junit.Assert;
 import org.junit.Test;
 
 public class CoalescentWithReassortmentTest extends CoalReTestClass {

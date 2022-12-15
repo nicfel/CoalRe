@@ -7,13 +7,13 @@ import org.apache.commons.math.MathException;
 import org.apache.commons.math.distribution.ContinuousDistribution;
 import org.apache.commons.math.distribution.Distribution;
 
-import beast.core.Description;
-import beast.core.Function;
-import beast.core.Input;
-import beast.core.Input.Validate;
-import beast.core.parameter.RealParameter;
-import beast.math.distributions.ParametricDistribution;
-import beast.util.Randomizer;
+import beast.base.core.Description;
+import beast.base.core.Function;
+import beast.base.core.Input;
+import beast.base.core.Input.Validate;
+import beast.base.inference.parameter.RealParameter;
+import beast.base.inference.distribution.ParametricDistribution;
+import beast.base.util.Randomizer;
 
 
 

@@ -1,7 +1,7 @@
 package coalre.operators;
 
-import beast.core.Input;
-import beast.util.Randomizer;
+import beast.base.core.Input;
+import beast.base.util.Randomizer;
 import coalre.distribution.CoalescentWithReassortment;
 import coalre.distribution.NetworkEvent;
 import coalre.network.NetworkEdge;

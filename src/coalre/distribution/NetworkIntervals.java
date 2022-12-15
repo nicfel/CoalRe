@@ -2,11 +2,11 @@ package coalre.distribution;
 
 
 
-import beast.core.CalculationNode;
-import beast.core.Function;
-import beast.core.Input;
-import beast.core.Input.Validate;
-import beast.core.parameter.RealParameter;
+import beast.base.inference.CalculationNode;
+import beast.base.core.Function;
+import beast.base.core.Input;
+import beast.base.core.Input.Validate;
+import beast.base.inference.parameter.RealParameter;
 import coalre.network.Network;
 
 import java.util.ArrayList;
