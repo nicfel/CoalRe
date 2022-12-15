@@ -2,7 +2,7 @@
   <depends on='BEAST.base' atleast='2.7.2'/>
   <depends on='BEAST.app' atleast='2.7.2'/>
 
-  <addonapp class="coalre.networkannotator.ReassortmentNetworkSummarizer"
+  <packageapp class="coalre.networkannotator.ReassortmentNetworkSummarizer"
             description="ReassortmentNetworkSummarizer"/>
 
 
