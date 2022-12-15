@@ -5,9 +5,13 @@ import beast.base.inference.parameter.RealParameter;
 import beast.base.core.BEASTInterface;
 import beast.base.core.BEASTObject;
 import beast.base.evolution.likelihood.GenericTreeLikelihood;
+import beast.base.evolution.operator.AdaptableOperatorSampler;
+import beast.base.evolution.operator.kernel.AdaptableVarianceMultivariateNormalOperator;
 import beast.base.inference.MCMC;
 import beast.base.inference.Operator;
 import beast.base.inference.operator.UpDownOperator;
+import beast.base.inference.operator.kernel.BactrianUpDownOperator;
+import beast.base.inference.operator.kernel.Transform;
 import beast.base.evolution.tree.coalescent.RandomTree;
 import beast.base.evolution.tree.TraitSet;
 import beast.base.evolution.tree.Tree;
@@ -68,45 +72,66 @@ public class BEAUtiConnector {
 
             // Remove segment trees from standard up/down operators.
 
-            for (Operator operator : mcmc.operatorsInput.get()) {
-                if (!(operator instanceof UpDownOperator))
-                    continue;
-
-                UpDownOperator upDown = (UpDownOperator) operator;
-
-                boolean segmentTreeScaler = upDown.upInput.get().contains(segmentTree)
-                        || upDown.downInput.get().contains(segmentTree);
-
-                if (segmentTreeScaler) {
-                    upDown.upInput.get().remove(segmentTree);
-                    upDown.downInput.get().remove(segmentTree);
-                }
+            for (Operator aos : mcmc.operatorsInput.get()) {
+            	if (aos instanceof AdaptableOperatorSampler) {           		
+            		
+                    for (Operator operator : ((AdaptableOperatorSampler) aos).operatorsInput.get()) {
+		                if (operator instanceof BactrianUpDownOperator) {
+		
+			                BactrianUpDownOperator upDown = (BactrianUpDownOperator) operator;
+			
+			                boolean segmentTreeScaler = upDown.upInput.get().contains(segmentTree)
+			                        || upDown.downInput.get().contains(segmentTree);
+			
+			                if (segmentTreeScaler) {
+			                    upDown.upInput.get().remove(segmentTree);
+			                    upDown.downInput.get().remove(segmentTree);
+			                }
+		                }else if (operator instanceof AdaptableVarianceMultivariateNormalOperator) {
+		                	
+		                	AdaptableVarianceMultivariateNormalOperator amvn = (AdaptableVarianceMultivariateNormalOperator) operator;
+		                	for (Transform t : amvn.transformationsInput.get())
+		                		if (t instanceof Transform.UnivariableTransform)
+		                			((Transform.UnivariableTransform) t).functionInput.get().remove(segmentTree);
+		                	
+		                }
+                    }
+            	}
 
             }
 
             // Clock rates to add to network up/down:
-            for (Operator operator : mcmc.operatorsInput.get()) {
-                if (!(operator instanceof UpDownOperator))
-                    continue;
-
-                UpDownOperator upDown = (UpDownOperator) operator;
-
-                // Note: built-in up/down operators scale trees _down_ while
-                // ours scales trees _up_, hence the up/down reversal.
-                for (BEASTObject o : upDown.upInput.get()) {
-                    if (o instanceof RealParameter) {
-                        if (o.getID().contains("clock"))
-                            parametersToScaleDown.add((RealParameter)o);
+            List<Operator> removeOps  = new ArrayList<>();
+            for (Operator aos : mcmc.operatorsInput.get()) {
+            	if (aos instanceof AdaptableOperatorSampler) {           		
+                    for (Operator operator : ((AdaptableOperatorSampler) aos).operatorsInput.get()) {
+		                if (!(operator instanceof BactrianUpDownOperator))
+		                    continue;
+		
+		                BactrianUpDownOperator upDown = (BactrianUpDownOperator) operator;
+		
+		                // Note: built-in up/down operators scale trees _down_ while
+		                // ours scales trees _up_, hence the up/down reversal.
+		                for (BEASTObject o : upDown.upInput.get()) {
+		                    if (o instanceof RealParameter) {
+		                        if (o.getID().contains("clock"))
+		                            parametersToScaleDown.add((RealParameter)o);
+		                    }
+		                }
+		
+		                for (BEASTObject o : upDown.downInput.get()) {
+		                    if (o instanceof RealParameter) {
+		                        if (o.getID().contains("clock"))
+		                            parametersToScaleUp.add((RealParameter)o);
+		                    }
+		                }
                     }
-                }
-
-                for (BEASTObject o : upDown.downInput.get()) {
-                    if (o instanceof RealParameter) {
-                        if (o.getID().contains("clock"))
-                            parametersToScaleUp.add((RealParameter)o);
-                    }
-                }
+                    if (((AdaptableOperatorSampler) aos).treeInput.get().size()!=0)
+                    	removeOps.add(aos);                    
+            	}
             }
+            
+            mcmc.operatorsInput.get().removeAll(removeOps);
 
             // Extract trait set from one of the trees to use for network.
 
@@ -154,6 +179,6 @@ public class BEAUtiConnector {
 
         }
         
-        return false;
+        return true;
     }
 }
