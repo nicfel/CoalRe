@@ -161,6 +161,7 @@
             source="${sourceVersion}"
             target="${targetVersion}"
             includeantruntime="false"
+            encoding="UTF-8"
             fork="yes">
             <classpath>
                 <pathelement path="${classpath}"/>
