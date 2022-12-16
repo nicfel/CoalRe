@@ -32,3 +32,8 @@ License
 CoalRe is free (as in freedom) software and is distributed under the terms of
 version 3 of the GNU General Public License.  A copy of this license is found
 in the file named `COPYING`.
+
+
+run build with
+
+`JAVA_FX_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home/ ant build`

@@ -113,11 +113,11 @@ public class AddRemoveReassortmentTest extends CoalReTestClass {
                 "alpha", 1.0,
                 "weight", 1.0);
 
-        System.out.println(network.getExtendedNewickVerbose());
+//        System.out.println(network.getExtendedNewickVerbose());
 
         operator.removeReassortment();
 
-        System.out.println(network.getExtendedNewickVerbose());
+//        System.out.println(network.getExtendedNewickVerbose());
     }
 
     @Test
@@ -131,12 +131,12 @@ public class AddRemoveReassortmentTest extends CoalReTestClass {
                 "alpha", 1.0,
                 "weight", 1.0);
 
-        System.out.println(network.getExtendedNewickVerbose());
+//        System.out.println(network.getExtendedNewickVerbose());
 
         double logHR = operator.addReassortment();
 
-        System.out.println(network.getExtendedNewickVerbose());
+//        System.out.println(network.getExtendedNewickVerbose());
 
-        System.out.println(logHR);
+//        System.out.println(logHR);
     }
 }
