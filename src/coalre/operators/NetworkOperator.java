@@ -43,10 +43,18 @@ public abstract class NetworkOperator extends Operator {
                         "to operator must match number of segments in network.");
             // ensure the order of the segment trees is correct
             segmentTreeMap = new int[network.getSegmentCount()];
+            
+            if (network.segmentNames==null) {
+            	network.segmentNames=new String[segmentTreesInput.get().size()];
+            	for (int j = 0; j < segmentTreesInput.get().size(); j++) {
+            		network.segmentNames[j] = segmentTreesInput.get().get(j).getID();
+            	}
+            }
+            
             int c=0;
             for (int i = 0; i < network.getSegmentCount(); i++) {
             	for (int j = 0; j < segmentTreesInput.get().size(); j++) {
-            		if (segmentTreesInput.get().get(j).getID().contentEquals(network.baseName + network.segmentNames[i])) {
+            		if (segmentTreesInput.get().get(j).getID().contentEquals(network.segmentNames[i])) {
             			segmentTreeMap[i] = j;
             			c++;
             		}

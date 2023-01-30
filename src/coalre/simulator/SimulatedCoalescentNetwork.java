@@ -66,7 +66,8 @@ public class SimulatedCoalescentNetwork extends Network {
             nSegments = segmentTreesInput.get().size();
             segmentNames = new String[nSegments];
             // initialize names of segments
-            baseName = "Tree.t:";
+            baseName = "";
+//            baseName = "Tree.t:";
 //            baseName = segmentTreesInput.get().get(0).getID();
 //            for (int segIdx=1; segIdx<nSegments; segIdx++) {
 //        		String newBase = "";

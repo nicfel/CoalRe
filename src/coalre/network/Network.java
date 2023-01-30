@@ -234,29 +234,29 @@ public class Network extends StateNode {
         }
 
         result.append("[&");
-        if (segmentNames!=null) {
-    		result.append("segments={");
-    		String str = "rem";
-            for (int segIdx=0; segIdx<getSegmentCount(); segIdx++) {
-            	if (currentEdge.hasSegments.get(segIdx)) {
-            		str = str+ ",\"" + segmentNames[segIdx].replace(",", "") + "\"";
-            	}
-            }
-        	result.append(str.replace("rem,", ""));
-        	result.append("}");
-        }else {
+//        if (segmentNames!=null) {
+//    		result.append("segments={");
+//    		String str = "rem";
+//            for (int segIdx=0; segIdx<getSegmentCount(); segIdx++) {
+//            	if (currentEdge.hasSegments.get(segIdx)) {
+//            		str = str+ ",\"" + segmentNames[segIdx].replace(",", "") + "\"";
+//            	}
+//            }
+//        	result.append(str.replace("rem,", ""));
+//        	result.append("}");
+//        }else {
         	result.append("segments=").append(currentEdge.hasSegments);
-        }
+//        }
         if (verbose) {
             for (int segIdx=0; segIdx<getSegmentCount(); segIdx++) {
-                if (segmentNames!=null) {
-	                result.append(",").append(segmentNames[segIdx]).append("=")
-	                        .append(currentEdge.hasSegments.get(segIdx));
-                }else {
+//                if (segmentNames!=null) {
+//	                result.append(",").append(segmentNames[segIdx]).append("=")
+//	                        .append(currentEdge.hasSegments.get(segIdx));
+//                }else {
 	                result.append(",seg").append(segIdx).append("=")
                     	.append(currentEdge.hasSegments.get(segIdx));
 
-                }
+//                }
             }
         }
         result.append(",segsCarried=").append(currentEdge.hasSegments.cardinality());
@@ -531,18 +531,18 @@ public class Network extends StateNode {
                     if (attribCtx.attribValue().vector() == null)
                         continue;
                     
-                    if (segmentNames!=null) {
-	                    for (NetworkParser.AttribValueContext attribValueCtx : attribCtx.attribValue().vector().attribValue()) {
-	                    	for (int i = 0; i < segmentNames.length;i++) {
-	                    		if (segmentNames[i].contentEquals(attribValueCtx.getText()))
-	                    			hasSegments.set(i);
-	                    	}
-	                    }
-                    }else {
+//                    if (segmentNames!=null) {
+//	                    for (NetworkParser.AttribValueContext attribValueCtx : attribCtx.attribValue().vector().attribValue()) {
+//	                    	for (int i = 0; i < segmentNames.length;i++) {
+//	                    		if (segmentNames[i].contentEquals(attribValueCtx.getText()))
+//	                    			hasSegments.set(i);
+//	                    	}
+//	                    }
+//                    }else {
 	                    for (NetworkParser.AttribValueContext attribValueCtx : attribCtx.attribValue().vector().attribValue()) {
 	                    	hasSegments.set(Integer.valueOf(attribValueCtx.getText()));
 	                    }
-                    }
+//                    }
 
                     segmentsProcessed = true;
                     break;
