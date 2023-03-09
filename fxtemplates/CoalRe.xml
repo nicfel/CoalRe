@@ -106,13 +106,13 @@
 
 
             <operator id="networkScaleCwR.alltrees" spec="coalre.operators.NetworkScaleOperator"
-                      network="@networkCwR.alltrees" weight="3.0"/>
+                      network="@networkCwR.alltrees" weight="3.0" scaleFactor="0.1"/>
 
             <operator id="networkScaleRootCwR.alltrees" spec="coalre.operators.NetworkScaleOperator"
-                      network="@networkCwR.alltrees" scaleRootOnly="true" weight="3.0"/>
+                      network="@networkCwR.alltrees" scaleRootOnly="true" weight="3.0" scaleFactor="0.5"/>
 
             <operator id="networkUpDownCwR.alltrees" spec="coalre.operators.NetworkScaleOperator"
-                      network="@networkCwR.alltrees" weight="3.0"/>
+                      network="@networkCwR.alltrees" weight="3.0" scaleFactor="0.1"/>
 
 
             <log id="networkCwRStatsLogger.alltrees" spec="coalre.statistics.NetworkStatsLogger" network="@networkCwR.alltrees"/>
