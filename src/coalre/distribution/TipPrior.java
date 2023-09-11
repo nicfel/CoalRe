@@ -1,25 +1,19 @@
 package coalre.distribution;
 
 
-import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-
 import beast.base.core.Description;
-import beast.base.inference.Distribution;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
-import beast.base.inference.State;
-import beast.base.inference.parameter.RealParameter;
 import beast.base.evolution.alignment.TaxonSet;
-import beast.base.evolution.tree.Node;
-import beast.base.evolution.tree.Tree;
+import beast.base.inference.Distribution;
+import beast.base.inference.State;
 import beast.base.inference.distribution.ParametricDistribution;
+import beast.base.inference.parameter.RealParameter;
 import coalre.network.Network;
 import coalre.network.NetworkNode;
+
+import java.io.PrintStream;
+import java.util.*;
 
 
 @Description("Prior over set of taxa, useful for defining monophyletic constraints and "
@@ -69,13 +63,13 @@ public class TipPrior extends Distribution {
         if (taxonsetInput.get().asStringList().size()!= 1) {
         	throw new IllegalArgumentException("TipPrior expects the number of tips to be 1");
         }
-
         for (final NetworkNode taxon : network.getLeafNodes()) {
-        	if (taxon.getTaxonLabel()==taxonsetInput.get().getTaxonId(0)){
+            // check if the string in getTaxonLabel is the same as the getTaxonId
+            if (taxon.getTaxonLabel().equals(taxonsetInput.get().getTaxonId(0))){
         		operatingNode = taxon;
         		break;
         	}
-        }    
+        }
         MRCATime = dateOffsetInput.get().getArrayValue() - operatingNode.getHeight();
 
         initialised = false;
@@ -103,6 +97,7 @@ public class TipPrior extends Distribution {
         	if (taxon.getTaxonLabel().equals(taxonsetInput.get().getTaxonId(0))){
         		operatingNode = taxon;
                 MRCATime = dateOffsetInput.get().getValue() - operatingNode.getHeight();
+                
                 logP += dist.logDensity(MRCATime);
         		break;
         	}

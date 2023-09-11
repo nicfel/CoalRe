@@ -23,7 +23,6 @@ public class DateOffsetInitializer extends BEASTObject implements StateNodeIniti
 
     @Override
     public void initAndValidate() {
-    	
         segmentTrees = segmentTreesInput.get();
     }
 
@@ -32,9 +31,9 @@ public class DateOffsetInitializer extends BEASTObject implements StateNodeIniti
     	double time = 0.0;
 
         for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++) {
-            time = Math.max(time, segmentTreesInput.get().get(0).getDate(0.0));
+            time = Math.max(time, segmentTreesInput.get().get(segIdx).getDate(0.0));
         }
-        
+
         dateOffsetInput.get().setValue(time);
 
     }

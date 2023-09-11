@@ -59,8 +59,7 @@ public class TipReheight extends NetworkOperator {
         
         for (final NetworkNode taxon : network.getLeafNodes()) {
         	if (taxon.getTaxonLabel().equals(taxonsetInput.get().getTaxonId(0))){
-        		operatingNode = taxon;       		
-        		
+        		operatingNode = taxon;
         		break;
         	}
         }    
@@ -71,13 +70,11 @@ public class TipReheight extends NetworkOperator {
 
 		double logHR = 0.0;
 		network.startEditing(this);
-//		System.out.println(network.getExtendedNewickVerbose());
-				
 		
         for (final NetworkNode taxon : network.getLeafNodes()) {
         	if (taxon.getTaxonLabel().equals(taxonsetInput.get().getTaxonId(0))){
         		operatingNode = taxon;
-        		
+
                 // 2. choose a delta to move
                 final double delta = getDelta();
                 final double oldHeight = operatingNode.getHeight();

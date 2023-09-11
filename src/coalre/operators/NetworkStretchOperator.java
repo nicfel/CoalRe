@@ -4,23 +4,16 @@ import beast.base.core.Input;
 import beast.base.core.Input.Validate;
 import beast.base.inference.operator.kernel.KernelDistribution;
 import beast.base.inference.parameter.RealParameter;
-import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NetworkScaleOperator extends NetworkOperator {
-	
+public class NetworkStretchOperator extends NetworkOperator {
+
     final public Input<Double> scaleFactorInput = new Input<>("scaleFactor",
             "magnitude factor used for scaling", Validate.REQUIRED);
-
-
-    public Input<Boolean> scaleRootOnlyInput = new Input<>(
-            "scaleRootOnly",
-            "Scale only the root node.",
-            false);
 
     public Input<List<RealParameter>> upParametersInput = new Input<>(
             "upParameter",
@@ -40,12 +33,6 @@ public class NetworkScaleOperator extends NetworkOperator {
     		"optimise", 
     		"flag to indicate that the scale factor is automatically changed in order to achieve a good acceptance rate (default true)", 
     		true);
-    
-//    final public Input<Boolean> useprime = new Input<>(
-//    		"useprime",
-//    		"flag to indicate that the scale factor is automatically changed in order to achieve a good acceptance rate (default true)",
-//    		true);
-
 
     final public Input<Double> scaleUpperLimit = new Input<>("upper", "Upper Limit of scale factor", 10.0);
     final public Input<Double> scaleLowerLimit = new Input<>("lower", "Lower limit of scale factor", 0.0);
@@ -57,17 +44,13 @@ public class NetworkScaleOperator extends NetworkOperator {
 
 
     double scaleFactor;
-    boolean scaleRootOnly;
     List<RealParameter> upParameters, downParameters;
-   
-
 
     @Override
     public void initAndValidate() {
         super.initAndValidate();
 
         scaleFactor = scaleFactorInput.get();
-        scaleRootOnly = scaleRootOnlyInput.get();
         upParameters = upParametersInput.get();
         downParameters = downParametersInput.get();
     	kernelDistribution = kernelDistributionInput.get();
@@ -91,73 +74,21 @@ public class NetworkScaleOperator extends NetworkOperator {
 
         network.startEditing(this);
 
-        if (scaleRootOnly) {
-
-            // Scale root
-
-            NetworkNode rootNode = network.getRootEdge().childNode;
-
-            rootNode.setHeight(rootNode.getHeight() * f);
+        for (NetworkNode node : network.getInternalNodes()) {
+            node.setHeight(node.getHeight() * f);
             count += 1;
-
-            if (f<1.0) {
-
-                for (NetworkEdge childEdge : rootNode.getChildEdges())
-                    if (rootNode.getHeight() < childEdge.childNode.getHeight())
-                        return Double.NEGATIVE_INFINITY;
-
-            }
-
-        } else {
-        	c1++;
-
-//        	double fprime;
-//        	if (useprime.get()) {
-//        		double networkLength = 0.0;
-//            	double sumLeafHeights = 0.0;
-//        		if (segmentTreesInput.get()!=null) {
-//        			for (Tree t : segmentTreesInput.get()) {
-//        				networkLength += TreeUtils.getTreeLength(t, t.getRoot());
-//                        // Scale network nodes
-//                    	for (Node n : t.getInternalNodes()) {
-//                    		if (n.isLeaf())
-//                    			sumLeafHeights += n.getHeight();
-//                    	}
-//        			}
-//        		}else {
-//                    // Scale network nodes
-//                	for (NetworkNode n : network.getLeafNodes()) {
-//                		sumLeafHeights += n.getHeight();
-//                	}
-//        			networkLength = coalre.statistics.NetworkStatsLogger.getTotalEdgeLength(network);
-//        		}
-//
-//        		fprime = (f*networkLength + sumLeafHeights)/(networkLength + sumLeafHeights);
-//        	}else {
-//        		fprime = f;
-//        	}
-        	
-        	
-      	
-        	
-        	
-        	
-
-            for (NetworkNode node : network.getInternalNodes()) {
-                node.setHeight(node.getHeight() * f);
-                count += 1;
-            }
-
-            if (f < 1.0) {
-                for (NetworkNode leaf : network.getLeafNodes()) {
-                    if (leaf.getParentEdges().get(0).parentNode.getHeight() < leaf.getHeight()) {
-                    	c2++;
-                    	
-                        return Double.NEGATIVE_INFINITY;
-                    }
-                }
-            }            
         }
+
+        if (f < 1.0) {
+            for (NetworkNode leaf : network.getLeafNodes()) {
+                if (leaf.getParentEdges().get(0).parentNode.getHeight() < leaf.getHeight()) {
+                    c2++;
+
+                    return Double.NEGATIVE_INFINITY;
+                }
+            }
+        }
+
 
         // Scale parameters
         try {
