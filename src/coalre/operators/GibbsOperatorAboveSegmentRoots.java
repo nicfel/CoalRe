@@ -2,18 +2,16 @@ package coalre.operators;
 
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
-import beast.base.inference.parameter.RealParameter;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
-import beast.pkgmgmt.Package;
+import beast.base.inference.parameter.RealParameter;
 import beast.base.util.Randomizer;
-import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
+import coalre.statistics.NetworkStatsLogger;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
@@ -26,6 +24,15 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
     
     public Input<RealParameter> binomialProbInput = new Input<>("binomialProb",
             "Probability of a given segment choosing a particular parent.");
+
+    public Input<Double> maxHeightRatioInput = new Input<>(
+            "maxHeightRatio",
+            "if specified, above the ratio, only coalescent events are allowed.", Double.POSITIVE_INFINITY);
+
+    public Input<Double> redFactorInput = new Input<>(
+            "redFactor",
+            "by how much the recombination rate should be reduced after reaching the maxHeightRatio.", 0.1);
+
 
 
     private int nSegments;
@@ -53,9 +60,8 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
 
     double resimulate() {
     	network.startEditing(this);
-    	
-    	// get the place where to cut
-    	double maxHeight = getMaxSegmentMRCA();
+        // get the maximum height of the segment tree roots
+        double maxHeight = NetworkStatsLogger.getLociMRCA(network);
 
     	// get all network edges 
         List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
@@ -73,6 +79,9 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
        // simulate the rest of the network starting from mxHeight
         double currentTime = maxHeight;
         double timeUntilNextSample = Double.POSITIVE_INFINITY;
+        // get the time when the reassortment rates are reduced
+        double recChangeTime = maxHeight*maxHeightRatioInput.get();
+        double redFactor = 1.0;
         do {
             // get the current propensities
             int k = startingEdges.size();
@@ -83,16 +92,22 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
                     transformedTimeToNextCoal + currentTransformedTime) - currentTime;
 
             
-            double timeToNextReass = k>=1 ? Randomizer.nextExponential(k*reassortmentRate.getValue()) : Double.POSITIVE_INFINITY;
+            double timeToNextReass = k>=1 ? Randomizer.nextExponential(k*reassortmentRate.getValue() * redFactor) : Double.POSITIVE_INFINITY;
 
             // next event time
             double timeUntilNextEvent = Math.min(timeToNextCoal, timeToNextReass);
-            if (timeUntilNextEvent < timeUntilNextSample) {
-                currentTime += timeUntilNextEvent;
-                if (timeUntilNextEvent == timeToNextCoal)
-                    coalesce(currentTime, startingEdges);
-                else
-                    reassort(currentTime, startingEdges);
+            if ((timeUntilNextEvent+currentTime)>recChangeTime) {
+                currentTime = recChangeTime;
+                redFactor *= redFactorInput.get();
+                recChangeTime = Double.POSITIVE_INFINITY;
+            }else {
+                if (timeUntilNextEvent < timeUntilNextSample) {
+                    currentTime += timeUntilNextEvent;
+                    if (timeUntilNextEvent == timeToNextCoal)
+                        coalesce(currentTime, startingEdges);
+                    else
+                        reassort(currentTime, startingEdges);
+                }
             }
 
         }
@@ -108,17 +123,6 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
 
     }
 
-    double getMaxSegmentMRCA(){
-    	double maxHeight = 0.0;
-    	for (int i = 0; i < segmentTreesInput.get().size(); i++){
-    		double height = segmentTreesInput.get().get(i).getRoot().getHeight();
-    		if (height>maxHeight)
-    			maxHeight=height;
-    	}
-    	
-    	return maxHeight;
-    }
-    
     private void coalesce(double coalescentTime, List<NetworkEdge> extantLineages) {
         // Sample the pair of lineages that are coalescing:
         NetworkEdge lineage1 = extantLineages.get(Randomizer.nextInt(extantLineages.size()));

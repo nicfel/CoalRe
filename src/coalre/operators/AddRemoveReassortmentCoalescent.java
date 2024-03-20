@@ -28,6 +28,8 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
     @Override
     public double networkProposal() {
         double logHR;
+        network.startEditing(this);
+
         if (Randomizer.nextBoolean()) {
             logHR = addRecombination();
         }else {
@@ -69,6 +71,11 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
                 double transformedTimeToNextCoal = Randomizer.nextExponential(rate);
                 double timeToNextCoal = coalescentDistr.populationFunction.getInverseIntensity(
                         transformedTimeToNextCoal + currentTransformedTime);
+
+//                if (timeToNextCoal <currTime){
+//                    System.out.println(currentTransformedTime + " " + transformedTimeToNextCoal + " " + timeToNextCoal);
+//                    System.exit(0);
+//                }
                 
 //                System.out.println(currTime + " " + timeToNextCoal + " " + currentTransformedTime);
 //                System.exit(0);
@@ -148,7 +155,6 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 
         double logHR = 0.0;
 
-        network.startEditing(this);
 
         NetworkNode sourceNode = new NetworkNode();
         sourceNode.setHeight(sourceTime);

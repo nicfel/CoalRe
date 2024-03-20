@@ -97,12 +97,12 @@ public class TipPrior extends Distribution {
         	if (taxon.getTaxonLabel().equals(taxonsetInput.get().getTaxonId(0))){
         		operatingNode = taxon;
                 MRCATime = dateOffsetInput.get().getValue() - operatingNode.getHeight();
-                
+
                 logP += dist.logDensity(MRCATime);
         		break;
         	}
         }    
-        
+
 //        System.out.println(logP);
 
         return logP;

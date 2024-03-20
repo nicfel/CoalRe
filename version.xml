@@ -1,4 +1,4 @@
-<package name="CoalRe" version="1.0.4">
+<package name="CoalRe" version="1.0.5">
   <depends on='BEAST.base' atleast='2.7.2'/>
   <depends on='BEAST.app' atleast='2.7.2'/>
 
@@ -26,6 +26,9 @@
         <provider classname="coalre.operators.TipReheight"/>
         <provider classname="coalre.operators.UniformNetworkNodeHeightOperator"/>
         <provider classname="coalre.simulator.SimulatedCoalescentNetwork"/>
+        <provider classname="coalre.simulator.SIRwithReassortment"/>
+        <provider classname="coalre.simulator.SuperspreadingSIRwithReassortment"/>
+        <provider classname="coalre.simulator.SuperspreadingStructuredSIRwithReassortment"/>
         <provider classname="coalre.statistics.NetworkStatsLogger"/>
         <provider classname="coalre.statistics.ReassortmentEventsLogger"/>
         <provider classname="coalre.statistics.ReassortmentStatsLogger"/>
@@ -33,6 +36,10 @@
         <provider classname="coalre.util.DummyTreeDistribution"/>
         <provider classname="coalre.util.SpikeSlabParameter"/>
         <provider classname="coalre.util.WeightedSumDistribution"/>
+        <provider classname="coalre.dynamics.RecombinationDynamicsFromSpline"/>
+        <provider classname="coalre.dynamics.Spline"/>
+        <provider classname="coalre.dynamics.NeDynamicsFromSpline"/>
+        <provider classname="coalre.dynamics.SplineTransmissionDifference"/>
     </service>
 
 </package>

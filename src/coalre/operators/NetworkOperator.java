@@ -1,12 +1,10 @@
 package coalre.operators;
 
 import beast.base.core.Input;
-import beast.base.inference.Operator;
 import beast.base.core.Log;
 import beast.base.evolution.tree.Tree;
-import beast.base.util.Binomial;
+import beast.base.inference.Operator;
 import beast.base.util.Randomizer;
-import cern.colt.Arrays;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
@@ -81,6 +79,16 @@ public abstract class NetworkOperator extends Operator {
 //            System.out.println(segmentTrees.get(segIdx) +";");
 //        System.out.println("=========");
 
+//        String[] trees = new String[segmentTrees.size()];
+//        if (this instanceof TipReheight) {
+//            if (((TipReheight) this).taxonsetInput.get().getTaxonId(0).contentEquals("RVA/1070/Thailand|2013-01-01")) {
+//                System.out.println(network);
+//                for (int i =0; i < segmentTrees.size(); i++) {
+//                    trees[i] = segmentTrees.get(i) + ";";
+//                }
+//            }
+//        }
+
 
         double logHR = networkProposal();
 
@@ -88,6 +96,23 @@ public abstract class NetworkOperator extends Operator {
             for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
                 network.updateSegmentTree(segmentTrees.get(segmentTreeMap[segIdx]), segmentTreeMap[segIdx]);
         }
+
+
+
+//        if (this instanceof TipReheight) {
+//            if (((TipReheight) this).taxonsetInput.get().getTaxonId(0).contentEquals("RVA/1070/Thailand|2013-01-01")) {
+//                System.out.println("\n\n\n\n\n\n\n\n\n\n\n\n\n");
+//                for (int i =0; i < segmentTrees.size(); i++) {
+//                    System.out.println(segmentTrees.get(i).getID());
+//                    System.out.println(trees[i]);
+//                    System.out.println(segmentTrees.get(i) + ";");
+//                }
+//                System.out.println(network);
+//
+//                System.out.println("\n=========");
+//            }
+//        }
+
         
 //        System.out.println(getID());
 //        System.out.println(network);

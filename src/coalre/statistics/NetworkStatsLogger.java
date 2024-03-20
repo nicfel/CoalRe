@@ -135,4 +135,30 @@ public class NetworkStatsLogger extends BEASTObject implements Loggable {
         return maxHeight;
     }
 
+    public static double getLociMRCA(Network network){
+        double maxHeight = 0.0;
+        for (int i = 0; i < network.getSegmentCount(); i++){
+            double height = getHeightSegmentsRoot(network.getRootEdge(), i);
+            if (height > maxHeight)
+                maxHeight = height;
+        }
+        return maxHeight;
+    }
+
+    private static double getHeightSegmentsRoot(NetworkEdge edge, int segment){
+        NetworkNode n = edge.childNode;
+        if (n.isCoalescence()){
+            if (n.getChildEdges().get(0).hasSegments.get(segment)
+                    && n.getChildEdges().get(1).hasSegments.get(segment)) {
+                return n.getHeight();
+            }else if (n.getChildEdges().get(0).hasSegments.get(segment)){
+                return getHeightSegmentsRoot(n.getChildEdges().get(0), segment);
+            }else{
+                return getHeightSegmentsRoot(n.getChildEdges().get(1), segment);
+            }
+        }else{
+            return getHeightSegmentsRoot(n.getChildEdges().get(0), segment);
+        }
+    }
+
 }

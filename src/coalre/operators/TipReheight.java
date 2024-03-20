@@ -70,7 +70,7 @@ public class TipReheight extends NetworkOperator {
 
 		double logHR = 0.0;
 		network.startEditing(this);
-		
+
         for (final NetworkNode taxon : network.getLeafNodes()) {
         	if (taxon.getTaxonLabel().equals(taxonsetInput.get().getTaxonId(0))){
         		operatingNode = taxon;
@@ -79,11 +79,11 @@ public class TipReheight extends NetworkOperator {
                 final double delta = getDelta();
                 final double oldHeight = operatingNode.getHeight();
                 final double newHeight = oldHeight + delta;
-                                
+
                 // check if ne height is valid
                 if (operatingNode.getParentEdges().get(0).parentNode.getHeight()<=newHeight)
                 	return Double.NEGATIVE_INFINITY;
-                
+
                 // set the height of the leaf node, even if the height drops below 0
                 operatingNode.setHeight(newHeight);               
                 
@@ -118,9 +118,8 @@ public class TipReheight extends NetworkOperator {
 
         		break;
         	}
-        }    
-
-		return logHR;
+        }
+        return logHR;
 	}
 	
 		
@@ -133,18 +132,23 @@ public class TipReheight extends NetworkOperator {
         }
     }
     
-    
     /**
      * automatic parameter tuning *
      */
     @Override
     public void optimize(final double logAlpha) {
+
         if (optimiseInput.get()) {
             double delta = calcDelta(logAlpha);
             delta += Math.log(size);
-            final double f = Math.exp(delta);
-            size = f;
+            size = Math.exp(delta);
         }
+//        if (taxonsetInput.get().getTaxonId(0).contentEquals("RVA/1070/Thailand|2013-01-01")) {
+//            System.out.println(getID() + " " + logAlpha + " " + m_nNrAccepted + " " + m_nNrRejected + " size=" + size);
+//            if (logAlpha>Double.NEGATIVE_INFINITY && logAlpha<-1000)
+//                System.exit(0);
+//        }
+
     }
 
     @Override

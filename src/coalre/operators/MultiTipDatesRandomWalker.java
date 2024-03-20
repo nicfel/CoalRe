@@ -1,9 +1,5 @@
 package coalre.operators;
 
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
-
 import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
@@ -12,6 +8,10 @@ import beast.base.evolution.operator.TreeOperator;
 import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.Tree;
 import beast.base.util.Randomizer;
+
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 
 
@@ -62,6 +62,7 @@ public class MultiTipDatesRandomWalker extends TreeOperator {
                 }
                 taxonIndices[k++] = taxonIndex;
             }
+
         } else {
             taxonIndices = new int[treeInput.get().getTaxaNames().length];
             for (int i = 0; i < taxonIndices.length; i++) {
@@ -87,9 +88,9 @@ public class MultiTipDatesRandomWalker extends TreeOperator {
 	
 	        double value = node.getHeight();
 	        double newValue = value+difference;
-	
-	
-	        if (newValue > node.getParent().getHeight()) { // || newValue < 0.0) {
+
+
+            if (newValue > node.getParent().getHeight()) { // || newValue < 0.0) {
                 return Double.NEGATIVE_INFINITY;
 	            
 	        }
@@ -98,8 +99,9 @@ public class MultiTipDatesRandomWalker extends TreeOperator {
 	            return Double.NEGATIVE_INFINITY;
 	        }
 	        node.setHeight(newValue);
-	
-    	}
+
+
+        }
         return 0.0;
     }
 
