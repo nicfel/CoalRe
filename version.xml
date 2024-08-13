@@ -1,10 +1,21 @@
-<package name="CoalRe" version="1.0.5">
+<package name="CoalRe" version="2.0.0">
   <depends on='BEAST.base' atleast='2.7.2'/>
   <depends on='BEAST.app' atleast='2.7.2'/>
 
   <packageapp class="coalre.networkannotator.ReassortmentNetworkSummarizer"
             description="ReassortmentNetworkSummarizer"/>
 
+  <packageapp class="coalre.networkannotator.TipDistanceReassortmentRate"
+            description="TipDistanceReassortmentRate"/>
+
+  <packageapp class="coalre.networkannotator.ExtantReassortmentRate"
+            description="ExtantReassortmentRate"/>
+
+  <packageapp class="coalre.networkannotator.ReassortmentOverTime"
+            description="ReassortmentOverTime"/>
+
+  <packageapp class="coalre.networkannotator.ExtractReassortmentEvents"
+            description="ExtractReassortmentEvents"/>
 
 
       <service type="beast.base.core.BEASTInterface">
@@ -25,6 +36,7 @@
         <provider classname="coalre.operators.SubNetworkSlide"/>
         <provider classname="coalre.operators.TipReheight"/>
         <provider classname="coalre.operators.UniformNetworkNodeHeightOperator"/>
+        <provider classname="coalre.operators.UniformReassortmentReheight"/>
         <provider classname="coalre.simulator.SimulatedCoalescentNetwork"/>
         <provider classname="coalre.simulator.SIRwithReassortment"/>
         <provider classname="coalre.simulator.SuperspreadingSIRwithReassortment"/>
@@ -36,10 +48,16 @@
         <provider classname="coalre.util.DummyTreeDistribution"/>
         <provider classname="coalre.util.SpikeSlabParameter"/>
         <provider classname="coalre.util.WeightedSumDistribution"/>
+        <provider classname="coalre.util.InitFromTree"/>
         <provider classname="coalre.dynamics.RecombinationDynamicsFromSpline"/>
         <provider classname="coalre.dynamics.Spline"/>
         <provider classname="coalre.dynamics.NeDynamicsFromSpline"/>
         <provider classname="coalre.dynamics.SplineTransmissionDifference"/>
+        <provider classname="coalre.dynamics.PiecewiseConstantReassortmentRates"/>
+        <provider classname="coalre.dynamics.PiecewiseConstantReassortmentRateScalers"/>
+        <provider classname="coalre.dynamics.Difference"/>
+        <provider classname="coalre.dynamics.LogDifference"/>
+
     </service>
 
 </package>

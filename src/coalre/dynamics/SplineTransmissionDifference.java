@@ -7,6 +7,7 @@ import beast.base.inference.CalculationNode;
 public class SplineTransmissionDifference extends CalculationNode implements Function {
 
     public Input<Spline> splineInput = new Input<>("spline", "spline to use for the population function", Input.Validate.REQUIRED);
+    public Input<Spline> spline2Input = new Input<>("spline2", "spline to use for the population function");
 
     double[] difference;
     double[] storedDifference;
@@ -50,6 +51,9 @@ public class SplineTransmissionDifference extends CalculationNode implements Fun
             double[] value = new double[splineInput.get().splineCoeffs.length+1];
             for (int i = 0; i <= splineInput.get().splineCoeffs.length; i++) {
                 value[i] = splineInput.get().InfectedInput.get().getArrayValue(i);
+				if (spline2Input.get() != null) {
+					value[i] += spline2Input.get().InfectedInput.get().getArrayValue(i);
+				}
             }
 
             for (int i = 1; i <= splineInput.get().splineCoeffs.length; i++) {

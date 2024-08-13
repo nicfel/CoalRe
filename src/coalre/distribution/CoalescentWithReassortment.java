@@ -109,13 +109,13 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 //        lp+=Math.log(reassortmentRate.getArrayValue())
 //                + event.segsSortedLeft * Math.log(intervals.getBinomialProb())
 //                + (event.segsToSort-event.segsSortedLeft)*Math.log(1-intervals.getBinomialProb())
-//                + Math.log(2.0);
+//                + Math.log(2.0);\
 		
 		double binomval = Math.pow(intervals.getBinomialProb(), event.segsSortedLeft)
 				* Math.pow(1-intervals.getBinomialProb(), event.segsToSort-event.segsSortedLeft) 
 				+ Math.pow(intervals.getBinomialProb(), event.segsToSort-event.segsSortedLeft)
 				* Math.pow(1-intervals.getBinomialProb(), event.segsSortedLeft);
-
+		
 		if (event.time<=(lociMRCA*maxHeightRatioInput.get())) {
 			if (isTimeVarying)
 				return Math.log(timeVaryingReassortmentRates.getPopSize(event.time))
@@ -148,12 +148,14 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 	private double intervalContribution(NetworkEvent prevEvent, NetworkEvent nextEvent, double lociMRCA) {
 
         double result = 0.0;
+//        System.out.println(networkIntervalsInput.get().networkInput.get());
 //		System.out.println(prevEvent.time + " " + nextEvent.time);
 
 //		if (nextEvent.time<3.3) {
 //			System.out.println(prevEvent.time + " " + nextEvent.time);
 //			System.out.println(timeVaryingReassortmentRates.getIntegral(prevEvent.time, nextEvent.time));
 //		}
+        
 
 		if (nextEvent.time<(lociMRCA*maxHeightRatioInput.get())) {
 			if (isTimeVarying)

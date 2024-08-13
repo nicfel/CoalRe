@@ -336,7 +336,7 @@ public class ReassortmentLogReader implements NetworkLogReader {
 	@Override
 	public int getNetworkCount() {
 		// TODO Auto-generated method stub
-		return 0;
+		return nNetworks;
 	}
 }
 

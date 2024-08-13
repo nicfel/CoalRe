@@ -52,6 +52,10 @@ public class NeDynamicsFromSpline extends PopulationFunction.Abstract implements
     }
 
     public double getIntegral(double from, double to) {
+    	if (from<0 && from > -1e-14) {
+    		from=0;
+    	}
+    	
         if (!spline.update())
             return Double.NaN;
 
@@ -78,7 +82,7 @@ public class NeDynamicsFromSpline extends PopulationFunction.Abstract implements
             }else if (i == intervalFrom) {
                 NeIntegral += (spline.transmissionRate[i]/spline.I[i]) * (spline.time[i+1] - from);
             }else{
-                NeIntegral += (spline.transmissionRate[i] / spline.I[i]) * (spline.time[i + 1] - spline.time[i]);
+                NeIntegral += (spline.transmissionRate[i]/spline.I[i]) * (spline.time[i + 1] - spline.time[i]);
             }
         }
         return 2*NeIntegral;
@@ -123,13 +127,13 @@ public class NeDynamicsFromSpline extends PopulationFunction.Abstract implements
 
     @Override
     public void init(PrintStream printStream) {
-        for (int i = 0; i < spline.gridPoints; i+=20) {
+        for (int i = 0; i < spline.gridPoints; i+=2) {
             printStream.print("logNe_" + i + "\t");
         }
+//        for (int i = 0; i < spline.gridPoints; i+=20) {
+//            printStream.print("logI_" + i + "\t");
+//        }
         for (int i = 0; i < spline.gridPoints; i+=20) {
-            printStream.print("logI_" + i + "\t");
-        }
-        for (int i = 0; i < spline.gridPoints; i+=1) {
             printStream.print("transmissionRate" + i + "\t");
         }
 
@@ -137,13 +141,13 @@ public class NeDynamicsFromSpline extends PopulationFunction.Abstract implements
 
     @Override
     public void log(long l, PrintStream printStream) {
-        for (int i = 0; i < spline.gridPoints; i+=20) {
+        for (int i = 0; i < spline.gridPoints; i+=2) {
             printStream.print(Math.log(spline.I[i]/spline.transmissionRate[i]) + "\t");
         }
+//        for (int i = 0; i < spline.gridPoints; i+=20) {
+//            printStream.print(spline.I[i] + "\t");
+//        }
         for (int i = 0; i < spline.gridPoints; i+=20) {
-            printStream.print(spline.I[i] + "\t");
-        }
-        for (int i = 0; i < spline.gridPoints; i+=1) {
             printStream.print(spline.transmissionRate[i] + "\t");
         }
 

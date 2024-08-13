@@ -197,7 +197,7 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                 double recoveryRate = 0;
                 double waningRate = 0;
                 for (int i = 0; i < states; i++) {
-                    transmissionRate += I[i] * recoveryRateInput.get().getValue(i);
+                    transmissionRate += I[i] * recoveryRateInput.get().getValue(i); // This should be recovery rate, as we model the Reff through the avg number of secondary infections below
                     recoveryRate += I[i] * recoveryRateInput.get().getValue(i);
                     waningRate += R[i] * waningImmunityRateInput.get().getValue(i);
                 }
@@ -245,21 +245,11 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                 // log every 1000th iteration
                 if (individualNr % 1000 == 0)
                     System.out.println(time + " S: " + getSumI(S) + " I: " + getSumI(I) + " R: " + getSumI(R) + " samples: " + sampledIndividuals.size() + " active: " + activeIndividuals.size());
-                int[] activeI = new int[I.length];
-                for (StructuredIndividual i : activeIndividuals){
-                    activeI[i.type]++;
-                }
-                for (int i = 0; i < states; i++) {
-                    if (I[i] != activeI[i]) {
-                        System.out.println("error");
-                        System.out.println(I[i] + " " + activeI[i]);
-                        System.exit(0);
-                    }
-                }
             } while (time < simulationTimeInput.get() && getSumI(I) > 0);
             System.out.println("start building network from " + sampledIndividuals.size() + " sampled individuals" + " simulation time was " + time);
             // build the network from the sampled individuals
         }while (sampledIndividuals.size()<minSamplesInput.get());
+
         buildNetwork(sampledIndividuals);
 //        System.out.println(lineages);
     }
@@ -282,7 +272,7 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
             if (randomT<=cummulative){
                 // pick the number of offsprings from a negative binomial distribution with R and k
                 // from a gamma and a poisson distribution
-                double secondary_infections = transmissionRateInput.get().getArrayValue()/recoveryRateInput.get().getArrayValue(i);
+                double secondary_infections = transmissionRateInput.get().getArrayValue(i)/recoveryRateInput.get().getArrayValue(i);
                 double gamma = Randomizer.nextGamma(kInput.get(), kInput.get() / (double) secondary_infections);
                 int nOffspring = (int) Randomizer.nextPoisson(gamma);
                 int isR = 0;
@@ -294,6 +284,7 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                     }
                 }
                 nOffspring -= isR;
+                System.out.println();
 
                 // don't do anything if there are no offspring
                 if (nOffspring > 0){
@@ -304,9 +295,6 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                     while (parent.type!=i){
                         parent = activeIndividuals.get(Randomizer.nextInt(activeIndividuals.size()));
                     }
-//                    System.out.println(i + " "+ activeIndividuals + " ");
-
-                    int alreadyInfectedCount = 0;
 
                     // build the superspreading event as a series of regular infection events
                     for (int j = 0; j < nOffspring; j++) {
@@ -323,6 +311,7 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                         // add the child to the second parent
                         parent.addChild(child2);
                         child2.addParent(parent);
+                        System.out.println(parent);
 
                         // add the child to the list of active individuals
                         activeIndividuals.add(child1);
@@ -360,6 +349,9 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
 
                             activeIndividuals.add(child3);
                             activeIndividuals.remove(parent2);
+                            
+                    		System.out.println("co-inf" + parent2 + " " + child3);
+                            
                             structuredSirEvents.add(new StructuredSIREvents(0, time + nextEventTime, i));
                         } else {
 //                            System.out.println("...");
@@ -372,15 +364,35 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
 //                            System.out.println("...");
 
                         }
+                        // check that the last two active individuals are both in type i
+						if (activeIndividuals.get(activeIndividuals.size() - 1).type != i
+								|| activeIndividuals.get(activeIndividuals.size() - 2).type != i) {
+							System.out.println("error");
+							System.exit(0);
+						}
+						System.out.println(child1 + " " + child2 + " " + parent);
+                        	
                         // remove the parent
                         activeIndividuals.remove(parent);
                         parent = child1;
                         time += 0.0000000001;
                     }
                 }
+				if (Math.abs(time - 64.22849979972362+nextEventTime) < 0.00001) {
+					System.out.println(activeIndividuals);
+					// also print the parents of all
+					System.out.print("[");
+					for (StructuredIndividual individual : activeIndividuals) {
+						System.out.print(individual.getParents().get(0) + ", ");
+					}
+//					System.exit(0);
+				}
+                
+                
                 return new ReturnVal(time, individualNr);
             }
         }
+
         return new ReturnVal(time, individualNr);
     }
 
@@ -399,14 +411,13 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                         while (individual.type!=i){
                             individual = activeIndividuals.get(Randomizer.nextInt(activeIndividuals.size()));
                         }
-//                        StructuredIndividual child = new StructuredIndividual(individualNr, j);
-//                        individualNr++;
-//                        individual.addChild(child);
-//                        child.addParent(individual);
-//                        individual.setTime(time + nextEventTime);
-//                        activeIndividuals.add(child);
-//                        activeIndividuals.remove(individual);
-                        individual.type = j;
+                        StructuredIndividual child = new StructuredIndividual(individualNr, j);
+                        individualNr++;
+                        individual.addChild(child);
+                        child.addParent(individual);
+                        individual.setTime(time + nextEventTime);
+                        activeIndividuals.add(child);
+                        activeIndividuals.remove(individual);
                         structuredSirEvents.add(new StructuredSIREvents(3, time + nextEventTime, new int[]{i,j}));
 
                         I[i]--;
@@ -451,6 +462,7 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
         }
         return individualNr;
     }
+    
     protected void buildNetwork(List<StructuredIndividual> sampledIndividuals) {
         // get the time of the most recent sample
         double mrsi_time = 0.0;
@@ -476,7 +488,7 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
         List<NetworkEdge> activeEdges = new ArrayList<>();
         System.out.println("start");
         while (activeIndividuals.size()>1 || sampledIndividuals.size()>0){
-            System.out.println("get next sampling time");
+//            System.out.println("get next sampling time");
             // get the next sampling event time, while keeping track of the index of the individual
             double nextSamplingTime = Double.NEGATIVE_INFINITY;
             int nextSamplingIndex = -1;
@@ -486,7 +498,7 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                     nextSamplingIndex = i;
                 }
             }
-            System.out.println("get next active time");
+//            System.out.println("get next active time");
             // get the activeIndividuals time, while keeping track of the index of the individual
             double nextActiveTime = Double.NEGATIVE_INFINITY;
             int nextActiveIndex = -1;
@@ -503,25 +515,13 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                         nextActiveTime = activeIndividuals.get(i).getParents().get(0).getTime();
                         nextActiveIndex = i;
                     }
-//                    else if ((activeIndividuals.get(i).getParents().get(0).getTime() == nextActiveTime)){
-//                        // if the other individual has two parents, then do nothing
-//                        if (activeIndividuals.get(nextActiveIndex).getParents().size()==2){
-//                            System.out.println("do nothing");}
-//                        else{
-//                            System.out.println(activeIndividuals.get(nextActiveIndex).getParents().size());
-//                            System.out.println(activeIndividuals.get(i).getParents().size());
-//                            System.out.println("----------------");
-//                        }
-//
-//                    }
                 }
             }
-            System.out.println(" done " + nextSamplingTime +" " + nextActiveTime + "");
-
-
+//            System.out.println(" done " + nextSamplingTime +" " + nextActiveTime + "");
+            System.out.println(activeIndividuals);
+            
             // depending on which one is next
             if (nextSamplingTime>nextActiveTime){
-                System.out.println("sampling event");
                 NetworkNode sampledNode = new NetworkNode();
                 sampledNode.setHeight(mrsi_time-nextSamplingTime);
                 sampledNode.setTaxonLabel("sample_no"+sampledIndividualNr);
@@ -529,6 +529,7 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                 sampledNode.setMetaData(",type="+sampledIndividuals.get(nextSamplingIndex).type);
                 sampledIndividualNr++;
 
+                lineages.add(new StructuredSIREvents(0, nextSamplingTime, sampledIndividuals.get(nextSamplingIndex).type));
                 // set segments for the sampled node, where all bits are true
                 BitSet segments = new BitSet(nSegments);
                 // set all bits to true
@@ -537,10 +538,11 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                 NetworkEdge edge = new NetworkEdge(null, sampledNode, segments);
                 activeEdges.add(edge);
                 activeIndividuals.add(sampledIndividuals.get(nextSamplingIndex));
+                System.out.println("sampling event " + activeIndividuals.size() + " " + activeIndividuals);
+
                 // remove the individual from the list of sampled individuals
                 sampledIndividuals.remove(nextSamplingIndex);
 
-                lineages.add(new StructuredSIREvents(0, nextSamplingTime, -1));
             }else {
 //                 check if the individual has two parents
                 if (activeIndividuals.get(nextActiveIndex).getParents().size()==2){
@@ -573,6 +575,8 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                         NetworkNode reassortmentNode = new NetworkNode();
                         reassortmentNode.setMetaData(",type="+activeIndividuals.get(nextActiveIndex).type);
                         reassortmentNode.setHeight(mrsi_time-nextActiveTime);
+                        lineages.add(new StructuredSIREvents(1, nextActiveTime, prob, activeIndividuals.get(nextActiveIndex).type));
+
                         // set the child edge
                         edge.parentNode = reassortmentNode;
                         reassortmentNode.addChildEdge(edge);
@@ -595,7 +599,6 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                         // remove the individual from the activeIndividuals list
                         activeIndividuals.remove(nextActiveIndex);
                         activeEdges.remove(nextActiveIndex);
-                        lineages.add(new StructuredSIREvents(1, nextActiveTime, prob));
                     }else{
                         // the event is not observed, just replace the individual with its parent that has cardinality>0
                         if (segmentsLeft.cardinality()>0) {
@@ -604,8 +607,7 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                             activeIndividuals.set(nextActiveIndex, activeIndividuals.get(nextActiveIndex).getParents().get(1));
                         }
                     }
-                }else{
-                    System.out.println("coalescent event");
+                }else if (activeIndividuals.get(nextActiveIndex).getParents().get(0).getChildren().size()==2){
                     // get the other child for this coalescent event
                     StructuredIndividual otherChild = activeIndividuals.get(nextActiveIndex).getParents().get(0).getChildren().get(0);
                     if (otherChild.equals(activeIndividuals.get(nextActiveIndex))) {
@@ -613,10 +615,22 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                     }
                     // check if the other child is in the activeIndividuals list
                     if (activeIndividuals.contains(otherChild)) {
+                    	System.out.println(nextActiveTime);
+                        System.out.println("coalescent event "  + activeIndividuals.size() + " " + activeIndividuals);
+						for (int l = 0; l < activeIndividuals.size(); l++) {
+							System.out.print(activeIndividuals.get(l) + " ");
+						}
+						System.out.println();
+						for (int l = 0; l < activeIndividuals.size(); l++) {
+							System.out.print(activeIndividuals.get(l).getParents().get(0) + " ");
+						}
+						System.out.println();
                         totalObservedCoal++;
                         // make a coalescent node
                         NetworkNode coalNode = new NetworkNode();
                         coalNode.setMetaData(",type="+activeIndividuals.get(nextActiveIndex).type);
+                        lineages.add(new StructuredSIREvents(2, nextActiveTime, activeIndividuals.get(nextActiveIndex).type));
+
 
                         coalNode.setHeight(mrsi_time - nextActiveTime);
                         // get the two child edges
@@ -641,11 +655,28 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                         // remove the two children from the activeIndividuals list
                         activeIndividuals.remove(nextActiveIndex);
                         activeIndividuals.remove(otherChild);
-                        lineages.add(new StructuredSIREvents(2, nextActiveTime, -1));
+
                     } else {
+                    	// check if this is a coalescent or a migration event
+                    	if (activeIndividuals.get(nextActiveIndex).type != activeIndividuals.get(nextActiveIndex).getParents().get(0).type) { 
+                    		System.out.println("migration event " + activeIndividuals.size() + " " + activeIndividuals);
+                    		System.out.println(activeIndividuals.get(nextActiveIndex) + " " + activeIndividuals.get(nextActiveIndex).getParents());
+                    		System.out.print(activeIndividuals.get(nextActiveIndex).getParents().get(0).getChildren());
+                    		System.out.println(nextActiveTime);
+                    		System.exit(0);
+                    	}
                         // replace the activeIndividuals with its parent
                         activeIndividuals.set(nextActiveIndex, activeIndividuals.get(nextActiveIndex).getParents().get(0));
+//                		System.out.println(".......... " + activeIndividuals.size() + " " + activeIndividuals);
+
                     }
+                }else {
+                	// migration event
+                    System.out.println("migration event " + activeIndividuals.size() + " " + activeIndividuals);
+                    // it is a migration event, add that to the lineages
+            		lineages.add(new StructuredSIREvents(3, nextActiveTime, new int[]{activeIndividuals.get(nextActiveIndex).type, activeIndividuals.get(nextActiveIndex).getParents().get(0).type}));
+                    activeIndividuals.set(nextActiveIndex, activeIndividuals.get(nextActiveIndex).getParents().get(0));
+
                 }
             }
             // check if all the individuals in activeIndividuals have different numbers
@@ -768,10 +799,11 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
             this.type = type;
         }
 
-        public StructuredSIREvents(int eventType, double time, double prob){
+        public StructuredSIREvents(int eventType, double time, double prob, int type){
             this.eventType = eventType;
             this.time = time;
             this.prob = prob;
+            this.type = type;
         }
 
         public StructuredSIREvents(int eventType, double time, int[] fromto){

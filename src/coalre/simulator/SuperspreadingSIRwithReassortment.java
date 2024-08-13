@@ -18,6 +18,10 @@ public class SuperspreadingSIRwithReassortment extends SIRwithReassortment imple
 
     public Input<Double> kInput = new Input<>("k",
             "k-value for the negative binomial distribution", 0.1);
+    
+	public Input<Double> recoveredPercentageInput = new Input<>("recoveredPercentage",
+			"percentage of recovered individuals at the start of the simulation", 0.0);
+
 
     @Override
     public void initAndValidate(){
@@ -104,9 +108,9 @@ public class SuperspreadingSIRwithReassortment extends SIRwithReassortment imple
         do {
             sirEvents = new ArrayList<>();
 
-            double S = populationSizeInput.get() - 1;
+            double R = (int) (recoveredPercentageInput.get() * populationSizeInput.get());
+            double S = populationSizeInput.get() - 1 - R;
             double I = 1;
-            double R = 0;
             int individualNr = 0;
             // start the simulations while keeping track of the different individuals
             List<Individual> activeIndividuals = new ArrayList<>();
@@ -117,7 +121,7 @@ public class SuperspreadingSIRwithReassortment extends SIRwithReassortment imple
             activeIndividuals.add(root);
             double time = 0.0;
             do {
-                double transmissionRate = I * recoveryRateInput.get();
+                double transmissionRate = I * recoveryRateInput.get(); // This should be recovery rate, as we model the Reff through the avg number of secondary infections below
                 double recoveryRate = I * recoveryRateInput.get();
                 double waningRate = R * waningImmunityRateInput.get();
 
