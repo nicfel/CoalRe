@@ -15,7 +15,7 @@ import java.util.List;
  */
 @Description("Computes time varying recombination rates as a population"+
         " function from spline interpolation of the number of infected over time")
-public class PiecewiseConstantReassortmentRateScalers extends PopulationFunction.Abstract {
+public class PiecewiseConstantReassortmentRateScalers extends PopulationFunction.Abstract implements Loggable  {
     final public Input<RealParameter> InfectedToRhoInput = new Input<>("InfectedToRho",
             "the value that maps the number of infected or the Ne to the reassortment rate ");
     final public Input<RealParameter> rateShiftsInput = new Input<>("rateShifts",
@@ -67,11 +67,11 @@ public class PiecewiseConstantReassortmentRateScalers extends PopulationFunction
         
         for (int i = 1; i < rateShifts.getDimension(); i++) {
 			if (t >= rateShifts.getValue(i-1) && t < rateShifts.getValue(i)) {
-				return spline.I[interval] * InfectedToRho.getValue(i-1);
+				return spline.I[interval] * Math.exp(InfectedToRho.getValue(i-1));
             }
         }
         
-        return spline.I[interval] * InfectedToRho.getValue(rateShifts.getDimension() - 1);
+        return spline.I[interval] * Math.exp(InfectedToRho.getValue(rateShifts.getDimension() - 1));
         
 			
 
@@ -93,12 +93,12 @@ public class PiecewiseConstantReassortmentRateScalers extends PopulationFunction
         	boolean found = false;
             for (int j = 1; j < rateShifts.getDimension(); j++) {
     			if (spline.time[i] >= rateShifts.getValue(j-1) && spline.time[i] < rateShifts.getValue(j)) {
-    				rateRatio = InfectedToRho.getValue(j-1);
+    				rateRatio = Math.exp(InfectedToRho.getValue(j-1));
     				found = true;
                 }
             }
 			if (!found)
-				rateRatio = InfectedToRho.getValue(rateShifts.getDimension() - 1);            
+				rateRatio = Math.exp(InfectedToRho.getValue(rateShifts.getDimension() - 1));            
         	
         	
             double rate = spline.I[i] * rateRatio;
@@ -144,6 +144,27 @@ public class PiecewiseConstantReassortmentRateScalers extends PopulationFunction
     public void restore() {
         super.restore();
     }
+
+
+	@Override
+	public void init(PrintStream out) {
+		// log the reassortment rates returned by the spline
+		for (int i = 0; i < spline.gridPoints; i++) {
+			out.print("reassortmentRate."+i + "\t");
+		}		
+	}
+
+	@Override
+	public void log(long sample, PrintStream out) {
+		for (int i = 0; i < spline.gridPoints; i++) {
+			out.print(getPopSize(spline.time[i]) + "\t");
+		}		
+	}
+
+	@Override
+	public void close(PrintStream out) {
+		// TODO Auto-generated method stub		
+	}
 
 
 }
