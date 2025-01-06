@@ -69,6 +69,9 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
         	logHR += RemoveAllEmptyNetworkSegments();
         }
         
+        if (logHR == Double.POSITIVE_INFINITY)
+        	return Double.NEGATIVE_INFINITY;
+        
         // case there are empty edges, which can happen when addRemoveEmptyEdges is false
 		if (!allEdgesAncestral()){
             return Double.NEGATIVE_INFINITY;
@@ -79,14 +82,6 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
                 network.updateSegmentTree(segmentTrees.get(segIdx), segIdx);
         }        
         
-//        System.out.println(getID());
-//        System.out.println(network);
-//        System.out.println("....");
-        
-//        for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
-//            System.out.println(segmentTrees.get(segIdx) +";");
-
-
                 		
         return logHR;
     }
@@ -102,7 +97,7 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
     	}  
     	
     	
-    	logHR -= Math.log(Math.pow(lambda, nrEmptyEdges)) - lambda - Math.log(factorial(nrEmptyEdges));
+    	logHR -= Math.log(Math.pow(lambda, nrEmptyEdges)) - lambda - logFactorial(nrEmptyEdges);
     	
     	return logHR;
     }
@@ -295,7 +290,19 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
         } 
         
         // probability of adding n empty edges in reverse move
-        logHR += Math.log(Math.pow(lambda, nrRemoved)) -lambda -  Math.log(factorial(nrRemoved));
+        logHR += Math.log(Math.pow(lambda, nrRemoved)) -lambda -  logFactorial(nrRemoved);
+        
+//		if (logFactorial(nrRemoved) != Math.log(factorial(nrRemoved))) {
+//			System.out.println(nrRemoved + " " + alfactorial(nrRemoved));
+//	        System.out.println(logFactorial(nrRemoved) + " " + Math.log(factorial(nrRemoved)));
+//		}
+//        
+//		if (logHR == Double.POSITIVE_INFINITY) {
+//			System.out.println(lambda + " " + nrRemoved + " " + ( Math.log(Math.pow(lambda, nrRemoved)) -lambda -  Math.log(factorial(nrRemoved))) );
+//			System.out.println(Math.log(Math.pow(lambda, nrRemoved)));
+////			System.out.println(altfactorial(nrRemoved));
+//			System.out.println(Math.log(factorial(nrRemoved)));
+//		}
         
         if (!allEdgesAncestral()){
         	//TODO change to Exception
@@ -459,12 +466,34 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
     }
 
 
-    private int factorial(int k){
-    	int f = 1;
-    	for (int i = 2; i <= k; i++)
-    		f*=k;
-    	return f;
+//    private int factorial(int k){
+//    	int f = 1;
+//    	for (int i = 2; i <= k; i++)
+//    		f*=k;
+//    	return f;
+//    }
+//    
+//    private int alfactorial(int k){
+//    	int f = 1;
+//    	for (int i = 2; i <= k; i++) {
+//    		System.out.println(" .. " +  f + " " + k);
+//    		f*=i;
+//    	}
+//    	return f;
+//    }
+
+    
+    private double logFactorial(int k) {
+        if (k < 1) {
+            return 0.0; // log(0!) = log(1) = 0
+        }
+        double logF = 0.0;
+        for (int i = 1; i <= k; i++) {
+            logF += Math.log(i);
+        }
+        return logF;
     }
+
 
 
 
