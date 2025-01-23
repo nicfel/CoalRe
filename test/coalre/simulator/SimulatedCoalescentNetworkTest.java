@@ -58,6 +58,7 @@ public class SimulatedCoalescentNetworkTest extends CoalReTestClass {
         double meanHeight = SimulatedCoalescentNetworkTest.mean(networkHeights);
         double meanLength = SimulatedCoalescentNetworkTest.mean(networkLengths);
 
+        System.out.println(this.getClass().getName() + " testSimulator");
         System.out.println(meanCount);
         System.out.println(meanHeight);
         System.out.println(meanLength);

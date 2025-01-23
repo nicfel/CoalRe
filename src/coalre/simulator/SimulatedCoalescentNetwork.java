@@ -171,7 +171,6 @@ public class SimulatedCoalescentNetwork extends Network {
      * @param sampleNodes network nodes corresponding to samples.
      */
     public void simulateNetwork(List<NetworkNode> sampleNodes) {
-    	System.out.println("resample");
 
         List<NetworkNode> remainingSampleNodes = new ArrayList<>(sampleNodes);
         List<NetworkEdge> extantLineages = new ArrayList<>();

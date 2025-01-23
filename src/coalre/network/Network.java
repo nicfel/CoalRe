@@ -49,7 +49,7 @@ public class Network extends StateNode {
     
 
     @Override
-    public void initAndValidate() {System.out.println(toString()); }
+    public void initAndValidate() {}
 
     /**
      * @return the root edge of the network
