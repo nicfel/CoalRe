@@ -2,14 +2,18 @@ package coalre.operators;
 
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
+import beast.base.evolution.tree.Node;
 import beast.base.inference.operator.kernel.KernelDistribution;
 import beast.base.inference.parameter.RealParameter;
+import beast.base.util.Randomizer;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class NetworkScaleOperator extends NetworkOperator {
 	
@@ -31,11 +35,7 @@ public class NetworkScaleOperator extends NetworkOperator {
             "downParameter",
             "Parameters to scale in the OPPOSITE direction as the network.",
             new ArrayList<>());
-    
-    public Input<RealParameter> NeInput = new Input<>(
-            "Ne",
-            "Ne input to scale in the same direction as the network, but with different scale factor.");
-    
+        
     final public Input<Boolean> optimiseInput = new Input<>(
     		"optimise", 
     		"flag to indicate that the scale factor is automatically changed in order to achieve a good acceptance rate (default true)", 
@@ -50,17 +50,15 @@ public class NetworkScaleOperator extends NetworkOperator {
     final public Input<Double> scaleUpperLimit = new Input<>("upper", "Upper Limit of scale factor", 10.0);
     final public Input<Double> scaleLowerLimit = new Input<>("lower", "Lower limit of scale factor", 0.0);
     
-    public final Input<KernelDistribution> kernelDistributionInput = new Input<>("kernelDistribution", "provides sample distribution for proposals", 
-    		KernelDistribution.newDefaultKernelDistribution());
-
-    protected KernelDistribution kernelDistribution;
-
 
     double scaleFactor;
     boolean scaleRootOnly;
     List<RealParameter> upParameters, downParameters;
+    double upper, lower;
    
-
+    Map<NetworkNode, Double> oldLengths;
+    Map<NetworkNode, Boolean> updated;
+    
 
     @Override
     public void initAndValidate() {
@@ -70,23 +68,26 @@ public class NetworkScaleOperator extends NetworkOperator {
         scaleRootOnly = scaleRootOnlyInput.get();
         upParameters = upParametersInput.get();
         downParameters = downParametersInput.get();
-    	kernelDistribution = kernelDistributionInput.get();
+    	
+        upper = scaleUpperLimit.get();
+        lower = scaleLowerLimit.get();
+
 
     }
     
     int c1=0,c2=0;
     
     
-	protected double getScaler(int i) {
-		return kernelDistribution.getScaler(i, Double.NaN, getCoercableParameterValue());
-	}
+    protected double getScaler() {
+        return (scaleFactor + (Randomizer.nextDouble() * ((1.0 / scaleFactor) - scaleFactor)));
+    }
 
     @Override
     public double networkProposal() {
 
         int count = 0;
    
-        final double f = getScaler(0);
+        final double f = getScaler();
 
 
         network.startEditing(this);
@@ -141,22 +142,37 @@ public class NetworkScaleOperator extends NetworkOperator {
       	
         	
         	
-        	
+        	oldLengths = new HashMap<>(); 
+        	updated = new HashMap<>();
 
             for (NetworkNode node : network.getInternalNodes()) {
-                node.setHeight(node.getHeight() * f);
-                count += 1;
+            	if (node.isLeaf())
+            		continue;
+            
+            	if (node.isReassortment()) 
+            		oldLengths.put(node, node.getChildEdges().get(0).getLength());
+            	else
+            		oldLengths.put(node, node.getHeight() - Math.max(node.getChildEdges().get(0).childNode.getHeight(), node.getChildEdges().get(1).childNode.getHeight()));            		
+            	
+            	updated.put(node, false);
             }
+//            System.out.println(network);
+            count += scaleNodes(network.getRootEdge().childNode, f);
+//            System.out.println(network);
+//            System.out.println(f);
+//            System.out.println(count);
+//            System.exit(0);
+            
 
-            if (f < 1.0) {
-                for (NetworkNode leaf : network.getLeafNodes()) {
-                    if (leaf.getParentEdges().get(0).parentNode.getHeight() < leaf.getHeight()) {
-                    	c2++;
-                    	
-                        return Double.NEGATIVE_INFINITY;
-                    }
-                }
-            }            
+//            if (f < 1.0) {
+//                for (NetworkNode leaf : network.getLeafNodes()) {
+//                    if (leaf.getParentEdges().get(0).parentNode.getHeight() < leaf.getHeight()) {
+//                    	c2++;
+//                    	
+//                        return Double.NEGATIVE_INFINITY;
+//                    }
+//                }
+//            }            
         }
 
         // Scale parameters
@@ -178,18 +194,66 @@ public class NetworkScaleOperator extends NetworkOperator {
         return Math.log(f)*(count-2);
     }
     
-    /** 
+    private int scaleNodes(NetworkNode n, double scaler) {
+    	int count = 0;
+		if (n.isLeaf())
+			return 0;
+		else {
+			if (n.isReassortment()) {
+				// check if the edge below the reassortment edge hast already been scaled
+				if (!updated.get(n)) {
+					count += scaleNodes(n.getChildEdges().get(0).childNode, scaler);
+					double newLength = oldLengths.get(n)*scaler;
+					n.setHeight(newLength + n.getChildEdges().get(0).childNode.getHeight());
+					updated.put(n, true);				
+					count++;
+
+				}
+				// update the 
+			}
+			else {
+				for (NetworkEdge e : n.getChildEdges()) {
+					count += scaleNodes(e.childNode, scaler);
+				}
+				double newLength = oldLengths.get(n)*scaler;
+				n.setHeight(newLength + Math.max(n.getChildEdges().get(0).childNode.getHeight(), n.getChildEdges().get(1).childNode.getHeight()));
+				updated.put(n, true);	
+				count++;
+			}
+			// scale the node height such that
+		}
+    	return count;
+    }
+    
+    
+	private int resampleNodeHeight(Node node, double scaler) {
+		// TODO Auto-generated method stub
+		if (node.isLeaf()) {
+			return 0;
+		}
+		double oldHeights = node.getHeight() - Math.max(node.getLeft().getHeight(), node.getRight().getHeight());
+		int logHR = 1;
+		logHR += resampleNodeHeight(node.getLeft(), scaler);
+		logHR += resampleNodeHeight(node.getRight(), scaler);
+
+		// resample the height
+		double minHeight = Math.max(node.getLeft().getHeight(), node.getRight().getHeight());
+		double newHeight = oldHeights * scaler;
+		node.setHeight(newHeight + minHeight);
+		return logHR;
+	}
+
+
+    /**
      * automatic parameter tuning *
      */
     @Override
     public void optimize(final double logAlpha) {
-    	if (optimiseInput.get()) {
-	        double delta = calcDelta(logAlpha);
-	        double scaleFactor = getCoercableParameterValue();
-	        delta += Math.log(scaleFactor);
-	        scaleFactor = Math.exp(delta);
-	        setCoercableParameterValue(scaleFactor);
-    	}
+        if (optimiseInput.get()) {
+            double delta = calcDelta(logAlpha);
+            delta += Math.log(1.0 / scaleFactor - 1.0);
+            setCoercableParameterValue(1.0 / (Math.exp(delta) + 1.0));
+        }
     }
 
     @Override
@@ -199,31 +263,28 @@ public class NetworkScaleOperator extends NetworkOperator {
 
     @Override
     public void setCoercableParameterValue(final double value) {
-        scaleFactor = Math.max(Math.min(value,scaleUpperLimit.get()),scaleLowerLimit.get());
-    }
-
-    @Override
-    public double getTargetAcceptanceProbability() {
-    	return 0.3;
+        scaleFactor = Math.max(Math.min(value, upper), lower);
     }
 
     @Override
     public String getPerformanceSuggestion() {
-        double prob = m_nNrAccepted / (m_nNrAccepted + m_nNrRejected + 0.0);
-        double targetProb = getTargetAcceptanceProbability();
+        final double prob = m_nNrAccepted / (m_nNrAccepted + m_nNrRejected + 0.0);
+        final double targetProb = getTargetAcceptanceProbability();
 
         double ratio = prob / targetProb;
         if (ratio > 2.0) ratio = 2.0;
         if (ratio < 0.5) ratio = 0.5;
 
         // new scale factor
-        double newWindowSize = getCoercableParameterValue() * ratio;
+        final double sf = Math.pow(scaleFactor, ratio);
 
-        DecimalFormat formatter = new DecimalFormat("#.###");
-        if (prob < 0.10 || prob > 0.40) {
-            return "Try setting scale factor to about " + formatter.format(newWindowSize);
+        final DecimalFormat formatter = new DecimalFormat("#.###");
+        if (prob < 0.10) {
+            return "Try setting scaleFactor to about " + formatter.format(sf);
+        } else if (prob > 0.40) {
+            return "Try setting scaleFactor to about " + formatter.format(sf);
         } else return "";
     }
-    
+
 
 }

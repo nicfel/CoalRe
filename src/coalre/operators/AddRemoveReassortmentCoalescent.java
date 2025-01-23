@@ -15,6 +15,9 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
     public Input<CoalescentWithReassortment> coalescentDistrInput = new Input<>("coalescentWithReassortment",
             "Mean of exponential used for choosing root attachment times.",
             Input.Validate.REQUIRED);
+    
+	public Input<Boolean> randomlySampleAttachmentEdgeInput = new Input<>("randomlySampleAttachmentEdge",
+			"Randomly sample edge to attach to", true);
 
 
     CoalescentWithReassortment coalescentDistr;
@@ -48,12 +51,34 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
                 .filter(e -> !e.isRootEdge())
                 .filter(e -> e.hasSegments.cardinality()>=2)
                 .collect(Collectors.toList());
+        NetworkEdge sourceEdge = null;
+        double sourceTime = -1.0;
         
-        NetworkEdge sourceEdge = possibleSourceEdges.get(Randomizer.nextInt(possibleSourceEdges.size()));
-        double sourceTime = Randomizer.nextDouble() * sourceEdge.getLength() + sourceEdge.childNode.getHeight();
+		if (randomlySampleAttachmentEdgeInput.get()) {
+	        
+	        sourceEdge = possibleSourceEdges.get(Randomizer.nextInt(possibleSourceEdges.size()));
+	        sourceTime = Randomizer.nextDouble() * sourceEdge.getLength() + sourceEdge.childNode.getHeight();
+	
+	        logHR -= Math.log(1.0/(double)possibleSourceEdges.size())
+	                + Math.log(1.0/sourceEdge.getLength());
+		}else {
+	        // compute the sum over all possible source edges
+			double sumEdgeLengths = possibleSourceEdges.stream().mapToDouble(e -> e.getLength()).sum();			
+			// Pick a random number between 0 and sum of edge lengths
+			double randomEdgeLength = Randomizer.nextDouble() * sumEdgeLengths;
+			logHR -= Math.log(1.0/sumEdgeLengths);
+			// pick the source edge as the first edge whose length is greater than the random number
+			double passedLength = 0;
+			for (NetworkEdge edge : possibleSourceEdges) {
+				passedLength += edge.getLength();
+				if (passedLength > randomEdgeLength) {
+					sourceEdge = edge;
+					sourceTime = passedLength-randomEdgeLength + sourceEdge.childNode.getHeight();
+					break;
+				}
+			}
 
-        logHR -= Math.log(1.0/(double)possibleSourceEdges.size())
-                + Math.log(1.0/sourceEdge.getLength());
+		}
                 
     	// Calculate tree intervals
     	List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
@@ -261,13 +286,20 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 
         Set<NetworkEdge> finalNetworkEdges = network.getEdges();
 
-        int nPossibleSourceEdges = (int)finalNetworkEdges.stream()
-                .filter(e -> !e.isRootEdge())
-                .filter(e -> e.hasSegments.cardinality()>=2)
-                .count();
+        if (randomlySampleAttachmentEdgeInput.get()) {
+            int nPossibleSourceEdges = (int)finalNetworkEdges.stream()
+                    .filter(e -> !e.isRootEdge())
+                    .filter(e -> e.hasSegments.cardinality()>=2)
+                    .count();
 
-        logHR += Math.log(1.0/(double)nPossibleSourceEdges)
-                + Math.log(1.0/sourceEdge.getLength());
+            logHR += Math.log(1.0/(double)nPossibleSourceEdges)
+                    + Math.log(1.0/sourceEdge.getLength());
+        }else {
+			List<NetworkEdge> possibleSourceEdges = finalNetworkEdges.stream().filter(e -> !e.isRootEdge())
+					.filter(e -> e.hasSegments.cardinality() >= 2).collect(Collectors.toList());
+			double sumEdgeLengths = possibleSourceEdges.stream().mapToDouble(e -> e.getLength()).sum();
+			logHR += Math.log(1.0 / sumEdgeLengths);
+        }
  
         // keep only those that coexist at the time of maxHeight
         List<NetworkEdge> destEdges = finalNetworkEdges.stream()
