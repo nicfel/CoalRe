@@ -18,7 +18,7 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
     
 	public Input<Boolean> randomlySampleAttachmentEdgeInput = new Input<>("randomlySampleAttachmentEdge",
 			"Randomly sample edge to attach to", true);
-
+	
 
     CoalescentWithReassortment coalescentDistr;
 
@@ -32,12 +32,15 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
     public double networkProposal() {
         double logHR;
         network.startEditing(this);
+        
+//        System.out.println(network);
 
         if (Randomizer.nextBoolean()) {
             logHR = addRecombination();
         }else {
             logHR = removeRecombination();
         }
+//        System.out.println(network);
         return logHR;
     }
 
@@ -224,10 +227,19 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
         reassortmentEdge.hasSegments = new BitSet();
 
         // Choose segments to divert to new edge
-        BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
-        logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
-        logHR -= addSegmentsToAncestors(reassortmentEdge, segsToDivert);
-        logHR += removeSegmentsFromAncestors(newEdge1, segsToDivert);
+        if (divertOneSegmentInput.get()) {
+            BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments, 0.1);
+            logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments, segsToDivert, 0.1);
+            logHR -= addSegmentsToAncestors(reassortmentEdge, segsToDivert);
+            logHR += removeSegmentsFromAncestors(newEdge1, segsToDivert);
+            // get the logHR in the other direction
+//            logHR += getLogConditionedSubsetProb(sourceEdge.hasSegments, segsToDivert, 0.1);
+        }else {
+	        BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
+	        logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
+	        logHR -= addSegmentsToAncestors(reassortmentEdge, segsToDivert);
+	        logHR += removeSegmentsFromAncestors(newEdge1, segsToDivert);
+        }
 
         return logHR;
     }
@@ -332,7 +344,13 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
         BitSet segsToDivert = (BitSet) edgeToRemove.hasSegments.clone();
         logHR -= addSegmentsToAncestors(edgeToRemoveSpouse, segsToDivert);
         logHR += removeSegmentsFromAncestors(edgeToRemove, segsToDivert);
-        logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments);
+        
+        if (divertOneSegmentInput.get()) {
+            logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments, segsToDivert, 0.1);
+		} else {
+			logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments);
+		}
+        
 
         // Remove edge and associated nodes
         NetworkEdge edgeToExtend = nodeToRemove.getChildEdges().get(0);
@@ -365,7 +383,60 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 
         return logHR;
     }
+    
+    
+    private BitSet getRandomConditionedSubset(BitSet sourceSegments, double binomProb) {
 
+        if (sourceSegments.cardinality() < 2) {
+            return null;
+        }
+
+        BitSet destSegments = new BitSet();
+
+        do {
+            destSegments.clear();
+
+            for (int segIdx = sourceSegments.nextSetBit(0);
+                 segIdx != -1;
+                 segIdx = sourceSegments.nextSetBit(segIdx + 1)) {
+
+                // Now pick each segment with probability 0.1
+                if (Randomizer.nextDouble() < binomProb) {
+                    destSegments.set(segIdx);
+                }
+            }
+
+        } while (destSegments.cardinality() == 0
+                || destSegments.cardinality() == sourceSegments.cardinality());
+//        System.out.println(destSegments + " " + sourceSegments);
+        return destSegments;
+    }
+    
+    
+    private double getLogConditionedSubsetProb(BitSet sourceSegments, BitSet chosenSubset, double binomProb) {
+
+        if (sourceSegments.cardinality() < 2) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        // Let n be the total number of possible segments in sourceSegments,
+        // and k be the number actually chosen in the subset.
+        int n = sourceSegments.cardinality();
+        int k = chosenSubset.cardinality();
+
+
+        // Fully correct conditional log-probability:
+        //    log( p^k * (1-p)^(n-k) )  -  log( 1 - p^n - (1-p)^n )
+        // =  k*log(p) + (n-k)*log(1-p) - log( 1 - p^n - (1-p)^n )
+        double logProb = k * Math.log(binomProb)
+                       + (n - k) * Math.log(1.0 - binomProb)
+                       - Math.log(1.0 - Math.pow(binomProb, n) - Math.pow(1.0 - binomProb, n));
+
+        return logProb;
+    }
+
+    
+    
 //    /**
 //     * automatic parameter tuning *
 //     */

@@ -1,5 +1,6 @@
 package coalre.operators;
 
+import beast.base.core.Input;
 import beast.base.util.Randomizer;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
@@ -11,6 +12,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
+	
+	public Input<Boolean> divertOneSegmentInput = new Input<>("divertOneSegment", "If true, only one segment is diverted", false);
 
     @Override
     public double networkProposal() {
@@ -29,19 +32,30 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
         NetworkEdge sourceEdge = sourceEdges.get(Randomizer.nextInt(sourceEdges.size()));
         NetworkEdge destEdge = getSpouseEdge(sourceEdge);
         
-        BitSet segsToDivert = getRandomUnconditionedSubset(sourceEdge.hasSegments);
-        logHR -= getLogUnconditionedSubsetProb(sourceEdge.hasSegments);
+        BitSet segsToDivert;
+        
+        if (divertOneSegmentInput.get()) {
+        	segsToDivert = getRandomSegment(sourceEdge.hasSegments);
+        	logHR -= Math.log(1./sourceEdge.hasSegments.cardinality());
+        }else {
+        	segsToDivert = getRandomUnconditionedSubset(sourceEdge.hasSegments);
+        	logHR -= getLogUnconditionedSubsetProb(sourceEdge.hasSegments);
+        }
         
         if (segsToDivert.cardinality()==0)
         	return Double.NEGATIVE_INFINITY;
 
         network.startEditing(this);
-        
 
+        
         logHR -= addSegmentsToAncestors(destEdge, segsToDivert);
         logHR += removeSegmentsFromAncestors(sourceEdge, segsToDivert);
 
-        logHR += getLogUnconditionedSubsetProb(destEdge.hasSegments);
+        if (divertOneSegmentInput.get()) {
+        	logHR += Math.log(1.0/destEdge.hasSegments.cardinality());
+        }else {
+        	logHR += getLogUnconditionedSubsetProb(destEdge.hasSegments);
+        }
 
         int reverseSourceEdgeCount = (int)(network.getEdges().stream()
                 .filter(e -> e.childNode.isReassortment())
@@ -49,11 +63,28 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
                 .count());
 
         logHR += Math.log(1.0/reverseSourceEdgeCount);
+        
+        
         return logHR;
     }
 
 
-    /**
+    private BitSet getRandomSegment(BitSet hasSegments) {
+		// pick a random segment to divert.
+    	BitSet segsToDivert = new BitSet();
+    	segsToDivert.clear();
+    	
+    	int segToDivert = Randomizer.nextInt(hasSegments.cardinality());
+    	int segIdx = hasSegments.nextSetBit(0);
+		for (int i = 0; i < segToDivert; i++) {
+			segIdx = hasSegments.nextSetBit(segIdx + 1);
+		}
+		segsToDivert.set(segIdx);
+		return segsToDivert;
+	}
+
+
+	/**
      * Remove segments from this edge and ancestors.
      *
      * @param edge edge at which to start removal
@@ -148,7 +179,8 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 
             if (Randomizer.nextBoolean())
                 destSegments.set(segIdx);
-        }
+        }  
+        
 
         return destSegments;
     }

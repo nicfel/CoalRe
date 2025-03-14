@@ -6,6 +6,7 @@ import beast.base.core.Loggable;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
 
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -48,6 +49,7 @@ public class NeDynamicsFromSpline extends PopulationFunction.Abstract implements
                 break;
             }
         }
+                
         return spline.I[interval]/(spline.transmissionRate[interval]*2);
     }
 

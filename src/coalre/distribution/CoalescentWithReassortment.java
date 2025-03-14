@@ -81,6 +81,13 @@ public class CoalescentWithReassortment extends NetworkDistribution {
     	for (NetworkEvent event : networkEventList) {
         	if (prevEvent != null)
         		logP += intervalContribution(prevEvent, event, lociMRCA);
+        	
+//        	if (logP>0) {
+//        		System.out.println("interval");
+//        		System.exit(0);
+//
+//        	}
+
 
         	switch (event.type) {
 				case COALESCENCE:
@@ -94,14 +101,30 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 					logP += reassortment(event, lociMRCA);
 					break;
 			}
+//        	if (logP>0) {
+//        		System.out.println(populationFunction.getPopSize(event.time));
+//        		System.out.println(event.time);
+//        		System.out.println(event.type);
+//        		System.exit(0);
+//        	}
+
+        	
 
        		if (logP==Double.NEGATIVE_INFINITY)
        			break;
 
         	prevEvent = event;
         }
+//    	if (logP>0) {
+//    		System.out.println(networkIntervalsInput.get().networkInput.get());
+//    		System.exit(0);
+//    	}
 //		System.out.println(networkIntervalsInput.get().networkInput.get());
 //		System.exit(0);
+//		System.out.println(logP);
+//		if (logP == Double.POSITIVE_INFINITY)
+//			System.exit(0);
+
 		return logP;
     }
     
@@ -131,6 +154,8 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 				return Math.log(redFactor*reassortmentRate.getArrayValue())
 						+ Math.log(binomval);
 		}
+		
+		
 
 
 
