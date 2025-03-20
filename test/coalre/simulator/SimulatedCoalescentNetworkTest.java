@@ -66,6 +66,8 @@ public class SimulatedCoalescentNetworkTest extends CoalReTestClass {
         Assert.assertEquals(8.05, meanCount, 0.1);
         Assert.assertEquals(2.93, meanHeight, 0.1);
         Assert.assertEquals(10.21, meanLength, 0.5);
+        
+        System.out.println("sim test complete");
     }
     
     
