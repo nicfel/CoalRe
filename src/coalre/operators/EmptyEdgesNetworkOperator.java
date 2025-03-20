@@ -80,7 +80,13 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
         if (logHR>Double.NEGATIVE_INFINITY) {
             for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
                 network.updateSegmentTree(segmentTrees.get(segIdx), segIdx);
-        }        
+        }
+        
+        if (logHR>100) {
+        	System.out.println("logHR: " + logHR + " " + this.getID());
+        	System.out.println(network);
+        	System.exit(0);
+        }
         
                 		
         return logHR;

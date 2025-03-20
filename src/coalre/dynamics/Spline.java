@@ -20,7 +20,7 @@ public class Spline extends CalculationNode implements Loggable {
     final public Input<RealParameter> rateShiftsInput = new Input<>("rateShifts",
             "When to switch between elements of Ne", Input.Validate.REQUIRED);
     final public Input<RealParameter> uninfectiousRateInput = new Input<>("uninfectiousRate",
-            "Rate at which individuals become uninfectious", Input.Validate.REQUIRED);
+            "Rate at which individuals become uninfectious");
     final public Input<Integer> gridPointsInput = new Input<>("gridPoints",
             "Number of grid points to use for the spline calculation", 1000);
     final public Input<Boolean> infectedIsNeInput = new Input<>("infectedIsNe",

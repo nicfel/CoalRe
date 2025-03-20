@@ -52,8 +52,6 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
 	public double redFactor;
 
-	private boolean reduceReassortmentAfterSegTrees = false;
-
 
 	@Override
     public void initAndValidate(){
@@ -81,13 +79,6 @@ public class CoalescentWithReassortment extends NetworkDistribution {
     	for (NetworkEvent event : networkEventList) {
         	if (prevEvent != null)
         		logP += intervalContribution(prevEvent, event, lociMRCA);
-        	
-//        	if (logP>0) {
-//        		System.out.println("interval");
-//        		System.exit(0);
-//
-//        	}
-
 
         	switch (event.type) {
 				case COALESCENCE:
@@ -101,12 +92,6 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 					logP += reassortment(event, lociMRCA);
 					break;
 			}
-//        	if (logP>0) {
-//        		System.out.println(populationFunction.getPopSize(event.time));
-//        		System.out.println(event.time);
-//        		System.out.println(event.type);
-//        		System.exit(0);
-//        	}
 
         	
 
@@ -116,6 +101,28 @@ public class CoalescentWithReassortment extends NetworkDistribution {
         	prevEvent = event;
         }
 //    	if (logP>0) {
+//    		prevEvent = null;
+//
+//        	for (NetworkEvent event : networkEventList) {
+//            	if (prevEvent != null)
+//            		System.out.println(intervalContribution(prevEvent, event, lociMRCA));
+//            	switch (event.type) {
+//    				case COALESCENCE:
+//    					System.out.println("c" +coalesce(event));
+//    					break;
+//
+//    				case SAMPLE:
+//    					break;
+//
+//    				case REASSORTMENT:
+//    					System.out.println("r" +reassortment(event, lociMRCA));
+//    					break;
+//            	}
+//            	prevEvent = event;
+//        	}
+//
+//    		
+//    		
 //    		System.out.println(networkIntervalsInput.get().networkInput.get());
 //    		System.exit(0);
 //    	}
@@ -140,10 +147,11 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 				* Math.pow(1-intervals.getBinomialProb(), event.segsSortedLeft);
 		
 		if (event.time<=(lociMRCA*maxHeightRatioInput.get())) {
-			if (isTimeVarying)
+			if (isTimeVarying) {
 				return Math.log(timeVaryingReassortmentRates.getPopSize(event.time))
 						+ Math.log(binomval);
-			else
+				
+			}else
 				return Math.log(reassortmentRate.getArrayValue())
 						+ Math.log(binomval);
 		}else{
@@ -183,26 +191,33 @@ public class CoalescentWithReassortment extends NetworkDistribution {
         
 
 		if (nextEvent.time<(lociMRCA*maxHeightRatioInput.get())) {
-			if (isTimeVarying)
+			if (isTimeVarying) {
 				result += -prevEvent.totalReassortmentObsProb
 						* timeVaryingReassortmentRates.getIntegral(prevEvent.time, nextEvent.time);
-			else
+//				if (result>=0 && prevEvent.time>100)
+//                    System.out.println(prevEvent.time + " " +nextEvent.time + " " + timeVaryingReassortmentRates.getIntegral(prevEvent.time, nextEvent.time));
+
+			}else {
 				result += -reassortmentRate.getArrayValue() * prevEvent.totalReassortmentObsProb
 						* (nextEvent.time - prevEvent.time);
+
+			}
 		}else if (prevEvent.time<(lociMRCA*maxHeightRatioInput.get())) {
-			if (isTimeVarying)
+			if (isTimeVarying) {
 				result += -prevEvent.totalReassortmentObsProb
-						* timeVaryingReassortmentRates.getIntegral(prevEvent.time, nextEvent.time-lociMRCA*maxHeightRatioInput.get());
-			else
+						* timeVaryingReassortmentRates.getIntegral(prevEvent.time, lociMRCA*maxHeightRatioInput.get());
+			}else {
 				result += -reassortmentRate.getArrayValue() * prevEvent.totalReassortmentObsProb
 						* (lociMRCA*maxHeightRatioInput.get() - prevEvent.time);
+			}
 
-			if (isTimeVarying)
+			if (isTimeVarying) {
 				result += -redFactor*prevEvent.totalReassortmentObsProb
 						* timeVaryingReassortmentRates.getIntegral(lociMRCA*maxHeightRatioInput.get(), nextEvent.time);
-			else
+			}else {
 				result += -redFactor*reassortmentRate.getArrayValue() * prevEvent.totalReassortmentObsProb
 						* (nextEvent.time - prevEvent.time-lociMRCA*maxHeightRatioInput.get());
+			}
 
 
 

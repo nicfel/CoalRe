@@ -55,6 +55,7 @@ public class NeDynamicsFromSpline extends PopulationFunction.Abstract implements
 
     public double getIntegral(double from, double to) {
     	if (from<0 && from > -1e-14) {
+    		System.out.println(from);
     		from=0;
     	}
     	
@@ -99,7 +100,7 @@ public class NeDynamicsFromSpline extends PopulationFunction.Abstract implements
     public double getInverseIntensity(double v) {
         // divide by 2 to avoid a division in every step
         v/=2;
-        for (int i = 0; i < spline.gridPoints; i++) {
+        for (int i = 0; i < spline.gridPoints-1; i++) {
             v -= (spline.transmissionRate[i] / spline.I[i]) * (spline.time[i + 1] - spline.time[i]);
             if (v<0){
                 v += (spline.transmissionRate[i] / spline.I[i]) * (spline.time[i + 1] - spline.time[i]);
@@ -107,6 +108,7 @@ public class NeDynamicsFromSpline extends PopulationFunction.Abstract implements
                 return spline.time[i] + v/(spline.transmissionRate[i] / spline.I[i]);
             }
         }
+
         return spline.time[spline.gridPoints-1] + v/(spline.transmissionRate[spline.gridPoints-1] / spline.I[spline.gridPoints-1]);
 
     }

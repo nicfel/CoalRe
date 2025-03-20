@@ -92,26 +92,13 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
     	
     	for (NetworkEvent event : networkEventList) {
     		if (event.time>currTime) {
-//    			System.out.println(currTime);
-    			// sample next possible attachment time
     			double rate = 0.5*prevEvent.lineages;
                 double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(currTime);
                 double transformedTimeToNextCoal = Randomizer.nextExponential(rate);
                 double timeToNextCoal = coalescentDistr.populationFunction.getInverseIntensity(
                         transformedTimeToNextCoal + currentTransformedTime);
 
-//                if (timeToNextCoal <currTime){
-//                    System.out.println(currentTransformedTime + " " + transformedTimeToNextCoal + " " + timeToNextCoal);
-//                    System.exit(0);
-//                }
-                
-//                System.out.println(currTime + " " + timeToNextCoal + " " + currentTransformedTime);
-//                System.exit(0);
-
-
-                
-//                System.out.println(coalescentDistr.populationFunction.getPopSize(attachmentTime));
-               	attachmentTime = timeToNextCoal;
+                attachmentTime = timeToNextCoal;
                 if (timeToNextCoal < event.time) {
                 	logHR -= -rate * coalescentDistr.populationFunction.getIntegral(currTime, attachmentTime) +
                 			Math.log(rate/coalescentDistr.populationFunction.getPopSize(attachmentTime));
@@ -128,11 +115,6 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
     		double transformedTimeToNextCoal = Randomizer.nextExponential(0.5);
             attachmentTime = coalescentDistr.populationFunction.getInverseIntensity(
                     transformedTimeToNextCoal + currentTransformedTime);
-            
-            
-//            System.out.println(currTime + " x " + attachmentTime + " " + currentTransformedTime);
-//            System.exit(0);
-
             
             logHR -= -0.5 * coalescentDistr.populationFunction.getIntegral(network.getRootEdge().childNode.getHeight(), attachmentTime);
         	logHR -= Math.log(0.5/coalescentDistr.populationFunction.getPopSize(attachmentTime));
@@ -229,6 +211,7 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
         // Choose segments to divert to new edge
         if (divertOneSegmentInput.get()) {
             BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments, 0.1);
+//            System.out.println("a" + segsToDivert);
             logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments, segsToDivert, 0.1);
             logHR -= addSegmentsToAncestors(reassortmentEdge, segsToDivert);
             logHR += removeSegmentsFromAncestors(newEdge1, segsToDivert);
@@ -236,7 +219,8 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 //            logHR += getLogConditionedSubsetProb(sourceEdge.hasSegments, segsToDivert, 0.1);
         }else {
 	        BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
-	        logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
+//            System.out.println("b" +segsToDivert);
+            logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
 	        logHR -= addSegmentsToAncestors(reassortmentEdge, segsToDivert);
 	        logHR += removeSegmentsFromAncestors(newEdge1, segsToDivert);
         }
@@ -329,7 +313,6 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 
         return logHR;
     }
-
 
     double removeReassortmentEdge(NetworkEdge edgeToRemove) {
         double logHR = 0.0;

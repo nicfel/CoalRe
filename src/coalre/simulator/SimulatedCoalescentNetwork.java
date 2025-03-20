@@ -194,9 +194,16 @@ public class SimulatedCoalescentNetwork extends Network {
             double transformedTimeToNextCoal = k>=2 ? Randomizer.nextExponential(0.5*k*(k-1)) : Double.POSITIVE_INFINITY;
             double timeToNextCoal = populationFunction.getInverseIntensity(
                     transformedTimeToNextCoal + currentTransformedTime) - currentTime;
+            
+//            System.out.println(timeToNextCoal);
+//            if (timeToNextCoal==Double.NaN){
+//            	System.out.println(currentTime + " " + currentTransformedTime + " " + transformedTimeToNextCoal + " " + k);
+//            	System.exit(0);
+//            }
 
             double timeToNextReass = k>=1 ? Randomizer.nextExponential(k*reassortmentRate.getValue()) : Double.POSITIVE_INFINITY;
-
+            
+//            System.out.println(timeToNextReass + " " + timeUntilNextSample);
             // next event time
             double timeUntilNextEvent = Math.min(timeToNextCoal, timeToNextReass);
             if (timeUntilNextEvent < timeUntilNextSample) {
