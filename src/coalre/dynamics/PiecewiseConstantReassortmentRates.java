@@ -104,7 +104,19 @@ public class PiecewiseConstantReassortmentRates extends PopulationFunction.Abstr
 
     @Override
     public double getInverseIntensity(double v) {
-		throw new IllegalArgumentException("Not implemented");
+    	
+        // compute the integral of Ne's between from an to
+		for (int i = 1; i < rateShifts.getDimension(); i++) {
+			v -= (rateShifts.getValue(i) - rateShifts.getValue(i - 1)) * Math.exp(reassortmentRate.getValue(i - 1));
+			if (v < 0) {
+				v += (rateShifts.getValue(i) - rateShifts.getValue(i - 1)) * Math.exp(reassortmentRate.getValue(i - 1));
+				// solve for the final time
+				return rateShifts.getValue(i - 1) + v / Math.exp(reassortmentRate.getValue(i - 1));
+			}			
+		}    		
+
+		return rateShifts.getValue(rateShifts.getDimension() - 1)
+				+ v / Math.exp(reassortmentRate.getValue(rateShifts.getDimension() - 1));
     }
 
     @Override

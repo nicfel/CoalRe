@@ -1,12 +1,10 @@
 package coalre.operators;
 
-import beast.base.core.Function;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
 import beast.base.inference.parameter.RealParameter;
 import beast.base.util.Randomizer;
-import coalre.distribution.CoalescentWithReassortment;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
 import coalre.statistics.NetworkStatsLogger;
@@ -16,12 +14,17 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
+public class GibbsOperatorAboveSegmentRoots_old extends NetworkOperator {
 
-    public Input<CoalescentWithReassortment> coalescentDistrInput = new Input<>("coalescentWithReassortment",
-            "Mean of exponential used for choosing root attachment times.",
-            Input.Validate.REQUIRED);
+    public Input<RealParameter> reassortmentRateInput = new Input<>("reassortmentRate",
+            "Rate of reassortment (per lineage per unit time)", Validate.REQUIRED);
+
+    public Input<PopulationFunction> populationFunctionInput = new Input<>("populationModel",
+            "Population model to use.", Validate.REQUIRED);
     
+    public Input<RealParameter> binomialProbInput = new Input<>("binomialProb",
+            "Probability of a given segment choosing a particular parent.");
+
     public Input<Double> maxHeightRatioInput = new Input<>(
             "maxHeightRatio",
             "if specified, above the ratio, only coalescent events are allowed.", Double.POSITIVE_INFINITY);
@@ -30,26 +33,19 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
             "redFactor",
             "by how much the recombination rate should be reduced after reaching the maxHeightRatio.", 0.1);
 
+
+
+    private int nSegments;
     
     private PopulationFunction populationFunction;
-    private Function reassortmentRate;
-    public PopulationFunction timeVaryingReassortmentRates;
-    
-    private boolean isTimeVarying = false;
-    private Function binomialProb;
-
+    private RealParameter reassortmentRate;
 
     @Override
     public void initAndValidate() {
+    	nSegments = segmentTreesInput.get().size();
     	
-        populationFunction = coalescentDistrInput.get().populationFunctionInput.get();
-        if (coalescentDistrInput.get().timeVaryingReassortmentRatesInput.get()!=null) {
-            timeVaryingReassortmentRates = coalescentDistrInput.get().timeVaryingReassortmentRatesInput.get();
-        	isTimeVarying = true;
-        }else {
-        	reassortmentRate = coalescentDistrInput.get().reassortmentRateInput.get();
-        }
-        binomialProb = coalescentDistrInput.get().networkIntervalsInput.get().binomialProbInput.get();
+        populationFunction = populationFunctionInput.get();
+        reassortmentRate = reassortmentRateInput.get();
 
     	
         super.initAndValidate();
@@ -96,18 +92,10 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
                     transformedTimeToNextCoal + currentTransformedTime) - currentTime;
 
             
-            double timeToNextReassortment = k>=1 ? 0 : Double.POSITIVE_INFINITY;
-            if (isTimeVarying) {
-                double currentTransformedReaTime = timeVaryingReassortmentRates.getIntensity(currentTime);
-                double transformedTimeToNextRea = Randomizer.nextExponential(k * redFactor);
-            	timeToNextReassortment = timeVaryingReassortmentRates.getInverseIntensity(
-            			transformedTimeToNextRea + currentTransformedReaTime) - currentTime;
-            }else {
-            	timeToNextReassortment = Randomizer.nextExponential(k*reassortmentRate.getArrayValue() * redFactor);
-            }
+            double timeToNextReass = k>=1 ? Randomizer.nextExponential(k*reassortmentRate.getValue() * redFactor) : Double.POSITIVE_INFINITY;
 
             // next event time
-            double timeUntilNextEvent = Math.min(timeToNextCoal, timeToNextReassortment);
+            double timeUntilNextEvent = Math.min(timeToNextCoal, timeToNextReass);
             if ((timeUntilNextEvent+currentTime)>recChangeTime) {
                 currentTime = recChangeTime;
                 redFactor *= redFactorInput.get();
@@ -165,6 +153,21 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
         extantLineages.add(lineage);
     }
     
+    private void sample(List<NetworkNode> remainingSampleNodes, List<NetworkEdge> extantLineages) {
+        // sample the network node
+        NetworkNode n = remainingSampleNodes.get(0);
+
+        // Create corresponding lineage
+        BitSet hasSegs = new BitSet();
+        hasSegs.set(0, nSegments);
+        NetworkEdge lineage = new NetworkEdge(null, n, hasSegs);
+        extantLineages.add(lineage);
+        n.addParentEdge(lineage);
+
+        remainingSampleNodes.remove(0);
+    }
+
+
     private void reassort(double reassortmentTime, List<NetworkEdge> extantLineages) {
         NetworkEdge lineage = extantLineages.get(Randomizer.nextInt(extantLineages.size()));
 
@@ -173,14 +176,14 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
 
         for (int segIdx = lineage.hasSegments.nextSetBit(0);
              segIdx != -1; segIdx = lineage.hasSegments.nextSetBit(segIdx+1)) {
-        	if (binomialProb==null) {
+        	if (binomialProbInput.get()==null) {
 	            if (Randomizer.nextBoolean()) {
 	                hasSegs_left.set(segIdx);
 	            } else {
 	                hasSegs_right.set(segIdx);
 	            }
         	}else {
-	            if (Randomizer.nextDouble()>binomialProb.getArrayValue()) {
+	            if (Randomizer.nextDouble()>binomialProbInput.get().getArrayValue()) {
 	                hasSegs_left.set(segIdx);
 	            } else {
 	                hasSegs_right.set(segIdx);

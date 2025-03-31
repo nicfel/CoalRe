@@ -10,6 +10,7 @@ import beast.base.evolution.tree.Tree;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
 import beast.base.util.Randomizer;
 import cern.colt.Arrays;
+import coalre.distribution.NetworkIntervals;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
@@ -24,7 +25,13 @@ import java.util.List;
 public class SimulatedCoalescentNetwork extends Network {
 
     public Input<RealParameter> reassortmentRateInput = new Input<>("reassortmentRate",
-            "Rate of reassortment (per lineage per unit time)", Validate.REQUIRED);
+            "Rate of reassortment (per lineage per unit time)");
+    
+	public Input<PopulationFunction> timeVaryingReassortmentRatesInput = new Input<>(
+	        "timeVaryingReassortmentRates",
+            "reassortment rates that vary over time",
+            Input.Validate.XOR, reassortmentRateInput);
+
 
     public Input<Function> binomialProbInput = new Input<>("binomialProb",
             "Probability parameter in binomial reassortment distribution.");
@@ -55,6 +62,9 @@ public class SimulatedCoalescentNetwork extends Network {
     private RealParameter reassortmentRate;
     private Function binomialProb;
     
+    public PopulationFunction timeVaryingReassortmentRates;
+    
+    private boolean isTimeVarying = false;
 
     private int nSegments;
 
@@ -87,7 +97,12 @@ public class SimulatedCoalescentNetwork extends Network {
         }
 
         populationFunction = populationFunctionInput.get();
-        reassortmentRate = reassortmentRateInput.get();
+        if (reassortmentRateInput.get()!=null) {
+        	reassortmentRate = reassortmentRateInput.get();
+        }else {
+        	isTimeVarying = true;
+        	timeVaryingReassortmentRates = timeVaryingReassortmentRatesInput.get();
+        }
         binomialProb = binomialProbInput.get();
 
         if (nSegments==0) {
@@ -195,17 +210,18 @@ public class SimulatedCoalescentNetwork extends Network {
             double timeToNextCoal = populationFunction.getInverseIntensity(
                     transformedTimeToNextCoal + currentTransformedTime) - currentTime;
             
-//            System.out.println(timeToNextCoal);
-//            if (timeToNextCoal==Double.NaN){
-//            	System.out.println(currentTime + " " + currentTransformedTime + " " + transformedTimeToNextCoal + " " + k);
-//            	System.exit(0);
-//            }
+            double timeToNextReassortment = k>=1 ? 0 : Double.POSITIVE_INFINITY;
+            if (isTimeVarying) {
+                double currentTransformedReaTime = timeVaryingReassortmentRates.getIntensity(currentTime);
+                double transformedTimeToNextRea = Randomizer.nextExponential(k);
+            	timeToNextReassortment = timeVaryingReassortmentRates.getInverseIntensity(
+            			transformedTimeToNextRea + currentTransformedReaTime) - currentTime;            	
+            }else {
+            	timeToNextReassortment = Randomizer.nextExponential(k*reassortmentRate.getArrayValue());
+            }
 
-            double timeToNextReass = k>=1 ? Randomizer.nextExponential(k*reassortmentRate.getValue()) : Double.POSITIVE_INFINITY;
-            
-//            System.out.println(timeToNextReass + " " + timeUntilNextSample);
             // next event time
-            double timeUntilNextEvent = Math.min(timeToNextCoal, timeToNextReass);
+            double timeUntilNextEvent = Math.min(timeToNextCoal, timeToNextReassortment);
             if (timeUntilNextEvent < timeUntilNextSample) {
                 currentTime += timeUntilNextEvent;
                 if (timeUntilNextEvent == timeToNextCoal)
