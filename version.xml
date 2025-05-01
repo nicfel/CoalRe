@@ -1,4 +1,4 @@
-<package name="CoalRe" version="2.6.1">
+<package name="CoalRe" version="2.6.3">
   <depends on='BEAST.base' atleast='2.7.2'/>
   <depends on='BEAST.app' atleast='2.7.2'/>
 
@@ -61,7 +61,7 @@
         <provider classname="coalre.dynamics.Difference"/>
         <provider classname="coalre.dynamics.LogDifference"/>
         <provider classname="coalre.dynamics.SkygrowthNeDynamics"/>
-        <provider classname="coalre.dynamics.PiecewiseConstantReassortmentRateFromSkygrowth"/>
+        <provider classname="coalre.dynamics.SkygrowthReassortmentRatesFromSkygrowthNe"/>
 
     </service>
 
