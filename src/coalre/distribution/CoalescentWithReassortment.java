@@ -64,7 +64,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
         	timeVaryingReassortmentRates = timeVaryingReassortmentRatesInput.get();
         }
     }
-
+	int ii = 0;
     public double calculateLogP() {
     	logP = 0;
     	// Calculate tree intervals
@@ -73,7 +73,10 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 		// get the mrca of all loci trees
 		double lociMRCA = maxHeightRatioInput.get()<Double.POSITIVE_INFINITY ?
 				NetworkStatsLogger.getLociMRCA(networkIntervalsInput.get().networkInput.get()) : Double.POSITIVE_INFINITY;
-
+		
+//		System.out.println(networkIntervalsInput.get().networkInput.get());
+//		System.out.println("lociMRCA: " + NetworkStatsLogger.getLociMRCA(networkIntervalsInput.get().networkInput.get()));
+		
 		NetworkEvent prevEvent = null;
 
     	for (NetworkEvent event : networkEventList) {
@@ -100,6 +103,11 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
         	prevEvent = event;
         }
+//    	System.out.println("logP: " + logP);
+//    	ii++;
+//    	if (ii>100) {
+//    		System.exit(0);
+//    	}
 //    	if (logP>0) {
 //    		prevEvent = null;
 //
@@ -136,10 +144,6 @@ public class CoalescentWithReassortment extends NetworkDistribution {
     }
     
 	private double reassortment(NetworkEvent event, double lociMRCA) {
-//        lp+=Math.log(reassortmentRate.getArrayValue())
-//                + event.segsSortedLeft * Math.log(intervals.getBinomialProb())
-//                + (event.segsToSort-event.segsSortedLeft)*Math.log(1-intervals.getBinomialProb())
-//                + Math.log(2.0);\
 		
 		double binomval = Math.pow(intervals.getBinomialProb(), event.segsSortedLeft)
 				* Math.pow(1-intervals.getBinomialProb(), event.segsToSort-event.segsSortedLeft) 
@@ -161,42 +165,22 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 			else
 				return Math.log(redFactor*reassortmentRate.getArrayValue())
 						+ Math.log(binomval);
-		}
-		
-		
-
-
-
-//        return Math.log(reassortmentRate.getArrayValue())
-//                + event.segsSortedLeft * Math.log(intervals.getBinomialProb())
-//                + (event.segsToSort-event.segsSortedLeft)*Math.log(1-intervals.getBinomialProb())
-//                + Math.log(2.0);
+		}	
 	}
 
 	private double coalesce(NetworkEvent event) {
-
 		return Math.log(1.0/populationFunction.getPopSize(event.time));
 	}
 
 	private double intervalContribution(NetworkEvent prevEvent, NetworkEvent nextEvent, double lociMRCA) {
 
         double result = 0.0;
-//        System.out.println(networkIntervalsInput.get().networkInput.get());
-//		System.out.println(prevEvent.time + " " + nextEvent.time);
-
-//		if (nextEvent.time<3.3) {
-//			System.out.println(prevEvent.time + " " + nextEvent.time);
-//			System.out.println(timeVaryingReassortmentRates.getIntegral(prevEvent.time, nextEvent.time));
-//		}
         
 
 		if (nextEvent.time<(lociMRCA*maxHeightRatioInput.get())) {
 			if (isTimeVarying) {
 				result += -prevEvent.totalReassortmentObsProb
 						* timeVaryingReassortmentRates.getIntegral(prevEvent.time, nextEvent.time);
-//				if (result>=0 && prevEvent.time>100)
-//                    System.out.println(prevEvent.time + " " +nextEvent.time + " " + timeVaryingReassortmentRates.getIntegral(prevEvent.time, nextEvent.time));
-
 			}else {
 				result += -reassortmentRate.getArrayValue() * prevEvent.totalReassortmentObsProb
 						* (nextEvent.time - prevEvent.time);

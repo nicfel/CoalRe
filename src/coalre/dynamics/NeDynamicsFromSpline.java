@@ -54,8 +54,8 @@ public class NeDynamicsFromSpline extends PopulationFunction.Abstract implements
     }
 
     public double getIntegral(double from, double to) {
-    	if (from<0 && from > -1e-14) {
-    		System.out.println(from);
+    	if (from<0 && from > -1e-10) {
+//    		System.out.println(from);
     		from=0;
     	}
     	

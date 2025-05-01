@@ -82,11 +82,11 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
                 network.updateSegmentTree(segmentTrees.get(segIdx), segIdx);
         }
         
-        if (logHR>100) {
-        	System.out.println("logHR: " + logHR + " " + this.getID());
-        	System.out.println(network);
-        	System.exit(0);
-        }
+//        if (logHR>100) {
+//        	System.out.println("logHR: " + logHR + " " + this.getID());
+//        	System.out.println(network);
+//        	System.exit(0);
+//        }
         
                 		
         return logHR;

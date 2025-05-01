@@ -97,6 +97,11 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
                 double transformedTimeToNextCoal = Randomizer.nextExponential(rate);
                 double timeToNextCoal = coalescentDistr.populationFunction.getInverseIntensity(
                         transformedTimeToNextCoal + currentTransformedTime);
+                
+                if (timeToNextCoal < currTime) {
+                	System.out.println("timeToNextCoal < currTime: " + currTime + " " + timeToNextCoal + " " + transformedTimeToNextCoal + " " + currentTransformedTime);
+                	System.exit(0);
+                }
 
                 attachmentTime = timeToNextCoal;
                 if (timeToNextCoal < event.time) {

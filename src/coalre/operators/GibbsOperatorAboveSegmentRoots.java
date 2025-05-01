@@ -22,13 +22,6 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
             "Mean of exponential used for choosing root attachment times.",
             Input.Validate.REQUIRED);
     
-    public Input<Double> maxHeightRatioInput = new Input<>(
-            "maxHeightRatio",
-            "if specified, above the ratio, only coalescent events are allowed.", Double.POSITIVE_INFINITY);
-
-    public Input<Double> redFactorInput = new Input<>(
-            "redFactor",
-            "by how much the recombination rate should be reduced after reaching the maxHeightRatio.", 0.1);
 
     
     private PopulationFunction populationFunction;
@@ -37,6 +30,8 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
     
     private boolean isTimeVarying = false;
     private Function binomialProb;
+    private double redFactor;
+    private double maxHeightRatio;
 
 
     @Override
@@ -50,7 +45,9 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
         	reassortmentRate = coalescentDistrInput.get().reassortmentRateInput.get();
         }
         binomialProb = coalescentDistrInput.get().networkIntervalsInput.get().binomialProbInput.get();
-
+        
+        redFactor = coalescentDistrInput.get().redFactorInput.get();
+        maxHeightRatio = coalescentDistrInput.get().maxHeightRatioInput.get();
     	
         super.initAndValidate();
     }
@@ -77,6 +74,7 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
                 .filter(e -> e.childNode.getHeight()<=maxHeight)
                .collect(Collectors.toList());
         
+
         if (startingEdges.size()==0)
         	return Double.NEGATIVE_INFINITY;
         
@@ -84,7 +82,8 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
         double currentTime = maxHeight;
         double timeUntilNextSample = Double.POSITIVE_INFINITY;
         // get the time when the reassortment rates are reduced
-        double recChangeTime = maxHeight*maxHeightRatioInput.get();
+        double recChangeTime = maxHeight*maxHeightRatio;
+
         double redFactor = 1.0;
         do {
             // get the current propensities
@@ -98,10 +97,16 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
             
             double timeToNextReassortment = k>=1 ? 0 : Double.POSITIVE_INFINITY;
             if (isTimeVarying) {
-                double currentTransformedReaTime = timeVaryingReassortmentRates.getIntensity(currentTime);
-                double transformedTimeToNextRea = Randomizer.nextExponential(k * redFactor);
-            	timeToNextReassortment = timeVaryingReassortmentRates.getInverseIntensity(
-            			transformedTimeToNextRea + currentTransformedReaTime) - currentTime;
+            	if (redFactor==0) {
+            		timeToNextReassortment = Double.POSITIVE_INFINITY;
+            		
+            	}else {
+	                double currentTransformedReaTime = timeVaryingReassortmentRates.getIntensity(currentTime);
+	                double transformedTimeToNextRea = Randomizer.nextExponential(k * redFactor);
+	            	timeToNextReassortment = timeVaryingReassortmentRates.getInverseIntensity(
+	            			transformedTimeToNextRea + currentTransformedReaTime) - currentTime;
+            	}
+            	
             }else {
             	timeToNextReassortment = Randomizer.nextExponential(k*reassortmentRate.getArrayValue() * redFactor);
             }
@@ -110,7 +115,7 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
             double timeUntilNextEvent = Math.min(timeToNextCoal, timeToNextReassortment);
             if ((timeUntilNextEvent+currentTime)>recChangeTime) {
                 currentTime = recChangeTime;
-                redFactor *= redFactorInput.get();
+                redFactor *= this.redFactor;
                 recChangeTime = Double.POSITIVE_INFINITY;
             }else {
                 if (timeUntilNextEvent < timeUntilNextSample) {
@@ -126,9 +131,7 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
         while (startingEdges.size() > 1);
         
         network.setRootEdge(startingEdges.get(0));
-//        System.out.println(network.getExtendedNewick());
 
-        
         return Double.POSITIVE_INFINITY;
 
         
