@@ -118,7 +118,7 @@ public class ColoredTreeExtractor extends ReassortmentAnnotator {
 
     }    
     
-    private Tree getSingleChildTree(Network network, int segment, List<String> leafNodes){
+    static Tree getSingleChildTree(Network network, int segment, List<String> leafNodes){
     	// get teh root of this segment tree
         List<NetworkNode> rootEdge = network.getNodes().stream()
                 .filter(e -> e.isCoalescence())
@@ -136,7 +136,7 @@ public class ColoredTreeExtractor extends ReassortmentAnnotator {
     	return tree;
     }
     
-    private Node getNextNode(NetworkNode networkNode, int nrSegments, int segment, List<String> leafNodes){
+    private static Node getNextNode(NetworkNode networkNode, int nrSegments, int segment, List<String> leafNodes){
     	
     	Node node = new Node();
     	

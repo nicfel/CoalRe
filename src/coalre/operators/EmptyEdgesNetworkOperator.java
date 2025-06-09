@@ -76,6 +76,7 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 		if (!allEdgesAncestral()){
             return Double.NEGATIVE_INFINITY;
 		}
+//		System.out.println(this.getID() + " " + logHR);
 
         if (logHR>Double.NEGATIVE_INFINITY) {
             for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
@@ -310,11 +311,11 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 //			System.out.println(Math.log(factorial(nrRemoved)));
 //		}
         
-        if (!allEdgesAncestral()){
-        	//TODO change to Exception
-        	System.err.println("still has empty segments, should not happen ever!");
-        	return Double.NEGATIVE_INFINITY;
+        if (!allEdgesAncestral()){       	
+        	System.err.println(network);
+        	throw new RuntimeException("still has empty segments, should not happen ever!");
         }
+        
         
         if(!networkTerminatesAtMRCA())
         	return Double.NEGATIVE_INFINITY;

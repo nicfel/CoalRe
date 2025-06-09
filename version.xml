@@ -1,4 +1,4 @@
-<package name="CoalRe" version="2.6.3">
+<package name="CoalRe" version="2.7.1">
   <depends on='BEAST.base' atleast='2.7.2'/>
   <depends on='BEAST.app' atleast='2.7.2'/>
 
@@ -19,6 +19,12 @@
 
   <packageapp class="coalre.networkannotator.ExtractReassortmentEvents"
             description="ExtractReassortmentEvents"/>
+
+<packageapp class="coalre.networkannotator.getCladeHeights"
+            description="GetCladeHeightsFromNetwork"/>
+
+<packageapp class="coalre.networkannotator.MarkClades"
+            description="MarkCladesFromCladeFile"/>
 
 
       <service type="beast.base.core.BEASTInterface">

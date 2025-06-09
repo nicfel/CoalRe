@@ -24,6 +24,11 @@ import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
 
 import javax.swing.*;
+
+import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.Tree;
+import cern.colt.Arrays;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -51,6 +56,7 @@ public class MarkClades extends ReassortmentAnnotator {
         double burninPercentage = 10.0;
         int followSegment = 0;
         int[] removeSegments = new int[0];
+        int printRelativeToSegment = -1;
 
 
         @Override
@@ -62,6 +68,7 @@ public class MarkClades extends ReassortmentAnnotator {
                     "Burnin percentage: " + burninPercentage + "\n" +
                     "Follow segment: " + followSegment + "\n" +
                     "Remove segments: " + (removeSegments.length > 0 ? removeSegments[0] : "") + "\n" +
+                    "Print relative to segment: " + printRelativeToSegment + " (if -1 the whole network is printed to file)\n" +
                     "-----------------------------------------\n";
                     
                     
@@ -103,18 +110,66 @@ public class MarkClades extends ReassortmentAnnotator {
 			String[] split = lines.get(i).split("[,\t]");
 			clades[i-1] = split[1];
 			tipNames[i-1] = split[0];
-		}		
+		}	
+		
+		List<String> uniqueClades = new ArrayList<>();
+		for (String clade : clades) {
+			if (!uniqueClades.contains(clade)) {
+				uniqueClades.add(clade);
+			}
+		}
+		// add the sorted combination of unique clades seperated by + to unique clades
+		Collections.sort(uniqueClades);
+		
+		List<String> combinedClades = new ArrayList<>();
+		for (int i = 0; i < uniqueClades.size(); i++) {
+			for (int j = i + 1; j < uniqueClades.size(); j++) {
+				combinedClades.add(uniqueClades.get(i) + "+" + uniqueClades.get(j));
+			}
+		}
+		for (int i = 0; i < uniqueClades.size(); i++) {
+			combinedClades.add(uniqueClades.get(i) + "+other");
+			
+		}
+
+		
+		
+		uniqueClades.addAll(combinedClades);
+		uniqueClades.add("other");
              
         // compute the pairwise reassortment distances 
         try (PrintStream ps = new PrintStream(options.outFile)) {
         	int count = 0;
+            List<String> leafNodes = new ArrayList<>();
+
 	        for (Network network : logReader){	  
 //	        	pruneNetwork(network, options.removeSegments);
 	        	labelClades(network, clades, tipNames, options.followSegment);
 	        	// mark the remaining edges based on the parental edges
 	        	markRemainingEdges(network, options.followSegment);
 	        	markReassortmentEvents(network);
-	        	ps.println(network);
+	        	
+				if (options.printRelativeToSegment >= 0) {
+					if (count==0) {
+		            	for (NetworkNode networkNode : network.getNodes()){
+		            		if (networkNode.isLeaf()){
+		            			leafNodes.add(networkNode.getTaxonLabel());
+		            		}
+		        		}
+
+					}
+					// build a tree by following segment options.printRelativeToSegment. Use the marked network to highlight reassortment events along branches
+					Tree tree = getSingleChildTree(network, options.printRelativeToSegment, leafNodes);
+					
+					Node noSingleRoot = convertToNonSingleChildTree(tree.getRoot(), uniqueClades);	
+					
+					Tree newTree = new Tree(noSingleRoot);
+					
+					ps.println(noSingleRoot +";");
+					
+				}else {
+					ps.println(network);
+				}     	
 	        	
 	        	count++;
 	        }
@@ -122,10 +177,10 @@ public class MarkClades extends ReassortmentAnnotator {
         }
         System.out.println("\nDone!");
     }
-    
+     
 
-        
-    private void markReassortmentEvents(Network network) {
+
+	private void markReassortmentEvents(Network network) {
 		List<NetworkNode> reassortmentNodes = network.getNodes().stream().filter(e -> e.isReassortment())
 				.collect(Collectors.toList());
 		
@@ -246,7 +301,7 @@ public class MarkClades extends ReassortmentAnnotator {
 		if (hasClades.size()==1)
 			edge.childNode.setTypeLabel(hasClades.get(0));
 		else if (hasClades.size() > 1) {
-			edge.childNode.setTypeLabel("multiple");
+			edge.childNode.setTypeLabel("other");
 		}
 		
 		return hasClades;
@@ -280,26 +335,27 @@ public class MarkClades extends ReassortmentAnnotator {
     	
     }
     
-    public static String helpMessage =
-            "TrunkReassortment - counts how many reassortment events happened on trunk and non-trunk nodes.\n"
-                    + "\n"
-                    + "Usage: appstore ACGAnnotator [-help | [options] logFile [outputFile]\n"
-                    + "\n"
-                    + "Option                   Description\n"
-                    + "--------------------------------------------------------------\n"
-                    + "-help                    Display usage info.\n"
-                    + "-trunkDefinition {MostRecentSample, TipDistance} Choose trunk definition method.\n"
-                    + "                         (default MostRecentSample)\n"
-                    + "-burnin percentage       Choose _percentage_ of log to discard\n"
-                    + "                         in order to remove burn-in period.\n"
-                    + "                         (Default 10%)\n"
-                    + "-minTipDistance     		minimum distance between internal network node\n"
-                    + "                         and tip node such that the internal node is considered trunk.\n"
-                    + "                         If not  specified, the trunk is any node between samples\n"
-                    + "                         height=0 and the root.\n"
-                    + "\n"
-                    + "If no output file is specified, output is written to a file\n"
-                    + "named 'reassortment_distances.txt'.";
+    public static final String helpMessage =
+    	    "MarkClades - Annotates reassortment networks with clade labels based on segment paths.\n" +
+    	    "\n" +
+    	    "Usage:\n" +
+    	    "  java MarkClades [options]\n" +
+    	    "\n" +
+    	    "Required options:\n" +
+    	    "  -tree <file>              Input BEAST2 log file with sampled reassortment networks.\n" +
+    	    "  -clade <file>             TSV or CSV file with columns: <tipName>,<cladeLabel>.\n" +
+    	    "  -out <file>               Output file to write annotated networks or trees.\n" +
+    	    "\n" +
+    	    "Optional options:\n" +
+    	    "  -burnin <percent>         Percentage of samples to discard as burn-in (default: 10.0).\n" +
+    	    "  -followSegment <index>    Segment index to follow for clade inference (default: 0).\n" +
+    	    "  -removeSegments <list>    Comma-separated list of segments to remove (e.g., 1,2).\n" +
+    	    "  -printSegment <index>     Print segment-specific tree instead of full network.\n" +
+    	    "  -help                     Print this message and exit.\n" +
+    	    "\n" +
+    	    "Output:\n" +
+    	    "  If -printSegment is provided, a tree with clade and reassortment annotations is output.\n" +
+    	    "  Otherwise, the full annotated network is written to the output file.";
 
     /**
      * Print usage info and exit.
@@ -402,6 +458,19 @@ public class MarkClades extends ReassortmentAnnotator {
 
                     i += 1;
                     break;
+                case "-printSegment":
+					if (args.length <= i + 1) {
+						printUsageAndError("-printRelativeToSegment must be followed by a number.");
+					}
+
+					try {
+						options.printRelativeToSegment = Integer.parseInt(args[i + 1]);
+					} catch (NumberFormatException e) {
+						printUsageAndError("Error parsing printRelativeToSegment.");
+					}
+
+					i += 1;
+					break;
 
 
                 default:
@@ -447,4 +516,172 @@ public class MarkClades extends ReassortmentAnnotator {
             System.exit(1);
         }
     }
+    
+    
+    private Tree getSingleChildTree(Network network, int segment, List<String> leafNodes){
+    	// get teh root of this segment tree
+        List<NetworkNode> rootEdge = network.getNodes().stream()
+                .filter(e -> e.isCoalescence())
+                .filter(e -> e.getChildEdges().get(0).hasSegments.get(segment))
+                .filter(e -> e.getChildEdges().get(1).hasSegments.get(segment))
+                .collect(Collectors.toList());
+        
+        double height = 0;
+		for (NetworkNode node : rootEdge) {
+			if (node.getHeight() > height) {
+				height = node.getHeight();
+			}
+		}
+		NetworkNode rootNode = rootEdge.get(0);
+		for (NetworkNode node : rootEdge) {
+			if (node.getHeight() == height) {
+				rootNode = node;
+            }
+		}
+        
+        
+    	Node root = getNextNode(rootNode, network.getSegmentCount(), segment, leafNodes);
+    	   	
+    	Tree tree = new Tree(root);
+    	return tree;
+    }
+    
+    private Node getNextNode(NetworkNode networkNode, int nrSegments, int segment, List<String> leafNodes){
+    	
+    	Node node = new Node();
+    	
+    	if (networkNode.isLeaf()){    		
+    		node.setHeight(networkNode.getHeight());
+    		node.setID(networkNode.getTaxonLabel());
+    		node.setNr(leafNodes.indexOf(networkNode.getTaxonLabel()));
+    		
+    		return node;
+    	}else{    	
+    		
+        	node.setHeight(networkNode.getHeight());
+	    	List<Node> newNodes = new ArrayList<>();
+	    	for (NetworkEdge childEdge : networkNode.getChildEdges()){
+	    		if (childEdge.hasSegments.get(segment)){
+	    			Node newNode = getNextNode(childEdge.childNode, nrSegments, segment, leafNodes);
+	    			
+	    			newNode.metaDataString = "isReassortment=" + (childEdge.childNode.isReassortment() ? 1:0);
+	        		
+	            	for (int i = 0; i < nrSegments; i++)
+	            		newNode.metaDataString = newNode.metaDataString + ",seg" + i + "=" + (childEdge.hasSegments.get(i)? 1 : 0);
+
+	            	newNode.metaDataString = newNode.metaDataString + ",segsCarried=" + childEdge.hasSegments.cardinality();
+	            	newNode.metaDataString = newNode.metaDataString + ",type" + "=" + childEdge.childNode.getTypeLabel();
+	            	
+
+	    			newNodes.add(newNode);
+	    		}    		
+	    	}
+	    	if (networkNode.isCoalescence()){
+	    		node.metaDataString = "isReassortment=0";
+	    		if (newNodes.size()==2){
+	    			node.setLeft(newNodes.get(0));
+	    			node.setRight(newNodes.get(1));
+	    			
+		    		newNodes.get(0).setParent(node);
+		    		newNodes.get(1).setParent(node);
+
+	    		}else{
+	    			node.setLeft(newNodes.get(0));
+		    		newNodes.get(0).setParent(node);
+	    		}
+	    	}else if (networkNode.isReassortment()){
+	    		node.setLeft(newNodes.get(0));
+	    		newNodes.get(0).setParent(node);
+	    		node.metaDataString = "isReassortment=0";
+	    	}
+	    	return node;
+    	}   	
+    }
+    
+    private Node convertToNonSingleChildTree(Node n, List<String> uniqueClades) {
+    	Node node = new Node();
+    	
+    	if (n.isLeaf()){    		
+    		node.setHeight(n.getHeight());
+    		node.setID(n.getID());
+    		node.setNr(n.getNr());
+    		
+			String[] event = n.metaDataString.split(",");
+			String type="";
+			for (String e : event) {
+				if (e.startsWith("type")) {
+					type=e.split("=")[1];
+				}
+			}
+			
+
+    		node.metaDataString = "type=" +type;
+    		
+    		return node;
+    	}else if (n.getChildCount() == 2){    	
+        	node.setHeight(n.getHeight());
+        	List<Node> newNodes = new ArrayList<>();
+        	for (Node child : n.getChildren()){
+        		// check if the node is a single child node
+        		int reassortmentEvents = 0;
+        		List<String> events = new ArrayList<>();
+				while (child.getChildCount() == 1) {
+					String[] event = child.metaDataString.split(",");
+					for (String e : event) {
+						if (e.startsWith("type")) {
+							events.add(e.split("=")[1]);
+						}
+					}
+					
+					reassortmentEvents++;
+					child = child.getChild(0);
+
+				}
+        		Node newNode = convertToNonSingleChildTree(child, uniqueClades);
+				// count each unique event
+				if (!newNode.isLeaf()) {
+					newNode.metaDataString = "Events=" + reassortmentEvents;
+				}else {
+					newNode.metaDataString = newNode.metaDataString+",Events=" + reassortmentEvents;                
+				}
+				
+				int[] eventCount = new int[uniqueClades.size()];
+				for (int i = 0; i < events.size(); i++) {
+					eventCount[uniqueClades.indexOf(events.get(i))]++;						
+				}	
+
+				for (int i = 0; i < eventCount.length; i++) {
+					newNode.metaDataString += ", " + uniqueClades.get(i) + "=" + eventCount[i];
+				}
+
+        		newNodes.add(newNode);
+        	}
+        	
+//    		node.metaDataString = "isReassortment=0";
+    		if (newNodes.size()==2){
+    			node.setLeft(newNodes.get(0));
+    			node.setRight(newNodes.get(1));
+    			
+	    		newNodes.get(0).setParent(node);
+	    		newNodes.get(1).setParent(node);
+    		}
+	    	return node;
+    	}
+    	
+    	return null;
+	}
+
+
+    
+    private void printTree(Tree tree, PrintStream out, int sample){
+	    out.print("tree STATE_" + sample + " = ");
+	    // Don't sort, this can confuse CalculationNodes relying on the tree
+	    //tree.getRoot().sort();
+	    final int[] dummy = new int[1];
+	    final String newick = tree.getRoot().toSortedNewick(dummy, true);
+	    out.print(newick);
+	    out.print(";");
+    }
+    
+    
 }
