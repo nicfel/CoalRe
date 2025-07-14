@@ -35,6 +35,10 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 	public Input<Double> maxHeightRatioInput = new Input<>(
 			"maxHeightRatio",
 			"if specified, above the ratio, only coalescent events are allowed.", Double.POSITIVE_INFINITY);
+	
+	public Input<Double> maxHeightInput = new Input<>(
+			"maxHeight",
+			"if specified, above the height, only coalescent events are allowed.", Double.POSITIVE_INFINITY);
 
 	public Input<Double> redFactorInput = new Input<>(
 			"redFactor",
@@ -71,7 +75,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
     	List<NetworkEvent> networkEventList = intervals.getNetworkEventList();
 
 		// get the mrca of all loci trees
-		double lociMRCA = maxHeightRatioInput.get()<Double.POSITIVE_INFINITY ?
+		double lociMRCA = maxHeightRatioInput.get()<Double.POSITIVE_INFINITY || maxHeightInput.get()<Double.POSITIVE_INFINITY ?
 				NetworkStatsLogger.getLociMRCA(networkIntervalsInput.get().networkInput.get()) : Double.POSITIVE_INFINITY;
 		
 //		System.out.println(networkIntervalsInput.get().networkInput.get());
@@ -82,7 +86,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
     	for (NetworkEvent event : networkEventList) {
         	if (prevEvent != null)
         		logP += intervalContribution(prevEvent, event, lociMRCA);
-
+        	
         	switch (event.type) {
 				case COALESCENCE:
 					logP += coalesce(event);
@@ -96,7 +100,6 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 					break;
 			}
 
-        	
 
        		if (logP==Double.NEGATIVE_INFINITY)
        			break;
@@ -145,12 +148,16 @@ public class CoalescentWithReassortment extends NetworkDistribution {
     
 	private double reassortment(NetworkEvent event, double lociMRCA) {
 		
+		double maxHeight = maxHeightInput.get() < Double.POSITIVE_INFINITY ? maxHeightInput.get()
+				: lociMRCA * maxHeightRatioInput.get();
+
+		
 		double binomval = Math.pow(intervals.getBinomialProb(), event.segsSortedLeft)
 				* Math.pow(1-intervals.getBinomialProb(), event.segsToSort-event.segsSortedLeft) 
 				+ Math.pow(intervals.getBinomialProb(), event.segsToSort-event.segsSortedLeft)
 				* Math.pow(1-intervals.getBinomialProb(), event.segsSortedLeft);
 		
-		if (event.time<=(lociMRCA*maxHeightRatioInput.get())) {
+		if (event.time<=maxHeight) {
 			if (isTimeVarying) {
 				return Math.log(timeVaryingReassortmentRates.getPopSize(event.time))
 						+ Math.log(binomval);
@@ -176,8 +183,11 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
         double result = 0.0;
         
+		double maxHeight = maxHeightInput.get() < Double.POSITIVE_INFINITY ? maxHeightInput.get()
+				: lociMRCA * maxHeightRatioInput.get();
+        
 
-		if (nextEvent.time<(lociMRCA*maxHeightRatioInput.get())) {
+		if (nextEvent.time<maxHeight) {
 			if (isTimeVarying) {
 				result += -prevEvent.totalReassortmentObsProb
 						* timeVaryingReassortmentRates.getIntegral(prevEvent.time, nextEvent.time);
@@ -186,21 +196,21 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 						* (nextEvent.time - prevEvent.time);
 
 			}
-		}else if (prevEvent.time<(lociMRCA*maxHeightRatioInput.get())) {
+		}else if (prevEvent.time<maxHeight) {
 			if (isTimeVarying) {
 				result += -prevEvent.totalReassortmentObsProb
-						* timeVaryingReassortmentRates.getIntegral(prevEvent.time, lociMRCA*maxHeightRatioInput.get());
+						* timeVaryingReassortmentRates.getIntegral(prevEvent.time, maxHeight);
 			}else {
 				result += -reassortmentRate.getArrayValue() * prevEvent.totalReassortmentObsProb
-						* (lociMRCA*maxHeightRatioInput.get() - prevEvent.time);
+						* (maxHeight - prevEvent.time);
 			}
 
 			if (isTimeVarying) {
 				result += -redFactor*prevEvent.totalReassortmentObsProb
-						* timeVaryingReassortmentRates.getIntegral(lociMRCA*maxHeightRatioInput.get(), nextEvent.time);
+						* timeVaryingReassortmentRates.getIntegral(maxHeight, nextEvent.time);
 			}else {
 				result += -redFactor*reassortmentRate.getArrayValue() * prevEvent.totalReassortmentObsProb
-						* (nextEvent.time - prevEvent.time-lociMRCA*maxHeightRatioInput.get());
+						* (nextEvent.time - prevEvent.time-maxHeight);
 			}
 
 

@@ -10,7 +10,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NetworkStretchOperator extends NetworkOperator {
+public class NetworkScaleSkyline extends NetworkOperator {
 
     final public Input<Double> scaleFactorInput = new Input<>("scaleFactor",
             "magnitude factor used for scaling", Validate.REQUIRED);

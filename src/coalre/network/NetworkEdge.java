@@ -57,6 +57,11 @@ public class NetworkEdge {
             childNodeCopy.setTaxonIndex(childNode.getTaxonIndex());
             childNodeCopy.setTypeIndex(childNode.typeIndex);
             childNodeCopy.setTypeLabel(childNode.typeLabel);
+            if (childNode.segmentIndices!=null) {
+            	childNodeCopy.segmentIndices = new int[childNode.segmentIndices.length];
+                System.arraycopy(childNode.segmentIndices, 0, childNodeCopy.segmentIndices, 
+                        0, childNode.segmentIndices.length);
+            }
             seenNodes.put(childNode, childNodeCopy);
         }
 

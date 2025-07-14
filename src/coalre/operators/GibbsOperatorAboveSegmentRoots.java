@@ -32,6 +32,7 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
     private Function binomialProb;
     private double redFactor;
     private double maxHeightRatio;
+    private double maxHeight;
 
 
     @Override
@@ -48,6 +49,7 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
         
         redFactor = coalescentDistrInput.get().redFactorInput.get();
         maxHeightRatio = coalescentDistrInput.get().maxHeightRatioInput.get();
+        maxHeight = coalescentDistrInput.get().maxHeightInput.get();
     	
         super.initAndValidate();
     }
@@ -62,7 +64,7 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
     double resimulate() {
     	network.startEditing(this);
         // get the maximum height of the segment tree roots
-        double maxHeight = NetworkStatsLogger.getLociMRCA(network);
+        double lociHeights = NetworkStatsLogger.getLociMRCA(network);
 
     	// get all network edges 
         List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
@@ -70,8 +72,8 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
         // keep only those that coexist at the time of maxHeight
         List<NetworkEdge> startingEdges = networkEdges.stream()
                 .filter(e -> !e.isRootEdge())
-                .filter(e -> e.parentNode.getHeight()>maxHeight)
-                .filter(e -> e.childNode.getHeight()<=maxHeight)
+                .filter(e -> e.parentNode.getHeight()>lociHeights)
+                .filter(e -> e.childNode.getHeight()<=lociHeights)
                .collect(Collectors.toList());
         
 
@@ -79,10 +81,10 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
         	return Double.NEGATIVE_INFINITY;
         
        // simulate the rest of the network starting from mxHeight
-        double currentTime = maxHeight;
+        double currentTime = lociHeights;
         double timeUntilNextSample = Double.POSITIVE_INFINITY;
         // get the time when the reassortment rates are reduced
-        double recChangeTime = maxHeight*maxHeightRatio;
+        double recChangeTime = Math.min(lociHeights*maxHeightRatio, maxHeight);
 
         double redFactor = 1.0;
         do {

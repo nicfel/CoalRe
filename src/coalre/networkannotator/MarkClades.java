@@ -33,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -54,7 +55,8 @@ public class MarkClades extends ReassortmentAnnotator {
         File outFile;
         File cladeFile;
         double burninPercentage = 10.0;
-        int followSegment = 0;
+        int followSegment = -1;
+        boolean printTable = false;
         int[] removeSegments = new int[0];
         int printRelativeToSegment = -1;
 
@@ -67,6 +69,7 @@ public class MarkClades extends ReassortmentAnnotator {
                     "Clade file: " + cladeFile + "\n" +
                     "Burnin percentage: " + burninPercentage + "\n" +
                     "Follow segment: " + followSegment + "\n" +
+                    "Print table: " + printTable + "\n" +
                     "Remove segments: " + (removeSegments.length > 0 ? removeSegments[0] : "") + "\n" +
                     "Print relative to segment: " + printRelativeToSegment + " (if -1 the whole network is printed to file)\n" +
                     "-----------------------------------------\n";
@@ -128,14 +131,14 @@ public class MarkClades extends ReassortmentAnnotator {
 			}
 		}
 		for (int i = 0; i < uniqueClades.size(); i++) {
-			combinedClades.add(uniqueClades.get(i) + "+other");
+			combinedClades.add(uniqueClades.get(i) + "+unknown");
 			
 		}
 
 		
 		
 		uniqueClades.addAll(combinedClades);
-		uniqueClades.add("other");
+		uniqueClades.add("unknown");
              
         // compute the pairwise reassortment distances 
         try (PrintStream ps = new PrintStream(options.outFile)) {
@@ -149,7 +152,30 @@ public class MarkClades extends ReassortmentAnnotator {
 	        	markRemainingEdges(network, options.followSegment);
 	        	markReassortmentEvents(network);
 	        	
-				if (options.printRelativeToSegment >= 0) {
+	        	if (options.printTable) {
+	        		if (count==0) {
+	        			ps.print("Sample\tHeight\tEvent\tLineage\tSegments\n");
+	        		}
+					for (NetworkNode node : network.getNodes()) {
+						if (node.isReassortment()) {
+							
+							// check which parent has followSegment and the other does not
+							BitSet segments = new BitSet(network.getSegmentCount());
+							if (node.getParentEdges().get(0).hasSegments.get(options.followSegment)) {
+								segments = (BitSet) node.getParentEdges().get(1).hasSegments.clone();
+							}else if (node.getParentEdges().get(1).hasSegments.get(options.followSegment)) {
+                                segments = (BitSet) node.getParentEdges().get(0).hasSegments.clone();
+                            }
+														
+							ps.print(count + "\t" + node.getHeight() + "\t" + node.getTypeLabel() + "\t" + node.getChildEdges().get(0).childNode.getTypeLabel() 
+									+ "\t" + segments.toString()
+									+ "\n");
+							
+							
+						}
+					}
+
+	        	}else if (options.printRelativeToSegment >= 0) {
 					if (count==0) {
 		            	for (NetworkNode networkNode : network.getNodes()){
 		            		if (networkNode.isLeaf()){
@@ -165,10 +191,10 @@ public class MarkClades extends ReassortmentAnnotator {
 					
 					Tree newTree = new Tree(noSingleRoot);
 					
-					ps.println(noSingleRoot +";");
+					ps.println(noSingleRoot.toNewick(false) +";");
 					
 				}else {
-					ps.println(network);
+					ps.println(network.getExtendedNewick(options.followSegment));
 				}     	
 	        	
 	        	count++;
@@ -195,7 +221,7 @@ public class MarkClades extends ReassortmentAnnotator {
 			}
 			// remove all type labels that say multiple
 			
-			
+//			System.out.println("Type labels: " + typeLabels);
 			// remove duplicates
 			Collections.sort(typeLabels);
 			for (int i = typeLabels.size() - 1; i>0; i--) {
@@ -239,6 +265,8 @@ public class MarkClades extends ReassortmentAnnotator {
 		List<NetworkEdge> edges = n.getEdges().stream()
 				.filter(e -> e.hasSegments.get(followSegment) == false)
 				.collect(Collectors.toList());
+		
+		
     	do {
     		// remove all edges for which childNode has a type label
 			for (int i = edges.size()-1; i >= 0; i--) {
@@ -301,7 +329,7 @@ public class MarkClades extends ReassortmentAnnotator {
 		if (hasClades.size()==1)
 			edge.childNode.setTypeLabel(hasClades.get(0));
 		else if (hasClades.size() > 1) {
-			edge.childNode.setTypeLabel("other");
+			edge.childNode.setTypeLabel("unknown");
 		}
 		
 		return hasClades;
@@ -418,6 +446,19 @@ public class MarkClades extends ReassortmentAnnotator {
 
                     i += 1;
                     break;
+                    
+                case "-printTable":
+					if (args.length <= i + 1) {
+						printUsageAndError("-printTable must be followed by a boolean value.");
+					}
+					
+					if (args[i + 1].equalsIgnoreCase("true")) {
+						options.printTable = true;
+					} else if (args[i + 1].equalsIgnoreCase("false")) {
+						options.printTable = false;
+					} else {
+						printUsageAndError("-printTable must be followed by true or false.");
+					}
 
 				case "-tree":
 					if (args.length <= i + 1)
@@ -578,6 +619,7 @@ public class MarkClades extends ReassortmentAnnotator {
 	    	}
 	    	if (networkNode.isCoalescence()){
 	    		node.metaDataString = "isReassortment=0";
+	    		
 	    		if (newNodes.size()==2){
 	    			node.setLeft(newNodes.get(0));
 	    			node.setRight(newNodes.get(1));
@@ -619,6 +661,10 @@ public class MarkClades extends ReassortmentAnnotator {
     		
     		return node;
     	}else if (n.getChildCount() == 2){    	
+    		
+
+    		
+    		
         	node.setHeight(n.getHeight());
         	List<Node> newNodes = new ArrayList<>();
         	for (Node child : n.getChildren()){
@@ -639,11 +685,11 @@ public class MarkClades extends ReassortmentAnnotator {
 				}
         		Node newNode = convertToNonSingleChildTree(child, uniqueClades);
 				// count each unique event
-				if (!newNode.isLeaf()) {
-					newNode.metaDataString = "Events=" + reassortmentEvents;
-				}else {
-					newNode.metaDataString = newNode.metaDataString+",Events=" + reassortmentEvents;                
-				}
+//				if (!newNode.isLeaf()) {
+					newNode.metaDataString = newNode.metaDataString + ",Events=" + reassortmentEvents;
+//				}else {
+//					newNode.metaDataString = newNode.metaDataString+",Events=" + reassortmentEvents;                
+//				}
 				
 				int[] eventCount = new int[uniqueClades.size()];
 				for (int i = 0; i < events.size(); i++) {
@@ -653,11 +699,11 @@ public class MarkClades extends ReassortmentAnnotator {
 				for (int i = 0; i < eventCount.length; i++) {
 					newNode.metaDataString += ", " + uniqueClades.get(i) + "=" + eventCount[i];
 				}
+//				System.out.println("New node: " + newNode.metaDataString);
 
         		newNodes.add(newNode);
         	}
         	
-//    		node.metaDataString = "isReassortment=0";
     		if (newNodes.size()==2){
     			node.setLeft(newNodes.get(0));
     			node.setRight(newNodes.get(1));
@@ -665,6 +711,21 @@ public class MarkClades extends ReassortmentAnnotator {
 	    		newNodes.get(0).setParent(node);
 	    		newNodes.get(1).setParent(node);
     		}
+    		
+    		if (!n.isRoot()) {
+				String[] nevent = n.metaDataString.split(",");
+				String type="";
+				for (String e : nevent) {
+					if (e.startsWith("type")) {
+						type=e.split("=")[1];
+					}
+				}
+				
+	
+	    		node.metaDataString = "type=" +type;
+    		}
+
+    		
 	    	return node;
     	}
     	

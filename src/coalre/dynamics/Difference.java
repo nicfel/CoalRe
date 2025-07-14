@@ -1,5 +1,7 @@
 package coalre.dynamics;
 
+import java.util.Arrays;
+
 import beast.base.core.Description;
 import beast.base.core.Function;
 import beast.base.core.Input;
@@ -25,11 +27,11 @@ public class Difference extends CalculationNode implements Function {
     @Override
     public void initAndValidate() {
     	if (independentAfter.get()!=null) {
-    		difference = new double[functionInput.get().getDimension()-1];
-    		storedDifference = new double[functionInput.get().getDimension()-1];
+    		difference = new double[functionInput.get().getDimension()-2];
+    		storedDifference = new double[functionInput.get().getDimension()-2];
     	}else {
-	    	difference = new double[functionInput.get().getDimension()];
-	    	storedDifference = new double[functionInput.get().getDimension()];
+	    	difference = new double[functionInput.get().getDimension()-1];
+	    	storedDifference = new double[functionInput.get().getDimension()-1];
     	}
     }
 
@@ -55,6 +57,7 @@ public class Difference extends CalculationNode implements Function {
 	        for (int i = 1; i < functionInput.get().getDimension(); i++) {
 				if (independentAfter.get() != null && i == independentAfter.get()) {
 					offset++;
+					continue;
 				}	        			
 	        	difference[i-offset] = functionInput.get().getArrayValue(i-1)-functionInput.get().getArrayValue(i);
 	        }    		
@@ -62,12 +65,12 @@ public class Difference extends CalculationNode implements Function {
 	        for (int i = 1; i < functionInput.get().getDimension(); i++) {
 				if (independentAfter.get() != null && i == independentAfter.get()) {
 					offset++;
+					continue;
 				} 
 	        	difference[i-offset] = (functionInput.get().getArrayValue(i-1)-functionInput.get().getArrayValue(i))
 	        			/ (rateShiftInput.get().getArrayValue(i)-rateShiftInput.get().getArrayValue(i-1));
 	        }
-    	}
-    	
+    	}   	
     	
         
         needsRecompute = false;

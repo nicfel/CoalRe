@@ -59,7 +59,6 @@ public class SkygrowthReassortmentRatesFromSkygrowthNe extends PopulationFunctio
 		int i = getIntervalNr(t);
 		double timediff = t;
 		timediff -= rateShifts.getValue(i);
-		
 		return Math.exp(rates[i] - growth[i] * timediff);
 	}
 
@@ -68,7 +67,6 @@ public class SkygrowthReassortmentRatesFromSkygrowthNe extends PopulationFunctio
 		for (int i = 0; i < rateShifts.getDimension()-1; i++)
 			if (t < rateShifts.getValue(i+1))
 				return i;
-
 		// after the last interval, just keep using the last element
 		return rateShifts.getDimension()-1;
 	}
@@ -77,12 +75,11 @@ public class SkygrowthReassortmentRatesFromSkygrowthNe extends PopulationFunctio
 	public double getIntegral(double start, double finish) {
 		if (start == finish)
 			return 0.0;
-
 		// get the interval "start" is in
 		int first_int = getIntervalNr(start);
 		// get the interval "finish" is in
 		int last_int = getIntervalNr(finish);
-
+		
 		double weighted = 0.0;
 		double curr_time = start;	
 
@@ -120,7 +117,10 @@ public class SkygrowthReassortmentRatesFromSkygrowthNe extends PopulationFunctio
 
 	@Override
 	public double getInverseIntensity(double x) {
-
+		if (x == Double.POSITIVE_INFINITY) {
+			return Double.POSITIVE_INFINITY;
+        }
+		
 		int i = 0;
 		double curr_time = 0;
 		double integral = 0;
@@ -206,7 +206,7 @@ public class SkygrowthReassortmentRatesFromSkygrowthNe extends PopulationFunctio
 				rates[i] = Ne.getArrayValue(i) + NeToReassortment.getArrayValue(i);
 			}
 		}else {
-			for (int i = 0; i < NeToReassortment.getDimension()-1; i++) {
+			for (int i = 0; i < NeToReassortment.getDimension(); i++) {
 				rates[i] = NeToReassortment.getArrayValue(i);
 			}
 		}

@@ -210,14 +210,14 @@ public class SimulatedCoalescentNetwork extends Network {
             double timeToNextCoal = populationFunction.getInverseIntensity(
                     transformedTimeToNextCoal + currentTransformedTime) - currentTime;
             
-            double timeToNextReassortment = k>=1 ? 0 : Double.POSITIVE_INFINITY;
+            double timeToNextReassortment = Double.POSITIVE_INFINITY;
             if (isTimeVarying) {
                 double currentTransformedReaTime = timeVaryingReassortmentRates.getIntensity(currentTime);
                 double transformedTimeToNextRea = Randomizer.nextExponential(k);
             	timeToNextReassortment = timeVaryingReassortmentRates.getInverseIntensity(
             			transformedTimeToNextRea + currentTransformedReaTime) - currentTime;            	
             }else {
-            	timeToNextReassortment = Randomizer.nextExponential(k*reassortmentRate.getArrayValue());
+            	timeToNextReassortment = k>0 ? Randomizer.nextExponential(k*reassortmentRate.getArrayValue()) : Double.POSITIVE_INFINITY;
             }
 
             // next event time

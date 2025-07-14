@@ -26,6 +26,9 @@ public abstract class NetworkOperator extends Operator {
     protected Network network;
     List<Tree> segmentTrees;
     int[] segmentTreeMap;
+    
+	protected BitSet segmentsChanged = new BitSet();
+
 
     @Override
     public void initAndValidate() {
@@ -88,13 +91,15 @@ public abstract class NetworkOperator extends Operator {
 //                }
 //            }
 //        }
-
+    	// set segmentsChanged to true
+        segmentsChanged.set(0, network.getSegmentCount(), true);
 
         double logHR = networkProposal();
 
         if (logHR>Double.NEGATIVE_INFINITY) {
             for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
-                network.updateSegmentTree(segmentTrees.get(segmentTreeMap[segIdx]), segmentTreeMap[segIdx]);
+            	if (segmentsChanged.get(segIdx))
+            		network.updateSegmentTree(segmentTrees.get(segmentTreeMap[segIdx]), segmentTreeMap[segIdx]);
         }
 
 

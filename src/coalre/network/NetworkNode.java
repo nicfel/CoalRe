@@ -36,6 +36,7 @@ public class NetworkNode {
      */
     protected double height = Double.MAX_VALUE;
     
+    public int[] segmentIndices;
     
     /**
      * Arbitrarily labeled metadata on this node. Needed for network summary only
@@ -199,6 +200,25 @@ public class NetworkNode {
     public String getMetaData() {
         return metaDataString;
     }
+
+    
+    /**
+     * set the Node number of segments that this node has
+     */
+    public void setSegmentIndices(int[] segmentIndices) {
+        this.segmentIndices = segmentIndices;
+    }
+    
+	/**
+	 * set the corresponding Node number of segment idx
+	 */
+	public void setSegmentIndex(int segmentIdx, int nodeNumber) {
+		segmentIndices[segmentIdx] = nodeNumber;
+	}
+
+	public int[] getSegmentIndices(int segmentIdx) {
+		return segmentIndices;
+	}
 
 
 }

@@ -36,6 +36,10 @@ public class SubNetworkSlide extends DivertSegmentOperator {
     final public Input<Boolean> optimiseInput = new Input<>("optimise", "flag to indicate that the scale factor is automatically changed in order to achieve a good acceptance rate (default true)", true);
     final public Input<Double> limitInput = new Input<>("limit", "limit on step size, default disable, " +
             "i.e. -1. (when positive, gets multiplied by network-height/log2(n-taxa).", -1.0);
+    
+	public Input<Boolean> randomlySampleAttachmentEdgeInput = new Input<>("randomlySampleAttachmentEdge",
+			"Randomly sample edge to attach to", true);
+
     // shadows size
     double size;
     private double limit;
@@ -74,6 +78,30 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 		NetworkEdge iEdge = possibleEdges.get(Randomizer.nextInt(possibleNodes));
 		NetworkNode iParent = iEdge.parentNode;
 		NetworkNode iChild = iEdge.childNode;
+		
+		double sumEdgeLengths = 0.0;
+		
+		if (!randomlySampleAttachmentEdgeInput.get()) {
+			// compute the total network length, and then sample from that
+			for (NetworkEdge e : possibleEdges) {
+				sumEdgeLengths += e.getLength();
+			}
+			double randomEdgeLength = Randomizer.nextDouble() * sumEdgeLengths;
+
+			// pick the source edge as the first edge whose length is greater than the random number
+			double passedLength = 0;
+			for (NetworkEdge edge : possibleEdges) {
+				passedLength += edge.getLength();
+				if (passedLength > randomEdgeLength) {
+					iEdge = edge;
+					break;
+				}
+			}
+			logHR -= Math.log(iEdge.getLength()/sumEdgeLengths);
+			sumEdgeLengths -= iEdge.getLength();
+			iParent = iEdge.parentNode;
+			iChild = iEdge.childNode;					
+		}
 
 		
         final double delta = Math.abs(getDelta());
@@ -228,6 +256,14 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 	    if(!networkTerminatesAtMRCA())
 	    	return Double.NEGATIVE_INFINITY;
 	    
+	    
+		if (!randomlySampleAttachmentEdgeInput.get()) {
+			sumEdgeLengths += iEdge.getLength();
+
+			logHR += Math.log(iEdge.getLength()/sumEdgeLengths);
+		}
+
+	    
 //	    // for each coalescent event, check that the parent edge is segments that is the union of the child edges
 //	    for (NetworkNode n : network.getInternalNodes()) {
 //	    	if (n.isCoalescence()) {
@@ -323,109 +359,109 @@ public class SubNetworkSlide extends DivertSegmentOperator {
         return targetEdges;
 	}
 
-	public double checkAncestralSegments(NetworkEdge edge) {
-    	double logHR = 0.0;
-    	
-    	NetworkNode parentNode = edge.parentNode;
-    	if (parentNode == null) {
-    		return logHR;
-    	}
-    	
-    	if (parentNode.getParentCount() > 1) {
-    		NetworkEdge parentEdge = parentNode.getParentEdges().get(0);
-    		NetworkEdge spouseEdge = parentNode.getParentEdges().get(1);
-    		
-    		BitSet segsToAdd = (BitSet)edge.hasSegments.clone();
-    		segsToAdd.andNot(parentEdge.hasSegments);
-    		segsToAdd.andNot(spouseEdge.hasSegments);
-    		
-    		if (!segsToAdd.isEmpty()) {
-    			if (Randomizer.nextBoolean()) {
-    				logHR -= addSegmentsToAncestors(parentEdge, segsToAdd);
-    			} else {
-    				logHR -= addSegmentsToAncestors(spouseEdge, segsToAdd);
-    			}
-    		}
-    		
-    		BitSet segsToRemoveParent = (BitSet)parentEdge.hasSegments.clone();
-    		segsToRemoveParent.andNot(edge.hasSegments);
-    		if (!segsToRemoveParent.isEmpty()) {
-    			logHR += removeSegmentsFromAncestors(parentEdge, segsToRemoveParent);
-    		}
-    		
-    		BitSet segsToRemoveSpouse= (BitSet)spouseEdge.hasSegments.clone();
-    		segsToRemoveSpouse.andNot(edge.hasSegments);
-    		if (!segsToRemoveSpouse.isEmpty()) {
-    			logHR += removeSegmentsFromAncestors(spouseEdge, segsToRemoveSpouse);
-    		}
-	
-    	} else {
-    		NetworkEdge parentEdge = parentNode.getParentEdges().get(0);
-    		BitSet segsToAdd = (BitSet)edge.hasSegments.clone();
-    		segsToAdd.andNot(parentEdge.hasSegments);
-    		
-    		if (!segsToAdd.isEmpty()) {
-    			logHR -= addSegmentsToAncestors(parentEdge, segsToAdd);
-    		}
-    		
-    		BitSet segsToRemoveParent = (BitSet)parentEdge.hasSegments.clone();
-    		segsToRemoveParent.andNot(edge.hasSegments);
-    		if (!segsToRemoveParent.isEmpty()) {
-    			logHR += removeSegmentsFromAncestors(parentEdge, segsToRemoveParent);
-    		}
-    	}
-    	return logHR;
-    }
-	
-	
-    double removeReassortmentEdge(NetworkEdge edgeToRemove) {
-        double logHR = 0.0;
-
-        network.startEditing(this);
-
-        NetworkNode nodeToRemove = edgeToRemove.childNode;
-        NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
-        NetworkNode edgeToRemoveSpouseParent = edgeToRemoveSpouse.parentNode;
-
-        // Divert segments away from chosen edge
-        BitSet segsToDivert = (BitSet) edgeToRemove.hasSegments.clone();
-        logHR -= addSegmentsToAncestors(edgeToRemoveSpouse, segsToDivert);
-        logHR += removeSegmentsFromAncestors(edgeToRemove, segsToDivert);
-               
-
-        // Remove edge and associated nodes
-        NetworkEdge edgeToExtend = nodeToRemove.getChildEdges().get(0);
-        nodeToRemove.removeChildEdge(edgeToExtend);
-        nodeToRemove.removeParentEdge(edgeToRemove);
-        nodeToRemove.removeParentEdge(edgeToRemoveSpouse);
-        edgeToRemoveSpouseParent.removeChildEdge(edgeToRemoveSpouse);
-        edgeToRemoveSpouseParent.addChildEdge(edgeToExtend);
-
-        NetworkNode secondNodeToRemove = edgeToRemove.parentNode;
-        NetworkEdge secondEdgeToExtend = getSisterEdge(edgeToRemove);
-
-        secondNodeToRemove.removeChildEdge(secondEdgeToExtend);
-        secondNodeToRemove.removeChildEdge(edgeToRemove);
-
-        if (secondNodeToRemove.getParentEdges().get(0).isRootEdge()) {
-            network.setRootEdge(secondEdgeToExtend);
-
-        } else {
-            NetworkEdge secondNodeToRemoveParentEdge = secondNodeToRemove.getParentEdges().get(0);
-            NetworkNode secondNodeToRemoveParent = secondNodeToRemoveParentEdge.parentNode;
-            secondNodeToRemoveParent.removeChildEdge(secondNodeToRemoveParentEdge);
-            secondNodeToRemove.removeParentEdge(secondNodeToRemoveParentEdge);
-
-            secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
-        }
-
-        if (!networkTerminatesAtMRCA())
-            return Double.NEGATIVE_INFINITY;
-
-        return logHR;
-    }
-    
-
+//	public double checkAncestralSegments(NetworkEdge edge) {
+//    	double logHR = 0.0;
+//    	
+//    	NetworkNode parentNode = edge.parentNode;
+//    	if (parentNode == null) {
+//    		return logHR;
+//    	}
+//    	
+//    	if (parentNode.getParentCount() > 1) {
+//    		NetworkEdge parentEdge = parentNode.getParentEdges().get(0);
+//    		NetworkEdge spouseEdge = parentNode.getParentEdges().get(1);
+//    		
+//    		BitSet segsToAdd = (BitSet)edge.hasSegments.clone();
+//    		segsToAdd.andNot(parentEdge.hasSegments);
+//    		segsToAdd.andNot(spouseEdge.hasSegments);
+//    		
+//    		if (!segsToAdd.isEmpty()) {
+//    			if (Randomizer.nextBoolean()) {
+//    				logHR -= addSegmentsToAncestors(parentEdge, segsToAdd);
+//    			} else {
+//    				logHR -= addSegmentsToAncestors(spouseEdge, segsToAdd);
+//    			}
+//    		}
+//    		
+//    		BitSet segsToRemoveParent = (BitSet)parentEdge.hasSegments.clone();
+//    		segsToRemoveParent.andNot(edge.hasSegments);
+//    		if (!segsToRemoveParent.isEmpty()) {
+//    			logHR += removeSegmentsFromAncestors(parentEdge, segsToRemoveParent);
+//    		}
+//    		
+//    		BitSet segsToRemoveSpouse= (BitSet)spouseEdge.hasSegments.clone();
+//    		segsToRemoveSpouse.andNot(edge.hasSegments);
+//    		if (!segsToRemoveSpouse.isEmpty()) {
+//    			logHR += removeSegmentsFromAncestors(spouseEdge, segsToRemoveSpouse);
+//    		}
+//	
+//    	} else {
+//    		NetworkEdge parentEdge = parentNode.getParentEdges().get(0);
+//    		BitSet segsToAdd = (BitSet)edge.hasSegments.clone();
+//    		segsToAdd.andNot(parentEdge.hasSegments);
+//    		
+//    		if (!segsToAdd.isEmpty()) {
+//    			logHR -= addSegmentsToAncestors(parentEdge, segsToAdd);
+//    		}
+//    		
+//    		BitSet segsToRemoveParent = (BitSet)parentEdge.hasSegments.clone();
+//    		segsToRemoveParent.andNot(edge.hasSegments);
+//    		if (!segsToRemoveParent.isEmpty()) {
+//    			logHR += removeSegmentsFromAncestors(parentEdge, segsToRemoveParent);
+//    		}
+//    	}
+//    	return logHR;
+//    }
+//	
+//	
+//    double removeReassortmentEdge(NetworkEdge edgeToRemove) {
+//        double logHR = 0.0;
+//
+//        network.startEditing(this);
+//
+//        NetworkNode nodeToRemove = edgeToRemove.childNode;
+//        NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
+//        NetworkNode edgeToRemoveSpouseParent = edgeToRemoveSpouse.parentNode;
+//
+//        // Divert segments away from chosen edge
+//        BitSet segsToDivert = (BitSet) edgeToRemove.hasSegments.clone();
+//        logHR -= addSegmentsToAncestors(edgeToRemoveSpouse, segsToDivert);
+//        logHR += removeSegmentsFromAncestors(edgeToRemove, segsToDivert);
+//               
+//
+//        // Remove edge and associated nodes
+//        NetworkEdge edgeToExtend = nodeToRemove.getChildEdges().get(0);
+//        nodeToRemove.removeChildEdge(edgeToExtend);
+//        nodeToRemove.removeParentEdge(edgeToRemove);
+//        nodeToRemove.removeParentEdge(edgeToRemoveSpouse);
+//        edgeToRemoveSpouseParent.removeChildEdge(edgeToRemoveSpouse);
+//        edgeToRemoveSpouseParent.addChildEdge(edgeToExtend);
+//
+//        NetworkNode secondNodeToRemove = edgeToRemove.parentNode;
+//        NetworkEdge secondEdgeToExtend = getSisterEdge(edgeToRemove);
+//
+//        secondNodeToRemove.removeChildEdge(secondEdgeToExtend);
+//        secondNodeToRemove.removeChildEdge(edgeToRemove);
+//
+//        if (secondNodeToRemove.getParentEdges().get(0).isRootEdge()) {
+//            network.setRootEdge(secondEdgeToExtend);
+//
+//        } else {
+//            NetworkEdge secondNodeToRemoveParentEdge = secondNodeToRemove.getParentEdges().get(0);
+//            NetworkNode secondNodeToRemoveParent = secondNodeToRemoveParentEdge.parentNode;
+//            secondNodeToRemoveParent.removeChildEdge(secondNodeToRemoveParentEdge);
+//            secondNodeToRemove.removeParentEdge(secondNodeToRemoveParentEdge);
+//
+//            secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
+//        }
+//
+//        if (!networkTerminatesAtMRCA())
+//            return Double.NEGATIVE_INFINITY;
+//
+//        return logHR;
+//    }
+//    
+//
 
     private double getDelta() {
         if (!gaussianInput.get()) {

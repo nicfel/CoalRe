@@ -177,8 +177,55 @@ public class getCladeHeights extends ReassortmentAnnotator {
 	private double[] getMinMaxClade(Network network, String[] tipNames, int followSegment) {
 		// get the most recent edge that has all tips below it when following followSegment		
 		hasClades(network.getRootEdge(), tipNames, followSegment);	
-		return new double[] {mrcaRootEdge.childNode.getHeight(), mrcaRootEdge.parentNode.getHeight()};
+		
+		// for this edge, follow the edge up and down until the child edge is a coalescent event where both children have the segment
+		double childNodeHeight = getChildNodeHeight(mrcaRootEdge, followSegment);
+		double parentNodeHeight = getParentNodeHeight(mrcaRootEdge, followSegment);
+		
+		return new double[] {childNodeHeight, parentNodeHeight};
 	}
+
+	private double getChildNodeHeight(NetworkEdge edge, int followSegment) {
+		if (edge.childNode.isLeaf()) {
+			// if the child node is a leaf, return its height
+			return edge.childNode.getHeight();
+		} else if (edge.childNode.isCoalescence()) {
+			if (edge.childNode.getChildEdges().get(0).hasSegments.get(followSegment)
+					&& edge.childNode.getChildEdges().get(1).hasSegments.get(followSegment)) {
+				return edge.childNode.getHeight();
+			}else {
+				if (edge.childNode.getChildEdges().get(0).hasSegments.get(followSegment)) {
+					return getChildNodeHeight(edge.childNode.getChildEdges().get(0), followSegment);
+				}else {
+					return getChildNodeHeight(edge.childNode.getChildEdges().get(1), followSegment);
+				}
+			}
+		} else {
+			return getChildNodeHeight(edge.childNode.getChildEdges().get(0), followSegment);
+		}
+	}
+	
+	private double getParentNodeHeight(NetworkEdge edge, int followSegment) {
+		if (edge.isRootEdge()) {
+			// if the child node is a leaf, return its height
+			return edge.childNode.getHeight();
+		} else if (edge.parentNode.isCoalescence()) {
+			if (edge.parentNode.getChildEdges().get(0).hasSegments.get(followSegment)
+					&& edge.parentNode.getChildEdges().get(1).hasSegments.get(followSegment)) {
+				return edge.parentNode.getHeight();
+			}else {
+				return getParentNodeHeight(edge.parentNode.getParentEdges().get(0), followSegment);
+			}
+		} else {
+			if (edge.parentNode.getParentEdges().get(0).hasSegments.get(followSegment)) {
+				return getParentNodeHeight(edge.parentNode.getParentEdges().get(0), followSegment);
+			}else {
+				return getParentNodeHeight(edge.parentNode.getParentEdges().get(1), followSegment);
+			}
+		}
+	}
+
+
 
 	private int hasClades(NetworkEdge edge, String[] tipNames, int followSegment) {
 		// get all leaves below rootEdge after following follow segment

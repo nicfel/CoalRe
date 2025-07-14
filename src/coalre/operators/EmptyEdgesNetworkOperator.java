@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import beast.base.core.Input;
+import beast.base.evolution.tree.Node;
 import beast.base.inference.Operator;
 import beast.base.util.Randomizer;
 import coalre.network.NetworkEdge;
@@ -29,29 +30,35 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 
     private double emptyAlpha;
     private double lambda;
+    
+
 
     @Override
     public void initAndValidate() {
         super.initAndValidate();
         emptyAlpha = emptyAlphaInput.get();
         lambda = lambdaInput.get();
+        segmentsChanged = new BitSet(segmentTrees.size());
     }
 
     @Override
     public double proposal() {
     	
-		//System.out.println(getID());
-       
+		// set all segments changed to true
+        for (int i = 0; i < segmentTrees.size(); i++) {
+            segmentsChanged.set(i, true);
+        }
         double logHR = 0.0;   
         
-//        System.out.println("b");
-//        System.out.println(network);        
 
-
+        double lhrbefore = 0.0;
+        double lhrafre = 0.0;
+        
         // Adds empty network edges
         if (addRemoveEmptyEdgesInput.get()){
         	logHR += addEmptyNetworkSegments();
-        	
+        	lhrbefore = logHR;
+
             if (logHR == Double.NEGATIVE_INFINITY)
             	return Double.NEGATIVE_INFINITY;
         }        
@@ -59,29 +66,52 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
         // calls the operator
         logHR += networkProposal();
         
-
+        
 
         // removes all the empty network edges in the network again
         if (addRemoveEmptyEdgesInput.get()){
+
             if (logHR == Double.NEGATIVE_INFINITY)
             	return Double.NEGATIVE_INFINITY;
-            
-        	logHR += RemoveAllEmptyNetworkSegments();
+			try {
+				// remove empty reassortment edges
+	            lhrafre = RemoveAllEmptyNetworkSegments();
+			} catch (Exception e) {
+				// if there are no empty reassortment edges, this can happen when removing empty edges. This was previously taken care of 
+				// by the all edges ancestral check, but that took too much time
+				return Double.NEGATIVE_INFINITY;
+			}
+        	logHR += lhrafre;
         }
+        
+
+//        System.out.println("logHR: " + (lhrbefore-lhrafre) + " " + this.getID());
+        
+        // if getID() == "Co"
         
         if (logHR == Double.POSITIVE_INFINITY)
         	return Double.NEGATIVE_INFINITY;
         
         // case there are empty edges, which can happen when addRemoveEmptyEdges is false
-		if (!allEdgesAncestral()){
-            return Double.NEGATIVE_INFINITY;
-		}
+//		if (!allEdgesAncestral()){
+//            return Double.NEGATIVE_INFINITY;
+//		}
 //		System.out.println(this.getID() + " " + logHR);
 
         if (logHR>Double.NEGATIVE_INFINITY) {
-            for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
-                network.updateSegmentTree(segmentTrees.get(segIdx), segIdx);
+//        	System.out.println(this.getID() + " " + segmentsChanged);
+            for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++) {
+//            	System.out.print(segmentsChanged.get(segIdx)+ " ");
+            	if (segmentsChanged.get(segIdx))
+            		network.updateSegmentTree(segmentTrees.get(segIdx), segIdx);
+            }
+//            System.out.println();
         }
+        
+
+      if(!networkTerminatesAtMRCA())
+    	return Double.NEGATIVE_INFINITY;
+
         
 //        if (logHR>100) {
 //        	System.out.println("logHR: " + logHR + " " + this.getID());
@@ -102,8 +132,10 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
     	for (int i = 0; i < nrEmptyEdges; i ++){
     		logHR += addEmptyReassortment();
     	}  
-    	
-    	
+//    	if (this.getID().equals("Co")) {
+//    		System.out.println("added " + nrEmptyEdges + " empty edges");
+//    	}
+    	    	
     	logHR -= Math.log(Math.pow(lambda, nrEmptyEdges)) - lambda - logFactorial(nrEmptyEdges);
     	
     	return logHR;
@@ -128,15 +160,18 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
                 + Math.log(1.0/sourceEdge.getLength());
                
         List<NetworkEdge> possibleDestEdges = networkEdges.stream()
+        		.filter(e -> !e.isRootEdge())
+        		.filter(e -> e.parentNode.getHeight() >= sourceTime)
                 .collect(Collectors.toList());
+        
+        // add the root Edge
+        possibleDestEdges.add(network.getRootEdge());
 
         NetworkEdge destEdge = possibleDestEdges.get(Randomizer.nextInt(possibleDestEdges.size()));
+        
     	// works
         logHR -= Math.log(1.0/possibleDestEdges.size());
-
         
-        if (!destEdge.isRootEdge() && destEdge.parentNode.getHeight() < sourceTime)
-            return Double.NEGATIVE_INFINITY;
 
         double minDestTime = Math.max(destEdge.childNode.getHeight(), sourceTime);
 
@@ -169,8 +204,8 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
         // works
         logHR += Math.log(1.0/nRemovableEdges);       
         
-        if(!networkTerminatesAtMRCA())
-        	return Double.NEGATIVE_INFINITY;
+//        if(!networkTerminatesAtMRCA())
+//        	return Double.NEGATIVE_INFINITY;
 
 
         return logHR;
@@ -247,13 +282,15 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 	    	logHR += removeEmptyReassortmentEdge(removableEdges.get(edgeInd));
 	    	networkEdges = new ArrayList<>(network.getEdges());
     	}
+        
+
 	    	
         if (logHR == Double.NEGATIVE_INFINITY)
         	return Double.NEGATIVE_INFINITY;
 
         
-        if(!networkTerminatesAtMRCA())
-        	return Double.NEGATIVE_INFINITY;
+//        if(!networkTerminatesAtMRCA())
+//        	return Double.NEGATIVE_INFINITY;
         
         return logHR;
     }
@@ -296,29 +333,21 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
                     .collect(Collectors.toList());            
         } 
         
+//		if (this.getID().equals("Co")) {
+//			System.out.println("remove: " + (nrRemoved) + " empty edges" );
+//		}
+
         // probability of adding n empty edges in reverse move
         logHR += Math.log(Math.pow(lambda, nrRemoved)) -lambda -  logFactorial(nrRemoved);
         
-//		if (logFactorial(nrRemoved) != Math.log(factorial(nrRemoved))) {
-//			System.out.println(nrRemoved + " " + alfactorial(nrRemoved));
-//	        System.out.println(logFactorial(nrRemoved) + " " + Math.log(factorial(nrRemoved)));
-//		}
-//        
-//		if (logHR == Double.POSITIVE_INFINITY) {
-//			System.out.println(lambda + " " + nrRemoved + " " + ( Math.log(Math.pow(lambda, nrRemoved)) -lambda -  Math.log(factorial(nrRemoved))) );
-//			System.out.println(Math.log(Math.pow(lambda, nrRemoved)));
-////			System.out.println(altfactorial(nrRemoved));
-//			System.out.println(Math.log(factorial(nrRemoved)));
-//		}
-        
-        if (!allEdgesAncestral()){       	
-        	System.err.println(network);
-        	throw new RuntimeException("still has empty segments, should not happen ever!");
-        }
+//        if (!allEdgesAncestral()){       	
+//        	System.err.println(network);
+//        	throw new RuntimeException("still has empty segments, should not happen ever!");
+//        }
         
         
-        if(!networkTerminatesAtMRCA())
-        	return Double.NEGATIVE_INFINITY;
+//        if(!networkTerminatesAtMRCA())
+//        	return Double.NEGATIVE_INFINITY;
         
         return logHR;
     }
@@ -354,10 +383,11 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
                 + Math.log(1.0/sourceEdge.getLength());        
 
         List<NetworkEdge> possibleDestEdges = finalNetworkEdges.stream()
+        		.filter(e -> !e.isRootEdge() && e.parentNode.getHeight() >= sourceTime)
                 .collect(Collectors.toList());
 
         // works
-        logHR += Math.log(1.0/finalNetworkEdges.size());
+        logHR += Math.log(1.0/(possibleDestEdges.size()+1));
     
 
         double minDestTime = Math.max(destEdge.childNode.getHeight(), sourceTime);
@@ -410,9 +440,10 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
             secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
         }
 
-        if (!networkTerminatesAtMRCA()){
-            return Double.NEGATIVE_INFINITY;
-        }
+//        if (!networkTerminatesAtMRCA()){
+//        	
+//            return Double.NEGATIVE_INFINITY;
+//        }
 
 
         return logHR;
@@ -438,8 +469,9 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
                 case 1:
                     // Reassortment
 
-                    if (lineages < 2 && node.getHeight() > maxSampleHeight)
+                    if (lineages < 2 && node.getHeight() > maxSampleHeight) {
                         return false;
+                    }
 
                     lineages += 1;
                     break;
@@ -451,7 +483,6 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
                     break;
             }
         }
-
         return true;
     }
     
@@ -460,17 +491,17 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
      *
      * @return true if all edges are ancestral.
      */
-    public boolean allEdgesAncestral() {
-        Set<NetworkNode> nodeList = networkInput.get().getNodes();
-        for (NetworkNode node : nodeList) {
-            for (NetworkEdge parentEdge : node.getParentEdges()) {
-                if (parentEdge.hasSegments.isEmpty())
-                    return false;
-            }
-        }
-
-        return true;
-    }
+//    public boolean allEdgesAncestral() {
+//        Set<NetworkNode> nodeList = networkInput.get().getNodes();
+//        for (NetworkNode node : nodeList) {
+//            for (NetworkEdge parentEdge : node.getParentEdges()) {
+//                if (parentEdge.hasSegments.isEmpty())
+//                    return false;
+//            }
+//        }
+//
+//        return true;
+//    }
 
 
 //    private int factorial(int k){

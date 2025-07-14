@@ -32,10 +32,15 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
     public double networkProposal() {
 
         double logHR;
-        if (Randomizer.nextBoolean())
+        if (Randomizer.nextBoolean()) {
             logHR = addReassortment();
-        else
-            logHR = removeReassortment();
+        }else {
+        	try {
+        		logHR = removeReassortment();
+			} catch (Exception e) {
+				logHR = Double.NEGATIVE_INFINITY;
+			}
+        }           
 
         return logHR;
     }
@@ -148,8 +153,9 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
         // Choose segments to divert to new edge
         BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
         logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
-        logHR -= addSegmentsToAncestors(reassortmentEdge, segsToDivert);
-        logHR += removeSegmentsFromAncestors(newEdge1, segsToDivert);
+        logHR += divertSegments(reassortmentEdge, newEdge1, segsToDivert);
+//        logHR -= addSegmentsToAncestors(reassortmentEdge, segsToDivert);
+//        logHR += removeSegmentsFromAncestors(newEdge1, segsToDivert);
 
         return logHR;
     }
@@ -220,8 +226,9 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 
         // Divert segments away from chosen edge
         BitSet segsToDivert = (BitSet) edgeToRemove.hasSegments.clone();
-        logHR -= addSegmentsToAncestors(edgeToRemoveSpouse, segsToDivert);
-        logHR += removeSegmentsFromAncestors(edgeToRemove, segsToDivert);
+        logHR +=  divertSegments(edgeToRemoveSpouse, edgeToRemove, segsToDivert);
+//        logHR -= addSegmentsToAncestors(edgeToRemoveSpouse, segsToDivert);
+//        logHR += removeSegmentsFromAncestors(edgeToRemove, segsToDivert);
         logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments);
 
         // Remove edge and associated nodes
@@ -250,52 +257,10 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
             secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
         }
 
-        if (!networkTerminatesAtMRCA())
-            return Double.NEGATIVE_INFINITY;
+//        if (!networkTerminatesAtMRCA())
+//            return Double.NEGATIVE_INFINITY;
 
         return logHR;
     }
 
-    /**
-     * Simple (but probably too expensive) check for a kind of invalid network
-     * which can result from an edge deletion operation: one in which the
-     * network posesses nontrivial structure above the MRCA. (I.e. the MRCA
-     * is not the root.)
-     *
-     * @return true if the network terminates at the true MRCA. (I.e. is valid.)
-     */
-    protected boolean networkTerminatesAtMRCA() {
-        List<NetworkNode> sortedNodes = new ArrayList<>(network.getNodes());
-        sortedNodes.sort(Comparator.comparingDouble(NetworkNode::getHeight));
-        List<NetworkNode> sampleNodes = sortedNodes.stream().filter(NetworkNode::isLeaf).collect(Collectors.toList());
-        double maxSampleHeight = sampleNodes.get(sampleNodes.size()-1).getHeight();
-
-        int lineages = 0;
-        for (NetworkNode node : sortedNodes) {
-            switch(node.getChildEdges().size()) {
-                case 2:
-                    // Coalescence
-
-                    lineages -= 1;
-                    break;
-
-                case 1:
-                    // Reassortment
-
-                    if (lineages < 2 && node.getHeight() > maxSampleHeight)
-                        return false;
-
-                    lineages += 1;
-                    break;
-
-                case 0:
-                    // Sample
-
-                    lineages += 1;
-                    break;
-            }
-        }
-
-        return true;
-    }
 }

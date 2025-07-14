@@ -100,13 +100,16 @@ public class SkygrowthNeDynamics extends PopulationFunction.Abstract {
 	
 	@Override
 	public double getIntensity(double t) {
-//		System.out.println("getIntensity: " + getIntegral(0,t) + " " + t);
 		return getIntegral(0,t);
 	}
 
 
 	@Override
 	public double getInverseIntensity(double x) {
+		
+		if (x == Double.POSITIVE_INFINITY) {
+			return Double.POSITIVE_INFINITY;
+		}
 
 		int i = 0;
 		double curr_time = 0;
@@ -127,20 +130,14 @@ public class SkygrowthNeDynamics extends PopulationFunction.Abstract {
 			} else {
 				integral += (Math.exp(timediff2 * r) - Math.exp(timediff1 * r)) / Math.exp(Ne.getArrayValue(i)) / r;
 			}
-			
-//			System.out.println("getInverseIntensity: " + integral + " " + x + " " + timediff1 + " " + rateShifts.getArrayValue(i) + " " + next_time);
 	
 			double diff = x - integral;
 	
 			if (diff < 0 || i == rateShifts.getDimension()) {
 				
 				if (r == 0.0) {
-//					System.out.println("Ne: " + Math.exp(Ne.getArrayValue(i)));
 					return Math.exp(Ne.getArrayValue(i)) * old_diff + curr_time;
 				} else {
-//					System.out.println(old_diff + " " + r + " " + timediff1 );
-//					System.out.println("getInverseIntensity: " + Math.log(Math.exp(Ne.getArrayValue(i)) * old_diff * r + Math.exp(timediff1 * r)) / r );
-//					System.exit(0);
 					return Math.log(Math.exp(Ne.getArrayValue(i)) * old_diff * r + Math.exp(timediff1 * r)) / r + curr_time;
 				}
 			

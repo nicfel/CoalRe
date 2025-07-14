@@ -109,11 +109,28 @@ public class Network extends StateNode {
     public Set<NetworkEdge> getEdges() {
         Set<NetworkEdge> networkEdgeSet = new HashSet<>();
 
-        getEdgesRecurse(rootEdge, networkEdgeSet);
+//        getEdgesRecurseW(rootEdge, networkEdgeSet);
 
+//        int networkEdgeCount = networkEdgeSet.size();
+//        
+//        networkEdgeSet = new HashSet<>();
+        // Likely faster implementation as it avoids all the contains calls
+        getEdgesRecurseNew(rootEdge, networkEdgeSet);
+        
+//        if (networkEdgeSet.size() != networkEdgeCount)
+//            throw new RuntimeException("Network edge count mismatch: " + networkEdgeSet.size() + " != " + networkEdgeCount);
+        
         return networkEdgeSet;
     }
+    private void getEdgesRecurseW(NetworkEdge edge, Set<NetworkEdge> networkEdgeSet) {
+    	getEdgesRecurse(edge, networkEdgeSet);
+    }
 
+    private void getEdgesRecurseNewW(NetworkEdge edge, Set<NetworkEdge> networkEdgeSet) {
+    	getEdgesRecurseNew(edge, networkEdgeSet);
+    }
+
+    
     /**
      * @return number of segments represented on network
      */
@@ -140,6 +157,20 @@ public class Network extends StateNode {
             getEdgesRecurse(childEdge, networkEdgeSet);
     }
 
+    
+    private void getEdgesRecurseNew(NetworkEdge edge, Set<NetworkEdge> networkEdgeSet) {
+
+	  	networkEdgeSet.add(edge);
+	  	
+	  	if (edge.childNode.isReassortment() && edge.equals(edge.childNode.getParentEdges().get(1)))
+			return;    		
+  		
+	    for (NetworkEdge childEdge : edge.childNode.getChildEdges())
+	    	getEdgesRecurseNew(childEdge, networkEdgeSet);
+    }
+
+    
+    
     /**
      * @return Extended Newick representation of network
      */
@@ -814,6 +845,14 @@ public class Network extends StateNode {
             }
 
         }        
+        
+        // keep track of the node number on the networkNode
+        if (networkNode.segmentIndices==null) {
+        	networkNode.segmentIndices = new int[getSegmentCount()];
+        	// initialise to -1
+        	Arrays.fill(networkNode.segmentIndices, -1);
+        }
+        networkNode.setSegmentIndex(segmentIdx, cladeNodes.get(thisClade).getNr());
         
         if (cladeNodes.get(thisClade).getHeight() != networkNode.getHeight())
             cladeNodes.get(thisClade).setHeight(networkNode.getHeight());
