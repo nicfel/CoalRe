@@ -31,7 +31,6 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
     @Override
     public double networkProposal() {
         double logHR;
-        network.startEditing(this);
         
 //        System.out.println(network);
         for (int i = 0; i < segmentTrees.size(); i++) {
@@ -339,7 +338,6 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
     double removeReassortmentEdge(NetworkEdge edgeToRemove) {
         double logHR = 0.0;
 
-        network.startEditing(this);
 
         NetworkNode nodeToRemove = edgeToRemove.childNode;
         NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);

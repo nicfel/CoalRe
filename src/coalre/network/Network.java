@@ -293,7 +293,21 @@ public class Network extends StateNode {
         result.append(",segsCarried=").append(currentEdge.hasSegments.cardinality());
         if (currentEdge.childNode.getTypeLabel() != null) 
         		result.append(",state=").append(currentEdge.childNode.getTypeLabel());
+    	
+        result.append(",indices=");
+        if (currentEdge.childNode.segmentIndices!=null) {
+        	result.append("{");
+			for (int i = 0; i < currentEdge.childNode.segmentIndices.length; i++) {
+				if (i > 0)
+					result.append(",");
+				result.append(currentEdge.childNode.segmentIndices[i]);
+			}
+			result.append("}");
+        }else {
+        	result.append("null");
         
+        }
+
         if (currentEdge.childNode.metaDataString != null) 
 			result.append(currentEdge.childNode.getMetaData());
 

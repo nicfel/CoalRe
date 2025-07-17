@@ -106,7 +106,6 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 
         double logHR = 0.0;
 
-        network.startEditing(this);
 
         NetworkNode sourceNode = new NetworkNode();
         sourceNode.setHeight(sourceTime);
@@ -218,7 +217,6 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
     double removeReassortmentEdge(NetworkEdge edgeToRemove) {
         double logHR = 0.0;
 
-        network.startEditing(this);
 
         NetworkNode nodeToRemove = edgeToRemove.childNode;
         NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);

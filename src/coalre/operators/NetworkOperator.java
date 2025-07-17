@@ -96,11 +96,11 @@ public abstract class NetworkOperator extends Operator {
 
         double logHR = networkProposal();
 
-        if (logHR>Double.NEGATIVE_INFINITY) {
-            for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
-            	if (segmentsChanged.get(segIdx))
-            		network.updateSegmentTree(segmentTrees.get(segmentTreeMap[segIdx]), segmentTreeMap[segIdx]);
-        }
+//        if (logHR>Double.NEGATIVE_INFINITY) {
+//            for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
+//            	if (segmentsChanged.get(segIdx))
+//            		network.updateSegmentTree(segmentTrees.get(segmentTreeMap[segIdx]), segmentTreeMap[segIdx]);
+//        }
 
 
 

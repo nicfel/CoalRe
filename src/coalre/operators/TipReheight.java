@@ -143,12 +143,6 @@ public class TipReheight extends NetworkOperator {
             delta += Math.log(size);
             size = Math.exp(delta);
         }
-//        if (taxonsetInput.get().getTaxonId(0).contentEquals("RVA/1070/Thailand|2013-01-01")) {
-//            System.out.println(getID() + " " + logAlpha + " " + m_nNrAccepted + " " + m_nNrRejected + " size=" + size);
-//            if (logAlpha>Double.NEGATIVE_INFINITY && logAlpha<-1000)
-//                System.exit(0);
-//        }
-
     }
 
     @Override

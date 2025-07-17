@@ -44,12 +44,10 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
     @Override
     public double proposal() {
     	
-		// set all segments changed to true
-        for (int i = 0; i < segmentTrees.size(); i++) {
-            segmentsChanged.set(i, true);
-        }
         double logHR = 0.0;   
-        
+		
+        network.startEditing(this);
+
 
         double lhrbefore = 0.0;
         double lhrafre = 0.0;
@@ -69,13 +67,14 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
         
 
         // removes all the empty network edges in the network again
+        List<NetworkEdge> edges = new ArrayList<>(network.getEdges());
         if (addRemoveEmptyEdgesInput.get()){
 
             if (logHR == Double.NEGATIVE_INFINITY)
             	return Double.NEGATIVE_INFINITY;
 			try {
 				// remove empty reassortment edges
-	            lhrafre = RemoveAllEmptyNetworkSegments();
+	            lhrafre = RemoveAllEmptyNetworkSegments(edges);
 			} catch (Exception e) {
 				// if there are no empty reassortment edges, this can happen when removing empty edges. This was previously taken care of 
 				// by the all edges ancestral check, but that took too much time
@@ -84,43 +83,13 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
         	logHR += lhrafre;
         }
         
-
-//        System.out.println("logHR: " + (lhrbefore-lhrafre) + " " + this.getID());
-        
-        // if getID() == "Co"
-        
         if (logHR == Double.POSITIVE_INFINITY)
         	return Double.NEGATIVE_INFINITY;
-        
-        // case there are empty edges, which can happen when addRemoveEmptyEdges is false
-//		if (!allEdgesAncestral()){
-//            return Double.NEGATIVE_INFINITY;
-//		}
-//		System.out.println(this.getID() + " " + logHR);
-
-        if (logHR>Double.NEGATIVE_INFINITY) {
-//        	System.out.println(this.getID() + " " + segmentsChanged);
-            for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++) {
-//            	System.out.print(segmentsChanged.get(segIdx)+ " ");
-            	if (segmentsChanged.get(segIdx))
-            		network.updateSegmentTree(segmentTrees.get(segIdx), segIdx);
-            }
-//            System.out.println();
-        }
-        
 
       if(!networkTerminatesAtMRCA())
     	return Double.NEGATIVE_INFINITY;
 
-        
-//        if (logHR>100) {
-//        	System.out.println("logHR: " + logHR + " " + this.getID());
-//        	System.out.println(network);
-//        	System.exit(0);
-//        }
-        
-                		
-        return logHR;
+      return logHR;
     }
     
     private double addEmptyNetworkSegments(){
@@ -128,9 +97,10 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
     	
     	// randomly sample the number of edges to add
     	int nrEmptyEdges = (int) Randomizer.nextPoisson(lambda);
+    	List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
     	    	
     	for (int i = 0; i < nrEmptyEdges; i ++){
-    		logHR += addEmptyReassortment();
+    		logHR += addEmptyReassortment(networkEdges);
     	}  
 //    	if (this.getID().equals("Co")) {
 //    		System.out.println("added " + nrEmptyEdges + " empty edges");
@@ -143,10 +113,8 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
     
 
     
-    double addEmptyReassortment() {
+    double addEmptyReassortment(List<NetworkEdge> networkEdges) {
         double logHR = 0.0;
-
-        List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
 
         // add empty reassortment edges to non empty edges
         List<NetworkEdge> possibleSourceEdges = networkEdges.stream()
@@ -188,13 +156,13 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
       
 
         // Create new reassortment edge
-        logHR += addEmptyReassortmentEdge(sourceEdge, sourceTime, destEdge, destTime);
+        logHR += addEmptyReassortmentEdge(sourceEdge, sourceTime, destEdge, destTime, networkEdges);
 
         if (logHR == Double.NEGATIVE_INFINITY)
             return Double.NEGATIVE_INFINITY;
         
         // HR contribution for reverse move
-        int nRemovableEdges = (int) network.getEdges().stream()
+        int nRemovableEdges = (int) networkEdges.stream()
                 .filter(e -> !e.isRootEdge())
                 .filter(e -> e.hasSegments.cardinality()==0)
                 .filter(e -> e.childNode.isReassortment())
@@ -213,11 +181,10 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
     
     // Only adds the reassortment edge, but does not diverge segments
     double addEmptyReassortmentEdge(NetworkEdge sourceEdge, double sourceTime,
-            NetworkEdge destEdge, double destTime) {
+            NetworkEdge destEdge, double destTime, List<NetworkEdge> networkEdges) {
 
 		double logHR = 0.0;
 		
-		network.startEditing(this);
 		
 		NetworkNode sourceNode = new NetworkNode();
 		sourceNode.setHeight(sourceTime);
@@ -261,45 +228,48 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 		destNode.addChildEdge(reassortmentEdge);
 		reassortmentEdge.hasSegments = new BitSet();		
 		
+		// update edges
+		networkEdges.add(newEdge1);
+		networkEdges.add(newEdge2);
+		
 		return logHR;
 	}
     
-    public double RemoveRandomEmptyNetworkSegments() {
-    	double logHR = 0.0;
-    	
-        List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
-
-        List<NetworkEdge> removableEdges = networkEdges.stream()
-                .filter(e -> !e.isRootEdge())
-                .filter(e -> e.childNode.isReassortment())
-                .filter(e -> e.hasSegments.cardinality()==0)
-                .filter(e -> e.parentNode.isCoalescence())
-                .collect(Collectors.toList());
-        
-        if (removableEdges.size()>0){
-	        logHR -= Math.log(1.0/(removableEdges.size()));
-	        int edgeInd = Randomizer.nextInt(removableEdges.size());            
-	    	logHR += removeEmptyReassortmentEdge(removableEdges.get(edgeInd));
-	    	networkEdges = new ArrayList<>(network.getEdges());
-    	}
-        
-
-	    	
-        if (logHR == Double.NEGATIVE_INFINITY)
-        	return Double.NEGATIVE_INFINITY;
-
-        
-//        if(!networkTerminatesAtMRCA())
+//    public double RemoveRandomEmptyNetworkSegments() {
+//    	double logHR = 0.0;
+//    	
+//        List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
+//
+//        List<NetworkEdge> removableEdges = networkEdges.stream()
+//                .filter(e -> !e.isRootEdge())
+//                .filter(e -> e.childNode.isReassortment())
+//                .filter(e -> e.hasSegments.cardinality()==0)
+//                .filter(e -> e.parentNode.isCoalescence())
+//                .collect(Collectors.toList());
+//        
+//        if (removableEdges.size()>0){
+//	        logHR -= Math.log(1.0/(removableEdges.size()));
+//	        int edgeInd = Randomizer.nextInt(removableEdges.size());            
+//	    	logHR += removeEmptyReassortmentEdge(removableEdges.get(edgeInd));
+//	    	networkEdges = new ArrayList<>(network.getEdges());
+//    	}
+//        
+//
+//	    	
+//        if (logHR == Double.NEGATIVE_INFINITY)
 //        	return Double.NEGATIVE_INFINITY;
-        
-        return logHR;
-    }
+//
+//        
+////        if(!networkTerminatesAtMRCA())
+////        	return Double.NEGATIVE_INFINITY;
+//        
+//        return logHR;
+//    }
 
     
-    public double RemoveAllEmptyNetworkSegments() {
+    public double RemoveAllEmptyNetworkSegments(List<NetworkEdge> networkEdges) {
     	double logHR = 0.0;
     	
-        List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
 
         List<NetworkEdge> removableEdges = networkEdges.stream()
                 .filter(e -> !e.isRootEdge())
@@ -316,9 +286,11 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
             logHR -= Math.log(1.0/(removableEdges.size()));
             int edgeInd = Randomizer.nextInt(removableEdges.size());     
             
-        	logHR += removeEmptyReassortmentEdge(removableEdges.get(edgeInd));
+        	logHR += removeEmptyReassortmentEdge(removableEdges.get(edgeInd), networkEdges);
         	
-        	networkEdges = new ArrayList<>(network.getEdges());
+        	
+        	
+//        	networkEdges = new ArrayList<>(network.getEdges());
         	
         	// In case and invalid network has been created
             if (logHR == Double.NEGATIVE_INFINITY)
@@ -352,7 +324,7 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
         return logHR;
     }
     
-    double removeEmptyReassortmentEdge(NetworkEdge edgeToRemove) {
+    double removeEmptyReassortmentEdge(NetworkEdge edgeToRemove, List<NetworkEdge> networkEdges) {
         double logHR = 0.0;
         
 
@@ -365,24 +337,22 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
         
 
         // Remove reassortment edge
-        logHR += actuallyRemoveEmptyReassortmentEdge(edgeToRemove);
+        logHR += actuallyRemoveEmptyReassortmentEdge(edgeToRemove, networkEdges);
 
         if (logHR == Double.NEGATIVE_INFINITY)
             return Double.NEGATIVE_INFINITY;
         
         // HR contribution for reverse move
-        Set<NetworkEdge> finalNetworkEdges = network.getEdges();
+//        Set<NetworkEdge> finalNetworkEdges = network.getEdges();
 
-        int nPossibleSourceEdges = (int)finalNetworkEdges.stream()
-                .filter(e -> !e.isRootEdge())
-                .count();
+        int nPossibleSourceEdges = networkEdges.size()-1;
         
         
         // change to -1 because after the move, 1 less can be a source edge
         logHR += Math.log(1.0/(double) nPossibleSourceEdges )
                 + Math.log(1.0/sourceEdge.getLength());        
 
-        List<NetworkEdge> possibleDestEdges = finalNetworkEdges.stream()
+        List<NetworkEdge> possibleDestEdges = networkEdges.stream()
         		.filter(e -> !e.isRootEdge() && e.parentNode.getHeight() >= sourceTime)
                 .collect(Collectors.toList());
 
@@ -404,11 +374,10 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
     }
 
 
-    double actuallyRemoveEmptyReassortmentEdge(NetworkEdge edgeToRemove) {
+    double actuallyRemoveEmptyReassortmentEdge(NetworkEdge edgeToRemove, List<NetworkEdge> networkEdges) {
 
         double logHR = 0.0;
 
-        network.startEditing(this);
 
         NetworkNode nodeToRemove = edgeToRemove.childNode;
         NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
@@ -439,6 +408,8 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 
             secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
         }
+        networkEdges.remove(edgeToRemove);
+        networkEdges.remove(edgeToRemoveSpouse);
 
 //        if (!networkTerminatesAtMRCA()){
 //        	

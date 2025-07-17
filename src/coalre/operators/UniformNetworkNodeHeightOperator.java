@@ -35,7 +35,18 @@ public class UniformNetworkNodeHeightOperator extends NetworkOperator {
 
         network.startEditing(this);
         node.setHeight(minHeight + Randomizer.nextDouble()*(maxHeight-minHeight));
+        
+        if (node.isCoalescence()) {
+	        if (node.segmentIndices!=null && segmentTreesInput.get().size()>0) {
+	        	for (int i =0; i < node.segmentIndices.length; i++) {
+	        		if (node.getChildEdges().get(0).hasSegments.get(i) && node.getChildEdges().get(1).hasSegments.get(i))
+	        			segmentTreesInput.get().get(i).getNode(node.segmentIndices[i]).setHeight(node.getHeight());
+				}
+	        }
+        }
+        segmentsChanged.set(0, network.getSegmentCount(), false);
 
+        
         return 0.0;
     }
 

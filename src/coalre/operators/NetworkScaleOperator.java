@@ -104,8 +104,7 @@ public class NetworkScaleOperator extends NetworkOperator {
 			NetworkNode rootNode = network.getRootEdge().childNode;
 
 			rootNode.setHeight(rootNode.getHeight() * f);
-			logHR += Math.log(f);
-
+			
 			if (f < 1.0) {
 
 				for (NetworkEdge childEdge : rootNode.getChildEdges())
@@ -113,6 +112,23 @@ public class NetworkScaleOperator extends NetworkOperator {
 						return Double.NEGATIVE_INFINITY;
 
 			}
+
+//			System.out.println(network);
+			
+	        if (rootNode.segmentIndices!=null && segmentTreesInput.get().size()>0) {
+	        	for (int i =0; i < rootNode.segmentIndices.length; i++) {
+	        		if (rootNode.getChildEdges().get(0).hasSegments.get(i) && rootNode.getChildEdges().get(1).hasSegments.get(i)) {
+//	        			segmentTreesInput.get().get(i).startEditing(this);
+	        			segmentTreesInput.get().get(i).getNode(rootNode.segmentIndices[i]).setHeight(rootNode.getHeight());
+	        		}
+				}
+	        }
+	        
+	        segmentsChanged.set(0, network.getSegmentCount(), false);
+
+	        
+			logHR += Math.log(f);
+
 
 		} else {
 			c1++;
@@ -146,6 +162,9 @@ public class NetworkScaleOperator extends NetworkOperator {
 //				}
 				
 				double lhr = resampleNodeHeight(network.getRootEdge().childNode);
+				
+		        segmentsChanged.set(0, network.getSegmentCount(), false);
+
 				
 //				double[] legnthAfter = new double[network.getSegmentCount()];
 //				for (NetworkEdge edge : network.getEdges()) {
@@ -191,7 +210,8 @@ public class NetworkScaleOperator extends NetworkOperator {
 			} else {
 				int count = scaleNodes(network.getRootEdge().childNode, f);
 				logHR += Math.log(f) * (count - 2);
-				
+		        segmentsChanged.set(0, network.getSegmentCount(), false);
+
 //				for (NetworkNode n : network.getNodes()) {
 //					if (n.segmentIndices != null)
 //						System.out.println(Arrays.toString(n.segmentIndices));
@@ -270,6 +290,14 @@ public class NetworkScaleOperator extends NetworkOperator {
 				double newLength = oldLengths.get(n) * scaler;
 				n.setHeight(newLength + Math.max(n.getChildEdges().get(0).childNode.getHeight(),
 						n.getChildEdges().get(1).childNode.getHeight()));
+				
+                if (n.segmentIndices!=null && segmentTreesInput.get().size()>0) {
+                	for (int i =0; i < n.segmentIndices.length; i++) {
+                		if (n.getChildEdges().get(0).hasSegments.get(i) && n.getChildEdges().get(1).hasSegments.get(i))
+                			segmentTreesInput.get().get(i).getNode(n.segmentIndices[i]).setHeight(n.getHeight());
+                    }
+                }
+                
 				updated.put(n, true);
 				count++;
 			}
@@ -292,6 +320,16 @@ public class NetworkScaleOperator extends NetworkOperator {
 					logHR += resampleNodeHeight(n.getChildEdges().get(0).childNode);
 					double newLength = oldLengths.get(n) * scaler;
 					n.setHeight(newLength + n.getChildEdges().get(0).childNode.getHeight());
+					
+			        if (n.isCoalescence()) {
+				        if (n.segmentIndices!=null && segmentTreesInput.get().size()>0) {
+				        	for (int i =0; i < n.segmentIndices.length; i++) {
+				        		if (n.getChildEdges().get(0).hasSegments.get(i) && n.getChildEdges().get(1).hasSegments.get(i))
+				        			segmentTreesInput.get().get(i).getNode(n.segmentIndices[i]).setHeight(n.getHeight());
+							}
+				        }
+			        }
+
 					updated.put(n, true);
 
 				}
@@ -305,6 +343,16 @@ public class NetworkScaleOperator extends NetworkOperator {
 				double newLength = oldLengths.get(n) * scaler;
 				n.setHeight(newLength + Math.max(n.getChildEdges().get(0).childNode.getHeight(),
 						n.getChildEdges().get(1).childNode.getHeight()));
+				
+		        if (n.isCoalescence()) {
+			        if (n.segmentIndices!=null && segmentTreesInput.get().size()>0) {
+			        	for (int i =0; i < n.segmentIndices.length; i++) {
+			        		if (n.getChildEdges().get(0).hasSegments.get(i) && n.getChildEdges().get(1).hasSegments.get(i))
+			        			segmentTreesInput.get().get(i).getNode(n.segmentIndices[i]).setHeight(n.getHeight());
+						}
+			        }
+		        }
+
 				updated.put(n, true);
 			}
 			// scale the node height such that

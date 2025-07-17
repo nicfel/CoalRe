@@ -56,39 +56,8 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 		if (segsToDivert.cardinality() == 0)
 			return Double.NEGATIVE_INFINITY;
 
-		network.startEditing(this);
-
-//        Integer[] treeChildNodeList = new Integer[network.getSegmentCount()];
-//        System.out.println(segsToDivert);
-//        getTreeNodesDown(sourceEdge, segsToDivert, treeChildNodeList);
-//        System.out.println(segsToDivert);
-		// the start nodes tell us the original parent, the other child, find the new
-		// target node and height
-		// update the segments
 		logHR += divertSegments(destEdge, sourceEdge, segsToDivert);
 
-//        List<NetworkNode> targetNodeIndices = new ArrayList<>();
-//        for (int i =0; i < network.getSegmentCount();i++)
-//        	targetNodeIndices.add(null);
-//        Integer[] newTargetNode = new Integer[network.getSegmentCount()];
-//        Double[] newNodeHeights = new Double[network.getSegmentCount()];
-//
-//        getTreeNodes(destEdge, segsToDivert, targetNodeIndices, newTargetNode, newNodeHeights);
-
-//        System.out.println(Arrays.toString(treeChildNodeList));
-//        System.out.println(Arrays.toString(newTargetNode));
-//        System.out.println(Arrays.toString(newNodeHeights));
-//        System.out.println(targetNodeIndices);
-//        
-//        // update the corresponding tree
-//        for (int i =0; i < network.getSegmentCount();i++) {
-//        	if (treeChildNodeList[i]!=null) {
-//        		System.out.println(targetNodeIndices.get(i).getHeight());
-//        		
-//        	}
-//    	}        
-//        targetNodeIndices.clear();
-//        System.exit(0);
 
 		if (divertOneSegmentInput.get()) {
 			logHR += Math.log(1.0 / destEdge.hasSegments.cardinality());
@@ -106,12 +75,11 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 
 	protected double divertSegments(NetworkEdge destEdge, NetworkEdge sourceEdge, BitSet segsToDivert) {
 		double logHR = 0.0;
-		System.out.println(segsToDivert + " " + sourceEdge.childNode.getHeight());
-		System.out.println(network);
-		
+
+//		System.out.println(network.getExtendedNewickVerbose());
 		Integer[] treeChildNodeList = new Integer[network.getSegmentCount()];
 		
-		
+//		System.out.println(network.getExtendedNewickVerbose(5));
 		getTreeNodesDown(sourceEdge, segsToDivert, treeChildNodeList);
 //		System.out.println(segsToDivert);
 
@@ -124,71 +92,159 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 		Integer[] newTargetNode = new Integer[network.getSegmentCount()];
 		Double[] newNodeHeights = new Double[network.getSegmentCount()];
 
-		getTreeNodes(destEdge, segsToDivert, targetNodeIndices, newTargetNode, newNodeHeights);
+		getTreeNodes(destEdge, segsToDivert, targetNodeIndices, newTargetNode, newNodeHeights, treeChildNodeList);
 
-//      System.out.println(Arrays.toString(treeChildNodeList));
-//      System.out.println(Arrays.toString(newTargetNode));
-//      System.out.println(Arrays.toString(newNodeHeights));
-//      System.out.println(targetNodeIndices);
-//      
-		System.out.println(network);
 
 		// update the corresponding tree
 		for (int i = 0; i < network.getSegmentCount(); i++) {
-			if (treeChildNodeList[i] != null) {
-//				System.out.println(i+ " " + targetNodeIndices.get(i).getHeight());
-//				System.out.println(segmentTrees.get(i) +";");
+
+			if (treeChildNodeList[i] != null && newTargetNode[i] != null) {
 				Node startChild = segmentTrees.get(i).getNode(treeChildNodeList[i]);
+				if (startChild.isRoot())
+					continue;
+				
 				Node oldParent = startChild.getParent();
 				Node newSibling = segmentTrees.get(i).getNode(newTargetNode[i]);
 
 				if (oldParent.isRoot()) {
 
 					if (oldParent==newSibling) {
-						System.out.println("lsssala");
-
+						oldParent.setHeight(newNodeHeights[i]);
+					}else if (newSibling.getParent()==oldParent) {
 						oldParent.setHeight(newNodeHeights[i]);
 					}else {
-						// new root
-						throw new IllegalArgumentException("lala");
+
+						// the node that will become the new root
+						Node oldSibling = oldParent.getChild(0).getNr() == treeChildNodeList[i] ? oldParent.getChild(1) : oldParent.getChild(0);
+						
+						int prevNumberNewRoot = oldSibling.getNr();
+						int rootNumber = segmentTrees.get(i).getRoot().getNr();
+						double newRootHeight = oldSibling.getHeight();
+						
+						// update the segmentIndices of the network node
+						if (targetNodeIndices.get(i).segmentIndices == null)
+							targetNodeIndices.get(i).segmentIndices = new int[network.getSegmentCount()];
+						targetNodeIndices.get(i).segmentIndices[i] = prevNumberNewRoot;
+
+						updatePreviousRootNumber(i,network.getRootEdge().childNode, rootNumber, newRootHeight);
+						
+						Node newGrandParent = newSibling.getParent();
+						newGrandParent.removeChild(newSibling);
+						newGrandParent.addChild(oldParent);
+						oldParent.addChild(newSibling);
+						// do the corresponding tree move
+						oldParent.removeChild(oldSibling);
+						oldParent.setHeight(newNodeHeights[i]);
+						oldSibling.setParent(null);
+						
+						segmentTrees.get(i).setRoot(oldSibling);
 					}
 					
 				}else {
 					Node oldGrandParent = oldParent.getParent();
 					Node oldSibling = oldParent.getChild(0).getNr() == treeChildNodeList[i] ? oldParent.getChild(1) : oldParent.getChild(0);
-					
-//					System.out.println(oldGrandParent.getHeight());
-					oldGrandParent.removeChild(oldParent);
-					oldGrandParent.addChild(oldSibling);
 					Node newGrandParent = newSibling.getParent();
-					if (newGrandParent==null) {
-						oldParent.setParent(null);
-//						System.out.println(newSibling.isRoot());
-						oldParent.removeChild(oldSibling);
-						oldParent.addChild(newSibling);
+					
+					if (newGrandParent==oldParent) {
 						oldParent.setHeight(newNodeHeights[i]);
-//						System.out.println(oldParent.getParent().getHeight());
-						segmentTrees.get(i).setRoot(oldParent);
-						System.out.println("lala");
+					}else if (oldGrandParent==newGrandParent) {
+						if (oldParent==newSibling) {
+							throw new IllegalArgumentException("oldParent==newSibling " + oldParent.getHeight() + " " + newSibling.getHeight());
+						}
+						
+						
+//						System.out.println(network.getExtendedNewickVerbose());
+//						System.out.println(newGrandParent.getHeight());
+//						System.out.println(i);
+//						System.out.println(segmentTrees.get(i) +";");
 
-					}else {
 						newGrandParent.removeChild(newSibling);
 						oldParent.removeChild(oldSibling);
-						newGrandParent.addChild(oldParent);
+						newGrandParent.addChild(oldSibling);
+						
 						oldParent.addChild(newSibling);
 						oldParent.setHeight(newNodeHeights[i]);
+						
+//						System.out.println(segmentTrees.get(i) +";");
+						
+//						System.exit(0);
+						// TODO
+//						System.out.println("do nothing "  + oldParent.getHeight() + " " + newNodeHeights[i]);
+						
+						return Double.NEGATIVE_INFINITY;
+//						throw new IllegalArgumentException("do nothing " + oldParent.getHeight() + " " + newNodeHeights[i]);
+						
+					}else {
+						
+	//					System.out.println(oldGrandParent.getHeight());
+						oldGrandParent.removeChild(oldParent);
+						oldGrandParent.addChild(oldSibling);
+						if (newGrandParent==null) {
+							// changing the root node also changes the node number
+							// which is an issue here 
+							oldParent.setParent(null);
+							
+							int prevRootNumber = oldParent.getNr();
+							double oldRootHeight = segmentTrees.get(i).getRoot().getHeight();
+							
+							// find the network node corresponding to the old root height
+							// and change the corresponding segment index
+							updatePreviousRootNumber(i,targetNodeIndices.get(i), prevRootNumber, oldRootHeight);
+													oldParent.removeChild(oldSibling);
+							oldParent.addChild(newSibling);
+							oldParent.setHeight(newNodeHeights[i]);
+
+							segmentTrees.get(i).setRoot(oldParent);
+							
+							// update the segmentIndices of the network node
+							if (targetNodeIndices.get(i).segmentIndices == null)
+								targetNodeIndices.get(i).segmentIndices = new int[network.getSegmentCount()];
+							targetNodeIndices.get(i).segmentIndices[i] = oldParent.getNr();
+							
+//							
+	
+						}else {
+//							System.out.println("basicmove " + newGrandParent.getHeight() + " " + oldGrandParent.getHeight() + " " + oldParent.getHeight() + " " + newNodeHeights[i]);
+							newGrandParent.removeChild(newSibling);
+							oldParent.removeChild(oldSibling);
+							newGrandParent.addChild(oldParent);
+							oldParent.addChild(newSibling);
+							oldParent.setHeight(newNodeHeights[i]);
+						}
 					}
 				}
-
-				
-				
-				
-				System.out.println(segmentTrees.get(i) +";");
-//				System.exit(0);
+//
+//				
+//				
+//				
+//				System.out.println(segmentTrees.get(i) +";");
+//				System.out.println("Updated segment tree " + i);
 			}
+
 		}
 
 		return logHR;
+	}
+
+	private void updatePreviousRootNumber(int i, NetworkNode n, int prevRootNumber, double oldRootHeight) {
+		if (n.getHeight()<oldRootHeight) {
+			return;
+		}
+		
+		if (n.isCoalescence()) {
+			if (n.getHeight() == oldRootHeight) {
+				// update the segment index
+				if (n.segmentIndices == null)
+					n.segmentIndices = new int[network.getSegmentCount()];
+				n.segmentIndices[i] = prevRootNumber;
+				return;
+			}
+			updatePreviousRootNumber(i, n.getChildEdges().get(0).childNode, prevRootNumber, oldRootHeight);
+			updatePreviousRootNumber(i, n.getChildEdges().get(1).childNode, prevRootNumber, oldRootHeight);
+		} else if (n.isReassortment()) {
+			updatePreviousRootNumber(i, n.getChildEdges().get(0).childNode, prevRootNumber, oldRootHeight);
+		}
+		return;
 	}
 
 	private BitSet getRandomSegment(BitSet hasSegments) {
@@ -225,8 +281,14 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 			if (segmentTrees.size() > 0 && edge.childNode.segmentIndices != null) {
 				for (int segIdx = 0; segIdx < segsToRemove.length(); segIdx++) {
 					// get the corresponding tree node
-					if (segsToRemove.get(segIdx) && edge.childNode.segmentIndices[segIdx] != -1) {
+					if (segsToRemove.get(segIdx) && 
+							edge.childNode.getChildEdges().get(0).hasSegments.get(segIdx) && 
+							edge.childNode.getChildEdges().get(1).hasSegments.get(segIdx)) {
+						
 						treeNodeList[segIdx] = edge.childNode.segmentIndices[segIdx];
+						
+//						System.out.println(segIdx + " " + edge.childNode.getHeight());
+
 						// set bitset to false
 						segsToRemove.set(segIdx, false);
 					}
@@ -240,6 +302,7 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 			// loop over the segsToRemove Left and update the Tree Nodes
 			for (int segIdx = 0; segIdx < segsToRemove.length(); segIdx++) {
 				if (segsToRemove.get(segIdx)) {
+						
 					treeNodeList[segIdx] = edge.childNode.segmentIndices[segIdx];
 				}
 			}
@@ -249,7 +312,7 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 	}
 
 	void getTreeNodes(NetworkEdge edge, BitSet segsToRemove, List<NetworkNode> targetNodeIndices,
-			Integer[] treeNodeList, Double[] nodeHeightList) {
+			Integer[] treeNodeList, Double[] nodeHeightList, Integer[] treeChildNodeList) {
 		segsToRemove = (BitSet) segsToRemove.clone();
 		segsToRemove.and(edge.hasSegments);
 
@@ -262,9 +325,9 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 		if (edge.parentNode.isReassortment()) {
 
 			getTreeNodes(edge.parentNode.getParentEdges().get(0), segsToRemove, targetNodeIndices, treeNodeList,
-					nodeHeightList);
+					nodeHeightList, treeChildNodeList);
 			getTreeNodes(edge.parentNode.getParentEdges().get(1), segsToRemove, targetNodeIndices, treeNodeList,
-					nodeHeightList);
+					nodeHeightList, treeChildNodeList);
 
 		} else {
 			if (segmentTrees.size() > 0) {
@@ -272,10 +335,26 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 
 				if (segmentTrees.size() > 0) {
 					for (int segIdx = 0; segIdx < segsToRemove.length(); segIdx++) {
+						
 						if (segsToRemove.get(segIdx) && sibSegs.get(segIdx)) {
 							nodeHeightList[segIdx] = edge.parentNode.getHeight();
 							treeNodeList[segIdx] = getTreeNodeIndex(getSisterEdge(edge), segIdx);
 							targetNodeIndices.set(segIdx, edge.parentNode);
+							
+							if (edge.parentNode.segmentIndices == null)
+								edge.parentNode.segmentIndices = new int[network.getSegmentCount()];
+							try {
+							edge.parentNode.segmentIndices[segIdx] = segmentTrees.get(segIdx)
+									.getNode(treeChildNodeList[segIdx]).getParent().getNr();
+							}catch (Exception e) {
+								System.out.println(segmentTrees.get(segIdx)
+									.getNode(treeChildNodeList[segIdx]).getHeight());
+								System.out.println(treeChildNodeList[segIdx]);
+								System.out.println("Error in segment tree " + segIdx + " " + edge.parentNode.getHeight());
+								System.out.println(network.getExtendedNewick(segIdx));
+								System.out.println(segmentTrees.get(segIdx) + ";");
+								System.exit(0);
+							}
 							segsToRemove.set(segIdx, false);
 						}
 					}
@@ -284,7 +363,7 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 			}
 
 			getTreeNodes(edge.parentNode.getParentEdges().get(0), segsToRemove, targetNodeIndices, treeNodeList,
-					nodeHeightList);
+					nodeHeightList, treeChildNodeList);
 
 		}
 
@@ -297,7 +376,9 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 		} else if (edge.childNode.isReassortment()) {
 			return getTreeNodeIndex(edge.childNode.getChildEdges().get(0), segIdx);
 		} else {
-			if (edge.childNode.segmentIndices != null && edge.childNode.segmentIndices[segIdx] != -1) {
+			if (edge.childNode.segmentIndices != null && 
+					edge.childNode.getChildEdges().get(0).hasSegments.get(segIdx) && 
+					edge.childNode.getChildEdges().get(1).hasSegments.get(segIdx)) {
 				return edge.childNode.segmentIndices[segIdx];
 			}
 			return edge.childNode.getChildEdges().get(0).hasSegments.get(segIdx)
