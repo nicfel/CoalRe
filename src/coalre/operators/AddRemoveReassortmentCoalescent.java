@@ -55,34 +55,45 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
         double logHR = 0.0;
 //        System.out.println(network);
 
-        List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
-
-        List<NetworkEdge> possibleSourceEdges = networkEdges.stream()
-                .filter(e -> !e.isRootEdge())
-                .filter(e -> e.hasSegments.cardinality()>=2)
-                .collect(Collectors.toList());
+        List<Integer> possibleSourceEdges = new ArrayList<>();
+		for (int i = 0; i < networkEdges.size(); i++) {
+			NetworkEdge edge = networkEdges.get(i);
+			if (!edge.isRootEdge() && edge.hasSegments.cardinality() >= 2) {
+				possibleSourceEdges.add(i);
+			}
+		}
+        
+//        List<NetworkEdge> possibleSourceEdges = networkEdges.stream()
+//                .filter(e -> !e.isRootEdge())
+//                .filter(e -> e.hasSegments.cardinality()>=2)
+//                .collect(Collectors.toList());
         NetworkEdge sourceEdge = null;
         double sourceTime = -1.0;
         
 		if (randomlySampleAttachmentEdgeInput.get()) {
 	        
-	        sourceEdge = possibleSourceEdges.get(Randomizer.nextInt(possibleSourceEdges.size()));
+	        sourceEdge = networkEdges.get(possibleSourceEdges.get(Randomizer.nextInt(possibleSourceEdges.size())));
 	        sourceTime = Randomizer.nextDouble() * sourceEdge.getLength() + sourceEdge.childNode.getHeight();
 	
 	        logHR -= Math.log(1.0/(double)possibleSourceEdges.size())
 	                + Math.log(1.0/sourceEdge.getLength());
 		}else {
 	        // compute the sum over all possible source edges
-			double sumEdgeLengths = possibleSourceEdges.stream().mapToDouble(e -> e.getLength()).sum();			
+			double sumEdgeLengths = 0.0;
+			for (Integer i : possibleSourceEdges) {
+				sumEdgeLengths += networkEdges.get(i).getLength();
+			}
+					
+//					possibleSourceEdges.stream().mapToDouble(e -> e.getLength()).sum();			
 			// Pick a random number between 0 and sum of edge lengths
 			double randomEdgeLength = Randomizer.nextDouble() * sumEdgeLengths;
 			logHR -= Math.log(1.0/sumEdgeLengths);
 			// pick the source edge as the first edge whose length is greater than the random number
 			double passedLength = 0;
-			for (NetworkEdge edge : possibleSourceEdges) {
-				passedLength += edge.getLength();
+			for (Integer i : possibleSourceEdges) {
+				passedLength += networkEdges.get(i).getLength();
 				if (passedLength > randomEdgeLength) {
-					sourceEdge = edge;
+					sourceEdge = networkEdges.get(i);
 					sourceTime = passedLength-randomEdgeLength + sourceEdge.childNode.getHeight();
 					break;
 				}
@@ -155,7 +166,7 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
             return Double.NEGATIVE_INFINITY;        
 
         // HR contribution for reverse move
-        int nRemovableEdges = (int) network.getEdges().stream()
+        int nRemovableEdges = (int) networkEdges.stream()
                 .filter(e -> !e.isRootEdge())
                 .filter(e -> e.hasSegments.cardinality()>=1)
                 .filter(e -> e.childNode.isReassortment())
@@ -245,6 +256,10 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 //	        logHR -= addSegmentsToAncestors(reassortmentEdge, segsToDivert);
 //	        logHR += removeSegmentsFromAncestors(newEdge1, segsToDivert);
         }
+        networkEdges.add(reassortmentEdge);
+        networkEdges.add(newEdge1);
+        networkEdges.add(newEdge2);
+
 
         return logHR;
     }
@@ -252,18 +267,27 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
     double removeRecombination() {
         double logHR = 0.0;
         
-        List<NetworkEdge> removableEdges = network.getEdges().stream()
-                .filter(e -> !e.isRootEdge())
-                .filter(e -> e.hasSegments.cardinality()>=1)
-                .filter(e -> e.childNode.isReassortment())
-                .filter(e -> e.parentNode.isCoalescence())
-                .collect(Collectors.toList());
+        List<Integer> removableEdges = new ArrayList<>();
+		for (int i = 0; i < networkEdges.size(); i++) {
+			NetworkEdge edge = networkEdges.get(i);
+			if (!edge.isRootEdge()&& edge.childNode.isReassortment()
+					&& edge.parentNode.isCoalescence() && edge.hasSegments.cardinality() >= 1 ) {
+				removableEdges.add(i);
+			}
+		}
+        
+//        List<NetworkEdge> removableEdges = networkEdges.stream()
+//                .filter(e -> !e.isRootEdge())
+//                .filter(e -> e.hasSegments.cardinality()>=1)
+//                .filter(e -> e.childNode.isReassortment())
+//                .filter(e -> e.parentNode.isCoalescence())
+//                .collect(Collectors.toList());
         
         
         if (removableEdges.isEmpty())
             return Double.NEGATIVE_INFINITY;
 
-        NetworkEdge edgeToRemove = removableEdges.get(Randomizer.nextInt(removableEdges.size()));
+        NetworkEdge edgeToRemove = networkEdges.get(removableEdges.get(Randomizer.nextInt(removableEdges.size())));
         logHR -= Math.log(1.0/(removableEdges.size()));
         
 
@@ -301,34 +325,53 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 
         // HR contribution for reverse move
 
-        Set<NetworkEdge> finalNetworkEdges = network.getEdges();
 
         if (randomlySampleAttachmentEdgeInput.get()) {
-            int nPossibleSourceEdges = (int)finalNetworkEdges.stream()
-                    .filter(e -> !e.isRootEdge())
-                    .filter(e -> e.hasSegments.cardinality()>=2)
-                    .count();
+            int nPossibleSourceEdges = 0;
+            for (NetworkEdge e : networkEdges) {
+                if (!e.isRootEdge() && e.hasSegments.cardinality() >= 2) {
+                    nPossibleSourceEdges++;
+                }
+            }
+//            		(int)networkEdges.stream()
+//                    .filter(e -> !e.isRootEdge())
+//                    .filter(e -> e.hasSegments.cardinality()>=2)
+//                    .count();
 
             logHR += Math.log(1.0/(double)nPossibleSourceEdges)
                     + Math.log(1.0/sourceEdge.getLength());
         }else {
-			List<NetworkEdge> possibleSourceEdges = finalNetworkEdges.stream().filter(e -> !e.isRootEdge())
-					.filter(e -> e.hasSegments.cardinality() >= 2).collect(Collectors.toList());
-			double sumEdgeLengths = possibleSourceEdges.stream().mapToDouble(e -> e.getLength()).sum();
+        	double sumEdgeLengths = 0.0;
+			for (NetworkEdge e : networkEdges) {
+				if (!e.isRootEdge() && e.hasSegments.cardinality() >= 2) {
+					sumEdgeLengths += e.getLength();
+				}
+			}
+//			List<NetworkEdge> possibleSourceEdges = networkEdges.stream().filter(e -> !e.isRootEdge())
+//					.filter(e -> e.hasSegments.cardinality() >= 2).collect(Collectors.toList());
+//			double sumEdgeLengths = possibleSourceEdges.stream().mapToDouble(e -> e.getLength()).sum();
 			logHR += Math.log(1.0 / sumEdgeLengths);
         }
  
-        // keep only those that coexist at the time of maxHeight
-        List<NetworkEdge> destEdges = finalNetworkEdges.stream()
-                .filter(e -> !e.isRootEdge())
-                .filter(e -> e.parentNode.getHeight()>destTime)
-                .filter(e -> e.childNode.getHeight()<=destTime)
-               .collect(Collectors.toList());
         
-        if (destEdges.size()==0)
-        	destEdges.add(network.getRootEdge());
+        int destEdges = 0;
+		for (NetworkEdge edge : networkEdges) {
+			if (!edge.isRootEdge() && edge.parentNode.getHeight() > destTime
+					&& edge.childNode.getHeight() <= destTime) {
+				destEdges++;
+			}
+		}
+//        // keep only those that coexist at the time of maxHeight
+//        List<NetworkEdge> destEdges = networkEdges.stream()
+//                .filter(e -> !e.isRootEdge())
+//                .filter(e -> e.parentNode.getHeight()>destTime)
+//                .filter(e -> e.childNode.getHeight()<=destTime)
+//               .collect(Collectors.toList());
         
-        logHR += Math.log(1.0/destEdges.size());
+        if (destEdges==0)
+        	destEdges++;
+        
+        logHR += Math.log(1.0/destEdges);
 
 
 
@@ -337,7 +380,6 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 
     double removeReassortmentEdge(NetworkEdge edgeToRemove) {
         double logHR = 0.0;
-
 
         NetworkNode nodeToRemove = edgeToRemove.childNode;
         NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
@@ -352,8 +394,6 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 
         logHR +=  divertSegments(edgeToRemoveSpouse, edgeToRemove, segsToDivert);
 
-//        logHR -= addSegmentsToAncestors(edgeToRemoveSpouse, segsToDivert);
-//        logHR += removeSegmentsFromAncestors(edgeToRemove, segsToDivert);
         
         if (divertOneSegmentInput.get()) {
             logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments, segsToDivert, 0.1);
@@ -361,6 +401,9 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 			logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments);
 		}
         
+        networkEdges.remove(edgeToRemove);
+        networkEdges.remove(edgeToRemoveSpouse);
+
 
         // Remove edge and associated nodes
         NetworkEdge edgeToExtend = nodeToRemove.getChildEdges().get(0);
@@ -375,6 +418,7 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 
         secondNodeToRemove.removeChildEdge(secondEdgeToExtend);
         secondNodeToRemove.removeChildEdge(edgeToRemove);
+        networkEdges.remove(secondNodeToRemove.getParentEdges().get(0));
 
         if (secondNodeToRemove.getParentEdges().get(0).isRootEdge()) {
             network.setRootEdge(secondEdgeToExtend);
@@ -387,7 +431,6 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 
             secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
         }
-
 //        if (!networkTerminatesAtMRCA())
 //            return Double.NEGATIVE_INFINITY;
 

@@ -19,19 +19,28 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 	public Input<Boolean> divertOneSegmentInput = new Input<>("divertOneSegment",
 			"If true, only one segment is diverted", false);
 
+	
+	
 	@Override
 	public double networkProposal() {
 		double logHR = 0.0;
-
-		List<NetworkEdge> sourceEdges = network.getEdges().stream().filter(e -> e.childNode.isReassortment())
-				.filter(e -> e.hasSegments.cardinality() > 0).collect(Collectors.toList());
+		
+		List<Integer> sourceEdges = new ArrayList<>();
+		for (int i = 0; i < networkEdges.size(); i++) {
+			if (networkEdges.get(i).childNode.isReassortment() && networkEdges.get(i).hasSegments.cardinality() > 0) {
+				sourceEdges.add(i);
+			}
+		}
+//
+//		List<NetworkEdge> sourceEdges = networkEdges.stream().filter(e -> e.childNode.isReassortment())
+//				.filter(e -> e.hasSegments.cardinality() > 0).collect(Collectors.toList());
 
 		if (sourceEdges.isEmpty())
 			return Double.NEGATIVE_INFINITY;
 
 		logHR -= Math.log(1.0 / sourceEdges.size());
 
-		NetworkEdge sourceEdge = sourceEdges.get(Randomizer.nextInt(sourceEdges.size()));
+		NetworkEdge sourceEdge = networkEdges.get(sourceEdges.get(Randomizer.nextInt(sourceEdges.size())));
 		NetworkEdge destEdge = getSpouseEdge(sourceEdge);
 
 		BitSet segsToDivert;
@@ -64,9 +73,18 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 		} else {
 			logHR += getLogUnconditionedSubsetProb(destEdge.hasSegments);
 		}
+		
+		
+		int reverseSourceEdgeCount = 0;
+		for (int i = 0; i < networkEdges.size(); i++) {
+			if (networkEdges.get(i).childNode.isReassortment() && networkEdges.get(i).hasSegments.cardinality() > 0) {
+				reverseSourceEdgeCount++;
+			}
+		}
 
-		int reverseSourceEdgeCount = (int) (network.getEdges().stream().filter(e -> e.childNode.isReassortment())
-				.filter(e -> e.hasSegments.cardinality() > 0).count());
+//
+//		int reverseSourceEdgeCount = (int) (networkEdges.stream().filter(e -> e.childNode.isReassortment())
+//				.filter(e -> e.hasSegments.cardinality() > 0).count());
 
 		logHR += Math.log(1.0 / reverseSourceEdgeCount);
 
@@ -81,10 +99,19 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 		
 //		System.out.println(network.getExtendedNewickVerbose(5));
 		getTreeNodesDown(sourceEdge, segsToDivert, treeChildNodeList);
-//		System.out.println(segsToDivert);
 
 		logHR -= addSegmentsToAncestors(destEdge, segsToDivert);
 		logHR += removeSegmentsFromAncestors(sourceEdge, segsToDivert);
+		
+		if (reconnectSegmentTrees(treeChildNodeList, destEdge, segsToDivert))
+			return Double.NEGATIVE_INFINITY;
+
+
+
+		return logHR;
+	}
+
+	protected boolean reconnectSegmentTrees(Integer[] treeChildNodeList, NetworkEdge destEdge, BitSet segsToDivert) {
 
 		List<NetworkNode> targetNodeIndices = new ArrayList<>();
 		for (int i = 0; i < network.getSegmentCount(); i++)
@@ -93,7 +120,6 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 		Double[] newNodeHeights = new Double[network.getSegmentCount()];
 
 		getTreeNodes(destEdge, segsToDivert, targetNodeIndices, newTargetNode, newNodeHeights, treeChildNodeList);
-
 
 		// update the corresponding tree
 		for (int i = 0; i < network.getSegmentCount(); i++) {
@@ -126,7 +152,7 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 							targetNodeIndices.get(i).segmentIndices = new int[network.getSegmentCount()];
 						targetNodeIndices.get(i).segmentIndices[i] = prevNumberNewRoot;
 
-						updatePreviousRootNumber(i,network.getRootEdge().childNode, rootNumber, newRootHeight);
+						updatePreviousRootNumber(i, network.getRootEdge().childNode, rootNumber, newRootHeight);
 						
 						Node newGrandParent = newSibling.getParent();
 						newGrandParent.removeChild(newSibling);
@@ -171,7 +197,7 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 						// TODO
 //						System.out.println("do nothing "  + oldParent.getHeight() + " " + newNodeHeights[i]);
 						
-						return Double.NEGATIVE_INFINITY;
+						return true;
 //						throw new IllegalArgumentException("do nothing " + oldParent.getHeight() + " " + newNodeHeights[i]);
 						
 					}else {
@@ -221,9 +247,8 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 //				System.out.println("Updated segment tree " + i);
 			}
 
-		}
-
-		return logHR;
+		}	
+		return false;
 	}
 
 	private void updatePreviousRootNumber(int i, NetworkNode n, int prevRootNumber, double oldRootHeight) {
@@ -239,8 +264,11 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 				n.segmentIndices[i] = prevRootNumber;
 				return;
 			}
-			updatePreviousRootNumber(i, n.getChildEdges().get(0).childNode, prevRootNumber, oldRootHeight);
-			updatePreviousRootNumber(i, n.getChildEdges().get(1).childNode, prevRootNumber, oldRootHeight);
+			
+			if (n.getChildEdges().get(0).hasSegments.get(i))
+				updatePreviousRootNumber(i, n.getChildEdges().get(0).childNode, prevRootNumber, oldRootHeight);
+			if (n.getChildEdges().get(1).hasSegments.get(i))
+				updatePreviousRootNumber(i, n.getChildEdges().get(1).childNode, prevRootNumber, oldRootHeight);
 		} else if (n.isReassortment()) {
 			updatePreviousRootNumber(i, n.getChildEdges().get(0).childNode, prevRootNumber, oldRootHeight);
 		}
@@ -394,7 +422,7 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 	 * @param segsToRemove segments to remove from edge and ancestors
 	 * @return log probability of reverse operation
 	 */
-	private double removeSegmentsFromAncestors(NetworkEdge edge, BitSet segsToRemove) {
+	protected double removeSegmentsFromAncestors(NetworkEdge edge, BitSet segsToRemove) {
 		double logP = 0.0;
 
 		segsToRemove = (BitSet) segsToRemove.clone();
@@ -446,7 +474,7 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 	 * @param segsToAdd segments to add to the edge and ancestors
 	 * @return log probability of operation
 	 */
-	private double addSegmentsToAncestors(NetworkEdge edge, BitSet segsToAdd) {
+	protected double addSegmentsToAncestors(NetworkEdge edge, BitSet segsToAdd) {
 		double logP = 0.0;
 
 		segsToAdd = (BitSet) segsToAdd.clone();

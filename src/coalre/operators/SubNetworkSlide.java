@@ -56,26 +56,15 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 	public double networkProposal() {
 
 		double logHR = 0.0;
-		network.startEditing(this);
-//		System.out.println();
 		
-//		System.out.println(network);
-		
-		// 1. Choose a random edge, avoiding root
-		List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
-		
-		final List<NetworkEdge> possibleEdges = networkEdges.stream()
-				.filter(e -> !e.isRootEdge())
-				.collect(Collectors.toList());
-		
-		final int possibleNodes = possibleEdges.size();
-        if (possibleNodes < 1) {
-            return Double.NEGATIVE_INFINITY;
-        }
+
 
         logHR = 0.0;
 
-		NetworkEdge iEdge = possibleEdges.get(Randomizer.nextInt(possibleNodes));
+		NetworkEdge iEdge = networkEdges.get(Randomizer.nextInt(networkEdges.size()));
+		while (iEdge.isRootEdge())
+			iEdge = networkEdges.get(Randomizer.nextInt(networkEdges.size()));
+		
 		NetworkNode iParent = iEdge.parentNode;
 		NetworkNode iChild = iEdge.childNode;
 		
@@ -83,14 +72,15 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 		
 		if (!randomlySampleAttachmentEdgeInput.get()) {
 			// compute the total network length, and then sample from that
-			for (NetworkEdge e : possibleEdges) {
-				sumEdgeLengths += e.getLength();
+			for (NetworkEdge e : networkEdges) {
+				if (!e.isRootEdge())
+					sumEdgeLengths += e.getLength();
 			}
 			double randomEdgeLength = Randomizer.nextDouble() * sumEdgeLengths;
 
 			// pick the source edge as the first edge whose length is greater than the random number
 			double passedLength = 0;
-			for (NetworkEdge edge : possibleEdges) {
+			for (NetworkEdge edge : networkEdges) {
 				passedLength += edge.getLength();
 				if (passedLength > randomEdgeLength) {
 					iEdge = edge;
@@ -105,24 +95,45 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 
 		
         final double delta = Math.abs(getDelta());
-
+//        System.out.println(network.getExtendedNewickVerbose());
         // get all potential reattachment Edges
         Map<NetworkEdge, Double> targetEdges = new HashMap<>();
         if (!iEdge.isRootEdge() && iParent.isReassortment()) {
+//        	if (true)
+//        		return Double.NEGATIVE_INFINITY;
 
-        	NetworkEdge iParentEdge = iParent.getParentEdges().get(Randomizer.nextInt(2));    
-        	
+        	NetworkEdge iParentEdge = iParent.getParentEdges().get(Randomizer.nextInt(2));            	
+       	
     		double maxHeight = iParentEdge.parentNode.getHeight();
     		double minHeight = 0;
         	
+//    		System.out.println(network.getExtendedNewick());
+//    		System.out.println(getSpouseEdge(iParentEdge).parentNode.getHeight() + " " + getSpouseEdge(iParentEdge).childNode.getHeight());
+//    		System.out.println(iEdge.parentNode.getHeight() + " " + iEdge.childNode.getHeight());
+    		
+    		
         	// get the other pare
         	targetEdges.putAll(getTargetEdgesUp(getSpouseEdge(iParentEdge), delta, maxHeight, minHeight));
         	targetEdges.putAll(getTargetEdgesDown(iEdge, delta, maxHeight, minHeight));  
-        	        	
+        	
+    		// keep the current segments of edge i 
+    		final BitSet iParentSegs = (BitSet) iParentEdge.hasSegments.clone();
+   	
+//        	// remove all target edges that do not have all the same segments as iParentEdge
+//			List<NetworkEdge> keyset = new ArrayList<>(targetEdges.keySet());
+//			for (NetworkEdge e : keyset) {
+//				BitSet edgeBitSet = (BitSet) iParentSegs.clone();
+//				edgeBitSet.andNot(e.hasSegments);
+//				if (edgeBitSet.cardinality()!=0) {
+//					targetEdges.remove(e);
+//				}
+//			}
+
         	// if list is empty return negative infinity
 			if (targetEdges.isEmpty()) {
 				return Double.NEGATIVE_INFINITY; // no valid targets
 			}
+			
         	
 			logHR -= Math.log(1.0/targetEdges.size());  
         	
@@ -130,29 +141,40 @@ public class SubNetworkSlide extends DivertSegmentOperator {
             List<NetworkEdge> potentialNewTargets = targetEdges.keySet().stream().collect(Collectors.toList());        
     		NetworkEdge jEdge = potentialNewTargets.get(Randomizer.nextInt(potentialNewTargets.size()));
     		// keep the current segments of edge i 
-
 			if (jEdge == iParentEdge.childNode.getChildEdges().get(0) || jEdge == getSpouseEdge(iParentEdge)) {
-				// change the height of jParent
+				// change the height of jParent, as it is a reassortment event, no trees will be affected
 				iParent.setHeight(targetEdges.get(jEdge));
 			}else {			
-				
-	    		// keep the current segments of edge i 
-	    		final BitSet iParentSegs = (BitSet) iParentEdge.hasSegments.clone();
-	    		
+
+//				System.out.println("");
+//				System.out.println(network.getExtendedNewickVerbose(0));
+
 	            // check that jEdge has all segments in iSegs
 				for (int i = 0; i < iParentSegs.length(); i++) {
 					if (iParentSegs.get(i) && !jEdge.hasSegments.get(i)) {
 						return Double.NEGATIVE_INFINITY; // cannot move segments that are not present in jEdge
 					}
 				}	
-
+				
 				// remove iParentEdge from child node
 				NetworkEdge grandChildEdge = iParentEdge.childNode.getChildEdges().get(0);
 				NetworkEdge otherParentEdge = getSpouseEdge(iParentEdge);
 				NetworkNode uncle = otherParentEdge.parentNode;
+								
+								
+				Integer[] treeChildNodeList = new Integer[network.getSegmentCount()];
+				getTreeNodesDown(iParentEdge, iParentSegs, treeChildNodeList);
+
+				logHR -= addSegmentsToAncestors(otherParentEdge, iParentSegs);
+				logHR += removeSegmentsFromAncestors(iParentEdge, iParentSegs);
 				
-	    		// remove iSegs from iEdge				
-	    		logHR += addSegmentsToAncestors(otherParentEdge, iParentSegs);	   
+				
+//	    		System.out.println(network.getExtendedNewick());
+
+				
+				if (reconnectSegmentTrees(treeChildNodeList, otherParentEdge, iParentSegs))
+					return Double.NEGATIVE_INFINITY;
+
 				
 				uncle.removeChildEdge(otherParentEdge);
 				iParentEdge.childNode.removeChildEdge(grandChildEdge);
@@ -167,20 +189,54 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 				iParentEdge.childNode.setHeight(targetEdges.get(jEdge));
 
 				otherParentEdge.hasSegments = (BitSet) jEdge.hasSegments.clone();
-				logHR -= removeSegmentsFromAncestors(otherParentEdge, iParentSegs);	    
-			
+				
+//				iParentSegs.and(jEdge.hasSegments);
+				treeChildNodeList = new Integer[network.getSegmentCount()];
+//	    		System.out.println(network.getExtendedNewick());
+				
+				// make sure that the new child edge, jEdge, has all segments in iParentSegs, otherwise, return Negative Infinity
+				for (int i = 0; i < iParentSegs.length(); i++) {
+					if (iParentSegs.get(i) && !jEdge.hasSegments.get(i)) {
+						return Double.NEGATIVE_INFINITY; // cannot move segments that are not present in jEdge
+					}
+				}
+				
+		
+				getTreeNodesDown(otherParentEdge, iParentSegs, treeChildNodeList);
+				logHR -= addSegmentsToAncestors(iParentEdge, iParentSegs);
+				logHR += removeSegmentsFromAncestors(otherParentEdge, iParentSegs);
+				
+				
+				if (reconnectSegmentTrees(treeChildNodeList, iParentEdge, iParentSegs))
+					return Double.NEGATIVE_INFINITY;
+
+
 			}
+
 
 			Map<NetworkEdge, Double> reverseTargetEdges = new HashMap<>();
             reverseTargetEdges.putAll(getTargetEdgesUp(getSpouseEdge(iParentEdge), delta, maxHeight, minHeight));
             reverseTargetEdges.putAll(getTargetEdgesDown(jEdge, delta, maxHeight, minHeight));
-                        
+                  
+//    		// keep the current segments of edge i     		
+//   	
+//        	// remove all target edges that do not have all the same segments as iParentEdge
+//			keyset = new ArrayList<>(reverseTargetEdges.keySet());
+//			for (NetworkEdge e : keyset) {
+//				BitSet edgeBitSet = (BitSet) iParentEdge.hasSegments.clone();
+//				edgeBitSet.andNot(e.hasSegments);
+//				if (edgeBitSet.cardinality()!=0) {
+//					reverseTargetEdges.remove(e);
+//				}
+//			}
+            
 			logHR += Math.log(1.0/reverseTargetEdges.size());  
+			
 
 			
-			return Double.NEGATIVE_INFINITY; // cannot move segments that are not present in jEdge
+//			return Double.NEGATIVE_INFINITY; // cannot move segments that are not present in jEdge
 
-        }else{
+        }else{ // parent is not a reassortment event
     		// calculate the max height of the new child
     		double maxHeight = Double.POSITIVE_INFINITY;
     		double minHeight = iChild.getHeight();
@@ -196,11 +252,22 @@ public class SubNetworkSlide extends DivertSegmentOperator {
     			
     		
 			if (jEdge == iParent.getParentEdges().get(0) || jEdge == getSisterEdge(iEdge)) {
-				// change the height of jParent
+				// change the height of jParent, but no topological changes
 				iParent.setHeight(targetEdges.get(jEdge));
+				if (iParent.segmentIndices != null && iParent.isCoalescence()) {
+					for (int i = 0; i < iParent.segmentIndices.length; i++) {
+						if (iParent.getChildEdges().get(0).hasSegments.get(i)
+								&& iParent.getChildEdges().get(1).hasSegments.get(i)) {
+							segmentTrees.get(i).getNode(iParent.segmentIndices[i]).setHeight(targetEdges.get(jEdge));
+						}	
+					}
+				}
 			}else {
 	    		// keep the current segments of edge i 
 	    		final BitSet iSegs = (BitSet) iEdge.hasSegments.clone();
+	    		//topology will change
+	    		Integer[] treeChildNodeList = new Integer[network.getSegmentCount()];
+	    		getTreeNodesDown(iEdge, iSegs, treeChildNodeList);
 	    		// remove iSegs from iEdge
 	    		logHR += removeSegmentsFromAncestors(iEdge, iSegs);	
 	    		
@@ -242,6 +309,11 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 	    		}  
 	    		iEdge.parentNode.setHeight(targetEdges.get(jEdge));
 	    		logHR -= addSegmentsToAncestors(iEdge, iSegs);
+	    		
+	    		
+	    		if (reconnectSegmentTrees(treeChildNodeList, iEdge, iSegs))
+	    			return Double.NEGATIVE_INFINITY;
+	    		
 			}
 			
 			
@@ -249,12 +321,16 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 			reverseTargetEdges.putAll(getTargetEdgesUp(iEdge.parentNode.getParentEdges().get(0), delta, maxHeight, minHeight));
 			reverseTargetEdges.putAll(getTargetEdgesDown(getSisterEdge(iEdge), delta, maxHeight, minHeight));  
 			
+			
 			logHR += Math.log(1.0/reverseTargetEdges.size());  
 			
+//	        System.out.println(network.getExtendedNewickVerbose());
+//	        System.exit(0);
+
+			
         }
+        
         		
-	    if(!networkTerminatesAtMRCA())
-	    	return Double.NEGATIVE_INFINITY;
 	    
 	    
 		if (!randomlySampleAttachmentEdgeInput.get()) {
