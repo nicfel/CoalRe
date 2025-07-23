@@ -64,6 +64,7 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 			if (logHR == Double.NEGATIVE_INFINITY)
 				return Double.NEGATIVE_INFINITY;
 			try {
+				
 				// remove empty reassortment edges
 				logHR += RemoveAllEmptyNetworkSegments();
 			} catch (Exception e) {
@@ -78,14 +79,14 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 			return Double.NEGATIVE_INFINITY;
 
 		// check that the networkEdges size is the same as newly calculating them
-		if (networkEdges.size()!=network.getEdges().size()) {
-			System.err.println(networkEdges.size() + " != " + network.getEdges().size() + " after proposal" +  this.getClass());
-			throw new IllegalArgumentException("Network edges size changed during proposal, this should not happen! "
-                    + "Please report this as a bug to the developers of coalre.");
-		}
+//		if (networkEdges.size()!=network.getEdges().size()) {
+//			System.err.println(networkEdges.size() + " != " + network.getEdges().size() + " after proposal" +  this.getClass());
+//			throw new IllegalArgumentException("Network edges size changed during proposal, this should not happen! "
+//                    + "Please report this as a bug to the developers of coalre.");
+//		}
 		
-		if (!networkTerminatesAtMRCA())
-			return Double.NEGATIVE_INFINITY;
+//		if (!networkTerminatesAtMRCA())
+//			return Double.NEGATIVE_INFINITY;
 
 		return logHR;
 	}
@@ -238,6 +239,7 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 				removableEdges.add(i);
 			}
 		}
+		
 				
 		int nrRemoved = 0;
 
@@ -362,10 +364,6 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 	}
 
 	protected boolean networkTerminatesAtMRCA() {
-//		if (true) {
-//			return networkTerminatesAtMRCA(network.getRootEdge());
-//		}
-//		
 		
 		List<NetworkNode> sortedNodes = new ArrayList<>(network.getNodes());
 		sortedNodes.sort(Comparator.comparingDouble(NetworkNode::getHeight));
@@ -385,6 +383,11 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 				// Reassortment
 
 				if (lineages < 2 && node.getHeight() > maxSampleHeight) {
+//					System.out.println(node.getHeight());
+//					System.out.println(network);
+					NetworkEdge newRootEdge = node.getChildEdges().get(0);
+					network.setRootEdge(newRootEdge);
+//					System.exit(0);
 					return false;
 				}
 

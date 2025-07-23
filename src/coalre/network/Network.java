@@ -73,7 +73,7 @@ public class Network extends StateNode {
     public Set<NetworkNode> getNodes() {
         Set<NetworkNode> networkNodeSet = new HashSet<>();
 
-        getNodesRecurse(rootEdge, networkNodeSet);
+        getNodesRecurseNew(rootEdge, networkNodeSet);
 
         return networkNodeSet;
     }
@@ -108,17 +108,8 @@ public class Network extends StateNode {
      */
     public Set<NetworkEdge> getEdges() {
         Set<NetworkEdge> networkEdgeSet = new HashSet<>();
-
-//        getEdgesRecurseW(rootEdge, networkEdgeSet);
-
-//        int networkEdgeCount = networkEdgeSet.size();
-//        
-//        networkEdgeSet = new HashSet<>();
         // Likely faster implementation as it avoids all the contains calls
-        getEdgesRecurseNew(rootEdge, networkEdgeSet);
-        
-//        if (networkEdgeSet.size() != networkEdgeCount)
-//            throw new RuntimeException("Network edge count mismatch: " + networkEdgeSet.size() + " != " + networkEdgeCount);
+        getEdgesRecurse(rootEdge, networkEdgeSet);
         
         return networkEdgeSet;
     }
@@ -156,6 +147,19 @@ public class Network extends StateNode {
         for (NetworkEdge childEdge : edge.childNode.getChildEdges())
             getEdgesRecurse(childEdge, networkEdgeSet);
     }
+    
+    private void getNodesRecurseNew(NetworkEdge edge, Set<NetworkNode> networkNodeSet) {
+
+	  	
+	  	if (edge.childNode.isReassortment() && edge.equals(edge.childNode.getParentEdges().get(1)))
+			return;    	
+	  	
+    	networkNodeSet.add(edge.childNode);
+  		
+	    for (NetworkEdge childEdge : edge.childNode.getChildEdges())
+	    	getNodesRecurseNew(childEdge, networkNodeSet);
+    }
+
 
     
     private void getEdgesRecurseNew(NetworkEdge edge, Set<NetworkEdge> networkEdgeSet) {
@@ -294,19 +298,19 @@ public class Network extends StateNode {
         if (currentEdge.childNode.getTypeLabel() != null) 
         		result.append(",state=").append(currentEdge.childNode.getTypeLabel());
     	
-        result.append(",indices=");
-        if (currentEdge.childNode.segmentIndices!=null) {
-        	result.append("{");
-			for (int i = 0; i < currentEdge.childNode.segmentIndices.length; i++) {
-				if (i > 0)
-					result.append(",");
-				result.append(currentEdge.childNode.segmentIndices[i]);
-			}
-			result.append("}");
-        }else {
-        	result.append("null");
+//        result.append(",indices=");
+//        if (currentEdge.childNode.segmentIndices!=null) {
+//        	result.append("{");
+//			for (int i = 0; i < currentEdge.childNode.segmentIndices.length; i++) {
+//				if (i > 0)
+//					result.append(",");
+//				result.append(currentEdge.childNode.segmentIndices[i]);
+//			}
+//			result.append("}");
+//        }else {
+//        	result.append("null");
         
-        }
+//        }
 
         if (currentEdge.childNode.metaDataString != null) 
 			result.append(currentEdge.childNode.getMetaData());

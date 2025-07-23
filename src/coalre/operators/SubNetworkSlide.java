@@ -57,8 +57,6 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 
 		double logHR = 0.0;
 		
-
-
         logHR = 0.0;
 
 		NetworkEdge iEdge = networkEdges.get(Randomizer.nextInt(networkEdges.size()));
@@ -81,7 +79,8 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 			// pick the source edge as the first edge whose length is greater than the random number
 			double passedLength = 0;
 			for (NetworkEdge edge : networkEdges) {
-				passedLength += edge.getLength();
+				if (!edge.isRootEdge())
+					passedLength += edge.getLength();
 				if (passedLength > randomEdgeLength) {
 					iEdge = edge;
 					break;

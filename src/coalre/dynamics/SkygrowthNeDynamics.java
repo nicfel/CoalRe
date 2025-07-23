@@ -25,6 +25,8 @@ public class SkygrowthNeDynamics extends PopulationFunction.Abstract {
 	boolean NesKnown = false;
 	double[] growth;
 	double[] growth_stored;
+	double[] invRatio;
+	double[] invRatio_stored;
 
 	@Override
 	public void initAndValidate() {
@@ -32,6 +34,7 @@ public class SkygrowthNeDynamics extends PopulationFunction.Abstract {
 		rateShifts = rateShiftsInput.get();
 		Ne.setDimension(rateShifts.getDimension());
 		growth = new double[rateShifts.getDimension()];
+		invRatio = new double[rateShifts.getDimension()];
 		recalculateNe();
 	}
 
@@ -59,6 +62,15 @@ public class SkygrowthNeDynamics extends PopulationFunction.Abstract {
 		return rateShifts.getDimension()-1;
 	}
 
+	private int getLaterIntervalNr(double t, int startPoint) {
+		// check which interval t + offset is in
+		for (int i = startPoint; i < rateShifts.getDimension()-1; i++)
+			if (t < rateShifts.getValue(i+1))
+				return i;
+		// after the last interval, just keep using the last element
+		return rateShifts.getDimension()-1;
+	}
+
 	@Override
 	public double getIntegral(double start, double finish) {
 		if (start == finish)
@@ -67,7 +79,7 @@ public class SkygrowthNeDynamics extends PopulationFunction.Abstract {
 		// get the interval "start" is in
 		int first_int = getIntervalNr(start);
 		// get the interval "finish" is in
-		int last_int = getIntervalNr(finish);
+		int last_int = getLaterIntervalNr(finish, first_int);
 
 		double weighted = 0.0;
 		double curr_time = start;	
@@ -80,15 +92,14 @@ public class SkygrowthNeDynamics extends PopulationFunction.Abstract {
 			double next_time = Math.min(getNextTime(i), finish);
 			double r = growth[i];
 
-			double timediff1 = curr_time;
-			double timediff2 = next_time;
-			timediff1 -= rateShifts.getArrayValue(i);
-			timediff2 -= rateShifts.getArrayValue(i);
+			double rateShift = rateShifts.getArrayValue(i);
+			double timediff1 = curr_time - rateShift;
+			double timediff2 = next_time - rateShift;
 			
 			if (r == 0.0) {
 				weighted += (next_time - curr_time) / Math.exp(Ne.getArrayValue(i));
 			} else {
-				weighted += (Math.exp(timediff2 * r) - Math.exp(timediff1 * r)) / Math.exp(Ne.getArrayValue(i)) / r;
+				weighted += (Math.exp(timediff2 * r) - Math.exp(timediff1 * r)) / invRatio[i];
 			}
 
 			curr_time = next_time;
@@ -128,7 +139,7 @@ public class SkygrowthNeDynamics extends PopulationFunction.Abstract {
 			if (r == 0.0) {
 				integral += (next_time - curr_time) / Math.exp(Ne.getArrayValue(i));
 			} else {
-				integral += (Math.exp(timediff2 * r) - Math.exp(timediff1 * r)) / Math.exp(Ne.getArrayValue(i)) / r;
+				integral += (Math.exp(timediff2 * r) - Math.exp(timediff1 * r)) / invRatio[i];
 			}
 	
 			double diff = x - integral;
@@ -173,12 +184,15 @@ public class SkygrowthNeDynamics extends PopulationFunction.Abstract {
 	public void store() {
 		growth_stored = new double[growth.length];
 		System.arraycopy(growth, 0, growth_stored, 0, growth.length);
+		invRatio_stored = new double[invRatio.length];
+		System.arraycopy(invRatio, 0, invRatio_stored, 0, invRatio.length);
 		super.store();
 	}
 
 	@Override
 	public void restore() {
 		System.arraycopy(growth_stored, 0, growth, 0, growth_stored.length);
+		System.arraycopy(invRatio_stored, 0, invRatio, 0, invRatio_stored.length);
 		super.restore();
 	}
 
@@ -189,6 +203,8 @@ public class SkygrowthNeDynamics extends PopulationFunction.Abstract {
 		for (int i = 0; i < Ne.getDimension()-1; i++) {
 			growth[i] = (Ne.getArrayValue(i) - Ne.getArrayValue(i+1))/(rateShifts.getValue(i+1)-curr_time);
 			curr_time = rateShifts.getValue(i+1);
+			invRatio[i] = Math.exp(Ne.getArrayValue(i)) * growth[i];
+			
 		}
 		NesKnown = true;
 	}

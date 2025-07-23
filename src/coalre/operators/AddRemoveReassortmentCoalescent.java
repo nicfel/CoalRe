@@ -179,6 +179,72 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
         return logHR;
     }
     
+//	double addReassortmentEdge(NetworkEdge sourceEdge, double sourceTime,
+//            NetworkEdge destEdge, double destTime) {
+//
+//double logHR = 0.0;
+//
+//
+//NetworkNode sourceNode = new NetworkNode();
+//sourceNode.setHeight(sourceTime);
+//
+//NetworkNode oldSourceEdgeParent = sourceEdge.parentNode;
+//oldSourceEdgeParent.removeChildEdge(sourceEdge);
+//sourceNode.addChildEdge(sourceEdge);
+//
+//NetworkEdge newEdge1 = new NetworkEdge();
+//sourceNode.addParentEdge(newEdge1);
+//oldSourceEdgeParent.addChildEdge(newEdge1);
+//
+//newEdge1.hasSegments = (BitSet) sourceEdge.hasSegments.clone();
+//
+//if (destEdge == sourceEdge)
+//destEdge = newEdge1;
+//
+//NetworkNode destNode = new NetworkNode();
+//destNode.setHeight(destTime);
+//
+//NetworkNode oldDestEdgeParent = destEdge.parentNode;
+//if (oldDestEdgeParent != null) {
+//oldDestEdgeParent.removeChildEdge(destEdge);
+//}
+//
+//destNode.addChildEdge(destEdge);
+//
+//NetworkEdge newEdge2 = new NetworkEdge();
+//destNode.addParentEdge(newEdge2);
+//
+//if (oldDestEdgeParent == null) {
+//network.setRootEdge(newEdge2);
+//} else {
+//oldDestEdgeParent.addChildEdge(newEdge2);
+//}
+//
+//newEdge2.hasSegments = (BitSet) destEdge.hasSegments.clone();
+//
+//NetworkEdge reassortmentEdge = new NetworkEdge();
+//sourceNode.addParentEdge(reassortmentEdge);
+//destNode.addChildEdge(reassortmentEdge);
+//reassortmentEdge.hasSegments = new BitSet();
+//
+//// Choose segments to divert to new edge
+//BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
+//logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
+//logHR += divertSegments(reassortmentEdge, newEdge1, segsToDivert);
+//
+//networkEdges.add(reassortmentEdge);
+//networkEdges.add(newEdge1);
+//networkEdges.add(newEdge2);
+//
+//
+//
+////logHR -= addSegmentsToAncestors(reassortmentEdge, segsToDivert);
+////logHR += removeSegmentsFromAncestors(newEdge1, segsToDivert);
+//
+//return logHR;
+//}
+//
+//
     double addReassortmentEdge(NetworkEdge sourceEdge, double sourceTime,
                                NetworkEdge destEdge, double destTime) {
 
@@ -378,32 +444,82 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
         return logHR;
     }
 
+//    double removeReassortmentEdge(NetworkEdge edgeToRemove) {
+//        double logHR = 0.0;
+//
+//        NetworkNode nodeToRemove = edgeToRemove.childNode;
+//        NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
+//        NetworkNode edgeToRemoveSpouseParent = edgeToRemoveSpouse.parentNode;
+//
+//        // Divert segments away from chosen edge
+//        BitSet segsToDivert = (BitSet) edgeToRemove.hasSegments.clone();
+//        for (int i = 0; i < segmentTrees.size(); i++) {
+//        	if (segsToDivert.get(i))
+//        		segmentsChanged.set(i, true);            	
+//        }
+//
+//        logHR +=  divertSegments(edgeToRemoveSpouse, edgeToRemove, segsToDivert);
+//
+//        
+//        if (divertOneSegmentInput.get()) {
+//            logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments, segsToDivert, 0.1);
+//		} else {
+//			logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments);
+//		}
+//        
+//        networkEdges.remove(edgeToRemove);
+//        networkEdges.remove(edgeToRemoveSpouse);
+//
+//
+//        // Remove edge and associated nodes
+//        NetworkEdge edgeToExtend = nodeToRemove.getChildEdges().get(0);
+//        nodeToRemove.removeChildEdge(edgeToExtend);
+//        nodeToRemove.removeParentEdge(edgeToRemove);
+//        nodeToRemove.removeParentEdge(edgeToRemoveSpouse);
+//        edgeToRemoveSpouseParent.removeChildEdge(edgeToRemoveSpouse);
+//        edgeToRemoveSpouseParent.addChildEdge(edgeToExtend);
+//
+//        NetworkNode secondNodeToRemove = edgeToRemove.parentNode;
+//        NetworkEdge secondEdgeToExtend = getSisterEdge(edgeToRemove);
+//
+//        secondNodeToRemove.removeChildEdge(secondEdgeToExtend);
+//        secondNodeToRemove.removeChildEdge(edgeToRemove);
+//        networkEdges.remove(secondNodeToRemove.getParentEdges().get(0));
+//
+//        if (secondNodeToRemove.getParentEdges().get(0).isRootEdge()) {
+//            network.setRootEdge(secondEdgeToExtend);
+//
+//        } else {
+//            NetworkEdge secondNodeToRemoveParentEdge = secondNodeToRemove.getParentEdges().get(0);
+//            NetworkNode secondNodeToRemoveParent = secondNodeToRemoveParentEdge.parentNode;
+//            secondNodeToRemoveParent.removeChildEdge(secondNodeToRemoveParentEdge);
+//            secondNodeToRemove.removeParentEdge(secondNodeToRemoveParentEdge);
+//
+//            secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
+//        }
+////        if (!networkTerminatesAtMRCA())
+////            return Double.NEGATIVE_INFINITY;
+//
+//        return logHR;
+//    }
+//    
+    
     double removeReassortmentEdge(NetworkEdge edgeToRemove) {
         double logHR = 0.0;
+
 
         NetworkNode nodeToRemove = edgeToRemove.childNode;
         NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
         NetworkNode edgeToRemoveSpouseParent = edgeToRemoveSpouse.parentNode;
+		networkEdges.remove(edgeToRemove);
+		networkEdges.remove(edgeToRemoveSpouse);
 
         // Divert segments away from chosen edge
         BitSet segsToDivert = (BitSet) edgeToRemove.hasSegments.clone();
-        for (int i = 0; i < segmentTrees.size(); i++) {
-        	if (segsToDivert.get(i))
-        		segmentsChanged.set(i, true);            	
-        }
-
         logHR +=  divertSegments(edgeToRemoveSpouse, edgeToRemove, segsToDivert);
-
-        
-        if (divertOneSegmentInput.get()) {
-            logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments, segsToDivert, 0.1);
-		} else {
-			logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments);
-		}
-        
-        networkEdges.remove(edgeToRemove);
-        networkEdges.remove(edgeToRemoveSpouse);
-
+//        logHR -= addSegmentsToAncestors(edgeToRemoveSpouse, segsToDivert);
+//        logHR += removeSegmentsFromAncestors(edgeToRemove, segsToDivert);
+        logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments);
 
         // Remove edge and associated nodes
         NetworkEdge edgeToExtend = nodeToRemove.getChildEdges().get(0);
@@ -418,8 +534,8 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 
         secondNodeToRemove.removeChildEdge(secondEdgeToExtend);
         secondNodeToRemove.removeChildEdge(edgeToRemove);
-        networkEdges.remove(secondNodeToRemove.getParentEdges().get(0));
 
+        networkEdges.remove(secondNodeToRemove.getParentEdges().get(0));
         if (secondNodeToRemove.getParentEdges().get(0).isRootEdge()) {
             network.setRootEdge(secondEdgeToExtend);
 
@@ -430,13 +546,13 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
             secondNodeToRemove.removeParentEdge(secondNodeToRemoveParentEdge);
 
             secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
+            networkEdges.remove(secondNodeToRemoveParentEdge);
         }
-//        if (!networkTerminatesAtMRCA())
-//            return Double.NEGATIVE_INFINITY;
 
         return logHR;
     }
-    
+
+
     
     private BitSet getRandomConditionedSubset(BitSet sourceSegments, double binomProb) {
 

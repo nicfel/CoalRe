@@ -72,6 +72,9 @@ public class NetworkEdge {
                 NetworkEdge childEdgeCopy = childEdge.getCopy(seenNodes);
                 childNodeCopy.addChildEdge(childEdgeCopy);
             }
+        }else {
+        	// meant to reduce the size of the Hasmap that has to be searched
+        	seenNodes.remove(childNode);
         }
 
         return edgeCopy;

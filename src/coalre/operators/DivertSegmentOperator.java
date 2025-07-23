@@ -297,6 +297,10 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 //    }
 
 	void getTreeNodesDown(NetworkEdge edge, BitSet segsToRemove, Integer[] treeNodeList) {
+		if (segmentTrees.size() == 0) {
+			return;
+		}
+			
 		segsToRemove = (BitSet) segsToRemove.clone();
 		segsToRemove.and(edge.hasSegments);
 
@@ -330,7 +334,6 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 			// loop over the segsToRemove Left and update the Tree Nodes
 			for (int segIdx = 0; segIdx < segsToRemove.length(); segIdx++) {
 				if (segsToRemove.get(segIdx)) {
-						
 					treeNodeList[segIdx] = edge.childNode.segmentIndices[segIdx];
 				}
 			}

@@ -90,8 +90,15 @@ public class TipReheight extends NetworkOperator {
                 // if the height drops below 0, reheight the whole network (probably inefficient, due to making nodes dirty)
                 if (newHeight < 0){
                 	double diff = newHeight;
-                	for (NetworkNode node : network.getNodes())
+                	for (NetworkNode node : network.getNodes()) {
                 		node.setHeight(node.getHeight()-diff);  
+            	        if (node.segmentIndices!=null && segmentTreesInput.get().size()>0) {
+            	        	for (int i =0; i < node.segmentIndices.length; i++) {
+            	        		if (node.segmentIndices[i]!=-1)
+            	        			segmentTreesInput.get().get(i).getNode(node.segmentIndices[i]).setHeight(node.getHeight());
+            				}
+            	        }
+                	}
                 	
                 	dateOffset.get().startEditing(this);
                 	dateOffset.get().setValue(dateOffset.get().getValue()+diff);
@@ -108,8 +115,15 @@ public class TipReheight extends NetworkOperator {
                 	
                 	// rescale all internal nodes relative to the newest most recently sampled individual
                 	if (newHeight>minHeight){
-                    	for (NetworkNode node : network.getNodes())
-                    		node.setHeight(node.getHeight()-minHeight);                	
+                    	for (NetworkNode node : network.getNodes()) {
+                    		node.setHeight(node.getHeight()-minHeight);    
+	            	        if (node.segmentIndices!=null && segmentTreesInput.get().size()>0) {
+	            	        	for (int i =0; i < node.segmentIndices.length; i++) {
+	            	        		if (node.segmentIndices[i]!=-1)
+	            	        			segmentTreesInput.get().get(i).getNode(node.segmentIndices[i]).setHeight(node.getHeight());
+	            				}
+	            	        }
+                    	}
                 	}
                 	
                 	dateOffset.get().startEditing(this);

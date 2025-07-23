@@ -55,8 +55,8 @@ public class CoalescentWithReassortment extends NetworkDistribution {
     private boolean isTimeVarying = false;
 
 	public double redFactor;
-
-
+	double[][] logBinomval;
+		
 	@Override
     public void initAndValidate(){
         populationFunction = populationFunctionInput.get();
@@ -67,25 +67,36 @@ public class CoalescentWithReassortment extends NetworkDistribution {
         	isTimeVarying = true;
         	timeVaryingReassortmentRates = timeVaryingReassortmentRatesInput.get();
         }
+        
+        logBinomval = new double[intervals.networkInput.get().getSegmentCount()+1][intervals.networkInput.get().getSegmentCount()];
+		for (int i = 2; i < intervals.networkInput.get().getSegmentCount()+1; i++) {
+			for (int j = 0; j < i; j++) {
+				logBinomval[i][j] = Math.log(Math.pow(intervals.getBinomialProb(), j)
+						* Math.pow(1-intervals.getBinomialProb(), i-j) 
+						+ Math.pow(intervals.getBinomialProb(), i-j)
+						* Math.pow(1-intervals.getBinomialProb(), j));
+			}
+		}
+            
     }
-	int ii = 0;
-    public double calculateLogP() {
+
+	public double calculateLogP() {
     	logP = 0;
     	// Calculate tree intervals
-    	List<NetworkEvent> networkEventList = intervals.getNetworkEventList();
-
+    	intervals.update();
 		// get the mrca of all loci trees
+		double oriLociMRCA = NetworkStatsLogger.getLociMRCA(networkIntervalsInput.get().networkInput.get());
 		double lociMRCA = maxHeightRatioInput.get()<Double.POSITIVE_INFINITY || maxHeightInput.get()<Double.POSITIVE_INFINITY ?
-				NetworkStatsLogger.getLociMRCA(networkIntervalsInput.get().networkInput.get()) : Double.POSITIVE_INFINITY;
+				oriLociMRCA : Double.POSITIVE_INFINITY;
 		
-//		System.out.println(networkIntervalsInput.get().networkInput.get());
-//		System.out.println("lociMRCA: " + NetworkStatsLogger.getLociMRCA(networkIntervalsInput.get().networkInput.get()));
-		
+		double maxHeight = maxHeightInput.get() < Double.POSITIVE_INFINITY ? maxHeightInput.get()
+				: lociMRCA * maxHeightRatioInput.get();
+
 		NetworkEvent prevEvent = null;
 
-    	for (NetworkEvent event : networkEventList) {
+    	for (NetworkEvent event : intervals.networkEventList) {
         	if (prevEvent != null)
-        		logP += intervalContribution(prevEvent, event, lociMRCA);
+        		logP += intervalContribution(prevEvent, event, lociMRCA, oriLociMRCA);
         	
         	switch (event.type) {
 				case COALESCENCE:
@@ -96,7 +107,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 					break;
 
 				case REASSORTMENT:
-					logP += reassortment(event, lociMRCA);
+					logP += reassortment(event, lociMRCA, maxHeight);
 					break;
 			}
 
@@ -106,80 +117,50 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
         	prevEvent = event;
         }
-//    	System.out.println("logP: " + logP);
-//    	ii++;
-//    	if (ii>100) {
-//    		System.exit(0);
-//    	}
-//    	if (logP>0) {
-//    		prevEvent = null;
-//
-//        	for (NetworkEvent event : networkEventList) {
-//            	if (prevEvent != null)
-//            		System.out.println(intervalContribution(prevEvent, event, lociMRCA));
-//            	switch (event.type) {
-//    				case COALESCENCE:
-//    					System.out.println("c" +coalesce(event));
-//    					break;
-//
-//    				case SAMPLE:
-//    					break;
-//
-//    				case REASSORTMENT:
-//    					System.out.println("r" +reassortment(event, lociMRCA));
-//    					break;
-//            	}
-//            	prevEvent = event;
-//        	}
-//
-//    		
-//    		
-//    		System.out.println(networkIntervalsInput.get().networkInput.get());
-//    		System.exit(0);
-//    	}
-//		System.out.println(networkIntervalsInput.get().networkInput.get());
-//		System.exit(0);
-//		System.out.println(logP);
-//		if (logP == Double.POSITIVE_INFINITY)
-//			System.exit(0);
 
 		return logP;
     }
     
-	private double reassortment(NetworkEvent event, double lociMRCA) {
+	private double reassortment(NetworkEvent event, double lociMRCA, double maxHeight) {
 		
-		double maxHeight = maxHeightInput.get() < Double.POSITIVE_INFINITY ? maxHeightInput.get()
-				: lociMRCA * maxHeightRatioInput.get();
-
-		
-		double binomval = Math.pow(intervals.getBinomialProb(), event.segsSortedLeft)
+		double logBinomval;
+		if (intervals.getBinomialProb()!=0.5) {
+			logBinomval = Math.log(Math.pow(intervals.getBinomialProb(), event.segsSortedLeft)
 				* Math.pow(1-intervals.getBinomialProb(), event.segsToSort-event.segsSortedLeft) 
 				+ Math.pow(intervals.getBinomialProb(), event.segsToSort-event.segsSortedLeft)
-				* Math.pow(1-intervals.getBinomialProb(), event.segsSortedLeft);
+				* Math.pow(1-intervals.getBinomialProb(), event.segsSortedLeft));
+		}else {
+			logBinomval = this.logBinomval[event.segsToSort][event.segsSortedLeft];
+		}
 		
 		if (event.time<=maxHeight) {
 			if (isTimeVarying) {
 				return Math.log(timeVaryingReassortmentRates.getPopSize(event.time))
-						+ Math.log(binomval);
+						+ logBinomval;
 				
 			}else
 				return Math.log(reassortmentRate.getArrayValue())
-						+ Math.log(binomval);
+						+ logBinomval;
 		}else{
 			if (isTimeVarying)
 				return Math.log(redFactor*timeVaryingReassortmentRates.getPopSize(event.time))
-						+ Math.log(binomval);
+						+ logBinomval;
 			else
 				return Math.log(redFactor*reassortmentRate.getArrayValue())
-						+ Math.log(binomval);
+						+ logBinomval;
 		}	
+	}
+
+	private double usePrecompBinomVal(int segsSortedLeft, int segsToSort) {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 	private double coalesce(NetworkEvent event) {
 		return Math.log(1.0/populationFunction.getPopSize(event.time));
 	}
 
-	private double intervalContribution(NetworkEvent prevEvent, NetworkEvent nextEvent, double lociMRCA) {
+	private double intervalContribution(NetworkEvent prevEvent, NetworkEvent nextEvent, double lociMRCA, double oriLociMRCA) {
 
         double result = 0.0;
         
@@ -212,9 +193,6 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 				result += -redFactor*reassortmentRate.getArrayValue() * prevEvent.totalReassortmentObsProb
 						* (nextEvent.time - prevEvent.time-maxHeight);
 			}
-
-
-
 		}else{
 			if (isTimeVarying)
 				result += -prevEvent.totalReassortmentObsProb
@@ -225,6 +203,12 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 		}
 		result += -0.5*prevEvent.lineages*(prevEvent.lineages-1)
                 * populationFunction.getIntegral(prevEvent.time, nextEvent.time);
+		
+		if (nextEvent.time > oriLociMRCA && prevEvent.lineages == 1) {
+			// ensures that root is actually the root, this was previous done by the network terminates at tMRCA class
+			// however, this is a more efficient way of keeping track of that
+			return Double.NEGATIVE_INFINITY;
+		}
 		
 		return result;
 	}

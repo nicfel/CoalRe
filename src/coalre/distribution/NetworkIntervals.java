@@ -26,15 +26,27 @@ public class NetworkIntervals extends CalculationNode {
 
     private Network network;
 
-    private List<NetworkEvent> networkEventList, storedNetworkEventList;
+    protected List<NetworkEvent> networkEventList, storedNetworkEventList;
 
     public boolean eventListDirty = true;
+    private boolean precomputeReassortmentObsProb = false;
+    private double[] obsProb;
 
     @Override
     public void initAndValidate() {
         network = networkInput.get();
 
         storedNetworkEventList = new ArrayList<>();
+        
+        if (binomialProbInput.get()==null) {
+        	precomputeReassortmentObsProb = true;
+        	obsProb = new double[network.getSegmentCount()+1];
+        	for (int i = 0; i< obsProb.length; i++) {
+        		obsProb[i] = 1.0 - (Math.pow(0.5, i) + Math.pow(0.5, i));
+        	}
+
+        }
+        
     }
 
     public List<NetworkEvent> getNetworkEventList() {
@@ -44,7 +56,6 @@ public class NetworkIntervals extends CalculationNode {
     }
 
     public double getBinomialProb() {
-//    	return 0.5;
         return binomialProbInput.get() != null
                 ? binomialProbInput.get().getArrayValue()
                 : 0.5;
@@ -79,32 +90,61 @@ public class NetworkIntervals extends CalculationNode {
 
         int lineages = 0;
         double totalReassortmentObsProb = 0;
-
-        for (NetworkEvent event : networkEventList) {
-            switch(event.type) {
-                case SAMPLE:
-                    lineages += 1;
-                    totalReassortmentObsProb += event.node.getParentEdges().get(0).getReassortmentObsProb(getBinomialProb());
-                    break;
-                case REASSORTMENT:
-                    lineages += 1;
-                    totalReassortmentObsProb -= event.node.getChildEdges().get(0).getReassortmentObsProb(getBinomialProb());
-                    totalReassortmentObsProb += event.node.getParentEdges().get(0).getReassortmentObsProb(getBinomialProb());
-                    totalReassortmentObsProb += event.node.getParentEdges().get(1).getReassortmentObsProb(getBinomialProb());
-
-                    event.segsToSort = event.node.getChildEdges().get(0).hasSegments.cardinality();
-                    event.segsSortedLeft = event.node.getParentEdges().get(0).hasSegments.cardinality();
-                    break;
-                case COALESCENCE:
-                    lineages -= 1;
-                    totalReassortmentObsProb -= event.node.getChildEdges().get(0).getReassortmentObsProb(getBinomialProb());
-                    totalReassortmentObsProb -= event.node.getChildEdges().get(1).getReassortmentObsProb(getBinomialProb());
-                    totalReassortmentObsProb += event.node.getParentEdges().get(0).getReassortmentObsProb(getBinomialProb());
-                    break;
-            }
-
-            event.lineages = lineages;
-            event.totalReassortmentObsProb = totalReassortmentObsProb;
+        
+        if (precomputeReassortmentObsProb) {
+	        for (NetworkEvent event : networkEventList) {
+	            switch(event.type) {
+	                case SAMPLE:
+	                    lineages += 1;
+	                    totalReassortmentObsProb += obsProb[event.node.getParentEdges().get(0).hasSegments.cardinality()];
+	                    break;
+	                case REASSORTMENT:
+	                    lineages += 1;
+	                    totalReassortmentObsProb -= obsProb[event.node.getChildEdges().get(0).hasSegments.cardinality()];
+	                    totalReassortmentObsProb += obsProb[event.node.getParentEdges().get(0).hasSegments.cardinality()];
+	                    totalReassortmentObsProb += obsProb[event.node.getParentEdges().get(1).hasSegments.cardinality()];
+	
+	                    event.segsToSort = event.node.getChildEdges().get(0).hasSegments.cardinality();
+	                    event.segsSortedLeft = event.node.getParentEdges().get(0).hasSegments.cardinality();
+	                    break;
+	                case COALESCENCE:
+	                    lineages -= 1;
+	                    totalReassortmentObsProb -= obsProb[event.node.getChildEdges().get(0).hasSegments.cardinality()];
+	                    totalReassortmentObsProb -= obsProb[event.node.getChildEdges().get(1).hasSegments.cardinality()];
+	                    totalReassortmentObsProb += obsProb[event.node.getParentEdges().get(0).hasSegments.cardinality()];
+	                    break;
+	            }
+	
+	            event.lineages = lineages;
+	            event.totalReassortmentObsProb = totalReassortmentObsProb;
+	        }
+        }else {
+        	for (NetworkEvent event : networkEventList) {
+	            switch(event.type) {
+	                case SAMPLE:
+	                    lineages += 1;
+	                    totalReassortmentObsProb += event.node.getParentEdges().get(0).getReassortmentObsProb(getBinomialProb());
+	                    break;
+	                case REASSORTMENT:
+	                    lineages += 1;
+	                    totalReassortmentObsProb -= event.node.getChildEdges().get(0).getReassortmentObsProb(getBinomialProb());
+	                    totalReassortmentObsProb += event.node.getParentEdges().get(0).getReassortmentObsProb(getBinomialProb());
+	                    totalReassortmentObsProb += event.node.getParentEdges().get(1).getReassortmentObsProb(getBinomialProb());
+	
+	                    event.segsToSort = event.node.getChildEdges().get(0).hasSegments.cardinality();
+	                    event.segsSortedLeft = event.node.getParentEdges().get(0).hasSegments.cardinality();
+	                    break;
+	                case COALESCENCE:
+	                    lineages -= 1;
+	                    totalReassortmentObsProb -= event.node.getChildEdges().get(0).getReassortmentObsProb(getBinomialProb());
+	                    totalReassortmentObsProb -= event.node.getChildEdges().get(1).getReassortmentObsProb(getBinomialProb());
+	                    totalReassortmentObsProb += event.node.getParentEdges().get(0).getReassortmentObsProb(getBinomialProb());
+	                    break;
+	            }
+	
+	            event.lineages = lineages;
+	            event.totalReassortmentObsProb = totalReassortmentObsProb;
+	        }
         }
 
         eventListDirty = false;
