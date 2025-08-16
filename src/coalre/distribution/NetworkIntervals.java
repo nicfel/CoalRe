@@ -99,29 +99,19 @@ public class NetworkIntervals extends CalculationNode {
 	                    totalReassortmentObsProb += obsProb[event.node.getParentEdges().get(0).hasSegments.cardinality()];
 	                    break;
 	                case REASSORTMENT:
-	                	int cardleft = event.node.getParentEdges().get(0).hasSegments.cardinality();
-	                	int cardright = event.node.getParentEdges().get(1).hasSegments.cardinality();
-	                	if (cardleft>0 && cardright>0) {
-		                	
-		                    lineages += 1;
-		                    totalReassortmentObsProb -= obsProb[event.node.getChildEdges().get(0).hasSegments.cardinality()];
-		                    totalReassortmentObsProb += obsProb[cardleft];
-		                    totalReassortmentObsProb += obsProb[cardright];
-		
-		                    event.segsToSort = event.node.getChildEdges().get(0).hasSegments.cardinality();
-		                    event.segsSortedLeft = event.node.getParentEdges().get(0).hasSegments.cardinality();
-	                	}
+	                    lineages += 1;
+	                    totalReassortmentObsProb -= obsProb[event.node.getChildEdges().get(0).hasSegments.cardinality()];
+	                    totalReassortmentObsProb += obsProb[event.node.getParentEdges().get(0).hasSegments.cardinality()];
+	                    totalReassortmentObsProb += obsProb[event.node.getParentEdges().get(1).hasSegments.cardinality()];
+	
+	                    event.segsToSort = event.node.getChildEdges().get(0).hasSegments.cardinality();
+	                    event.segsSortedLeft = event.node.getParentEdges().get(0).hasSegments.cardinality();
 	                    break;
 	                case COALESCENCE:
-	                	int childleft = event.node.getChildEdges().get(0).hasSegments.cardinality();
-	                	int childright = event.node.getChildEdges().get(1).hasSegments.cardinality();
-                        if (childleft>0 && childright>0) {
-	
-		                    lineages -= 1;
-		                    totalReassortmentObsProb -= obsProb[event.node.getChildEdges().get(0).hasSegments.cardinality()];
-		                    totalReassortmentObsProb -= obsProb[event.node.getChildEdges().get(1).hasSegments.cardinality()];
-		                    totalReassortmentObsProb += obsProb[event.node.getParentEdges().get(0).hasSegments.cardinality()];
-                        }
+	                    lineages -= 1;
+	                    totalReassortmentObsProb -= obsProb[event.node.getChildEdges().get(0).hasSegments.cardinality()];
+	                    totalReassortmentObsProb -= obsProb[event.node.getChildEdges().get(1).hasSegments.cardinality()];
+	                    totalReassortmentObsProb += obsProb[event.node.getParentEdges().get(0).hasSegments.cardinality()];
 	                    break;
 	            }
 	
