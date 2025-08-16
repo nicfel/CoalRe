@@ -1,81 +1,86 @@
 package coalre.distribution;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import beast.base.core.Description;
 import beast.base.core.Function;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
+import beast.base.inference.CalculationNode;
 import beast.base.inference.parameter.IntegerParameter;
 import beast.base.inference.parameter.RealParameter;
-import beast.base.evolution.tree.coalescent.PopulationFunction;
-import beast.base.inference.distribution.ParametricDistribution;
-import coalre.network.NetworkEdge;
-
-import java.util.BitSet;
-import java.util.List;
-import java.util.stream.Collectors;
+import coalre.network.Network;
 
 
-/**
- * @author Nicola Felix Mueller
- */
+@Description("calculates the differences between the entries of a vector")
+public class emptyNetworkEdgesPrior extends CalculationNode implements Function {
+    final public Input<Network> networkInput = new Input<>("network", "ignore difference after that index");
 
-@Description("Calculates the probability of a reassortment network using under" +
-        " the framework of Mueller (2018).")
-public class emptyNetworkEdgesPrior extends NetworkDistribution {
 
-	final public Input<ParametricDistribution> nrEventsDistributionInput = new Input<>("nrEventsDistribution", "distribution used to calculate prior, e.g. normal, beta, gamma.", Validate.REQUIRED);
-	final public Input<ParametricDistribution> emptyLengthDistributionInput = new Input<>("emptyLengthDistribution", "distribution used to calculate prior, e.g. normal, beta, gamma.", Validate.REQUIRED);
-
-	/**
-     * shadows distInput *
-     */
-    protected ParametricDistribution nrEventsDistribution;
-    protected ParametricDistribution emptyLengthDistribution;
+    boolean needsRecompute = true;
+    double emptyEdgesCount;
+    double storedEmptyEdgesCount;
+    
 
     @Override
-    public void initAndValidate(){
-    	nrEventsDistribution = nrEventsDistributionInput.get();
-    	emptyLengthDistribution = emptyLengthDistributionInput.get();
-        calculateLogP();
+    public void initAndValidate() {
+
     }
 
-    public double calculateLogP() {
+    @Override
+    public int getDimension() {
+        return 1;
+    }
+
+    @Override
+    public double getArrayValue() {
+        if (needsRecompute) {
+            compute();
+        }
+        return emptyEdgesCount;
+    }
+
+    /**
+     * do the actual work, and reset flag *
+     */
+    void compute() {
+    	emptyEdgesCount = (double) networkInput.get().getEdges().stream()
+    			.filter(e -> e.hasSegments.cardinality() == 0)
+    			.count();
     	
-    	logP = 0.0;
-    	
-    	// get how many reassortment edges are empty
-        double nrEmptyReassortmentEdges = (double) networkIntervalsInput.get().networkInput.get().getEdges().stream()
-                .filter(e -> !e.isRootEdge())
-                .filter(e -> e.hasSegments.cardinality()==0)
-                .filter(e -> e.childNode.isReassortment())
-                .count();
-        
-        final Double[] arrayForInit = new Double[1];
-        arrayForInit[0] = nrEmptyReassortmentEdges;	
-        
-        Function nrEmptyEdges = new RealParameter(arrayForInit);
+        needsRecompute = false;
+    }
 
-        
-        // get how many reassortment events are empty
-        List<NetworkEdge> emptyEdges = networkIntervalsInput.get().networkInput.get().getEdges().stream()
-				.filter(e -> !e.isRootEdge())
-				.filter(e -> e.hasSegments.cardinality()==0)
-				.collect(Collectors.toList());
-        
-        double overalLength = 0.0;
-        for (int i = 0; i < emptyEdges.size(); i++)
-        	overalLength += emptyEdges.get(i).getLength();
-       
-        final Double[] overalLengthForInit = new Double[1];
-        overalLengthForInit[0] = nrEmptyReassortmentEdges;	
+    @Override
+    public double getArrayValue(int dim) {
+        if (needsRecompute) {
+            compute();
+        }
+        return emptyEdgesCount;
+    }
 
-        Function lengthEmptyEdges = new RealParameter(arrayForInit);
-           
-        
-        logP += nrEventsDistribution.calcLogP(nrEmptyEdges);
-        logP += emptyLengthDistribution.calcLogP(lengthEmptyEdges);
-        
-        return logP;
-    }    
+    /**
+     * CalculationNode methods *
+     */
+    @Override
+    public void store() {
+		storedEmptyEdgesCount = emptyEdgesCount;
+        super.store();
+    }
 
-}
+    @Override
+    public void restore() {
+    	double tmp = storedEmptyEdgesCount;
+    	storedEmptyEdgesCount = emptyEdgesCount;
+		emptyEdgesCount = tmp;
+        super.restore();
+    }
+
+    @Override
+    public boolean requiresRecalculation() {
+        needsRecompute = true;
+        return true;
+    }
+} // class Sum

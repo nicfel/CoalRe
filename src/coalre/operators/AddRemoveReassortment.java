@@ -71,6 +71,7 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 		List<NetworkEdge> destEdges = networkEdges.stream()
 				.filter(e -> !e.isRootEdge())
 				.filter(e -> e.parentNode.getHeight() >= sourceTime)
+				.filter(e -> e.hasSegments.cardinality() >= 1)
 				.collect(Collectors.toList());	
 		destEdges.add(network.getRootEdge());
 		
@@ -249,6 +250,7 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 		int destEdgesNumber = (int) networkEdges.stream()
 				.filter(e -> !e.isRootEdge())
 				.filter(e -> e.parentNode.getHeight() >= sourceTime)
+				.filter(e -> e.hasSegments.cardinality() >= 1)
 				.count();	
 		
 		destEdgesNumber += 1; // include root edge

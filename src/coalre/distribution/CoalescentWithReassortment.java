@@ -125,7 +125,10 @@ public class CoalescentWithReassortment extends NetworkDistribution {
     }
     
 	private double reassortment(NetworkEvent event, double maxHeight) {
-		
+		if (event.empty) {
+			return 0.0;
+		}
+
 		double logBinomval;
 		if (intervals.getBinomialProb()!=0.5) {
 			logBinomval = Math.log(Math.pow(intervals.getBinomialProb(), event.segsSortedLeft)
@@ -169,6 +172,8 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 	}
 
 	private double coalesce(NetworkEvent event) {
+		if (event.empty)
+			return 0.0;
 		return Math.log(1.0/populationFunction.getPopSize(event.time));
 	}
 

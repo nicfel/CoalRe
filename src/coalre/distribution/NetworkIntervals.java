@@ -8,6 +8,7 @@ import beast.base.core.Input;
 import beast.base.core.Input.Validate;
 import beast.base.inference.parameter.RealParameter;
 import coalre.network.Network;
+import coalre.network.NetworkNode;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -65,7 +66,9 @@ public class NetworkIntervals extends CalculationNode {
 //        if (!eventListDirty)
 //            return;
 
-        networkEventList = network.getNodes().stream().map(n -> {
+        networkEventList = network.getNodes().stream()
+//        		.filter(n -> valid(n))
+        		.map(n -> {
             NetworkEvent event = new NetworkEvent();
             event.time = n.getHeight();
             event.node = n;
@@ -99,19 +102,35 @@ public class NetworkIntervals extends CalculationNode {
 	                    totalReassortmentObsProb += obsProb[event.node.getParentEdges().get(0).hasSegments.cardinality()];
 	                    break;
 	                case REASSORTMENT:
-	                    lineages += 1;
-	                    totalReassortmentObsProb -= obsProb[event.node.getChildEdges().get(0).hasSegments.cardinality()];
-	                    totalReassortmentObsProb += obsProb[event.node.getParentEdges().get(0).hasSegments.cardinality()];
-	                    totalReassortmentObsProb += obsProb[event.node.getParentEdges().get(1).hasSegments.cardinality()];
-	
-	                    event.segsToSort = event.node.getChildEdges().get(0).hasSegments.cardinality();
-	                    event.segsSortedLeft = event.node.getParentEdges().get(0).hasSegments.cardinality();
+	                	int cardleft = event.node.getParentEdges().get(0).hasSegments.cardinality();
+	                	int cardright = event.node.getParentEdges().get(1).hasSegments.cardinality();
+	                	if (cardleft>0 && cardright>0) {
+		                	
+		                    lineages += 1;
+		                    totalReassortmentObsProb -= obsProb[event.node.getChildEdges().get(0).hasSegments.cardinality()];
+		                    totalReassortmentObsProb += obsProb[cardleft];
+		                    totalReassortmentObsProb += obsProb[cardright];
+		
+		                    event.segsToSort = event.node.getChildEdges().get(0).hasSegments.cardinality();
+		                    event.segsSortedLeft = event.node.getParentEdges().get(0).hasSegments.cardinality();
+		                    event.empty = false;
+	                	}else {
+	                		event.empty = true;
+	                	}
 	                    break;
 	                case COALESCENCE:
-	                    lineages -= 1;
-	                    totalReassortmentObsProb -= obsProb[event.node.getChildEdges().get(0).hasSegments.cardinality()];
-	                    totalReassortmentObsProb -= obsProb[event.node.getChildEdges().get(1).hasSegments.cardinality()];
-	                    totalReassortmentObsProb += obsProb[event.node.getParentEdges().get(0).hasSegments.cardinality()];
+	                	int childleft = event.node.getChildEdges().get(0).hasSegments.cardinality();
+	                	int childright = event.node.getChildEdges().get(1).hasSegments.cardinality();
+                        if (childleft>0 && childright>0) {
+	
+		                    lineages -= 1;
+		                    totalReassortmentObsProb -= obsProb[childleft];
+		                    totalReassortmentObsProb -= obsProb[childright];
+		                    totalReassortmentObsProb += obsProb[event.node.getParentEdges().get(0).hasSegments.cardinality()];
+		                    event.empty = false;
+                        }else {
+                        	event.empty = true;
+                        }
 	                    break;
 	            }
 	
@@ -152,7 +171,19 @@ public class NetworkIntervals extends CalculationNode {
     
     
 
-    @Override
+//    private boolean valid(NetworkNode n) {
+//		if (n.isCoalescence())
+//			if (n.getChildEdges().get(0).hasSegments.cardinality() == 0
+//					|| n.getChildEdges().get(1).hasSegments.cardinality() == 0)
+//				return false;
+//		if (n.isReassortment())
+//			if (n.getParentEdges().get(0).hasSegments.cardinality() == 0
+//					|| n.getParentEdges().get(1).hasSegments.cardinality() == 0)
+//				return false;
+//		return true;
+//	}
+
+	@Override
     protected boolean requiresRecalculation() {
         eventListDirty = true;
         return true;

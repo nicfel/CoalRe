@@ -24,6 +24,8 @@ public class NetworkEvent {
      * whcih segments went right, needed for plasmids.
      */
     public BitSet segsRight;
+    
+    public boolean empty;
 
 
 

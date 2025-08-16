@@ -48,70 +48,62 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 
 	@Override
 	public double proposal() {
-		if (network.segmentTreesNeedInit) {			
-			// update all segment trees			
-            for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
-          		network.updateSegmentTree(segmentTrees.get(segmentTreeMap[segIdx]), segmentTreeMap[segIdx]); 
-            
-            network.segmentTreesNeedInit = false;
-			return Double.POSITIVE_INFINITY;
-		}
 
 		double logHR = 0.0;
 
 		network.startEditing(this);
 
 		networkEdges = new ArrayList<>(network.getEdges());
-		
-		
-		
-		netChange = 0;
-		double logHRproposal=0.0;
-		// Adds empty network edges
-		if (addRemoveEmptyEdgesInput.get()) {
-			logHRproposal = addEmptyNetworkSegments();
-			logHR += logHRproposal;
-
-			if (logHR == Double.NEGATIVE_INFINITY)
-				return Double.NEGATIVE_INFINITY;
-		}
+//		
+//		
+//		
+//		netChange = 0;
+//		double logHRproposal=0.0;
+//		// Adds empty network edges
+//		if (addRemoveEmptyEdgesInput.get()) {
+//			logHRproposal = addEmptyNetworkSegments();
+//			logHR += logHRproposal;
+//
+//			if (logHR == Double.NEGATIVE_INFINITY)
+//				return Double.NEGATIVE_INFINITY;
+//		}
 
        	logHR += networkProposal();
-
-
-		if (addRemoveEmptyEdgesInput.get()) {
-
-			if (logHR == Double.NEGATIVE_INFINITY)
-				return Double.NEGATIVE_INFINITY;
-			try {
-				
-				// remove empty reassortment edges
-				logHR += RemoveAllEmptyNetworkSegments();
-			} catch (Exception e) {
-				// if there are no empty reassortment edges, this can happen when removing empty
-				// edges. This was previously taken care of
-				// by the all edges ancestral check, but that took too much time
-				return Double.NEGATIVE_INFINITY;
-			}
-		}
-
-		if (logHR == Double.POSITIVE_INFINITY)
-			return Double.NEGATIVE_INFINITY;
-
-		// check that the networkEdges size is the same as newly calculating them
-//		if (networkEdges.size()!=network.getEdges().size()) {
-//			System.err.println(networkEdges.size() + " != " + network.getEdges().size() + " after proposal" +  this.getClass());
-//			throw new IllegalArgumentException("Network edges size changed during proposal, this should not happen! "
-//                    + "Please report this as a bug to the developers of coalre.");
+//
+//
+//		if (addRemoveEmptyEdgesInput.get()) {
+//
+//			if (logHR == Double.NEGATIVE_INFINITY)
+//				return Double.NEGATIVE_INFINITY;
+//			try {
+//				
+//				// remove empty reassortment edges
+//				logHR += RemoveAllEmptyNetworkSegments();
+//			} catch (Exception e) {
+//				// if there are no empty reassortment edges, this can happen when removing empty
+//				// edges. This was previously taken care of
+//				// by the all edges ancestral check, but that took too much time
+//				return Double.NEGATIVE_INFINITY;
+//			}
 //		}
-		
-//		if (!networkTerminatesAtMRCA())
+//
+//		if (logHR == Double.POSITIVE_INFINITY)
 //			return Double.NEGATIVE_INFINITY;
-		
-		ii++;
-		if (netChange <-5) {
-			System.out.println(this.getID() + " " + netChange + " " + logHR + " " + logHRproposal);
-		}
+//
+//		// check that the networkEdges size is the same as newly calculating them
+////		if (networkEdges.size()!=network.getEdges().size()) {
+////			System.err.println(networkEdges.size() + " != " + network.getEdges().size() + " after proposal" +  this.getClass());
+////			throw new IllegalArgumentException("Network edges size changed during proposal, this should not happen! "
+////                    + "Please report this as a bug to the developers of coalre.");
+////		}
+//		
+////		if (!networkTerminatesAtMRCA())
+////			return Double.NEGATIVE_INFINITY;
+//		
+//		ii++;
+//		if (netChange <-5) {
+//			System.out.println(this.getID() + " " + netChange + " " + logHR + " " + logHRproposal);
+//		}
 
 		return logHR;
 	}

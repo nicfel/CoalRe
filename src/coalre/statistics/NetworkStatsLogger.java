@@ -50,7 +50,8 @@ public class NetworkStatsLogger extends BEASTObject implements Loggable {
         else
         	out.print(prefix + "height\t" +
 	                prefix + "totalLength\t" +
-	                prefix + "reassortmentNodeCount\t");
+	                prefix + "reassortmentNodeCount\t" +
+	                prefix + "emptyEdgeCount\t");
 
     }
 
@@ -68,8 +69,9 @@ public class NetworkStatsLogger extends BEASTObject implements Loggable {
         	
         }else{   
         	out.print(getTotalHeight(network) + "\t" +
-	                getTotalEdgeLength(network) + "\t" +
-	                getReassortmentCount(network) + "\t");
+        			getTotalNonEmptyEdgeLength(network) + "\t" +
+	                getNonEmptyReassortmentCount(network) + "\t"+
+	                getEmptyEdgeNumber(network) + "\t");
         }
     }
 
@@ -77,9 +79,31 @@ public class NetworkStatsLogger extends BEASTObject implements Loggable {
     public void close(PrintStream out) {
 
     }
+    
+    public static int getNonEmptyReassortmentCount(Network network) {
+        return (int)network.getNodes().stream()
+        		.filter(NetworkNode::isReassortment)
+        		.filter(n -> n.getParentEdges().get(0).hasSegments.cardinality()!=0)
+        		.filter(n -> n.getParentEdges().get(1).hasSegments.cardinality()!=0)
+        		.count();
+    }
+
 
     public static int getReassortmentCount(Network network) {
         return (int)network.getNodes().stream().filter(NetworkNode::isReassortment).count();
+    }
+    
+    public static double getTotalNonEmptyEdgeLength(Network network) {
+        return network.getEdges().stream()
+        		.filter(e -> !e.isRootEdge())
+        		.filter(e -> e.hasSegments.cardinality() > 0)
+                .map(NetworkEdge::getLength).reduce((l1, l2) -> l1+l2).get();
+    }
+
+    public static int getEmptyEdgeNumber(Network network) {
+        return (int) network.getEdges().stream()
+        		.filter(e -> !e.isRootEdge())
+        		.filter(e -> e.hasSegments.cardinality() == 0).count();
     }
 
     public static double getTotalEdgeLength(Network network) {
