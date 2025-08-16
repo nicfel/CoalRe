@@ -144,8 +144,19 @@ public class NetworkStatsLogger extends BEASTObject implements Loggable {
         }
         return maxHeight;
     }
+    
+    public static double getSecondHighestLociMRCA(Network network){
+        List<Double> rootHeights = new ArrayList<>();
+        for (int i = 0; i < network.getSegmentCount(); i++){
+        	rootHeights.add(getHeightSegmentsRoot(network.getRootEdge(), i));
+        }
+        // sort
+        rootHeights.sort((h1, h2) -> Double.compare(h2, h1));
+        return rootHeights.size() > 1 ? rootHeights.get(1) : rootHeights.get(0);
+    }
 
-    private static double getHeightSegmentsRoot(NetworkEdge edge, int segment){
+
+    static double getHeightSegmentsRoot(NetworkEdge edge, int segment){
         NetworkNode n = edge.childNode;
         if (n.isCoalescence()){
             if (n.getChildEdges().get(0).hasSegments.get(segment)

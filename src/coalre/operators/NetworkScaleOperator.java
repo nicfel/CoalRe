@@ -3,12 +3,14 @@ package coalre.operators;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
 import beast.base.evolution.tree.Node;
+import beast.base.evolution.tree.Tree;
 import beast.base.inference.operator.kernel.KernelDistribution;
 import beast.base.inference.parameter.RealParameter;
 import beast.base.util.Randomizer;
 import cern.colt.Arrays;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
+import coalre.statistics.NetworkStatsLogger;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -99,35 +101,27 @@ public class NetworkScaleOperator extends NetworkOperator {
 
 		if (scaleRootOnly) {
 
-			// Scale root
-
-			NetworkNode rootNode = network.getRootEdge().childNode;
-
-			rootNode.setHeight(rootNode.getHeight() * f);
+			oldLengths = new HashMap<>();
+			updated = new HashMap<>();
 			
-			if (f < 1.0) {
+			double oriLociMRCA = NetworkStatsLogger.getLociMRCA(network);
 
-				for (NetworkEdge childEdge : rootNode.getChildEdges())
-					if (rootNode.getHeight() < childEdge.childNode.getHeight())
-						return Double.NEGATIVE_INFINITY;
 
+			for (NetworkNode node : network.getInternalNodes()) {
+				if (node.isLeaf() || node.getHeight() < oriLociMRCA)
+					continue;
+
+				if (node.isReassortment())
+					oldLengths.put(node, node.getChildEdges().get(0).getLength());
+				else
+					oldLengths.put(node, node.getHeight() - Math.max(node.getChildEdges().get(0).childNode.getHeight(),
+							node.getChildEdges().get(1).childNode.getHeight()));
+
+				updated.put(node, false);
 			}
-
-//			System.out.println(network);
 			
-	        if (rootNode.segmentIndices!=null && segmentTreesInput.get().size()>0) {
-	        	for (int i =0; i < rootNode.segmentIndices.length; i++) {
-	        		if (rootNode.getChildEdges().get(0).hasSegments.get(i) && rootNode.getChildEdges().get(1).hasSegments.get(i)) {
-//	        			segmentTreesInput.get().get(i).startEditing(this);
-	        			segmentTreesInput.get().get(i).getNode(rootNode.segmentIndices[i]).setHeight(rootNode.getHeight());
-	        		}
-				}
-	        }
-	        
-	        segmentsChanged.set(0, network.getSegmentCount(), false);
-
-	        
-			logHR += Math.log(f);
+			return resampleNodeHeight(network.getRootEdge().childNode, oriLociMRCA);
+			
 
 
 		} else {
@@ -150,42 +144,12 @@ public class NetworkScaleOperator extends NetworkOperator {
 			}
 
 			if (scaleIntervalsIndependently.get()) {
-//				double[] lengthBefore = new double[network.getSegmentCount()];
-//				for (NetworkEdge edge : network.getEdges()) {
-//					if (edge.isRootEdge()) {
-//						continue;
-//					}
-//					for (int s  = 0; s < network.getSegmentCount(); s++) {
-//						if (edge.hasSegments.get(s))
-//							lengthBefore[s] += edge.getLength();
-//                    }
-//				}
-				
 				double lhr = resampleNodeHeight(network.getRootEdge().childNode);
-				
-		        segmentsChanged.set(0, network.getSegmentCount(), false);
-
-				
-//				double[] legnthAfter = new double[network.getSegmentCount()];
-//				for (NetworkEdge edge : network.getEdges()) {
-//					if (edge.isRootEdge()) {
-//						continue;
-//					}
-//					for (int s = 0; s < network.getSegmentCount(); s++) {
-//						if (edge.hasSegments.get(s))
-//							legnthAfter[s] += edge.getLength();
-//					}
-//				}
-//				System.out.print("tree heights ratios");
-//				for (int s = 0; s < network.getSegmentCount(); s++) {
-//                    System.out.print(" " + lengthBefore[s] / legnthAfter[s]);
-//                }
-//				System.out.println();
-				
-				
 				return lhr;
 			} else if (lastIntervalInput.get() != null) {
-				logHR += resampleNodeHeightLastInterval(network.getRootEdge().childNode, lastIntervalInput.get(), f);
+//				int count = resampleNodeHeightLastInterval(network.getRootEdge().childNode, lastIntervalInput.get(), f);
+//				logHR += Math.log(f) * (count - 2);
+
 				for (RealParameter param : upLogScaledParametersInput.get()) {
 					param.startEditing(this);
 					double logScaler = Math.log(f);
@@ -201,21 +165,15 @@ public class NetworkScaleOperator extends NetworkOperator {
 					double logScaler = doubleDiscountInput.get() ? 2 * Math.log(f) : Math.log(f);
 					for (int i = param.getDimension() - 1; i < param.getDimension(); i++) {
 						param.setValue(i, param.getValue(i) - logScaler);
-						logHR -= logScaler;
+						logHR -= doubleDiscountInput.get() ? logScaler/2 : logScaler;
 					}
 				}
-
 				return logHR;
 
 			} else {
 				int count = scaleNodes(network.getRootEdge().childNode, f);
 				logHR += Math.log(f) * (count - 2);
 		        segmentsChanged.set(0, network.getSegmentCount(), false);
-
-//				for (NetworkNode n : network.getNodes()) {
-//					if (n.segmentIndices != null)
-//						System.out.println(Arrays.toString(n.segmentIndices));
-//				}
 
 			}
 
@@ -360,31 +318,93 @@ public class NetworkScaleOperator extends NetworkOperator {
 		return logHR;
 	}
 
-	private double resampleNodeHeightLastInterval(NetworkNode n, double lastInterval, double scaler) {
+	private double resampleNodeHeight(NetworkNode n, double minHeight) {
 		double logHR = 0.0;
-
-		if (n.getHeight() < lastInterval) {
-			// if the node is below the last interval, just return 0
-			return logHR;
-		}
-
-		if (n.isLeaf()) {
+		
+		if (n.getHeight() < minHeight) {
 			return logHR;
 		} else {
 			if (n.isReassortment()) {
 				// check if the edge below the reassortment edge hast already been scaled
 				if (!updated.get(n)) {
-
-					logHR += resampleNodeHeightLastInterval(n.getChildEdges().get(0).childNode, lastInterval, scaler);
-
-					// adjust the scaler such that only the part above lastInterval is scaled
-					if (n.getChildEdges().get(0).childNode.getHeight() < lastInterval) {
-						scaler = (lastInterval - n.getChildEdges().get(0).childNode.getHeight()) / oldLengths.get(n);
-					}
-
+					double scaler = getScalerExp();
 					logHR += Math.log(scaler);
+
+					logHR += resampleNodeHeight(n.getChildEdges().get(0).childNode, minHeight);
 					double newLength = oldLengths.get(n) * scaler;
 					n.setHeight(newLength + n.getChildEdges().get(0).childNode.getHeight());
+					
+			        if (n.isCoalescence()) {
+				        if (n.segmentIndices!=null && segmentTreesInput.get().size()>0) {
+				        	for (int i =0; i < n.segmentIndices.length; i++) {
+				        		if (n.getChildEdges().get(0).hasSegments.get(i) && n.getChildEdges().get(1).hasSegments.get(i))
+				        			segmentTreesInput.get().get(i).getNode(n.segmentIndices[i]).setHeight(n.getHeight());
+							}
+				        }
+			        }
+
+					updated.put(n, true);
+
+				}
+				// update the
+			} else {
+				double scaler = getScalerExp();
+				logHR += Math.log(scaler);
+				for (NetworkEdge e : n.getChildEdges()) {
+					logHR += resampleNodeHeight(e.childNode, minHeight);
+				}
+				double newLength = oldLengths.get(n) * scaler;
+				n.setHeight(newLength + Math.max(n.getChildEdges().get(0).childNode.getHeight(),
+						n.getChildEdges().get(1).childNode.getHeight()));
+				
+		        if (n.isCoalescence()) {
+			        if (n.segmentIndices!=null && segmentTreesInput.get().size()>0) {
+			        	for (int i =0; i < n.segmentIndices.length; i++) {
+			        		if (n.getChildEdges().get(0).hasSegments.get(i) && n.getChildEdges().get(1).hasSegments.get(i))
+			        			segmentTreesInput.get().get(i).getNode(n.segmentIndices[i]).setHeight(n.getHeight());
+						}
+			        }
+		        }
+
+				updated.put(n, true);
+			}
+			// scale the node height such that
+		}
+		return logHR;
+	}
+
+
+	private int resampleNodeHeightLastInterval(NetworkNode n, double lastInterval, double scaler) {
+		int count = 0;
+
+		
+		if (n.getHeight() < lastInterval) {
+			// if the node is below the last interval, just return 0
+			return 0;
+		}
+
+		if (n.isLeaf()) {
+			return 0;
+		} else {
+			if (n.isReassortment()) {
+				// check if the edge below the reassortment edge hast already been scaled
+				if (!updated.get(n)) {
+
+					count += resampleNodeHeightLastInterval(n.getChildEdges().get(0).childNode, lastInterval, scaler);
+                    double oldLength = oldLengths.get(n);
+					// adjust the scaler such that only the part above lastInterval is scaled
+					if (n.getChildEdges().get(0).childNode.getHeight() < lastInterval) {
+						// discount the part that is below the interval
+						oldLength -= (lastInterval - n.getChildEdges().get(0).childNode.getHeight());
+					}
+					count++;
+					
+					double newLength = oldLength * scaler;
+					if (n.getChildEdges().get(0).childNode.getHeight() < lastInterval) {
+						n.setHeight(newLength + lastInterval);
+					}else {
+						n.setHeight(newLength + n.getChildEdges().get(0).childNode.getHeight());
+					}
 					updated.put(n, true);
 
 				}
@@ -392,23 +412,43 @@ public class NetworkScaleOperator extends NetworkOperator {
 			} else {
 
 				for (NetworkEdge e : n.getChildEdges()) {
-					logHR += resampleNodeHeightLastInterval(e.childNode, lastInterval, scaler);
+					count += resampleNodeHeightLastInterval(e.childNode, lastInterval, scaler);
 				}
 				// adjust the scaler such that only the part above lastInterval is scaled
 				// adjust the scaler such that only the part above lastInterval is scaled
-				if (n.getChildEdges().get(0).childNode.getHeight() < lastInterval) {
-					scaler = (lastInterval - n.getChildEdges().get(0).childNode.getHeight()) / oldLengths.get(n);
+                double oldLength = oldLengths.get(n);
+
+				if (Math.max(n.getChildEdges().get(0).childNode.getHeight(),
+						n.getChildEdges().get(1).childNode.getHeight()) < lastInterval) {
+					// discount the part that is below the interval
+					oldLength -= (lastInterval - Math.max(n.getChildEdges().get(0).childNode.getHeight(),
+							n.getChildEdges().get(1).childNode.getHeight()));
 				}
 
-				logHR += Math.log(scaler);
-				double newLength = oldLengths.get(n) * scaler;
-				n.setHeight(newLength + Math.max(n.getChildEdges().get(0).childNode.getHeight(),
-						n.getChildEdges().get(1).childNode.getHeight()));
+				count++;
+				double newLength = oldLength * scaler;
+				
+				if (Math.max(n.getChildEdges().get(0).childNode.getHeight(),
+						n.getChildEdges().get(1).childNode.getHeight()) < lastInterval) {
+					n.setHeight(newLength + lastInterval);
+				}else {
+					n.setHeight(newLength + Math.max(n.getChildEdges().get(0).childNode.getHeight(),
+							n.getChildEdges().get(1).childNode.getHeight()));
+				}
+
+				
+		        if (n.segmentIndices!=null && segmentTreesInput.get().size()>0) {
+		        	for (int i =0; i < n.segmentIndices.length; i++) {
+		        		if (n.getChildEdges().get(0).hasSegments.get(i) && n.getChildEdges().get(1).hasSegments.get(i))
+		        			segmentTreesInput.get().get(i).getNode(n.segmentIndices[i]).setHeight(n.getHeight());
+					}
+		        }
+
 				updated.put(n, true);
 			}
 			// scale the node height such that
 		}
-		return logHR;
+		return count;
 	}
 
 	protected double getScalerExp() {

@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
         "If it moves up, it can exceed the root and become a new root. " +
         "If it moves down, it may need to make a choice which branch to " +
         "slide down into.")
-public class SubNetworkSlide extends DivertSegmentOperator {
+public class SubNetworkSlide_old extends DivertSegmentOperator {
 
     final public Input<Double> sizeInput = new Input<>("size", "size of the slide, default 1.0", 1.0);
     final public Input<Boolean> gaussianInput = new Input<>("gaussian", "Gaussian (=true=default) or uniform delta", true);
@@ -50,7 +50,6 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 
         size = sizeInput.get();
         limit = limitInput.get();
-        throw new IllegalArgumentException("don't use, may have and HR issue");
 	}
 
 	@Override
@@ -58,26 +57,48 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 
 		double logHR = 0.0;
 		
-		List<NetworkEdge> edges = networkEdges.stream()
-				.filter(e -> !e.isRootEdge())
-				.filter(e -> e.hasSegments.cardinality() >= 1)
-				.filter(e -> e.parentNode.isReassortment())
-				.collect(Collectors.toList());
+        logHR = 0.0;
 
-		if (edges.isEmpty()) {
-			return Double.NEGATIVE_INFINITY; // no valid edges to slide
-		}
-
-		NetworkEdge iEdge = edges.get(Randomizer.nextInt(edges.size()));
+		NetworkEdge iEdge = networkEdges.get(Randomizer.nextInt(networkEdges.size()));
+		while (iEdge.isRootEdge())
+			iEdge = networkEdges.get(Randomizer.nextInt(networkEdges.size()));
 		
 		NetworkNode iParent = iEdge.parentNode;
 		NetworkNode iChild = iEdge.childNode;
 		
+		double sumEdgeLengths = 0.0;
+		
+		if (!randomlySampleAttachmentEdgeInput.get()) {
+			// compute the total network length, and then sample from that
+			for (NetworkEdge e : networkEdges) {
+				if (!e.isRootEdge())
+					sumEdgeLengths += e.getLength();
+			}
+			double randomEdgeLength = Randomizer.nextDouble() * sumEdgeLengths;
+
+			// pick the source edge as the first edge whose length is greater than the random number
+			double passedLength = 0;
+			for (NetworkEdge edge : networkEdges) {
+				if (!edge.isRootEdge())
+					passedLength += edge.getLength();
+				if (passedLength > randomEdgeLength) {
+					iEdge = edge;
+					break;
+				}
+			}
+			logHR -= Math.log(iEdge.getLength()/sumEdgeLengths);
+			sumEdgeLengths -= iEdge.getLength();
+			iParent = iEdge.parentNode;
+			iChild = iEdge.childNode;					
+		}
+
+		
         final double delta = Math.abs(getDelta());
+//        System.out.println(network.getExtendedNewickVerbose());
         // get all potential reattachment Edges
         Map<NetworkEdge, Double> targetEdges = new HashMap<>();
         if (!iEdge.isRootEdge() && iParent.isReassortment()) {
-        	
+
         	NetworkEdge iParentEdge = iParent.getParentEdges().get(Randomizer.nextInt(2));            	
        	
     		double maxHeight = iParentEdge.parentNode.getHeight();
@@ -91,6 +112,7 @@ public class SubNetworkSlide extends DivertSegmentOperator {
     		// keep the current segments of edge i 
     		final BitSet iParentSegs = (BitSet) iParentEdge.hasSegments.clone();
    	
+
         	// if list is empty return negative infinity
 			if (targetEdges.isEmpty()) {
 				return Double.NEGATIVE_INFINITY; // no valid targets
@@ -179,6 +201,7 @@ public class SubNetworkSlide extends DivertSegmentOperator {
                   
             
 			logHR += Math.log(1.0/reverseTargetEdges.size());  
+			
 
         }else{ // parent is not a reassortment event
     		// calculate the max height of the new child
@@ -270,6 +293,38 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 			
         }
         
+        		
+	    
+	    
+		if (!randomlySampleAttachmentEdgeInput.get()) {
+			sumEdgeLengths += iEdge.getLength();
+
+			logHR += Math.log(iEdge.getLength()/sumEdgeLengths);
+		}
+
+	    
+//	    // for each coalescent event, check that the parent edge is segments that is the union of the child edges
+//	    for (NetworkNode n : network.getInternalNodes()) {
+//	    	if (n.isCoalescence()) {
+//	    		BitSet child1 = (BitSet) n.getChildEdges().get(0).hasSegments.clone();
+//	    		child1.or(n.getChildEdges().get(1).hasSegments);
+//	    		// check that they are the same
+//				if (!child1.equals(n.getParentEdges().get(0).hasSegments)) {
+//					System.out.println("Error: parent edge segments do not match child edges: "
+//							+ n.getParentEdges().get(0).hasSegments + " " + child1);
+//					System.exit(0);
+//				}	    		
+//	    	}else if (n.isReassortment()) {
+//	    		BitSet parent1 = (BitSet) n.getParentEdges().get(0).hasSegments.clone();
+//	    		parent1.or(n.getParentEdges().get(1).hasSegments);
+//	    		// check that they are the same
+//				if (!parent1.equals(n.getChildEdges().get(0).hasSegments)) {
+//					System.out.println("Error: child edge segments do not match parent edges: "
+//							+ n.getChildEdges().get(0).hasSegments + " " + parent1);
+//					System.exit(0);
+//				}
+//	    	}
+//	    }
 
 		return logHR;
 	}
@@ -505,7 +560,6 @@ public class SubNetworkSlide extends DivertSegmentOperator {
     public void optimize(final double logAlpha) {
         if (optimiseInput.get()) {
             double delta = calcDelta(logAlpha);
-
             delta += Math.log(size);
             final double f = Math.exp(delta);
             if( limit > 0 ) {
@@ -520,8 +574,6 @@ public class SubNetworkSlide extends DivertSegmentOperator {
                size = f;
             }
         }
-
-
     }
 
     @Override

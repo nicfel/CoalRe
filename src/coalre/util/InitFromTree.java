@@ -56,6 +56,9 @@ public class InitFromTree extends BEASTObject implements StateNodeInitialiser {
 		}
 		
         network.setRootEdge(extantLineages.get(0));	
+        
+        // make sure that there are no 0 length edges
+        
 	}
 	
 	

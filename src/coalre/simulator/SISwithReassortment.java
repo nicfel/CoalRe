@@ -17,12 +17,10 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-public class SIRwithReassortment extends Network implements Loggable {
+public class SISwithReassortment extends Network implements Loggable {
     public Input<Double> transmissionRateInput = new Input<>("transmissionRate", "transmission rate", Input.Validate.REQUIRED);
 
     public Input<Double> recoveryRateInput  = new Input<>("recoveryRate", "recovery rate", Input.Validate.REQUIRED);
-
-    public Input<Double> waningImmunityRateInput  = new Input<>("waningImmunityRate", "waning immunity rate", Input.Validate.REQUIRED);
 
     public Input<Double> reassortmenProbabilityInput = new Input<>("reassortmenProbability", "reassortment probability", Input.Validate.REQUIRED);
 
@@ -70,7 +68,6 @@ public class SIRwithReassortment extends Network implements Loggable {
                 IDs.add(segmentTreesInput.get().get(segIdx).getID());
                 segmentNames[segIdx] = segmentTreesInput.get().get(segIdx).getID().replace(baseName, "");
             }
-//            segmentTreesInput.get().clear();
         }
 
         simulateNetwork();
@@ -155,11 +152,11 @@ public class SIRwithReassortment extends Network implements Loggable {
             activeIndividuals.add(root);
             double time = 0.0;
             do {
-                double transmissionRate = I*(S + I - 1)/(S+I+R) * transmissionRateInput.get();
+                double transmissionRate = I*(S + I - 1)/(S+I) * transmissionRateInput.get() * Math.max(0,(S-R)/S);
                 double recoveryRate = I * recoveryRateInput.get();
-                double waningRate = R * waningImmunityRateInput.get();
+                
 
-                double totalRate = transmissionRate + recoveryRate + waningRate;
+                double totalRate = transmissionRate + recoveryRate;
                 double nextEventTime = Math.log(1.0 / Randomizer.nextDouble()) / totalRate;
 
                 // pick which event happens next based on the rates, by drawing at random
@@ -236,10 +233,11 @@ public class SIRwithReassortment extends Network implements Loggable {
                     // update the population counts
                     I--;
                     R++;
+                    S++;
                     sirEvents.add(new SIREvents(2, time + nextEventTime));
                 } else {
                     System.out.println(transmissionRate + recoveryRate);
-                    System.out.println(transmissionRate + " " + recoveryRate + " " + waningRate);
+                    System.out.println(transmissionRate + " " + recoveryRate);
                     System.out.println(I);
                     System.out.println((S + I) );
                     System.exit(0);
@@ -253,7 +251,7 @@ public class SIRwithReassortment extends Network implements Loggable {
 //                System.out.println("S: " + S + " I: " + I + " R: " + R + " " + activeIndividuals.size() + " " + sampledIndividuals.size());
             } while (time < simulationTimeInput.get() && I > 0);
             System.out.println("start building network from " + sampledIndividuals.size() + " sampled individuals" + " simulation time was " + time);
-
+            System.out.println("total number of recovered was " + R );
 
             // build the network from the sampled individuals
         }while (sampledIndividuals.size()<minSamplesInput.get());
@@ -344,8 +342,8 @@ public class SIRwithReassortment extends Network implements Loggable {
                 segments.set(0,nSegments);
                 // make a new edge
                 NetworkEdge edge = new NetworkEdge(null, sampledNode, segments);
-                activeEdges.add(edge);
                 sampledNode.addParentEdge(edge);
+                activeEdges.add(edge);
                 activeIndividuals.add(sampledIndividuals.get(nextSamplingIndex));
                 // remove the individual from the list of sampled individuals
                 sampledIndividuals.remove(nextSamplingIndex);

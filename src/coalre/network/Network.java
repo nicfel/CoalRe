@@ -27,7 +27,7 @@ public class Network extends StateNode {
     public String[] segmentNames;
     public String baseName;
  
-    
+	public boolean segmentTreesNeedInit = true;
     
     public Network() {
     }
@@ -41,6 +41,7 @@ public class Network extends StateNode {
     }
 
     public Network(String newickString, TaxonSet taxonSet) {
+
         fromExtendedNewick(newickString);
 
         for (NetworkNode leafNode : getLeafNodes())
@@ -49,7 +50,9 @@ public class Network extends StateNode {
     
 
     @Override
-    public void initAndValidate() {}
+    public void initAndValidate() {
+
+    }
 
     /**
      * @return the root edge of the network
@@ -73,7 +76,7 @@ public class Network extends StateNode {
     public Set<NetworkNode> getNodes() {
         Set<NetworkNode> networkNodeSet = new HashSet<>();
 
-        getNodesRecurseNew(rootEdge, networkNodeSet);
+        getNodesRecurse(rootEdge, networkNodeSet);
 
         return networkNodeSet;
     }
@@ -295,6 +298,15 @@ public class Network extends StateNode {
             }
         }
         result.append(",segsCarried=").append(currentEdge.hasSegments.cardinality());
+        // check if there is any overlap of the segments if it is a coalescent node
+//		if (currentEdge.childNode.isCoalescence()) {
+//			BitSet overlap = (BitSet) currentEdge.childNode.getChildEdges().get(0).hasSegments.clone();
+//			overlap.and(currentEdge.childNode.getChildEdges().get(1).hasSegments);
+//			boolean isCoal = overlap.cardinality() > 0;
+//			result.append(",isCoal=").append(isCoal);
+//		}
+//        
+        
         if (currentEdge.childNode.getTypeLabel() != null) 
         		result.append(",state=").append(currentEdge.childNode.getTypeLabel());
     	
@@ -326,7 +338,7 @@ public class Network extends StateNode {
     }
 
     public void fromExtendedNewick(String newickStr) {
-    	
+
     	if (newickStr.split(";").length==2) {
     		String segmentString = newickStr.split(";")[0];
     		newickStr = newickStr.split(";")[1] + ";";
@@ -408,7 +420,7 @@ public class Network extends StateNode {
     }
 
     @Override
-    public void fromXML(org.w3c.dom.Node node) {
+    public void fromXML(org.w3c.dom.Node node) {    	
         fromExtendedNewick(node.getTextContent().replaceAll("&amp;", "&"));
     }
 
@@ -460,7 +472,7 @@ public class Network extends StateNode {
 
     @Override
     public void log(long sample, PrintStream out) {
-        out.println("tree STATE_" + sample + " = " + getExtendedNewick());
+        out.println("tree STATE_" + sample + " = " + getExtendedNewick(0));
     }
 
 

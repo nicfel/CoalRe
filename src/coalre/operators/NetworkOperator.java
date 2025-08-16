@@ -24,7 +24,7 @@ public abstract class NetworkOperator extends Operator {
             new ArrayList<>());
 
     protected Network network;
-    List<Tree> segmentTrees;
+    protected List<Tree> segmentTrees;
     int[] segmentTreeMap;
     
 	protected BitSet segmentsChanged = new BitSet();
@@ -63,7 +63,8 @@ public abstract class NetworkOperator extends Operator {
             }
             if (c!=network.getSegmentCount()) {
             	throw new IllegalArgumentException("not all segments found");
-            }
+            }         
+            
 
         }
 
@@ -72,6 +73,17 @@ public abstract class NetworkOperator extends Operator {
 //    static int count = 0;
 
     public double proposal() {
+		if (network.segmentTreesNeedInit) {			
+			System.out.println("restore segment trees in first move");
+			// update all segment trees			
+            for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
+          		network.updateSegmentTree(segmentTrees.get(segmentTreeMap[segIdx]), segmentTreeMap[segIdx]); 
+            
+            network.segmentTreesNeedInit = false;
+			return Double.POSITIVE_INFINITY;
+		}
+
+
 //        count += 1;
 //
 //        System.out.println("count = " + count);
@@ -92,9 +104,18 @@ public abstract class NetworkOperator extends Operator {
 //            }
 //        }
     	// set segmentsChanged to true
-        segmentsChanged.set(0, network.getSegmentCount(), true);
+//        segmentsChanged.set(0, network.getSegmentCount(), true);
 
-        double logHR = networkProposal();
+        double logHR = 0.0;
+//        try {
+        	logHR += networkProposal();
+//        } catch (Exception e) {
+//            Log.warning.println("re-initialize segment tree map");
+//            e.printStackTrace();
+//            // update segment trees and return Double.NEGATIVE_INFINITY
+//            for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
+//          		network.updateSegmentTree(segmentTrees.get(segmentTreeMap[segIdx]), segmentTreeMap[segIdx]);            
+//        }
 
 //        if (logHR>Double.NEGATIVE_INFINITY) {
 //            for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)

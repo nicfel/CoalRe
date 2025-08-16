@@ -27,7 +27,8 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 		
 		List<Integer> sourceEdges = new ArrayList<>();
 		for (int i = 0; i < networkEdges.size(); i++) {
-			if (networkEdges.get(i).childNode.isReassortment() && networkEdges.get(i).hasSegments.cardinality() > 0) {
+			if (networkEdges.get(i).childNode.isReassortment() 
+					&& networkEdges.get(i).hasSegments.cardinality() > 0) {
 				sourceEdges.add(i);
 			}
 		}
@@ -51,15 +52,6 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 		} else {
 			segsToDivert = getRandomUnconditionedSubset(sourceEdge.hasSegments);
 			logHR -= getLogUnconditionedSubsetProb(sourceEdge.hasSegments);
-		}
-
-		// set all
-		for (int i = 0; i < segmentTrees.size(); i++) {
-//			if (!segsToDivert.get(i)) {
-				segmentsChanged.set(i, false);
-//			} else {
-//				segmentsChanged.set(i, true);
-//			}
 		}
 
 		if (segsToDivert.cardinality() == 0)
@@ -197,7 +189,7 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 						// TODO
 //						System.out.println("do nothing "  + oldParent.getHeight() + " " + newNodeHeights[i]);
 						
-						return true;
+//						return true;
 //						throw new IllegalArgumentException("do nothing " + oldParent.getHeight() + " " + newNodeHeights[i]);
 						
 					}else {
@@ -274,27 +266,6 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 		}
 		return;
 	}
-
-	private BitSet getRandomSegment(BitSet hasSegments) {
-		// pick a random segment to divert.
-		BitSet segsToDivert = new BitSet();
-		segsToDivert.clear();
-
-		int segToDivert = Randomizer.nextInt(hasSegments.cardinality());
-		int segIdx = hasSegments.nextSetBit(0);
-		for (int i = 0; i < segToDivert; i++) {
-			segIdx = hasSegments.nextSetBit(segIdx + 1);
-		}
-		segsToDivert.set(segIdx);
-		return segsToDivert;
-	}
-
-//    double removeSegmentsFromAncestors(NetworkEdge edge, BitSet segsToRemove) {
-//    	int[] treeNodesIn = new int[network.getSegmentCount()];
-//    	Node[] treeNodes = new Node[network.getSegmentCount()];
-//    	
-//    	return removeSegmentsFromAncestors(edge, segsToRemove, treeNodes, treeNodesIn);
-//    }
 
 	void getTreeNodesDown(NetworkEdge edge, BitSet segsToRemove, Integer[] treeNodeList) {
 		if (segmentTrees.size() == 0) {
@@ -532,6 +503,69 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 
 	protected double getLogUnconditionedSubsetProb(BitSet sourceSegments) {
 		return sourceSegments.cardinality() * Math.log(0.5);
+	}
+	
+    protected double getLogConditionedSubsetProb(BitSet sourceSegments, BitSet chosenSubset, double binomProb) {
+
+        if (sourceSegments.cardinality() < 2) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        // Let n be the total number of possible segments in sourceSegments,
+        // and k be the number actually chosen in the subset.
+        int n = sourceSegments.cardinality();
+        int k = chosenSubset.cardinality();
+
+
+        // Fully correct conditional log-probability:
+        //    log( p^k * (1-p)^(n-k) )  -  log( 1 - p^n - (1-p)^n )
+        // =  k*log(p) + (n-k)*log(1-p) - log( 1 - p^n - (1-p)^n )
+        double logProb = k * Math.log(binomProb)
+                       + (n - k) * Math.log(1.0 - binomProb)
+                       - Math.log(1.0 - Math.pow(binomProb, n) - Math.pow(1.0 - binomProb, n));
+
+        return logProb;
+    }
+    
+    protected BitSet getRandomConditionedSubset(BitSet sourceSegments, double binomProb) {
+
+        if (sourceSegments.cardinality() < 2) {
+            return null;
+        }
+
+        BitSet destSegments = new BitSet();
+
+        do {
+            destSegments.clear();
+
+            for (int segIdx = sourceSegments.nextSetBit(0);
+                 segIdx != -1;
+                 segIdx = sourceSegments.nextSetBit(segIdx + 1)) {
+
+                // Now pick each segment with probability 0.1
+                if (Randomizer.nextDouble() < binomProb) {
+                    destSegments.set(segIdx);
+                }
+            }
+
+        } while (destSegments.cardinality() == 0
+                || destSegments.cardinality() == sourceSegments.cardinality());
+//        System.out.println(destSegments + " " + sourceSegments);
+        return destSegments;
+    }
+
+	protected BitSet getRandomSegment(BitSet hasSegments) {
+		// pick a random segment to divert.
+		BitSet segsToDivert = new BitSet();
+		segsToDivert.clear();
+
+		int segToDivert = Randomizer.nextInt(hasSegments.cardinality());
+		int segIdx = hasSegments.nextSetBit(0);
+		for (int i = 0; i < segToDivert; i++) {
+			segIdx = hasSegments.nextSetBit(segIdx + 1);
+		}
+		segsToDivert.set(segIdx);
+		return segsToDivert;
 	}
 
 }

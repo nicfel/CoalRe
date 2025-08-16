@@ -123,7 +123,9 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
 
         // Update segment trees:
         if (enableSegTreeUpdateInput.get()) {
+        	System.out.println(this);
             for (int segIdx = 0; segIdx < nSegments; segIdx++) {
+            	
                 // get the segment tree, set the taxonsets and update the segment tree based on the network
                 Tree segmentTree = new Tree();
                 segmentTree.initByName("taxonset", taxonset);
@@ -249,7 +251,7 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
             System.out.println("start building network from " + sampledIndividuals.size() + " sampled individuals" + " simulation time was " + time);
             // build the network from the sampled individuals
         }while (sampledIndividuals.size()<minSamplesInput.get());
-
+        
         buildNetwork(sampledIndividuals);
 //        System.out.println(lineages);
     }
@@ -479,7 +481,9 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
         System.out.println("=================");
         System.out.println("=================");
         System.out.println("=================");
+        
         lineages = new ArrayList<>();
+        
 
         int sampledIndividualNr = 0;
         int totalObservedCoal=0;
@@ -488,7 +492,7 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
         List<NetworkEdge> activeEdges = new ArrayList<>();
         System.out.println("start");
         while (activeIndividuals.size()>1 || sampledIndividuals.size()>0){
-//            System.out.println("get next sampling time");
+
             // get the next sampling event time, while keeping track of the index of the individual
             double nextSamplingTime = Double.NEGATIVE_INFINITY;
             int nextSamplingIndex = -1;
@@ -498,7 +502,7 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                     nextSamplingIndex = i;
                 }
             }
-//            System.out.println("get next active time");
+
             // get the activeIndividuals time, while keeping track of the index of the individual
             double nextActiveTime = Double.NEGATIVE_INFINITY;
             int nextActiveIndex = -1;
@@ -517,8 +521,6 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                     }
                 }
             }
-//            System.out.println(" done " + nextSamplingTime +" " + nextActiveTime + "");
-            System.out.println(activeIndividuals);
             
             // depending on which one is next
             if (nextSamplingTime>nextActiveTime){
@@ -536,9 +538,9 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                 segments.set(0,nSegments);
                 // make a new edge
                 NetworkEdge edge = new NetworkEdge(null, sampledNode, segments);
+                sampledNode.addParentEdge(edge);
                 activeEdges.add(edge);
                 activeIndividuals.add(sampledIndividuals.get(nextSamplingIndex));
-                System.out.println("sampling event " + activeIndividuals.size() + " " + activeIndividuals);
 
                 // remove the individual from the list of sampled individuals
                 sampledIndividuals.remove(nextSamplingIndex);
@@ -695,6 +697,7 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
         this.setRootEdge(activeEdges.get(0));
         System.out.println(this.getLeafNodes().size() +" " + this.getInternalNodes().size());
         System.out.println(this);
+        
     }
 
     private class ReturnVal{

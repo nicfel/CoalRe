@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import beast.base.core.Input;
+import beast.base.core.Log;
 import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.Tree;
 import beast.base.inference.Operator;
@@ -26,10 +27,16 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 	public Input<Boolean> addRemoveEmptyEdgesInput = new Input<>("addRemoveEmptyEdges",
 			"adds empty edges before calling the networkproposal and then removes all empty edges at the end again",
 			true);
-
+	
+	public Input<Integer> removedEdgesOffset = new Input<>("removedEdgesOffset",
+			"Offset for the removed edges. This is used to avoid the operator to remove edges that were added in the same proposal.",
+			0);
+		
 	private double emptyAlpha;
 	private double lambda;
-	List<NetworkEdge> networkEdges;
+	protected List<NetworkEdge> networkEdges;
+	int netChange;
+	int ii=0;
 
 	@Override
 	public void initAndValidate() {
@@ -41,23 +48,36 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 
 	@Override
 	public double proposal() {
+		if (network.segmentTreesNeedInit) {			
+			// update all segment trees			
+            for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
+          		network.updateSegmentTree(segmentTrees.get(segmentTreeMap[segIdx]), segmentTreeMap[segIdx]); 
+            
+            network.segmentTreesNeedInit = false;
+			return Double.POSITIVE_INFINITY;
+		}
 
 		double logHR = 0.0;
 
 		network.startEditing(this);
 
 		networkEdges = new ArrayList<>(network.getEdges());
-
+		
+		
+		
+		netChange = 0;
+		double logHRproposal=0.0;
 		// Adds empty network edges
 		if (addRemoveEmptyEdgesInput.get()) {
-			logHR += addEmptyNetworkSegments();
+			logHRproposal = addEmptyNetworkSegments();
+			logHR += logHRproposal;
 
 			if (logHR == Double.NEGATIVE_INFINITY)
 				return Double.NEGATIVE_INFINITY;
 		}
 
-		// calls the operator
-		logHR += networkProposal();
+       	logHR += networkProposal();
+
 
 		if (addRemoveEmptyEdgesInput.get()) {
 
@@ -87,6 +107,11 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 		
 //		if (!networkTerminatesAtMRCA())
 //			return Double.NEGATIVE_INFINITY;
+		
+		ii++;
+		if (netChange <-5) {
+			System.out.println(this.getID() + " " + netChange + " " + logHR + " " + logHRproposal);
+		}
 
 		return logHR;
 	}
@@ -96,6 +121,7 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 
 		// randomly sample the number of edges to add
 		int nrEmptyEdges = (int) Randomizer.nextPoisson(lambda);
+		netChange+= nrEmptyEdges;
 
 		for (int i = 0; i < nrEmptyEdges; i++) {
 			logHR += addEmptyReassortment();
@@ -116,6 +142,7 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 //		
 //		List<NetworkEdge> possibleSourceEdges = networkEdges.stream().filter(e -> !e.isRootEdge())
 //				.collect(Collectors.toList());
+				
 
 		NetworkEdge sourceEdge = networkEdges.get(Randomizer.nextInt(networkEdges.size()));
 		while (sourceEdge.isRootEdge())
@@ -241,7 +268,7 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 		}
 		
 				
-		int nrRemoved = 0;
+		int nrRemoved = 0-removedEdgesOffset.get();
 
 		while (removableEdges.size() > 0) {
 			nrRemoved++;
@@ -264,6 +291,8 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 				}
 			}
 		}
+		
+		netChange -= nrRemoved;
 
 		// probability of adding n empty edges in reverse move
 		logHR += Math.log(Math.pow(lambda, nrRemoved)) - lambda - logFactorial(nrRemoved);
