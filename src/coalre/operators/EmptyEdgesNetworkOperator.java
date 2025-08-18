@@ -66,17 +66,20 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 		
 		
 		netChange = 0;
-		double logHRproposal=0.0;
+		double logAdd=0.0;
+		double logHRproposal = 0.0;
+		double logRemove = 0.0;
 		// Adds empty network edges
 		if (addRemoveEmptyEdgesInput.get()) {
-			logHRproposal = addEmptyNetworkSegments();
-			logHR += logHRproposal;
+			logAdd = addEmptyNetworkSegments();
+			logHR += logAdd;
 
 			if (logHR == Double.NEGATIVE_INFINITY)
 				return Double.NEGATIVE_INFINITY;
 		}
 
-       	logHR += networkProposal();
+		logHRproposal = networkProposal();
+		logHR += logHRproposal;
 
 
 		if (addRemoveEmptyEdgesInput.get()) {
@@ -86,7 +89,8 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 			try {
 				
 				// remove empty reassortment edges
-				logHR += RemoveAllEmptyNetworkSegments();
+				logRemove = RemoveAllEmptyNetworkSegments();
+				logHR += logRemove;
 			} catch (Exception e) {
 				// if there are no empty reassortment edges, this can happen when removing empty
 				// edges. This was previously taken care of
@@ -108,10 +112,10 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 //		if (!networkTerminatesAtMRCA())
 //			return Double.NEGATIVE_INFINITY;
 		
-		ii++;
-		if (netChange <-5) {
-			System.out.println(this.getID() + " " + netChange + " " + logHR + " " + logHRproposal);
-		}
+//		ii++;
+//		if (netChange < -5) {
+//			System.out.println(this.getID() + " " + netChange + " " + logHR + " " +logAdd+ " " +logRemove+ " " + logHRproposal);
+//		}
 
 		return logHR;
 	}

@@ -1,4 +1,4 @@
-<package name="CoalRe" version="2.7.1">
+<package name="CoalRe" version="2.7.4">
   <depends on='BEAST.base' atleast='2.7.2'/>
   <depends on='BEAST.app' atleast='2.7.2'/>
 
@@ -26,7 +26,6 @@
 <packageapp class="coalre.networkannotator.MarkClades"
             description="MarkCladesFromCladeFile"/>
 
-
       <service type="beast.base.core.BEASTInterface">
         <provider classname="coalre.distribution.CoalescentWithReassortment"/>
         <provider classname="coalre.distribution.emptyNetworkEdgesPrior"/>
@@ -37,17 +36,24 @@
         <provider classname="coalre.network.SegmentTreeInitializer"/>
         <provider classname="coalre.operators.AddRemoveReassortment"/>
         <provider classname="coalre.operators.AddRemoveReassortmentCoalescent"/>
+        <provider classname="coalre.operators.AddRemoveReassortmentExponential"/>
         <provider classname="coalre.operators.DivertSegmentOperator"/>
         <provider classname="coalre.operators.GibbsOperatorAboveSegmentRoots"/>
         <provider classname="coalre.operators.MultiTipDatesRandomWalker"/>
         <provider classname="coalre.operators.NetworkExchange"/>
         <provider classname="coalre.operators.NetworkScaleOperator"/>
         <provider classname="coalre.operators.SubNetworkSlide"/>
+        <provider classname="coalre.operators.SubNetworkLeap"/>
+        <provider classname="coalre.operators.NetworkSPR"/>
+        <provider classname="coalre.operators.SubTreeSlideOnNetwork"/>
         <provider classname="coalre.operators.TipReheight"/>
         <provider classname="coalre.operators.UniformNetworkNodeHeightOperator"/>
         <provider classname="coalre.operators.UniformReassortmentReheight"/>
+        <provider classname="coalre.operators.ChangePredictorOperator"/>
+        <provider classname="coalre.operators.EffectSizePredictorOperator"/>        
         <provider classname="coalre.simulator.SimulatedCoalescentNetwork"/>
         <provider classname="coalre.simulator.SIRwithReassortment"/>
+        <provider classname="coalre.simulator.SISwithReassortment"/>
         <provider classname="coalre.simulator.SuperspreadingSIRwithReassortment"/>
         <provider classname="coalre.simulator.SuperspreadingStructuredSIRwithReassortment"/>
         <provider classname="coalre.statistics.NetworkStatsLogger"/>
@@ -68,8 +74,7 @@
         <provider classname="coalre.dynamics.LogDifference"/>
         <provider classname="coalre.dynamics.SkygrowthNeDynamics"/>
         <provider classname="coalre.dynamics.SkygrowthReassortmentRatesFromSkygrowthNe"/>
-
+        <provider classname="coalre.dynamics.GLMReassortmentRates"/>
     </service>
-
 </package>
 

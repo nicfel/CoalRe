@@ -180,16 +180,26 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
         if (logHR == Double.NEGATIVE_INFINITY)
             return Double.NEGATIVE_INFINITY;  
         
-        
-        
+        int nRemovableEdges;
+		if (divertOneSegmentInput.get()) {
+			nRemovableEdges= (int) networkEdges.stream().filter(e -> !e.isRootEdge())
+				.filter(e -> e.hasSegments.cardinality() == 1).filter(e -> e.childNode.isReassortment())
+				.filter(e -> e.parentNode.isCoalescence()).count();
+		} else {
+			nRemovableEdges= (int) networkEdges.stream().filter(e -> !e.isRootEdge())
+					.filter(e -> e.hasSegments.cardinality() >= 1).filter(e -> e.childNode.isReassortment())
+					.filter(e -> e.parentNode.isCoalescence()).count();
 
-        // HR contribution for reverse move
-        int nRemovableEdges = (int) networkEdges.stream()
-                .filter(e -> !e.isRootEdge())
-                .filter(e -> e.hasSegments.cardinality()>=1)
-                .filter(e -> e.childNode.isReassortment())
-                .filter(e -> e.parentNode.isCoalescence())
-                .count();
+		}
+
+
+//        // HR contribution for reverse move
+//        int nRemovableEdges = (int) networkEdges.stream()
+//                .filter(e -> !e.isRootEdge())
+//                .filter(e -> e.hasSegments.cardinality()>=1)
+//                .filter(e -> e.childNode.isReassortment())
+//                .filter(e -> e.parentNode.isCoalescence())
+//                .count();
         
         logHR += Math.log(1.0/nRemovableEdges);
         return logHR;
