@@ -51,7 +51,6 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
         		return Double.NEGATIVE_INFINITY;
         	}
         }
-//        System.out.println(network);
         return logHR;
     }
 
@@ -59,26 +58,24 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
         double logHR = 0.0;
 
         List<Integer> possibleSourceEdges = new ArrayList<>();
-        if (useMaxHeight) {
-    		double lociMRCA = NetworkStatsLogger.getSecondHighestLociMRCA(networkInput.get());
+    	if (divertOneSegmentInput.get()) {
+			for (int i = 0; i < networkEdges.size(); i++) {
+				NetworkEdge edge = networkEdges.get(i);
+				if (!edge.isRootEdge()
+						&& edge.hasSegments.cardinality() >= 1) {                            
+					possibleSourceEdges.add(i);
+				}
+			}
 
-        	// If we use max height, we can only add reassortment edges to the root edge
+    	}else {
 			for (int i = 0; i < networkEdges.size(); i++) {
 				NetworkEdge edge = networkEdges.get(i);
-				if (!edge.isRootEdge() 
-						&& edge.hasSegments.cardinality() >= 2
-						&& edge.childNode.getHeight() < lociMRCA) {
+				if (!edge.isRootEdge()) {
 					possibleSourceEdges.add(i);
 				}
 			}
-        }else {
-			for (int i = 0; i < networkEdges.size(); i++) {
-				NetworkEdge edge = networkEdges.get(i);
-				if (!edge.isRootEdge() && edge.hasSegments.cardinality() >= 2) {
-					possibleSourceEdges.add(i);
-				}
-			}
-        }
+    	}
+        
         
         NetworkEdge sourceEdge = null;
         double sourceTime = -1.0;
@@ -111,7 +108,6 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 					break;
 				}
 			}
-
 		}
                 
     	// Calculate tree intervals
@@ -180,28 +176,29 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
         if (logHR == Double.NEGATIVE_INFINITY)
             return Double.NEGATIVE_INFINITY;  
         
-        int nRemovableEdges;
-		if (divertOneSegmentInput.get()) {
-			nRemovableEdges= (int) networkEdges.stream().filter(e -> !e.isRootEdge())
-				.filter(e -> e.hasSegments.cardinality() == 1).filter(e -> e.childNode.isReassortment())
-				.filter(e -> e.parentNode.isCoalescence()).count();
-		} else {
-			nRemovableEdges= (int) networkEdges.stream().filter(e -> !e.isRootEdge())
-					.filter(e -> e.hasSegments.cardinality() >= 1).filter(e -> e.childNode.isReassortment())
-					.filter(e -> e.parentNode.isCoalescence()).count();
-
-		}
-
-
-//        // HR contribution for reverse move
-//        int nRemovableEdges = (int) networkEdges.stream()
-//                .filter(e -> !e.isRootEdge())
-//                .filter(e -> e.hasSegments.cardinality()>=1)
-//                .filter(e -> e.childNode.isReassortment())
-//                .filter(e -> e.parentNode.isCoalescence())
-//                .count();
         
-        logHR += Math.log(1.0/nRemovableEdges);
+        
+
+        // HR contribution for reverse move
+		if (divertOneSegmentInput.get()) {
+			int nRemovableEdges = (int) networkEdges.stream()
+	                .filter(e -> !e.isRootEdge())
+	                .filter(e -> e.childNode.isReassortment())
+	                .filter(e -> e.hasSegments.cardinality() == 1)
+	                .filter(e -> e.parentNode.isCoalescence())
+	                .count();
+	        
+				logHR += Math.log(1.0/nRemovableEdges);
+
+		}else {
+			int nRemovableEdges = (int) networkEdges.stream()
+                .filter(e -> !e.isRootEdge())
+                .filter(e -> e.childNode.isReassortment())
+                .filter(e -> e.parentNode.isCoalescence())
+                .count();
+        
+			logHR += Math.log(1.0/nRemovableEdges);
+		}
         return logHR;
     }
 
@@ -255,17 +252,24 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
         destNode.addChildEdge(reassortmentEdge);
         reassortmentEdge.hasSegments = new BitSet();
 
-        // Choose segments to divert to new edge
-        if (divertOneSegmentInput.get()) {
-            BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments, 0.1);
-            logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments, segsToDivert, 0.1);
-            logHR += divertSegments(reassortmentEdge, newEdge1, segsToDivert);
-        }else {
-	        BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
-            logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
-            logHR += divertSegments(reassortmentEdge, newEdge1, segsToDivert);
-        }
-        networkEdges.add(reassortmentEdge);
+		// Choose segments to divert to new edge
+		if (divertOneSegmentInput.get()) {
+//			BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments, 1.0/sourceEdge.hasSegments.cardinality());
+			BitSet segsToDivert = getRandomSegment(sourceEdge.hasSegments);
+			logHR -= Math.log(1.0 / sourceEdge.hasSegments.cardinality());
+//			logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments, segsToDivert, sourceEdge.hasSegments.cardinality());
+			logHR += divertSegments(reassortmentEdge, newEdge1, segsToDivert);
+		} else {
+			if (sourceEdge.hasSegments.cardinality()>0) {
+				BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
+				logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
+				if (segsToDivert.cardinality()>0) {
+	//				System.out.println(segsToDivert + " " + sourceEdge.hasSegments);
+					logHR += divertSegments(reassortmentEdge, newEdge1, segsToDivert);
+				}
+			}
+		}
+		networkEdges.add(reassortmentEdge);
         networkEdges.add(newEdge1);
         networkEdges.add(newEdge2);
 
@@ -277,13 +281,27 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
         double logHR = 0.0;
         
         List<Integer> removableEdges = new ArrayList<>();
-		for (int i = 0; i < networkEdges.size(); i++) {
-			NetworkEdge edge = networkEdges.get(i);
-			if (!edge.isRootEdge()&& edge.childNode.isReassortment()
-					&& edge.parentNode.isCoalescence() && edge.hasSegments.cardinality() >= 1 ) {
-				removableEdges.add(i);
-			}
-		}
+        
+        if (divertOneSegmentInput.get()) {
+    		for (int i = 0; i < networkEdges.size(); i++) {
+    			NetworkEdge edge = networkEdges.get(i);
+    			if (!edge.isRootEdge()
+    					&& edge.childNode.isReassortment()
+    					&& edge.parentNode.isCoalescence()
+    					&& edge.hasSegments.cardinality() == 1) {
+    				removableEdges.add(i);
+    			}
+    		}
+
+        }else {
+    		for (int i = 0; i < networkEdges.size(); i++) {
+    			NetworkEdge edge = networkEdges.get(i);
+    			if (!edge.isRootEdge()&& edge.childNode.isReassortment()
+    					&& edge.parentNode.isCoalescence()) {
+    				removableEdges.add(i);
+    			}
+    		}
+        }
         
 //        List<NetworkEdge> removableEdges = networkEdges.stream()
 //                .filter(e -> !e.isRootEdge())
@@ -337,39 +355,49 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 
         if (randomlySampleAttachmentEdgeInput.get()) {
             int nPossibleSourceEdges = 0;
-            if (useMaxHeight) {
-            	double lociMRCA = NetworkStatsLogger.getSecondHighestLociMRCA(networkInput.get());
-				for (NetworkEdge e : networkEdges) {
-					if (!e.isRootEdge() && e.hasSegments.cardinality() >= 2 && e.childNode.getHeight() < lociMRCA) {
-						nPossibleSourceEdges++;
-					}
-				}
-            }else {
-	            for (NetworkEdge e : networkEdges) {
-	                if (!e.isRootEdge() && e.hasSegments.cardinality() >= 2) {
-	                    nPossibleSourceEdges++;
-	                }
-	            }
-            }
+//            if (useMaxHeight) {
+//            	double lociMRCA = NetworkStatsLogger.getSecondHighestLociMRCA(networkInput.get());
+//				for (NetworkEdge e : networkEdges) {
+//					if (!e.isRootEdge() && e.hasSegments.cardinality() >= 2 && e.childNode.getHeight() < lociMRCA) {
+//						nPossibleSourceEdges++;
+//					}
+//				}
+//				throw new RuntimeException("This operator is not implemented for randomly sampling attachment edges yet.");
+//            }else {
+            	if (divertOneSegmentInput.get()){
+		            for (NetworkEdge e : networkEdges) {
+		                if (!e.isRootEdge() && e.hasSegments.cardinality() >= 1) {
+		                    nPossibleSourceEdges++;
+		                }
+		            }
+            	}else {
+		            for (NetworkEdge e : networkEdges) {
+		                if (!e.isRootEdge()) {
+		                    nPossibleSourceEdges++;
+		                }
+		            }
+            	}
+//            }
 
             logHR += Math.log(1.0/(double)nPossibleSourceEdges)
                     + Math.log(1.0/sourceEdge.getLength());
         }else {
         	double sumEdgeLengths = 0.0;
-        	if (useMaxHeight) {
-        		double lociMRCA = NetworkStatsLogger.getSecondHighestLociMRCA(networkInput.get());
-        		for (NetworkEdge e : networkEdges) {
-        			if (!e.isRootEdge() && e.hasSegments.cardinality() >= 2 && e.childNode.getHeight() < lociMRCA) {
-        				sumEdgeLengths += e.getLength();
-        			}
-        		}
-        	}else {
+//        	if (useMaxHeight) {
+//        		double lociMRCA = NetworkStatsLogger.getSecondHighestLociMRCA(networkInput.get());
+//        		for (NetworkEdge e : networkEdges) {
+//        			if (!e.isRootEdge() && e.hasSegments.cardinality() >= 2 && e.childNode.getHeight() < lociMRCA) {
+//        				sumEdgeLengths += e.getLength();
+//        			}
+//        		}
+//        		throw new RuntimeException("This operator is not implemented for randomly sampling attachment edges yet.");
+//        	}else {
 				for (NetworkEdge e : networkEdges) {
-					if (!e.isRootEdge() && e.hasSegments.cardinality() >= 2) {
+					if (!e.isRootEdge()) {
 						sumEdgeLengths += e.getLength();
 					}
 				}
-        	}
+//        	}
 			logHR += Math.log(1.0 / sumEdgeLengths);
         }
  
@@ -403,13 +431,16 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 		networkEdges.remove(edgeToRemoveSpouse);
 
         // Divert segments away from chosen edge
-        BitSet segsToDivert = (BitSet) edgeToRemove.hasSegments.clone();
-        logHR +=  divertSegments(edgeToRemoveSpouse, edgeToRemove, segsToDivert);
-        if (divertOneSegmentInput.get()) {
-            logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments, segsToDivert, 0.1);
-        }else {
-        	logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments);
-        }
+		BitSet segsToDivert = (BitSet) edgeToRemove.hasSegments.clone();
+		if (segsToDivert.cardinality() != 0) {
+		
+			logHR += divertSegments(edgeToRemoveSpouse, edgeToRemove, segsToDivert);
+		}
+		if (divertOneSegmentInput.get()) {
+			logHR += Math.log(1.0 / edgeToRemoveSpouse.hasSegments.cardinality());
+		} else {
+			logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments);
+		}
 
         // Remove edge and associated nodes
         NetworkEdge edgeToExtend = nodeToRemove.getChildEdges().get(0);

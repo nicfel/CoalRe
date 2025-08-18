@@ -8,6 +8,7 @@ import beast.base.evolution.tree.coalescent.PopulationFunction;
 import coalre.network.NetworkNode;
 import coalre.statistics.NetworkStatsLogger;
 
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -69,16 +70,30 @@ public class CoalescentWithReassortment extends NetworkDistribution {
         	timeVaryingReassortmentRates = timeVaryingReassortmentRatesInput.get();
         }
         
-        logBinomval = new double[intervals.networkInput.get().getSegmentCount()+1][intervals.networkInput.get().getSegmentCount()];
-		for (int i = 2; i < intervals.networkInput.get().getSegmentCount()+1; i++) {
-			for (int j = 0; j < i; j++) {
-				logBinomval[i][j] = Math.log(Math.pow(intervals.getBinomialProb(), j)
-						* Math.pow(1-intervals.getBinomialProb(), i-j) 
-						+ Math.pow(intervals.getBinomialProb(), i-j)
-						* Math.pow(1-intervals.getBinomialProb(), j));
+        logBinomval = new double[intervals.networkInput.get().getSegmentCount()+1][intervals.networkInput.get().getSegmentCount()+1];
+		for (int i = 0; i < intervals.networkInput.get().getSegmentCount()+1; i++) {
+			
+			for (int j = 0; j <= i; j++) {
+				if (i==0 && j==0) {
+					logBinomval[i][j] = Math.log(intervals.emptyObsProb);
+				}else if (i==j || j==0) {
+					logBinomval[i][j] = Math.log(intervals.emptyObsProb*(Math.pow(intervals.getBinomialProb(), j)
+							* Math.pow(1-intervals.getBinomialProb(), i-j) 
+							+ Math.pow(intervals.getBinomialProb(), i-j)
+							* Math.pow(1-intervals.getBinomialProb(), j)));
+//
+//				}else if (j==0) {
+//					logBinomval[i][j] = Math.pow(intervals.getBinomialProb(), i);
+				}else {
+					logBinomval[i][j] = Math.log(Math.pow(intervals.getBinomialProb(), j)
+							* Math.pow(1-intervals.getBinomialProb(), i-j) 
+							+ Math.pow(intervals.getBinomialProb(), i-j)
+							* Math.pow(1-intervals.getBinomialProb(), j));
+				}
 			}
+//			System.out.println(Arrays.toString(logBinomval[i]));
 		}
-            
+//        System.exit(0);
     }
 
 	public double calculateLogP() {		
@@ -96,21 +111,29 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 		double maxHeight = Math.min(maxHeightInput.get(),lociMRCA * maxHeightRatioInput.get());
 
 		NetworkEvent prevEvent = null;
+		
+		double logPint = 0;
+		double logPcoal = 0.;
+		double logPreassortment = 0.;
 
     	for (NetworkEvent event : intervals.networkEventList) {
-        	if (prevEvent != null)
-        		logP += intervalContribution(prevEvent, event, maxHeight, oriLociMRCA);
+        	if (prevEvent != null) {
+        		logPint += intervalContribution(prevEvent, event, maxHeight, oriLociMRCA);
+//        		logP += logPint;
+        	}
         	
         	switch (event.type) {
 				case COALESCENCE:
-					logP += coalesce(event);
+					logPcoal += coalesce(event);
+//					logP += logPcoal;
 					break;
 
 				case SAMPLE:
 					break;
 
 				case REASSORTMENT:
-					logP += reassortment(event, maxHeight);
+					logPreassortment += reassortment(event, maxHeight);
+//					logP += logPreassortment;
 					break;
 			}
 
@@ -120,6 +143,11 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
         	prevEvent = event;
         }
+    	logP = logPint + logPcoal + logPreassortment;
+    	if (logP>0) {
+    		System.err.println(logP + " " + logPint + " " + logPcoal + " " + logPreassortment);
+    		System.exit(0);
+    	}
 
 		return logP;
     }
@@ -176,7 +204,6 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
         double result = 0.0;
                
-
 		if (nextEvent.time<maxHeight) {
 			if (isTimeVarying) {
 				result += -prevEvent.totalReassortmentObsProb

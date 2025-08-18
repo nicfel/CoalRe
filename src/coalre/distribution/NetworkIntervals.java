@@ -27,10 +27,14 @@ public class NetworkIntervals extends CalculationNode {
     private Network network;
 
     protected List<NetworkEvent> networkEventList, storedNetworkEventList;
+    
+    
 
     public boolean eventListDirty = true;
     private boolean precomputeReassortmentObsProb = false;
     private double[] obsProb;
+    
+    protected double emptyObsProb = 0.1;
 
     @Override
     public void initAndValidate() {
@@ -41,9 +45,10 @@ public class NetworkIntervals extends CalculationNode {
         if (binomialProbInput.get()==null) {
         	precomputeReassortmentObsProb = true;
         	obsProb = new double[network.getSegmentCount()+1];
-        	for (int i = 0; i< obsProb.length; i++) {
-        		obsProb[i] = 1.0 - (Math.pow(0.5, i) + Math.pow(0.5, i));
+        	for (int i = 1; i< obsProb.length; i++) {
+        		obsProb[i] = 1.0 - (2*Math.pow(0.5, i)) + (2*Math.pow(0.5, i))*emptyObsProb;
         	}
+        	obsProb[0] = emptyObsProb;
 
         }
         
@@ -117,6 +122,7 @@ public class NetworkIntervals extends CalculationNode {
 	
 	            event.lineages = lineages;
 	            event.totalReassortmentObsProb = totalReassortmentObsProb;
+	            	
 	        }
         }else {
         	for (NetworkEvent event : networkEventList) {
@@ -145,9 +151,12 @@ public class NetworkIntervals extends CalculationNode {
 	            event.lineages = lineages;
 	            event.totalReassortmentObsProb = totalReassortmentObsProb;
 	        }
+        	throw new RuntimeException("Precomputation of reassortment obs prob not implemented yet.");
         }
+        
 
         eventListDirty = false;
+        
     }
     
     

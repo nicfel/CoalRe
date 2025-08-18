@@ -197,12 +197,12 @@ public abstract class NetworkOperator extends Operator {
      */
     protected BitSet getRandomConditionedSubset(BitSet sourceSegments) {
 
-        if (sourceSegments.cardinality()<2)
-            return null;
+//        if (sourceSegments.cardinality()<2)
+//            return null;
 
         BitSet destSegments = new BitSet();
 
-        do {
+//        do {
             destSegments.clear();
 
             for (int segIdx = sourceSegments.nextSetBit(0); segIdx != -1;
@@ -212,8 +212,8 @@ public abstract class NetworkOperator extends Operator {
                     destSegments.set(segIdx);
             }
 
-        } while (destSegments.cardinality() == 0
-                || destSegments.cardinality() == sourceSegments.cardinality());
+//        } while (destSegments.cardinality() == 0
+//                || destSegments.cardinality() == sourceSegments.cardinality());
 
         return destSegments;
     }
@@ -227,11 +227,11 @@ public abstract class NetworkOperator extends Operator {
      */
     protected double getLogConditionedSubsetProb(BitSet sourceSegments) {
 
-        if (sourceSegments.cardinality()<2)
-            return Double.NEGATIVE_INFINITY;
+//        if (sourceSegments.cardinality()<2)
+//            return Double.NEGATIVE_INFINITY;
 
-        return sourceSegments.cardinality()*Math.log(0.5)
-                - Math.log(1.0 - 2.0*Math.pow(0.5, sourceSegments.cardinality()));
+        return sourceSegments.cardinality()*Math.log(0.5);
+//                - Math.log(1.0 - 2.0*Math.pow(0.5, sourceSegments.cardinality()));
     }
     
     public void replace(final NetworkNode node, final NetworkEdge child, final NetworkEdge replacement) {

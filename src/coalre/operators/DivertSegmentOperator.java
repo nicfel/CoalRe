@@ -529,13 +529,13 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
     
     protected BitSet getRandomConditionedSubset(BitSet sourceSegments, double binomProb) {
 
-        if (sourceSegments.cardinality() < 2) {
-            return null;
-        }
+//        if (sourceSegments.cardinality() < 2) {
+//            return null;
+//        }
 
         BitSet destSegments = new BitSet();
 
-        do {
+//        do {
             destSegments.clear();
 
             for (int segIdx = sourceSegments.nextSetBit(0);
@@ -548,8 +548,8 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
                 }
             }
 
-        } while (destSegments.cardinality() == 0
-                || destSegments.cardinality() == sourceSegments.cardinality());
+//        } while (destSegments.cardinality() == 0
+//                || destSegments.cardinality() == sourceSegments.cardinality());
 //        System.out.println(destSegments + " " + sourceSegments);
         return destSegments;
     }

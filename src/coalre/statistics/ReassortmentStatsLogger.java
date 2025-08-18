@@ -22,10 +22,6 @@ public class ReassortmentStatsLogger extends BEASTObject implements Loggable {
             "Network for which to log statistics.",
             Input.Validate.REQUIRED);
     
-    public Input<List<Tree>> segmentTreesInput = new Input<>("segmentTree",
-            "Segment tree associated with network.",
-            new ArrayList<>());
-
 
     Network network;
     int segCount;
@@ -38,9 +34,6 @@ public class ReassortmentStatsLogger extends BEASTObject implements Loggable {
     public void initAndValidate() {
         network = networkInput.get();
         segCount = network.getSegmentCount();
-        
-        if(segmentTreesInput.get().size()>0)
-        	logObservable = true;
 
     }
 

@@ -70,34 +70,34 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 		double logHRproposal = 0.0;
 		double logRemove = 0.0;
 		// Adds empty network edges
-		if (addRemoveEmptyEdgesInput.get()) {
-			logAdd = addEmptyNetworkSegments();
-			logHR += logAdd;
-
-			if (logHR == Double.NEGATIVE_INFINITY)
-				return Double.NEGATIVE_INFINITY;
-		}
+//		if (addRemoveEmptyEdgesInput.get()) {
+//			logAdd = addEmptyNetworkSegments();
+//			logHR += logAdd;
+//
+//			if (logHR == Double.NEGATIVE_INFINITY)
+//				return Double.NEGATIVE_INFINITY;
+//		}
 
 		logHRproposal = networkProposal();
 		logHR += logHRproposal;
 
 
-		if (addRemoveEmptyEdgesInput.get()) {
-
-			if (logHR == Double.NEGATIVE_INFINITY)
-				return Double.NEGATIVE_INFINITY;
-			try {
-				
-				// remove empty reassortment edges
-				logRemove = RemoveAllEmptyNetworkSegments();
-				logHR += logRemove;
-			} catch (Exception e) {
-				// if there are no empty reassortment edges, this can happen when removing empty
-				// edges. This was previously taken care of
-				// by the all edges ancestral check, but that took too much time
-				return Double.NEGATIVE_INFINITY;
-			}
-		}
+//		if (addRemoveEmptyEdgesInput.get()) {
+//
+//			if (logHR == Double.NEGATIVE_INFINITY)
+//				return Double.NEGATIVE_INFINITY;
+//			try {
+//				
+//				// remove empty reassortment edges
+//				logRemove = RemoveAllEmptyNetworkSegments();
+//				logHR += logRemove;
+//			} catch (Exception e) {
+//				// if there are no empty reassortment edges, this can happen when removing empty
+//				// edges. This was previously taken care of
+//				// by the all edges ancestral check, but that took too much time
+//				return Double.NEGATIVE_INFINITY;
+//			}
+//		}
 
 		if (logHR == Double.POSITIVE_INFINITY)
 			return Double.NEGATIVE_INFINITY;
