@@ -601,6 +601,8 @@ public class Network extends StateNode {
 //	                    }
 //                    }else {
 	                    for (NetworkParser.AttribValueContext attribValueCtx : attribCtx.attribValue().vector().attribValue()) {
+	                    	if (attribValueCtx.getText().isEmpty())
+	                    		continue;
 	                    	hasSegments.set(Integer.valueOf(attribValueCtx.getText()));
 	                    }
 //                    }

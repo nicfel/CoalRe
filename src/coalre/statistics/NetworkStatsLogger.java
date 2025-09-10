@@ -50,7 +50,8 @@ public class NetworkStatsLogger extends BEASTObject implements Loggable {
         else
         	out.print(prefix + "height\t" +
 	                prefix + "totalLength\t" +
-	                prefix + "reassortmentNodeCount\t");
+	                prefix + "reassortmentNodeCount\t"+
+	                prefix + "emptyCount\t");
 
     }
 
@@ -69,7 +70,8 @@ public class NetworkStatsLogger extends BEASTObject implements Loggable {
         }else{   
         	out.print(getTotalHeight(network) + "\t" +
 	                getTotalEdgeLength(network) + "\t" +
-	                getObsReassortmentCount(network) + "\t");
+	                getObsReassortmentCount(network) + "\t"+
+	                getEmptyEdges(network) + "\t");
         }
     }
 
@@ -90,12 +92,17 @@ public class NetworkStatsLogger extends BEASTObject implements Loggable {
     public static int getReassortmentCount(Network network) {
         return (int)network.getNodes().stream().filter(NetworkNode::isReassortment).count();
     }
+    public static int getEmptyEdges(Network network) {
+        return (int)network.getEdges().stream().filter(e->e.hasSegments.cardinality()==0).count();
+    }
+
 
     public static double getTotalEdgeLength(Network network) {
         return network.getEdges().stream().filter(e -> !e.isRootEdge())
         		.filter(e -> e.hasSegments.cardinality() > 0)
                 .map(NetworkEdge::getLength).reduce((l1, l2) -> l1+l2).get();
     }
+    
 
     public static double getTotalHeight(Network network) {
         return network.getRootEdge().childNode.getHeight();

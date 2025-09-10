@@ -23,6 +23,9 @@ public class NetworkIntervals extends CalculationNode {
 
     public Input<RealParameter> binomialProbInput = new Input<>("binomialProb",
             "Probability of a given segment choosing a particular parent.");
+    
+	public Input<Double> emptyObsProbInput = new Input<>("emptyObsProb",
+			"Probability of observing an empty segment in a reassortment event, default 0.05", 0.1);
 
     private Network network;
 
@@ -34,7 +37,7 @@ public class NetworkIntervals extends CalculationNode {
     private boolean precomputeReassortmentObsProb = false;
     private double[] obsProb;
     
-    protected double emptyObsProb = 0.1;
+    protected double emptyObsProb; // Probability of observing an empty segment in a reassortment event, default 0.05;
 
     @Override
     public void initAndValidate() {
@@ -42,14 +45,15 @@ public class NetworkIntervals extends CalculationNode {
 
         storedNetworkEventList = new ArrayList<>();
         
-        if (binomialProbInput.get()==null) {
+        emptyObsProb = emptyObsProbInput.get()/(network.getSegmentCount()+1.0);
+        
+        if (binomialProbInput.get()==null || binomialProbInput.get().getArrayValue()==0.5) {
         	precomputeReassortmentObsProb = true;
         	obsProb = new double[network.getSegmentCount()+1];
         	for (int i = 1; i< obsProb.length; i++) {
-        		obsProb[i] = 1.0 - (2*Math.pow(0.5, i)) + (2*Math.pow(0.5, i))*emptyObsProb;
+        		obsProb[i] = 1.0 - (2*Math.pow(0.5, i)) + (2*Math.pow(0.5, i))*emptyObsProb*(i+1);
         	}
-        	obsProb[0] = emptyObsProb;
-
+        	obsProb[0] = (0+0.1)*emptyObsProb; 
         }
         
     }

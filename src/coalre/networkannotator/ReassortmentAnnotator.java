@@ -153,7 +153,7 @@ public class ReassortmentAnnotator {
      * removes all edges from the network that don't carry any segments
      * @param network
      */
-    private void removeEmptyNetworkEdge(Network network){
+    protected void removeEmptyNetworkEdge(Network network){
         List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
 
         List<NetworkEdge> removableEdges = networkEdges.stream()

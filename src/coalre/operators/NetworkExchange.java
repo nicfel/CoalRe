@@ -133,10 +133,11 @@ public class NetworkExchange extends DivertSegmentOperator {
 		final List<NetworkEdge> possibleEdges = networkEdges.stream()
 				.filter(e -> !e.isRootEdge())
 				.filter(e -> e.parentNode.isCoalescence())
+				.filter(e -> e.hasSegments.cardinality() > 0)
+				.filter(e -> isTrueCoalescence(e))
 				.collect(Collectors.toList());
 
 //		final int nPossibleEdges = possibleEdges.size();
-//		logHR -= Math.log(1.0/(double)nPossibleEdges);
 
 		final NetworkEdge iEdge = possibleEdges.get(Randomizer.nextInt(possibleEdges.size()));
 
@@ -148,6 +149,7 @@ public class NetworkExchange extends DivertSegmentOperator {
 				.filter(e -> !e.isRootEdge())
 				.filter(e -> e.parentNode.getHeight()>iEdge.parentNode.getHeight())
 				.filter(e -> e.childNode.getHeight()<iEdge.parentNode.getHeight())
+				.filter(e -> segmentsOverlap(e.hasSegments, iEdge.hasSegments))
 				.collect(Collectors.toList());
 		
 //		System.out.println(network);
@@ -166,9 +168,37 @@ public class NetworkExchange extends DivertSegmentOperator {
 			removeReassortmentEdge(iEdge.parentNode.getParentEdges().get(0));
 		else
 			removeReassortmentEdge(iEdge.parentNode.getParentEdges().get(1));
+		
+		int possibleEdgesRevers = (int) networkEdges.stream()
+				.filter(e -> !e.isRootEdge())
+				.filter(e -> e.parentNode.isCoalescence())
+				.filter(e -> e.hasSegments.cardinality() > 0)
+				.filter(e -> isTrueCoalescence(e))
+				.count();
+		
+		logHR += Math.log(possibleEdges.size()/(double)possibleEdgesRevers);
+
 //		System.out.println(network);
 //		System.exit(0);
 		return logHR;
+	}
+
+	private boolean segmentsOverlap(BitSet hasSegments, BitSet hasSegments2) {
+		for (int i = hasSegments.nextSetBit(0); i >= 0; i = hasSegments.nextSetBit(i + 1)) {
+			if (hasSegments2.get(i))
+				return true;
+		}
+		return false;
+	}
+
+	private boolean isTrueCoalescence(NetworkEdge e) {
+		NetworkEdge sister = getSisterEdge(e);
+		// loop over all segments in e, check if sister also has them, if so, return true
+		for (int i = e.hasSegments.nextSetBit(0); i >= 0; i = e.hasSegments.nextSetBit(i + 1)) {
+			if (sister.hasSegments.get(i))
+				return true;
+		}
+		return false;
 	}
 
 	/* exchange sub-nets whose root are i and j */

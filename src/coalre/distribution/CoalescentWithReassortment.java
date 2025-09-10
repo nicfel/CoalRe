@@ -75,9 +75,9 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 			
 			for (int j = 0; j <= i; j++) {
 				if (i==0 && j==0) {
-					logBinomval[i][j] = Math.log(intervals.emptyObsProb);
+					logBinomval[i][j] = Math.log(0.1*intervals.emptyObsProb);
 				}else if (i==j || j==0) {
-					logBinomval[i][j] = Math.log(intervals.emptyObsProb*(Math.pow(intervals.getBinomialProb(), j)
+					logBinomval[i][j] = Math.log((i+1)*intervals.emptyObsProb*(Math.pow(intervals.getBinomialProb(), j)
 							* Math.pow(1-intervals.getBinomialProb(), i-j) 
 							+ Math.pow(intervals.getBinomialProb(), i-j)
 							* Math.pow(1-intervals.getBinomialProb(), j)));

@@ -35,22 +35,23 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
     @Override
     public double networkProposal() {
         double logHR;
-        
-//        System.out.println(network);
-        for (int i = 0; i < segmentTrees.size(); i++) {
-    		segmentsChanged.set(i, false);
-        }
 
-
-        if (Randomizer.nextBoolean()) {
+        if (Randomizer.nextDouble()<0.5) {
             logHR = addRecombination();
+			if (logHR == Double.NEGATIVE_INFINITY)
+				return Double.NEGATIVE_INFINITY;
+            
         }else {
         	try {
         		logHR = removeRecombination();
+				if (logHR == Double.NEGATIVE_INFINITY)
+					return Double.NEGATIVE_INFINITY;
+
         	} catch (Exception e) {
         		return Double.NEGATIVE_INFINITY;
         	}
         }
+        
         return logHR;
     }
 

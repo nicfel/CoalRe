@@ -1,186 +1,279 @@
 package coalre.operators;
 
 import beast.base.core.Input;
-import beast.pkgmgmt.Package;
 import beast.base.util.Randomizer;
-import coalre.network.Network;
+import coalre.distribution.CoalescentWithReassortment;
+import coalre.distribution.NetworkEvent;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
+import coalre.statistics.NetworkStatsLogger;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class AddRemoveReassortmentExponential extends DivertSegmentOperator {
 
-	public Input<Double> alphaInput = new Input<>("alpha",
-			"Mean of exponential used for choosing root attachment times.", 1.0);
-
-	public Input<Boolean> localMove = new Input<>("localMove",
-			"If true, only reassortment edges that are ancestral to the reassortment event are considered.", false);
-
-	public Input<Double> addProbabilityInput = new Input<>("addProbability",
-			"Probability of adding a reassortment edge.", 0.5);
+    public Input<CoalescentWithReassortment> coalescentDistrInput = new Input<>("coalescentWithReassortment",
+            "Mean of exponential used for choosing root attachment times.",
+            Input.Validate.REQUIRED);
+    
+	public Input<Boolean> randomlySampleAttachmentEdgeInput = new Input<>("randomlySampleAttachmentEdge",
+			"Randomly sample edge to attach to", true);
 	
-	private double alpha;
 
-	@Override
-	public void initAndValidate() {
-		super.initAndValidate();
+    CoalescentWithReassortment coalescentDistr;
 
-		alpha = alphaInput.get();
-	}
+    boolean useMaxHeight = false;
+    @Override
+    public void initAndValidate() {
+        super.initAndValidate();
+        coalescentDistr = coalescentDistrInput.get();
+        if (coalescentDistr.maxHeightRatioInput.get()==1.0 && coalescentDistr.redFactorInput.get()==0.0)
+        	useMaxHeight = true;
+    }
 
-	@Override
-	public double networkProposal() {
+    @Override
+    public double networkProposal() {
+        double logHR;
 
-		double logHR;
-		if (Randomizer.nextDouble() < addProbabilityInput.get()) {
-//			if (localMove.get()) {
-//				logHR = addLocalReassortment();
-//			}else
-				logHR = addReassortment();
-		} else {
-//			try {
-//				if (localMove.get())
-//					logHR = removeLocalReassortment();
-//				else
-					logHR = removeReassortment();
-//			} catch (Exception e) {
-//				// dangerous implementation!!
-//				logHR = Double.NEGATIVE_INFINITY;
+        if (Randomizer.nextDouble()<0.5) {
+            logHR = addRecombination();
+			if (logHR == Double.NEGATIVE_INFINITY)
+				return Double.NEGATIVE_INFINITY;
+            
+        }else {
+        	try {
+        		logHR = removeRecombination();
+				if (logHR == Double.NEGATIVE_INFINITY)
+					return Double.NEGATIVE_INFINITY;
+
+        	} catch (Exception e) {
+        		return Double.NEGATIVE_INFINITY;
+        	}
+        }
+        
+        return logHR;
+    }
+
+    double addRecombination() {
+        double logHR = 0.0;
+       
+        List<Integer> possibleSourceEdges = new ArrayList<>();
+//    	if (divertOneSegmentInput.get()) {
+			for (int i = 0; i < networkEdges.size(); i++) {
+				NetworkEdge edge = networkEdges.get(i);
+				if (!edge.isRootEdge()
+						&& edge.hasSegments.cardinality() >= 1) {                            
+					possibleSourceEdges.add(i);
+				}
+			}
+//
+//    	}else {
+//			for (int i = 0; i < networkEdges.size(); i++) {
+//				NetworkEdge edge = networkEdges.get(i);
+//				if (!edge.isRootEdge() && edge.hasSegments.cardinality() >= 1) {
+//					possibleSourceEdges.add(i);
+//				}
 //			}
+//    	}
+        
+        
+        NetworkEdge sourceEdge = null;
+        double sourceTime = -1.0;
+        
+		if (randomlySampleAttachmentEdgeInput.get()) {
+	        
+	        sourceEdge = networkEdges.get(possibleSourceEdges.get(Randomizer.nextInt(possibleSourceEdges.size())));
+	        sourceTime = Randomizer.nextDouble() * sourceEdge.getLength() + sourceEdge.childNode.getHeight();
+	
+	        logHR -= Math.log(1.0/(double)possibleSourceEdges.size())
+	                + Math.log(1.0/sourceEdge.getLength());
+		}else {
+	        // compute the sum over all possible source edges
+			double sumEdgeLengths = 0.0;
+			for (Integer i : possibleSourceEdges) {
+				sumEdgeLengths += networkEdges.get(i).getLength();
+			}
+					
+//					possibleSourceEdges.stream().mapToDouble(e -> e.getLength()).sum();			
+			// Pick a random number between 0 and sum of edge lengths
+			double randomEdgeLength = Randomizer.nextDouble() * sumEdgeLengths;
+			logHR -= Math.log(1.0/sumEdgeLengths);
+			// pick the source edge as the first edge whose length is greater than the random number
+			double passedLength = 0;
+			for (Integer i : possibleSourceEdges) {
+				passedLength += networkEdges.get(i).getLength();
+				if (passedLength > randomEdgeLength) {
+					sourceEdge = networkEdges.get(i);
+					sourceTime = passedLength-randomEdgeLength + sourceEdge.childNode.getHeight();
+					break;
+				}
+			}
 		}
-
-		return logHR;
-	}
-
-	double addReassortment() {
-		double logHR = 0.0;
-
-		List<NetworkEdge> possibleSourceEdges = networkEdges.stream().filter(e -> !e.isRootEdge())
-				.collect(Collectors.toList());
-
-		NetworkEdge sourceEdge = possibleSourceEdges.get(Randomizer.nextInt(possibleSourceEdges.size()));
-		double sourceTime = Randomizer.nextDouble() * sourceEdge.getLength() + sourceEdge.childNode.getHeight();
-
-		logHR -= Math.log(1.0 / (double) possibleSourceEdges.size()) + Math.log(1.0 / sourceEdge.getLength());
-
-		List<NetworkEdge> destEdges = networkEdges.stream()
-				.filter(e -> !e.isRootEdge())
-				.filter(e -> e.parentNode.getHeight() >= sourceTime)
-				.collect(Collectors.toList());	
-		destEdges.add(network.getRootEdge());
-		
-		NetworkEdge destEdge = destEdges.get(Randomizer.nextInt(destEdges.size()));
-		logHR -= Math.log(1.0 / destEdges.size());
-
-//		if (!destEdge.isRootEdge() && destEdge.parentNode.getHeight() < sourceTime)
-//			return Double.NEGATIVE_INFINITY;
-
-		double minDestTime = Math.max(destEdge.childNode.getHeight(), sourceTime);
-
-		double destTime;
-		if (destEdge.isRootEdge()) {
-			destTime = minDestTime + Randomizer.nextExponential(1.0 / alpha);
-			logHR -= -(1.0 / alpha) * (destTime - minDestTime) + Math.log(1.0 / alpha);
-		} else {
-			destTime = Randomizer.nextDouble() * (destEdge.parentNode.getHeight() - minDestTime) + minDestTime;
-			logHR -= Math.log(1.0 / (destEdge.parentNode.getHeight() - minDestTime));
-		}
-
-		// Create new reassortment edge
-		logHR += addReassortmentEdge(sourceEdge, sourceTime, destEdge, destTime);
-
-		if (logHR == Double.NEGATIVE_INFINITY)
-			return Double.NEGATIVE_INFINITY;
-
-		// HR contribution for reverse move
-		int nRemovableEdges;
-		
+		BitSet segsToDivert = new BitSet();
+		// Choose segments to divert to new edge
 		if (divertOneSegmentInput.get()) {
-			nRemovableEdges= (int) networkEdges.stream().filter(e -> !e.isRootEdge())
-				.filter(e -> e.childNode.isReassortment())
-				.filter(e -> e.parentNode.isCoalescence()).count();
+			segsToDivert = getRandomSegment(sourceEdge.hasSegments);
+			logHR -= Math.log(1.0 / sourceEdge.hasSegments.cardinality());
 		} else {
-			nRemovableEdges= (int) networkEdges.stream().filter(e -> !e.isRootEdge())
-					.filter(e -> e.childNode.isReassortment())
-					.filter(e -> e.parentNode.isCoalescence())
-					.filter(e -> e.hasSegments.cardinality() == 0)
-					.count();
-
-		}
-		logHR += Math.log(1.0 / nRemovableEdges);
-
-		return logHR;
-	}
-
-	/**
-	 * same as above, but the reattachment is to ancestral edges only with the goal
-	 * of minimizing topology changes on the tree
-	 * 
-	 * @return
-	 */
-	private void getAllAncestralEdges(NetworkEdge edge, List<NetworkEdge> destEdges) {
-		if (destEdges.contains(edge)) {
-			return;
-		}
-		destEdges.add(edge);
-		if (edge.parentNode != null) {
-			for (NetworkEdge parentEdge : edge.parentNode.getParentEdges()) {
-				getAllAncestralEdges(parentEdge, destEdges);
+			if (sourceEdge.hasSegments.cardinality()>0) {
+				segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
+				logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
 			}
 		}
 
-	}
+                
+    	// Calculate tree intervals
+    	List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
 
-	double addReassortmentEdge(NetworkEdge sourceEdge, double sourceTime, NetworkEdge destEdge, double destTime) {
+    	double currTime = sourceTime;
+    	NetworkEvent prevEvent = null;
+    	double attachmentTime = 0.0;
+    	
+    	for (NetworkEvent event : networkEventList) {
+    		if (event.time>currTime) {
+    			double rate = 0.5*prevEvent.lineages;
+                double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(currTime);
+                double transformedTimeToNextCoal = Randomizer.nextExponential(rate);
+                double timeToNextCoal = coalescentDistr.populationFunction.getInverseIntensity(
+                        transformedTimeToNextCoal + currentTransformedTime);
+                
 
-		double logHR = 0.0;
+                attachmentTime = timeToNextCoal;
+                if (timeToNextCoal < event.time) {
+                	logHR -= -rate * coalescentDistr.populationFunction.getIntegral(currTime, attachmentTime) +
+                			Math.log(rate/coalescentDistr.populationFunction.getPopSize(attachmentTime));
+                	break;
+                }
+                logHR -= -rate * coalescentDistr.populationFunction.getIntegral(currTime, event.time);
+    			currTime = event.time;
+    		}
+    		prevEvent = event;
+        }    	
+    	
+    	if (attachmentTime>network.getRootEdge().childNode.getHeight()) {    		
+            double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(network.getRootEdge().childNode.getHeight());
+    		double transformedTimeToNextCoal = Randomizer.nextExponential(0.5);
+            attachmentTime = coalescentDistr.populationFunction.getInverseIntensity(
+                    transformedTimeToNextCoal + currentTransformedTime);
+            
+            logHR -= -0.5 * coalescentDistr.populationFunction.getIntegral(network.getRootEdge().childNode.getHeight(), attachmentTime);
+        	logHR -= Math.log(0.5/coalescentDistr.populationFunction.getPopSize(attachmentTime));
 
-		NetworkNode sourceNode = new NetworkNode();
-		sourceNode.setHeight(sourceTime);
+    	}    	
 
-		NetworkNode oldSourceEdgeParent = sourceEdge.parentNode;
-		oldSourceEdgeParent.removeChildEdge(sourceEdge);
-		sourceNode.addChildEdge(sourceEdge);
+    	double destTime = attachmentTime;
+    	BitSet sourceSegments = (BitSet) segsToDivert.clone();
+        // keep only those that coexist at the time of maxHeight
+        List<NetworkEdge> destEdges = networkEdges.stream()
+                .filter(e -> !e.isRootEdge())
+                .filter(e -> e.parentNode.getHeight()>destTime)
+                .filter(e -> e.childNode.getHeight()<=destTime)
+                .filter(e -> segmentsOverlap(e.hasSegments, sourceSegments))
+               .collect(Collectors.toList());
+        
+        if (destEdges.size()==0 && network.getRootEdge().childNode.getHeight()<destTime)
+        	destEdges.add(network.getRootEdge());
+		if (destEdges.isEmpty())
+			return Double.NEGATIVE_INFINITY;
+        
+        
+        NetworkEdge destEdge = destEdges.get(Randomizer.nextInt(destEdges.size()));
+        logHR -= Math.log(1.0/destEdges.size());
 
-		NetworkEdge newEdge1 = new NetworkEdge();
-		sourceNode.addParentEdge(newEdge1);
-		oldSourceEdgeParent.addChildEdge(newEdge1);
+        if (!destEdge.isRootEdge() && destEdge.parentNode.getHeight() < sourceTime)
+            return Double.NEGATIVE_INFINITY;
+      
+        
+        // Create new reassortment edge
+        logHR += addReassortmentEdge(sourceEdge, sourceTime, destEdge, destTime, segsToDivert);
+        
+       
+        if (logHR == Double.NEGATIVE_INFINITY)
+            return Double.NEGATIVE_INFINITY;         
 
-		newEdge1.hasSegments = (BitSet) sourceEdge.hasSegments.clone();
+        // HR contribution for reverse move
+		if (divertOneSegmentInput.get()) {
+			int nRemovableEdges = (int) networkEdges.stream()
+	                .filter(e -> !e.isRootEdge())
+	                .filter(e -> e.childNode.isReassortment())
+	                .filter(e -> e.hasSegments.cardinality() == 1)
+	                .filter(e -> e.parentNode.isCoalescence())
+	                .filter(e -> isTrueCoalescence(e))
+	                .count();
+	        
+				logHR += Math.log(1.0/nRemovableEdges);
 
-		if (destEdge == sourceEdge)
-			destEdge = newEdge1;
-
-		NetworkNode destNode = new NetworkNode();
-		destNode.setHeight(destTime);
-
-		NetworkNode oldDestEdgeParent = destEdge.parentNode;
-		if (oldDestEdgeParent != null) {
-			oldDestEdgeParent.removeChildEdge(destEdge);
+		}else {
+			int nRemovableEdges = (int) networkEdges.stream()
+                .filter(e -> !e.isRootEdge())
+                .filter(e -> e.childNode.isReassortment())
+                .filter(e -> e.parentNode.isCoalescence())
+                .filter(e -> isTrueCoalescence(e))
+                .count();
+        
+			logHR += Math.log(1.0/nRemovableEdges);
 		}
+        return logHR;
+    }
 
-		destNode.addChildEdge(destEdge);
+    double addReassortmentEdge(NetworkEdge sourceEdge, double sourceTime,
+                               NetworkEdge destEdge, double destTime, BitSet segsToDivert) {
 
-		NetworkEdge newEdge2 = new NetworkEdge();
-		destNode.addParentEdge(newEdge2);
+        double logHR = 0.0;
 
-		if (oldDestEdgeParent == null) {
-			network.setRootEdge(newEdge2);
-		} else {
-			oldDestEdgeParent.addChildEdge(newEdge2);
+        boolean sourceisroot = sourceEdge.isRootEdge();
+        NetworkNode sourceNode = new NetworkNode();
+        sourceNode.setHeight(sourceTime);
+
+        NetworkNode oldSourceEdgeParent = sourceEdge.parentNode;
+        if (!sourceisroot)
+        	oldSourceEdgeParent.removeChildEdge(sourceEdge);
+        sourceNode.addChildEdge(sourceEdge);
+
+        NetworkEdge newEdge1 = new NetworkEdge();
+        sourceNode.addParentEdge(newEdge1);
+        if (!sourceisroot)
+        	oldSourceEdgeParent.addChildEdge(newEdge1);
+
+        newEdge1.hasSegments = (BitSet) sourceEdge.hasSegments.clone();
+
+        if (destEdge == sourceEdge)
+            destEdge = newEdge1;
+
+        NetworkNode destNode = new NetworkNode();
+        destNode.setHeight(destTime);
+
+        NetworkNode oldDestEdgeParent = destEdge.parentNode;
+        if (oldDestEdgeParent != null) {
+            oldDestEdgeParent.removeChildEdge(destEdge);
+        }
+
+        destNode.addChildEdge(destEdge);
+
+        NetworkEdge newEdge2 = new NetworkEdge();
+        destNode.addParentEdge(newEdge2);
+
+        if (oldDestEdgeParent == null) {
+            network.setRootEdge(newEdge2);
+        } else {
+            oldDestEdgeParent.addChildEdge(newEdge2);
+        }
+
+        newEdge2.hasSegments = (BitSet) destEdge.hasSegments.clone();
+
+        NetworkEdge reassortmentEdge = new NetworkEdge();
+        sourceNode.addParentEdge(reassortmentEdge);
+        destNode.addChildEdge(reassortmentEdge);
+        reassortmentEdge.hasSegments = new BitSet();
+		if (segsToDivert.cardinality()>0) {
+//				System.out.println(segsToDivert + " " + sourceEdge.hasSegments);
+			logHR += divertSegments(reassortmentEdge, newEdge1, segsToDivert);
 		}
+		
+        if (!isTrueCoalescence(reassortmentEdge))
+        	return Double.NEGATIVE_INFINITY;
 
-		newEdge2.hasSegments = (BitSet) destEdge.hasSegments.clone();
-
-		NetworkEdge reassortmentEdge = new NetworkEdge();
-		sourceNode.addParentEdge(reassortmentEdge);
-		destNode.addChildEdge(reassortmentEdge);
-		reassortmentEdge.hasSegments = new BitSet();
 
 //		// Choose segments to divert to new edge
 //		if (divertOneSegmentInput.get()) {
@@ -190,379 +283,241 @@ public class AddRemoveReassortmentExponential extends DivertSegmentOperator {
 ////			logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments, segsToDivert, sourceEdge.hasSegments.cardinality());
 //			logHR += divertSegments(reassortmentEdge, newEdge1, segsToDivert);
 //		} else {
-//			BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
-//			logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
-//			logHR += divertSegments(reassortmentEdge, newEdge1, segsToDivert);
+//			if (sourceEdge.hasSegments.cardinality()>0) {
+//				BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
+//				logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
+//				if (segsToDivert.cardinality()>0) {
+//	//				System.out.println(segsToDivert + " " + sourceEdge.hasSegments);
+//					logHR += divertSegments(reassortmentEdge, newEdge1, segsToDivert);
+//				}
+//			}
 //		}
-
 		networkEdges.add(reassortmentEdge);
-		networkEdges.add(newEdge1);
-		networkEdges.add(newEdge2);
+        networkEdges.add(newEdge1);
+        networkEdges.add(newEdge2);
 
-		return logHR;
-	}
 
-	double removeReassortment() {
-		double logHR = 0.0;
+        return logHR;
+    }
 
-		
-		List<NetworkEdge> removableEdges;
-//		if (divertOneSegmentInput.get()) {
-//            removableEdges = networkEdges.stream().filter(e -> !e.isRootEdge())
-//                    .filter(e -> e.hasSegments.cardinality() == 1).filter(e -> e.childNode.isReassortment())
-//                    .filter(e -> e.parentNode.isCoalescence()).collect(Collectors.toList());
-//        } else {
-            removableEdges = networkEdges.stream().filter(e -> !e.isRootEdge())
-    				.filter(e -> e.hasSegments.cardinality() == 0).filter(e -> e.childNode.isReassortment())
-    				.filter(e -> e.parentNode.isCoalescence()).collect(Collectors.toList());
+    double removeRecombination() {
+        double logHR = 0.0;
+        
+        List<Integer> removableEdges = new ArrayList<>();
+        
+        if (divertOneSegmentInput.get()) {
+    		for (int i = 0; i < networkEdges.size(); i++) {
+    			NetworkEdge edge = networkEdges.get(i);
+    			if (!edge.isRootEdge()
+    					&& edge.childNode.isReassortment()
+    					&& edge.parentNode.isCoalescence()
+    					&& edge.hasSegments.cardinality() == 1
+    					&& isTrueCoalescence(edge)) {
+    				removableEdges.add(i);
+    			}
+    		}
 
-//        }
-		
+        }else {
+    		for (int i = 0; i < networkEdges.size(); i++) {
+    			NetworkEdge edge = networkEdges.get(i);
+    			if (!edge.isRootEdge()
+    					&& edge.childNode.isReassortment()
+    					&& edge.parentNode.isCoalescence() 
+    					&& isTrueCoalescence(edge)) {
+    				removableEdges.add(i);
+    			}
+    		}
+        }
+        
+//        List<NetworkEdge> removableEdges = networkEdges.stream()
+//                .filter(e -> !e.isRootEdge())
+//                .filter(e -> e.hasSegments.cardinality()>=1)
+//                .filter(e -> e.childNode.isReassortment())
+//                .filter(e -> e.parentNode.isCoalescence())
+//                .collect(Collectors.toList());
+        
+        
+        if (removableEdges.isEmpty())
+            return Double.NEGATIVE_INFINITY;
 
-		if (removableEdges.isEmpty())
-			return Double.NEGATIVE_INFINITY;
+        NetworkEdge edgeToRemove = networkEdges.get(removableEdges.get(Randomizer.nextInt(removableEdges.size())));
+        logHR -= Math.log(1.0/(removableEdges.size()));
+        
 
-		NetworkEdge edgeToRemove = removableEdges.get(Randomizer.nextInt(removableEdges.size()));
+        double sourceTime = edgeToRemove.childNode.getHeight();
+        NetworkEdge sourceEdge = edgeToRemove.childNode.getChildEdges().get(0);
+        NetworkEdge destEdge = getSisterEdge(edgeToRemove);
+        if (destEdge.childNode == edgeToRemove.childNode)
+            destEdge = sourceEdge;
+        double destTime = edgeToRemove.parentNode.getHeight();        
+    	// Calculate tree intervals
+    	List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
 
-		logHR -= Math.log(1.0 / (removableEdges.size()));
+    	double currTime = sourceTime;
+    	NetworkEvent prevEvent = null;
+    	
+    	for (NetworkEvent event : networkEventList) {
+    		if (event.time>currTime) {                
+            	double rate = 0.5 * (prevEvent.lineages-1);
+                if (destTime<=event.time) {
+                	logHR += -rate* coalescentDistr.populationFunction.getIntegral(currTime, destTime);                	
+                	logHR += Math.log(rate/coalescentDistr.populationFunction.getPopSize(destTime));
+                	break;
+                }
+                logHR += -rate * coalescentDistr.populationFunction.getIntegral(currTime, event.time);
+    			currTime = event.time;
+    		}
+    		prevEvent = event;
+        }    	
+    	
+        // Remove reassortment edge
+        logHR += removeReassortmentEdge(edgeToRemove);
+        
+        if (logHR == Double.NEGATIVE_INFINITY)
+            return Double.NEGATIVE_INFINITY;
 
-		double sourceTime = edgeToRemove.childNode.getHeight();
-		NetworkEdge sourceEdge = edgeToRemove.childNode.getChildEdges().get(0);
-		NetworkEdge destEdge = getSisterEdge(edgeToRemove);
-		if (destEdge.childNode == edgeToRemove.childNode)
-			destEdge = sourceEdge;
-		double destTime = edgeToRemove.parentNode.getHeight();
+        // HR contribution for reverse move
 
-		// Remove reassortment edge
-		logHR += removeReassortmentEdge(edgeToRemove);
 
-		if (logHR == Double.NEGATIVE_INFINITY)
-			return Double.NEGATIVE_INFINITY;
+        if (randomlySampleAttachmentEdgeInput.get()) {
+            int nPossibleSourceEdges = 0;
+//            if (useMaxHeight) {
+//            	double lociMRCA = NetworkStatsLogger.getSecondHighestLociMRCA(networkInput.get());
+//				for (NetworkEdge e : networkEdges) {
+//					if (!e.isRootEdge() && e.hasSegments.cardinality() >= 2 && e.childNode.getHeight() < lociMRCA) {
+//						nPossibleSourceEdges++;
+//					}
+//				}
+//				throw new RuntimeException("This operator is not implemented for randomly sampling attachment edges yet.");
+//            }else {
+//            	if (divertOneSegmentInput.get()){
+		            for (NetworkEdge e : networkEdges) {
+		                if (!e.isRootEdge() && e.hasSegments.cardinality() >= 1) {
+		                    nPossibleSourceEdges++;
+		                }
+		            }
+//            	}else {
+//		            for (NetworkEdge e : networkEdges) {
+//		                if (!e.isRootEdge()) {
+//		                    nPossibleSourceEdges++;
+//		                }
+//		            }
+//            	}
+//            }
 
-		// HR contribution for reverse move
-
-		int nPossibleSourceEdges = (int) networkEdges.stream().filter(e -> !e.isRootEdge())
-				.count();
-
-		logHR += Math.log(1.0 / (double) nPossibleSourceEdges) + Math.log(1.0 / sourceEdge.getLength());
-
-		
-
-		int destEdgesNumber = (int) networkEdges.stream()
-				.filter(e -> !e.isRootEdge())
-				.filter(e -> e.parentNode.getHeight() >= sourceTime)
-				.count();	
-		
-		destEdgesNumber += 1; // include root edge
-		
-		logHR += Math.log(1.0 / destEdgesNumber);
-
-		double minDestTime = Math.max(destEdge.childNode.getHeight(), sourceTime);
-
-		if (destEdge.isRootEdge()) {
-			logHR += -(1.0 / alpha) * (destTime - minDestTime) + Math.log(1.0 / alpha);
-		} else {
-			logHR += Math.log(1.0 / (destEdge.parentNode.getHeight() - minDestTime));
+            logHR += Math.log(1.0/(double)nPossibleSourceEdges)
+                    + Math.log(1.0/sourceEdge.getLength());
+        }else {
+        	double sumEdgeLengths = 0.0;
+//        	if (useMaxHeight) {
+//        		double lociMRCA = NetworkStatsLogger.getSecondHighestLociMRCA(networkInput.get());
+//        		for (NetworkEdge e : networkEdges) {
+//        			if (!e.isRootEdge() && e.hasSegments.cardinality() >= 2 && e.childNode.getHeight() < lociMRCA) {
+//        				sumEdgeLengths += e.getLength();
+//        			}
+//        		}
+//        		throw new RuntimeException("This operator is not implemented for randomly sampling attachment edges yet.");
+//        	}else {
+				for (NetworkEdge e : networkEdges) {
+					if (!e.isRootEdge()) {
+						sumEdgeLengths += e.getLength();
+					}
+				}
+//        	}
+			logHR += Math.log(1.0 / sumEdgeLengths);
+        }
+ 
+        
+        int destEdges = 0;
+        BitSet sourceSegments = (BitSet) sourceEdge.hasSegments.clone();
+		for (NetworkEdge edge : networkEdges) {
+			if (!edge.isRootEdge() && edge.parentNode.getHeight() > destTime
+					&& edge.childNode.getHeight() <= destTime
+					&& segmentsOverlap(edge.hasSegments, sourceSegments)) {
+				destEdges++;
+			}
 		}
+        
+        if (destEdges==0)
+        	destEdges++;
+        
+        logHR += Math.log(1.0/destEdges);
 
-		return logHR;
-	}
 
-	double removeReassortmentEdge(NetworkEdge edgeToRemove) {
-		double logHR = 0.0;
 
-		NetworkNode nodeToRemove = edgeToRemove.childNode;
-		NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
-		NetworkNode edgeToRemoveSpouseParent = edgeToRemoveSpouse.parentNode;
+        return logHR;
+    }
+
+    double removeReassortmentEdge(NetworkEdge edgeToRemove) {
+        double logHR = 0.0;
+
+
+        NetworkNode nodeToRemove = edgeToRemove.childNode;
+        NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
+        NetworkNode edgeToRemoveSpouseParent = edgeToRemoveSpouse.parentNode;
 		networkEdges.remove(edgeToRemove);
 		networkEdges.remove(edgeToRemoveSpouse);
 
-		// Divert segments away from chosen edge
-//		BitSet segsToDivert = (BitSet) edgeToRemove.hasSegments.clone();
-//		logHR += divertSegments(edgeToRemoveSpouse, edgeToRemove, segsToDivert);
-//		if (divertOneSegmentInput.get()) {
-//			logHR += Math.log(1.0 / edgeToRemoveSpouse.hasSegments.cardinality());
-////			logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments, segsToDivert, 1.0/edgeToRemoveSpouse.hasSegments.cardinality());
-//		} else {
-//			logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments);
-//		}
-
-		// Remove edge and associated nodes
-		NetworkEdge edgeToExtend = nodeToRemove.getChildEdges().get(0);
-		nodeToRemove.removeChildEdge(edgeToExtend);
-		nodeToRemove.removeParentEdge(edgeToRemove);
-		nodeToRemove.removeParentEdge(edgeToRemoveSpouse);
-		edgeToRemoveSpouseParent.removeChildEdge(edgeToRemoveSpouse);
-		edgeToRemoveSpouseParent.addChildEdge(edgeToExtend);
-
-		NetworkNode secondNodeToRemove = edgeToRemove.parentNode;
-		NetworkEdge secondEdgeToExtend = getSisterEdge(edgeToRemove);
-
-		secondNodeToRemove.removeChildEdge(secondEdgeToExtend);
-		secondNodeToRemove.removeChildEdge(edgeToRemove);
-
-		networkEdges.remove(secondNodeToRemove.getParentEdges().get(0));
-		if (secondNodeToRemove.getParentEdges().get(0).isRootEdge()) {
-			network.setRootEdge(secondEdgeToExtend);
-
+        // Divert segments away from chosen edge
+		BitSet segsToDivert = (BitSet) edgeToRemove.hasSegments.clone();
+		if (segsToDivert.cardinality() != 0) {
+		
+			logHR += divertSegments(edgeToRemoveSpouse, edgeToRemove, segsToDivert);
+		}
+		if (divertOneSegmentInput.get()) {
+			logHR += Math.log(1.0 / edgeToRemoveSpouse.hasSegments.cardinality());
 		} else {
-			NetworkEdge secondNodeToRemoveParentEdge = secondNodeToRemove.getParentEdges().get(0);
-			NetworkNode secondNodeToRemoveParent = secondNodeToRemoveParentEdge.parentNode;
-			secondNodeToRemoveParent.removeChildEdge(secondNodeToRemoveParentEdge);
-			secondNodeToRemove.removeParentEdge(secondNodeToRemoveParentEdge);
-
-			secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
-			networkEdges.remove(secondNodeToRemoveParentEdge);
+			logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments);
 		}
 
-//        if (!networkTerminatesAtMRCA())
-//            return Double.NEGATIVE_INFINITY;
+        // Remove edge and associated nodes
+        NetworkEdge edgeToExtend = nodeToRemove.getChildEdges().get(0);
+        nodeToRemove.removeChildEdge(edgeToExtend);
+        nodeToRemove.removeParentEdge(edgeToRemove);
+        nodeToRemove.removeParentEdge(edgeToRemoveSpouse);
+        edgeToRemoveSpouseParent.removeChildEdge(edgeToRemoveSpouse);
+        edgeToRemoveSpouseParent.addChildEdge(edgeToExtend);
 
-		return logHR;
-	}
-	
-	double addLocalReassortment() {
-		double logHR = 0.0;
-		
-		// sample two times between 0 and the height of the root edge
-		double newSourceTime = Randomizer.nextDouble() * network.getRootEdge().childNode.getHeight();
-		logHR -= Math.log(1.0 / network.getRootEdge().childNode.getHeight());
-		
-		List<NetworkEdge> potentialSourceEdges = networkEdges.stream()
-				.filter(e -> !e.isRootEdge())
-				.filter(e -> e.childNode.getHeight() < newSourceTime)
-				.filter(e -> e.parentNode.getHeight() > newSourceTime)
-				.filter(e -> e.hasSegments.cardinality() > 1)				
-				.collect(Collectors.toList());
-		
-		
-		if (potentialSourceEdges.isEmpty())
-			return Double.NEGATIVE_INFINITY;
-		
-		NetworkEdge sourceEdge = potentialSourceEdges.get(Randomizer.nextInt(potentialSourceEdges.size()));
-		logHR -= Math.log(1.0 / potentialSourceEdges.size());
-					
-		NetworkEdge destEdge = sourceEdge;
-		
-		double minTime = Math.max(newSourceTime, destEdge.childNode.getHeight());
-		
-		double newDestTime = Randomizer.nextDouble() * (destEdge.parentNode.getHeight()-minTime) + minTime;
-		logHR -= Math.log(1.0 / (destEdge.parentNode.getHeight()-minTime));		
-		
+        NetworkNode secondNodeToRemove = edgeToRemove.parentNode;
+        NetworkEdge secondEdgeToExtend = getSisterEdge(edgeToRemove);
 
-		// Create new reassortment edge
-		logHR += addReassortmentEdge(sourceEdge, newSourceTime, destEdge, newDestTime);
-		if (logHR == Double.NEGATIVE_INFINITY)
-			return Double.NEGATIVE_INFINITY;
-		
-		int nRemovableEdges = (int) networkEdges.stream()
-				.filter(e -> !e.isRootEdge())
-				.filter(e -> e.parentNode.isCoalescence())				
-				.filter(e -> e.childNode.isReassortment())
-				.filter(e -> getSpouseEdge(e)==getSisterEdge(e))
-				.filter(e -> e.hasSegments.cardinality() >= 1)
-				.filter(e -> getSpouseEdge(e).hasSegments.cardinality() >= 1)
-				.count();
-		// write the same into a for loop
+        secondNodeToRemove.removeChildEdge(secondEdgeToExtend);
+        secondNodeToRemove.removeChildEdge(edgeToRemove);
 
-		logHR += Math.log(1.0 / nRemovableEdges);
+        networkEdges.remove(secondNodeToRemove.getParentEdges().get(0));
+        if (secondNodeToRemove.getParentEdges().get(0).isRootEdge()) {
+            network.setRootEdge(secondEdgeToExtend);
 
-		return logHR;
+        } else {
+            NetworkEdge secondNodeToRemoveParentEdge = secondNodeToRemove.getParentEdges().get(0);
+            NetworkNode secondNodeToRemoveParent = secondNodeToRemoveParentEdge.parentNode;
+            secondNodeToRemoveParent.removeChildEdge(secondNodeToRemoveParentEdge);
+            secondNodeToRemove.removeParentEdge(secondNodeToRemoveParentEdge);
+
+            secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
+            networkEdges.remove(secondNodeToRemoveParentEdge);
+        }
+
+        return logHR;
+    }
+    
+	private boolean segmentsOverlap(BitSet hasSegments, BitSet hasSegments2) {
+		for (int i = hasSegments.nextSetBit(0); i >= 0; i = hasSegments.nextSetBit(i + 1)) {
+			if (hasSegments2.get(i))
+				return true;
+		}
+		return false;
 	}
 
-	double removeLocalReassortment() {
-		double logHR = 0.0;
-
-		List<NetworkEdge> removableEdges = networkEdges.stream()
-				.filter(e -> !e.isRootEdge())
-				.filter(e -> e.parentNode.isCoalescence())				
-				.filter(e -> e.childNode.isReassortment())
-				.filter(e -> getSpouseEdge(e)==getSisterEdge(e))
-				.filter(e -> e.hasSegments.cardinality() >= 1)
-				.filter(e -> getSpouseEdge(e).hasSegments.cardinality() >= 1)
-				.collect(Collectors.toList());
-
-		if (removableEdges.isEmpty())
-			return Double.NEGATIVE_INFINITY;
-		
-		logHR -= Math.log(1.0 / (removableEdges.size()));
-		
-
-		NetworkEdge edgeToRemove = removableEdges.get(Randomizer.nextInt(removableEdges.size()));		
-		NetworkEdge childEdge = edgeToRemove.childNode.getChildEdges().get(0);
-		NetworkEdge newDestEdge = getSisterEdge(edgeToRemove);
-		
-		double oldSourceTime = edgeToRemove.childNode.getHeight();
-		double oldParentHeight = edgeToRemove.parentNode.getParentEdges().get(0).parentNode.getHeight();
-				
-		logHR += removeReassortmentEdge(edgeToRemove);
-
-		if (logHR == Double.NEGATIVE_INFINITY)
-			return Double.NEGATIVE_INFINITY;
-		
-
-
-		// HR contribution for reverse move
-		logHR += Math.log(1.0 / (oldParentHeight - oldSourceTime));	
-		
-		logHR += Math.log(1.0 / (network.getRootEdge().childNode.getHeight()));
-
-		
-		// get the possible desEdges for reverse calculation
-		int nPossibleDestEdges = (int) networkEdges.stream()
-				.filter(e -> !e.isRootEdge())
-				.filter(e -> e.childNode.getHeight() < oldSourceTime)
-				.filter(e -> e.parentNode.getHeight() > oldSourceTime)
-				.filter(e -> e.hasSegments.cardinality() > 1)
-                .count();
-		
-		logHR += Math.log(1.0 / nPossibleDestEdges);
-
-		return logHR;
+	private boolean isTrueCoalescence(NetworkEdge e) {
+		NetworkEdge sister = getSisterEdge(e);
+		// loop over all segments in e, check if sister also has them, if so, return true
+		for (int i = e.hasSegments.nextSetBit(0); i >= 0; i = e.hasSegments.nextSetBit(i + 1)) {
+			if (sister.hasSegments.get(i))
+				return true;
+		}
+		return false;
 	}
 
-	
-	
-	
-//	
-//	double addLocalReassortmentEdge(NetworkEdge sourceEdge, double sourceTime, NetworkEdge destEdge, double destTime, int segment) {
-//
-//		double logHR = 0.0;
-//
-//		NetworkNode sourceNode = new NetworkNode();
-//		sourceNode.setHeight(sourceTime);
-//
-//		NetworkNode oldSourceEdgeParent = sourceEdge.parentNode;
-//		oldSourceEdgeParent.removeChildEdge(sourceEdge);
-//		sourceNode.addChildEdge(sourceEdge);
-//
-//		NetworkEdge newEdge1 = new NetworkEdge();
-//		sourceNode.addParentEdge(newEdge1);
-//		oldSourceEdgeParent.addChildEdge(newEdge1);
-//
-//		newEdge1.hasSegments = (BitSet) sourceEdge.hasSegments.clone();
-//
-//		if (destEdge == sourceEdge)
-//			destEdge = newEdge1;
-//
-//		NetworkNode destNode = new NetworkNode();
-//		destNode.setHeight(destTime);
-//
-//		NetworkNode oldDestEdgeParent = destEdge.parentNode;
-//		if (oldDestEdgeParent != null) {
-//			oldDestEdgeParent.removeChildEdge(destEdge);
-//		}
-//
-//		destNode.addChildEdge(destEdge);
-//
-//		NetworkEdge newEdge2 = new NetworkEdge();
-//		destNode.addParentEdge(newEdge2);
-//
-//		if (oldDestEdgeParent == null) {
-//			network.setRootEdge(newEdge2);
-//		} else {
-//			oldDestEdgeParent.addChildEdge(newEdge2);
-//		}
-//
-//		newEdge2.hasSegments = (BitSet) destEdge.hasSegments.clone();
-//
-//		NetworkEdge reassortmentEdge = new NetworkEdge();
-//		sourceNode.addParentEdge(reassortmentEdge);
-//		destNode.addChildEdge(reassortmentEdge);
-//		reassortmentEdge.hasSegments = new BitSet();
-//		
-////		BitSet segsToDivert = new BitSet();
-//
-//		// ensure this segment gets diverted
-//		BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
-//		logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments);
-//		
-//		
-//		
-//		
-//		logHR += divertSegments(reassortmentEdge, newEdge1, segsToDivert);
-//
-//		
-//		
-////		segsToDivert.set(segment);
-////		logHR += divertSegments(reassortmentEdge, newEdge1, segsToDivert);
-//		
-//
-//		networkEdges.add(reassortmentEdge);
-//		networkEdges.add(newEdge1);
-//		networkEdges.add(newEdge2);
-//
-//		return logHR;
-//	}
-//	
-//	double removeLocalReassortmentEdge(NetworkEdge edgeToRemove) {
-//		double logHR = 0.0;
-//
-//		NetworkNode nodeToRemove = edgeToRemove.childNode;
-//		NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
-//		NetworkNode edgeToRemoveSpouseParent = edgeToRemoveSpouse.parentNode;
-//		networkEdges.remove(edgeToRemove);
-//		networkEdges.remove(edgeToRemoveSpouse);
-//
-//		// Divert segments away from chosen edge
-//		BitSet segsToDivert = (BitSet) edgeToRemove.hasSegments.clone();
-//		logHR += divertSegments(edgeToRemoveSpouse, edgeToRemove, segsToDivert);
-//		logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments);
-//
-//		// Remove edge and associated nodes
-//		NetworkEdge edgeToExtend = nodeToRemove.getChildEdges().get(0);
-//		nodeToRemove.removeChildEdge(edgeToExtend);
-//		nodeToRemove.removeParentEdge(edgeToRemove);
-//		nodeToRemove.removeParentEdge(edgeToRemoveSpouse);
-//		edgeToRemoveSpouseParent.removeChildEdge(edgeToRemoveSpouse);
-//		edgeToRemoveSpouseParent.addChildEdge(edgeToExtend);
-//
-//		NetworkNode secondNodeToRemove = edgeToRemove.parentNode;
-//		NetworkEdge secondEdgeToExtend = getSisterEdge(edgeToRemove);
-//
-//		secondNodeToRemove.removeChildEdge(secondEdgeToExtend);
-//		secondNodeToRemove.removeChildEdge(edgeToRemove);
-//
-//		networkEdges.remove(secondNodeToRemove.getParentEdges().get(0));
-//		if (secondNodeToRemove.getParentEdges().get(0).isRootEdge()) {
-//			network.setRootEdge(secondEdgeToExtend);
-//
-//		} else {
-//			NetworkEdge secondNodeToRemoveParentEdge = secondNodeToRemove.getParentEdges().get(0);
-//			NetworkNode secondNodeToRemoveParent = secondNodeToRemoveParentEdge.parentNode;
-//			secondNodeToRemoveParent.removeChildEdge(secondNodeToRemoveParentEdge);
-//			secondNodeToRemove.removeParentEdge(secondNodeToRemoveParentEdge);
-//
-//			secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
-//			networkEdges.remove(secondNodeToRemoveParentEdge);
-//		}
-//
-////        if (!networkTerminatesAtMRCA())
-////            return Double.NEGATIVE_INFINITY;
-//
-//		return logHR;
-//	}
-////	
-//	boolean validLocalReassortmentEdge(NetworkEdge edge) {
-//		NetworkEdge spouseEdge = getSpouseEdge(edge);
-//		
-//		List<NetworkEdge> destEdges = new ArrayList<>();
-//		if (spouseEdge.parentNode.isCoalescence())
-//			destEdges.add(getSisterEdge(edge));
-//		
-//		for (NetworkEdge parentEdge : spouseEdge.parentNode.getParentEdges()) {
-//			if (parentEdge.isRootEdge())
-//				continue;
-//			destEdges.add(parentEdge);
-//
-//			if (parentEdge.parentNode.isCoalescence())
-//				destEdges.add(getSisterEdge(parentEdge));
-//		}
-//		
-//		if (destEdges.isEmpty())
-//			return false;
-//		
-//			
-//		return destEdges.contains(edge.parentNode.getParentEdges().get(0));
-//	}
-}
+
+ }

@@ -97,48 +97,53 @@ public class MarkClades extends ReassortmentAnnotator {
 
         System.out.println("\nWriting output to " + options.outFile.getName()
 	      + "...");
-	      
-	    List<String> lines = null;
-    	try {
-    		lines = java.nio.file.Files.readAllLines(options.cladeFile.toPath());
-    	} catch (IOException e) {
-    		e.printStackTrace();
-    	}
-    	
-        String[] clades = new String[lines.size()-1];
-        String[] tipNames = new String[lines.size()-1];
         
-		for (int i = 1; i < lines.size(); i++) {
-			// split line on , or \t
-			String[] split = lines.get(i).split("[,\t]");
-			clades[i-1] = split[1];
-			tipNames[i-1] = split[0];
-		}	
-		
 		List<String> uniqueClades = new ArrayList<>();
-		for (String clade : clades) {
-			if (!uniqueClades.contains(clade)) {
-				uniqueClades.add(clade);
-			}
-		}
-		// add the sorted combination of unique clades seperated by + to unique clades
-		Collections.sort(uniqueClades);
-		
-		List<String> combinedClades = new ArrayList<>();
-		for (int i = 0; i < uniqueClades.size(); i++) {
-			for (int j = i + 1; j < uniqueClades.size(); j++) {
-				combinedClades.add(uniqueClades.get(i) + "+" + uniqueClades.get(j));
-			}
-		}
-		for (int i = 0; i < uniqueClades.size(); i++) {
-			combinedClades.add(uniqueClades.get(i) + "+unknown");
-			
-		}
+        String[] clades = new String[0];
+        String[] tipNames = new String[0];
 
-		
-		
-		uniqueClades.addAll(combinedClades);
-		uniqueClades.add("unknown");
+		if (options.cladeFile != null) {
+		    List<String> lines = null;
+	    	try {
+	    		lines = java.nio.file.Files.readAllLines(options.cladeFile.toPath());
+	    	} catch (IOException e) {
+	    		e.printStackTrace();
+	    	}
+	    	
+	        clades = new String[lines.size()-1];
+	        tipNames = new String[lines.size()-1];
+
+			for (int i = 1; i < lines.size(); i++) {
+				// split line on , or \t
+				String[] split = lines.get(i).split("[,\t]");
+				clades[i-1] = split[1];
+				tipNames[i-1] = split[0];
+			}	
+			
+			for (String clade : clades) {
+				if (!uniqueClades.contains(clade)) {
+					uniqueClades.add(clade);
+				}
+			}
+			// add the sorted combination of unique clades seperated by + to unique clades
+			Collections.sort(uniqueClades);
+			
+			List<String> combinedClades = new ArrayList<>();
+			for (int i = 0; i < uniqueClades.size(); i++) {
+				for (int j = i + 1; j < uniqueClades.size(); j++) {
+					combinedClades.add(uniqueClades.get(i) + "+" + uniqueClades.get(j));
+				}
+			}
+			for (int i = 0; i < uniqueClades.size(); i++) {
+				combinedClades.add(uniqueClades.get(i) + "+unknown");
+				
+			}
+	
+			
+			
+			uniqueClades.addAll(combinedClades);
+			uniqueClades.add("unknown");
+		}
              
         // compute the pairwise reassortment distances 
         try (PrintStream ps = new PrintStream(options.outFile)) {
@@ -146,11 +151,15 @@ public class MarkClades extends ReassortmentAnnotator {
             List<String> leafNodes = new ArrayList<>();
 
 	        for (Network network : logReader){	  
+	        	removeEmptyNetworkEdge(network);
 //	        	pruneNetwork(network, options.removeSegments);
-	        	labelClades(network, clades, tipNames, options.followSegment);
-	        	// mark the remaining edges based on the parental edges
-	        	markRemainingEdges(network, options.followSegment);
-	        	markReassortmentEvents(network);
+	        	if (options.cladeFile!=null) {
+	        		labelClades(network, clades, tipNames, options.followSegment);
+		        	// mark the remaining edges based on the parental edges
+		        	markRemainingEdges(network, options.followSegment);
+		        	markReassortmentEvents(network);
+	        	}
+
 	        	
 	        	if (options.printTable) {
 	        		if (count==0) {
@@ -691,13 +700,16 @@ public class MarkClades extends ReassortmentAnnotator {
 //					newNode.metaDataString = newNode.metaDataString+",Events=" + reassortmentEvents;                
 //				}
 				
-				int[] eventCount = new int[uniqueClades.size()];
-				for (int i = 0; i < events.size(); i++) {
-					eventCount[uniqueClades.indexOf(events.get(i))]++;						
-				}	
-
-				for (int i = 0; i < eventCount.length; i++) {
-					newNode.metaDataString += ", " + uniqueClades.get(i) + "=" + eventCount[i];
+				if (uniqueClades.size() > 0) {
+					
+					int[] eventCount = new int[uniqueClades.size()];
+					for (int i = 0; i < events.size(); i++) {
+						eventCount[uniqueClades.indexOf(events.get(i))]++;						
+					}	
+	
+					for (int i = 0; i < eventCount.length; i++) {
+						newNode.metaDataString += ", " + uniqueClades.get(i) + "=" + eventCount[i];
+					}
 				}
 //				System.out.println("New node: " + newNode.metaDataString);
 
