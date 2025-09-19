@@ -1,4 +1,4 @@
-<package name="CoalRe" version="2.7.4">
+<package name="CoalRe" version="2.8.0">
   <depends on='BEAST.base' atleast='2.7.2'/>
   <depends on='BEAST.app' atleast='2.7.2'/>
 

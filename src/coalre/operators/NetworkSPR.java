@@ -50,9 +50,12 @@ public class NetworkSPR extends DivertSegmentOperator {
 		final List<NetworkEdge> possibleEdges = networkEdges.stream()
 				.filter(e -> !e.isRootEdge())
 				.filter(e -> e.parentNode.isCoalescence())
+				.filter(e -> e.childNode.isReassortment())
 				.filter(e -> !e.parentNode.getParentEdges().get(0).isRootEdge())
 				.collect(Collectors.toList());
 
+		if (possibleEdges.isEmpty())
+			return Double.NEGATIVE_INFINITY;
 
 		final NetworkEdge iEdge = possibleEdges.get(Randomizer.nextInt(possibleEdges.size()));
 

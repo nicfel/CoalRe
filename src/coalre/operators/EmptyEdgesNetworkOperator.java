@@ -48,6 +48,10 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 
 	@Override
 	public double proposal() {
+		
+//		if (this.getID()!=null && this.getID().equals("AR222"))
+//			System.out.println(network.getExtendedNewickVerbose(0));
+		
 		if (network.segmentTreesNeedInit) {			
 			// update all segment trees			
             for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
@@ -116,6 +120,12 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 //		if (netChange < -5) {
 //			System.out.println(this.getID() + " " + netChange + " " + logHR + " " +logAdd+ " " +logRemove+ " " + logHRproposal);
 //		}
+		
+//		if (this.getID()!=null && this.getID().equals("AR222")) {
+//			System.out.println(network.getExtendedNewickVerbose(0));
+//			System.out.println(logHR);
+//		}
+
 
 		return logHR;
 	}

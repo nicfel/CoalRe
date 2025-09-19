@@ -50,7 +50,6 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 
         size = sizeInput.get();
         limit = limitInput.get();
-        throw new IllegalArgumentException("don't use, may have and HR issue");
 	}
 
 	@Override

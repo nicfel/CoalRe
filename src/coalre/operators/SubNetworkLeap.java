@@ -39,6 +39,8 @@ public class SubNetworkLeap extends DivertSegmentOperator {
     
 	public Input<Boolean> randomlySampleAttachmentEdgeInput = new Input<>("randomlySampleAttachmentEdge",
 			"Randomly sample edge to attach to", true);
+	public Input<Boolean> useEdgeLengthInput = new Input<>("useEdgeLength",
+			"Use edge length to scale the size of the move", false);
 
     // shadows size
     double size;
@@ -100,11 +102,15 @@ public class SubNetworkLeap extends DivertSegmentOperator {
 		}
 		logHR -= Math.log(1.0 / coalSegments.cardinality()); // pick random segment
 		
-
-		
-        double delta = Math.abs(getDelta(iEdge.getLength()));
-        
-        double logForwardDeltaProb = getLogDeltaProb(delta, iEdge.getLength());
+		double delta;
+		double logForwardDeltaProb;
+		if (useEdgeLengthInput.get()) {
+	        delta = Math.abs(getDelta(iEdge.getLength()));        
+	        logForwardDeltaProb = getLogDeltaProb(delta, iEdge.getLength());
+		}else {
+			delta = Math.abs(getDelta(1.0));
+			logForwardDeltaProb = getLogDeltaProb(delta, 1.0);
+		}
 
         
         // get all potential reattachment Edges
@@ -207,9 +213,12 @@ public class SubNetworkLeap extends DivertSegmentOperator {
 		logHR += Math.log(1.0 / coalSegmentsReverse.cardinality()); // pick random segment
 
 		
-			
-	    double logReverseDeltaProb = getLogDeltaProb(delta, iEdge.getLength());
-	    
+		double logReverseDeltaProb;
+		if (useEdgeLengthInput.get())
+			logReverseDeltaProb = getLogDeltaProb(delta, iEdge.getLength());
+		else
+	    	logReverseDeltaProb = getLogDeltaProb(delta, 1.0);
+
 	    // Delta probabilities cancel out if using same edge length
 	    logHR += logReverseDeltaProb - logForwardDeltaProb; // This equals 0 for symmetric case
 	    	    
@@ -278,9 +287,15 @@ public class SubNetworkLeap extends DivertSegmentOperator {
 		}
 		logHR -= Math.log(1.0 / coalSegments.cardinality()); // pick random segment
 
-        double delta = Math.abs(getDelta(iEdge.getLength()));
-        
-        double logForwardDeltaProb = getLogDeltaProb(delta, iEdge.getLength());
+		double delta;
+		double logForwardDeltaProb;
+		if (useEdgeLengthInput.get()) {
+	        delta = Math.abs(getDelta(iEdge.getLength()));        
+	        logForwardDeltaProb = getLogDeltaProb(delta, iEdge.getLength());
+		}else {
+			delta = Math.abs(getDelta(1.0));
+			logForwardDeltaProb = getLogDeltaProb(delta, 1.0);
+		}
 
         
         // get all potential reattachment Edges
@@ -374,7 +389,11 @@ public class SubNetworkLeap extends DivertSegmentOperator {
 		logHR += Math.log(1.0/reverseTargetEdges.size());  
 		
 			
-	    double logReverseDeltaProb = getLogDeltaProb(delta, iEdge.getLength());
+		double logReverseDeltaProb;
+		if (useEdgeLengthInput.get())
+			logReverseDeltaProb = getLogDeltaProb(delta, iEdge.getLength());
+		else
+	    	logReverseDeltaProb = getLogDeltaProb(delta, 1.0);
 	    
 	    // Delta probabilities cancel out if using same edge length
 	    logHR += logReverseDeltaProb - logForwardDeltaProb; // This equals 0 for symmetric case

@@ -14,8 +14,8 @@ public class UniformNetworkNodeHeightOperator extends NetworkOperator {
     @Override
     public double networkProposal() {
         List<NetworkNode> networkNodes = network.getNodes().stream()
-                .filter(n -> !n.isLeaf())
                 .filter(n -> !n.getParentEdges().get(0).isRootEdge())
+                
                 .collect(Collectors.toList());
 
         if (networkNodes.isEmpty())

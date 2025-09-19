@@ -472,7 +472,7 @@ public class Network extends StateNode {
 
     @Override
     public void log(long sample, PrintStream out) {
-        out.println("tree STATE_" + sample + " = " + getExtendedNewick(0));
+        out.println("tree STATE_" + sample + " = " + getExtendedNewickVerbose(0));
     }
 
 

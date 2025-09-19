@@ -24,6 +24,9 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
     CoalescentWithReassortment coalescentDistr;
 
     boolean useMaxHeight = false;
+    
+    double addProb = 0.5;
+    
     @Override
     public void initAndValidate() {
         super.initAndValidate();
@@ -36,22 +39,27 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
     public double networkProposal() {
         double logHR;
         
-//        System.out.println(network);
         for (int i = 0; i < segmentTrees.size(); i++) {
     		segmentsChanged.set(i, false);
         }
 
 
-        if (Randomizer.nextBoolean()) {
+        if (Randomizer.nextDouble()< addProb) {
             logHR = addRecombination();
+//            System.out.println("logHR before add prob: " + logHR);
+            logHR += Math.log((1.0 - addProb)/addProb);
+//            System.out.println("logHR before add prob: " + logHR);
+//            System.out.println("add: " +  Math.log((1.0 - addProb)/addProb));
         }else {
         	try {
         		logHR = removeRecombination();
+                logHR += Math.log(addProb/(1.0 - addProb));
+//                System.out.println("remove: " + logHR);
         	} catch (Exception e) {
         		return Double.NEGATIVE_INFINITY;
         	}
         }
-//        System.out.println(network);
+        
         return logHR;
     }
 
@@ -181,16 +189,16 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
             return Double.NEGATIVE_INFINITY;  
         
         int nRemovableEdges;
-		if (divertOneSegmentInput.get()) {
-			nRemovableEdges= (int) networkEdges.stream().filter(e -> !e.isRootEdge())
-				.filter(e -> e.hasSegments.cardinality() == 1).filter(e -> e.childNode.isReassortment())
-				.filter(e -> e.parentNode.isCoalescence()).count();
-		} else {
+//		if (divertOneSegmentInput.get()) {
+//			nRemovableEdges= (int) networkEdges.stream().filter(e -> !e.isRootEdge())
+//				.filter(e -> e.hasSegments.cardinality() == 1).filter(e -> e.childNode.isReassortment())
+//				.filter(e -> e.parentNode.isCoalescence()).count();
+//		} else {
 			nRemovableEdges= (int) networkEdges.stream().filter(e -> !e.isRootEdge())
 					.filter(e -> e.hasSegments.cardinality() >= 1).filter(e -> e.childNode.isReassortment())
 					.filter(e -> e.parentNode.isCoalescence()).count();
 
-		}
+//		}
 
 
 //        // HR contribution for reverse move
@@ -257,8 +265,9 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 
         // Choose segments to divert to new edge
         if (divertOneSegmentInput.get()) {
-            BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments, 0.1);
-            logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments, segsToDivert, 0.1);
+        	double prob = 1./sourceEdge.hasSegments.cardinality();
+            BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments, prob);
+            logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments, segsToDivert, prob);
             logHR += divertSegments(reassortmentEdge, newEdge1, segsToDivert);
         }else {
 	        BitSet segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
@@ -312,6 +321,7 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
     	double currTime = sourceTime;
     	NetworkEvent prevEvent = null;
     	
+//    	double logHRBefore = logHR;
     	for (NetworkEvent event : networkEventList) {
     		if (event.time>currTime) {                
             	double rate = 0.5 * (prevEvent.lineages-1);
@@ -325,10 +335,11 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
     		}
     		prevEvent = event;
         }    	
+//    	System.out.println(logHR-logHRBefore);
     	
         // Remove reassortment edge
-        logHR += removeReassortmentEdge(edgeToRemove);
-        
+        logHR += removeReassortmentEdge(edgeToRemove);        
+    	
         if (logHR == Double.NEGATIVE_INFINITY)
             return Double.NEGATIVE_INFINITY;
 
@@ -406,7 +417,8 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
         BitSet segsToDivert = (BitSet) edgeToRemove.hasSegments.clone();
         logHR +=  divertSegments(edgeToRemoveSpouse, edgeToRemove, segsToDivert);
         if (divertOneSegmentInput.get()) {
-            logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments, segsToDivert, 0.1);
+//        	System.out.println(getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments, segsToDivert, 1.0/(double) edgeToRemoveSpouse.hasSegments.cardinality()));
+            logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments, segsToDivert, 1.0/(double) edgeToRemoveSpouse.hasSegments.cardinality());
         }else {
         	logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments);
         }
