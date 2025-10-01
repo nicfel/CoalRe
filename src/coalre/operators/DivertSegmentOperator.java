@@ -1,18 +1,15 @@
 package coalre.operators;
 
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.List;
 import beast.base.core.Input;
 import beast.base.evolution.tree.Node;
 import beast.base.util.Randomizer;
-import cern.colt.Arrays;
-import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
-
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
+import coalre.util.BitSetFun;
 
 public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 
@@ -98,23 +95,27 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 		if (reconnectSegmentTrees(treeChildNodeList, destEdge, segsToDivert))
 			return Double.NEGATIVE_INFINITY;
 
-
-
 		return logHR;
 	}
 
+    /**
+     * Reconnect the segment trees after diverting segments.
+     * @param treeChildNodeList the list of child node indices in the segment trees corresponding to the segments being diverted
+     * @param destEdge the destination edge to which segments are being diverted
+     * @param segsToDivert the segments being diverted
+     * @return true if an error occurred during reconnection, false otherwise
+     */
 	protected boolean reconnectSegmentTrees(Integer[] treeChildNodeList, NetworkEdge destEdge, BitSet segsToDivert) {
 
-		List<NetworkNode> targetNodeIndices = new ArrayList<>();
-		for (int i = 0; i < network.getSegmentCount(); i++)
-			targetNodeIndices.add(null);
-		Integer[] newTargetNode = new Integer[network.getSegmentCount()];
-		Double[] newNodeHeights = new Double[network.getSegmentCount()];
+        int nSegs = network.getSegmentCount();
+		List<NetworkNode> targetNodeIndices = new ArrayList<>(Collections.nCopies(nSegs, null));
+		Integer[] newTargetNode = new Integer[nSegs];
+		Double[] newNodeHeights = new Double[nSegs];
 
 		getTreeNodes(destEdge, segsToDivert, targetNodeIndices, newTargetNode, newNodeHeights, treeChildNodeList);
 
 		// update the corresponding tree
-		for (int i = 0; i < network.getSegmentCount(); i++) {
+		for (int i = 0; i < nSegs; i++) {
 
 			if (treeChildNodeList[i] != null && newTargetNode[i] != null) {
 				Node startChild = segmentTrees.get(i).getNode(treeChildNodeList[i]);
@@ -141,7 +142,7 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 						
 						// update the segmentIndices of the network node
 						if (targetNodeIndices.get(i).segmentIndices == null)
-							targetNodeIndices.get(i).segmentIndices = new int[network.getSegmentCount()];
+							targetNodeIndices.get(i).segmentIndices = new int[nSegs];
 						targetNodeIndices.get(i).segmentIndices[i] = prevNumberNewRoot;
 
 						updatePreviousRootNumber(i, network.getRootEdge().childNode, rootNumber, newRootHeight);
@@ -216,7 +217,7 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 							
 							// update the segmentIndices of the network node
 							if (targetNodeIndices.get(i).segmentIndices == null)
-								targetNodeIndices.get(i).segmentIndices = new int[network.getSegmentCount()];
+								targetNodeIndices.get(i).segmentIndices = new int[nSegs];
 							targetNodeIndices.get(i).segmentIndices[i] = oldParent.getNr();
 							
 //							
@@ -267,10 +268,27 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 		return;
 	}
 
+    Integer[] getTreeNodesDown(NetworkEdge edge, BitSet segsToRemove) {
+        Integer[] treeNodeList = new Integer[network.getSegmentCount()];
+        getTreeNodesDown(edge, segsToRemove, treeNodeList);
+        System.out.println();
+        System.out.println(segsToRemove);
+        System.out.print("[");
+        for (Object x : treeNodeList)
+            System.out.print(x + ", ");
+        System.out.println("]");
+        return treeNodeList;
+    }
+
+    /**
+     * Find the correspoding segment tree nodes below `edge` for all segments in `segsToRemove` 
+     * @param edge the edge from which to start searching
+     * @param segsToRemove the segments being diverted
+     * @param treeNodeList the array in which the segment tree node IDs will be stored 
+     */
 	void getTreeNodesDown(NetworkEdge edge, BitSet segsToRemove, Integer[] treeNodeList) {
-		if (segmentTrees.size() == 0) {
+		if (segmentTrees.isEmpty())
 			return;
-		}
 			
 		segsToRemove = (BitSet) segsToRemove.clone();
 		segsToRemove.and(edge.hasSegments);
@@ -313,6 +331,26 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 		return;
 	}
 
+    Integer[] getTreeNodes(NetworkEdge edge, BitSet segsToRemove, Integer[] treeChildNodeList) {
+        int nSegs = network.getSegmentCount();
+		List<NetworkNode> targetNodeIndices = new ArrayList<>(Collections.nCopies(nSegs, null));
+		Integer[] treeNodeList = new Integer[nSegs];
+		Double[] nodeHeightList = new Double[nSegs];
+
+		getTreeNodes(edge, segsToRemove, targetNodeIndices, treeNodeList, nodeHeightList, treeChildNodeList);
+
+        return treeNodeList;
+    }
+
+    /**
+     * Find the correspoding segment tree nodes above `edge` for all segments in `segsToRemove`
+     * @param edge
+     * @param segsToRemove
+     * @param targetNodeIndices
+     * @param treeNodeList
+     * @param nodeHeightList
+     * @param treeChildNodeList
+     */
 	void getTreeNodes(NetworkEdge edge, BitSet segsToRemove, List<NetworkNode> targetNodeIndices,
 			Integer[] treeNodeList, Double[] nodeHeightList, Integer[] treeChildNodeList) {
 		segsToRemove = (BitSet) segsToRemove.clone();
@@ -336,8 +374,7 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 				BitSet sibSegs = getSisterEdge(edge).hasSegments;
 
 				if (segmentTrees.size() > 0) {
-					for (int segIdx = 0; segIdx < segsToRemove.length(); segIdx++) {
-						
+					for (int segIdx = 0; segIdx < segsToRemove.length(); segIdx++) {						
 						if (segsToRemove.get(segIdx) && sibSegs.get(segIdx)) {
 							nodeHeightList[segIdx] = edge.parentNode.getHeight();
 							treeNodeList[segIdx] = getTreeNodeIndex(getSisterEdge(edge), segIdx);
