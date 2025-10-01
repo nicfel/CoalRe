@@ -216,8 +216,12 @@ public class NetworkNode {
 		segmentIndices[segmentIdx] = nodeNumber;
 	}
 
-	public int[] getSegmentIndices(int segmentIdx) {
+	public int[] getSegmentIndices() {
 		return segmentIndices;
+	}
+
+	public int getSegmentIndex(int segmentIdx) {
+		return segmentIndices[segmentIdx];
 	}
 
 
