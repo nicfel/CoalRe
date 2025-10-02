@@ -20,6 +20,9 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 	public Input<Boolean> randomlySampleAttachmentEdgeInput = new Input<>("randomlySampleAttachmentEdge",
 			"Randomly sample edge to attach to", true);
 	
+	public Input<Boolean> useDirectAncestorsOnlyInput = new Input<>("useDirectAncestorsOnly",
+			"if true, only use direct ancestors of segment trees when sampling attachment edge", false);
+	
 
     CoalescentWithReassortment coalescentDistr;
 
@@ -45,14 +48,20 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 
 
         if (Randomizer.nextDouble()< addProb) {
-            logHR = addRecombination();
-//            System.out.println("logHR before add prob: " + logHR);
-            logHR += Math.log((1.0 - addProb)/addProb);
-//            System.out.println("logHR before add prob: " + logHR);
-//            System.out.println("add: " +  Math.log((1.0 - addProb)/addProb));
+        	if (useDirectAncestorsOnlyInput.get()) {
+        		logHR = deltaAddRecombination();
+        	}else {
+        		logHR = addRecombination();
+        	}
+//        	System.out.println(network +"\n");
+//        	System.exit(0);
+        	logHR += Math.log((1.0 - addProb)/addProb);
         }else {
         	try {
-        		logHR = removeRecombination();
+				if (useDirectAncestorsOnlyInput.get())
+					logHR = deltaRemoveRecombination();
+				else
+					logHR = removeRecombination();
                 logHR += Math.log(addProb/(1.0 - addProb));
 //                System.out.println("remove: " + logHR);
         	} catch (Exception e) {
@@ -454,4 +463,313 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
         return logHR;
     }
 
+    
+    // Delta-based add recombination move
+    double deltaAddRecombination() {
+        double logHR = 0.0;
+
+        // 1. Select source edge and time (same as original)
+        List<Integer> possibleSourceEdges = new ArrayList<>();
+        if (useMaxHeight) {
+            double lociMRCA = NetworkStatsLogger.getSecondHighestLociMRCA(networkInput.get());
+            for (int i = 0; i < networkEdges.size(); i++) {
+                NetworkEdge edge = networkEdges.get(i);
+                if (!edge.isRootEdge() 
+                        && edge.hasSegments.cardinality() >= 2
+                        && edge.childNode.getHeight() < lociMRCA) {
+                    possibleSourceEdges.add(i);
+                }
+            }
+        } else {
+            for (int i = 0; i < networkEdges.size(); i++) {
+                NetworkEdge edge = networkEdges.get(i);
+                if (!edge.isRootEdge() && edge.hasSegments.cardinality() >= 2) {
+                    possibleSourceEdges.add(i);
+                }
+            }
+        }
+        
+        NetworkEdge sourceEdge;
+        double sourceTime;
+        
+        if (randomlySampleAttachmentEdgeInput.get()) {
+            sourceEdge = networkEdges.get(possibleSourceEdges.get(Randomizer.nextInt(possibleSourceEdges.size())));
+            sourceTime = Randomizer.nextDouble() * sourceEdge.getLength() + sourceEdge.childNode.getHeight();
+            logHR -= Math.log(1.0/(double)possibleSourceEdges.size())
+                    + Math.log(1.0/sourceEdge.getLength());
+        } else {
+            double sumEdgeLengths = 0.0;
+            for (Integer i : possibleSourceEdges) {
+                sumEdgeLengths += networkEdges.get(i).getLength();
+            }
+            double randomEdgeLength = Randomizer.nextDouble() * sumEdgeLengths;
+            logHR -= Math.log(1.0/sumEdgeLengths);
+            double passedLength = 0;
+            sourceEdge = null;
+            sourceTime = -1.0;
+            for (Integer i : possibleSourceEdges) {
+                passedLength += networkEdges.get(i).getLength();
+                if (passedLength > randomEdgeLength) {
+                    sourceEdge = networkEdges.get(i);
+                    sourceTime = passedLength-randomEdgeLength + sourceEdge.childNode.getHeight();
+                    break;
+                }
+            }
+        }
+
+        // 2. Sample attachment time using coalescent intervals (same as original)
+        List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
+        double currTime = sourceTime;
+        NetworkEvent prevEvent = null;
+        double attachmentTime = 0.0;
+        
+        for (NetworkEvent event : networkEventList) {
+            if (event.time > currTime) {
+                double rate = 0.5 * prevEvent.lineages;
+                double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(currTime);
+                double transformedTimeToNextCoal = Randomizer.nextExponential(rate);
+                double timeToNextCoal = coalescentDistr.populationFunction.getInverseIntensity(
+                        transformedTimeToNextCoal + currentTransformedTime);
+                
+                attachmentTime = timeToNextCoal;
+                if (timeToNextCoal < event.time) {
+                    logHR -= -rate * coalescentDistr.populationFunction.getIntegral(currTime, attachmentTime) +
+                            Math.log(rate/coalescentDistr.populationFunction.getPopSize(attachmentTime));
+                    break;
+                }
+                logHR -= -rate * coalescentDistr.populationFunction.getIntegral(currTime, event.time);
+                currTime = event.time;
+            }
+            prevEvent = event;
+        }
+        
+        if (attachmentTime > network.getRootEdge().childNode.getHeight()) {
+            double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(network.getRootEdge().childNode.getHeight());
+            double transformedTimeToNextCoal = Randomizer.nextExponential(0.5);
+            attachmentTime = coalescentDistr.populationFunction.getInverseIntensity(
+                    transformedTimeToNextCoal + currentTransformedTime);
+            
+            logHR -= -0.5 * coalescentDistr.populationFunction.getIntegral(network.getRootEdge().childNode.getHeight(), attachmentTime);
+            logHR -= Math.log(0.5/coalescentDistr.populationFunction.getPopSize(attachmentTime));
+        }
+
+        double destTime = attachmentTime;
+
+        List<NetworkEdge> targetEdges = new ArrayList<>();
+        getTargetEdges(sourceEdge, destTime, targetEdges);
+        
+        // only keep unique target Edges
+        targetEdges = targetEdges.stream()
+                .distinct()
+                .collect(Collectors.toList());
+
+
+        
+        if (targetEdges.isEmpty()) {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        NetworkEdge destEdge = targetEdges.get(Randomizer.nextInt(targetEdges.size()));
+        logHR -= Math.log(1.0/targetEdges.size());
+
+        if (!destEdge.isRootEdge() && destEdge.parentNode.getHeight() < sourceTime)
+            return Double.NEGATIVE_INFINITY;
+
+        // 4. Create new reassortment edge
+        logHR += addReassortmentEdge(sourceEdge, sourceTime, destEdge, destTime);
+        
+        if (logHR == Double.NEGATIVE_INFINITY)
+            return Double.NEGATIVE_INFINITY;
+
+        
+        
+        // 1. Select removable edge - only those that could have been added by deltaAddRecombination
+        List<Integer> removableEdges = new ArrayList<>();
+        for (int i = 0; i < networkEdges.size(); i++) {
+            NetworkEdge edge = networkEdges.get(i);
+            if (!edge.isRootEdge() && edge.childNode.isReassortment()
+                    && edge.parentNode.isCoalescence() && edge.hasSegments.cardinality() >= 1) {
+                
+                NetworkEdge potentialSourceEdge = getSpouseEdge(edge);
+                double trueDestTime = edge.parentNode.getHeight();
+                NetworkEdge trueDestEdge = getSisterEdge(edge);
+                
+                // Check if destEdge is reachable from sourceEdge via delta traversal
+                List<NetworkEdge> reachableEdges = new ArrayList<>();
+                getTargetEdges(potentialSourceEdge, trueDestTime, reachableEdges);
+                
+//                System.out.println("Checking edge: " + trueDestTime + " " + trueDestEdge.childNode.getHeight() + " - " + trueDestEdge.parentNode.getHeight());
+//                
+//                for (NetworkEdge e : reachableEdges)
+//                	System.out.println(e.childNode.getHeight() + " - " + e.parentNode.getHeight());
+//                
+                if (reachableEdges.contains(trueDestEdge)) {
+                    removableEdges.add(i);
+                }
+            }
+        }
+        
+        // only keep unique edges
+        Collections.sort(removableEdges);
+        removableEdges = removableEdges.stream().distinct().collect(Collectors.toList());
+        logHR += Math.log(1.0/removableEdges.size());
+        return logHR;
+    }
+
+    // Delta-based remove recombination move
+    double deltaRemoveRecombination() {
+        double logHR = 0.0;
+        
+        // 1. Select removable edge - only those that could have been added by deltaAddRecombination
+        List<Integer> removableEdges = new ArrayList<>();
+        for (int i = 0; i < networkEdges.size(); i++) {
+            NetworkEdge edge = networkEdges.get(i);
+            if (!edge.isRootEdge() && edge.childNode.isReassortment()
+                    && edge.parentNode.isCoalescence() && edge.hasSegments.cardinality() >= 1) {
+                
+                NetworkEdge potentialSourceEdge = getSpouseEdge(edge);
+                double trueDestTime = edge.parentNode.getHeight();
+                NetworkEdge trueDestEdge = getSisterEdge(edge);
+                
+                
+                // Check if destEdge is reachable from sourceEdge via delta traversal
+                List<NetworkEdge> reachableEdges = new ArrayList<>();
+                getTargetEdges(potentialSourceEdge, trueDestTime, reachableEdges);
+                
+//                System.out.println("Checking edge: " + trueDestTime + " " + trueDestEdge.childNode.getHeight() + " - " + trueDestEdge.parentNode.getHeight());
+//                
+//                for (NetworkEdge e : reachableEdges)
+//                	System.out.println(e.childNode.getHeight() + " - " + e.parentNode.getHeight());
+//                
+                if (reachableEdges.contains(trueDestEdge) || reachableEdges.contains(trueDestEdge.parentNode.getParentEdges().get(0))) {
+                    removableEdges.add(i);
+                }
+            }
+        }
+        // only keep unique edges
+        Collections.sort(removableEdges);
+        removableEdges = removableEdges.stream().distinct().collect(Collectors.toList());
+        
+        
+        if (removableEdges.isEmpty())
+            return Double.NEGATIVE_INFINITY;
+
+        NetworkEdge edgeToRemove = networkEdges.get(removableEdges.get(Randomizer.nextInt(removableEdges.size())));
+        logHR -= Math.log(1.0/(removableEdges.size()));
+
+        // 2. Extract source/dest information
+        double sourceTime = edgeToRemove.childNode.getHeight();
+        NetworkEdge sourceEdge = edgeToRemove.childNode.getChildEdges().get(0);
+        NetworkEdge destEdge = getSisterEdge(edgeToRemove);
+        if (destEdge.childNode == edgeToRemove.childNode)
+            destEdge = sourceEdge;
+        double destTime = edgeToRemove.parentNode.getHeight();
+
+        // 3. Time density contribution (same as original)
+        List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
+        double currTime = sourceTime;
+        NetworkEvent prevEvent = null;
+        
+        for (NetworkEvent event : networkEventList) {
+            if (event.time > currTime) {
+                double rate = 0.5 * (prevEvent.lineages - 1);
+                if (destTime <= event.time) {
+                    logHR += -rate * coalescentDistr.populationFunction.getIntegral(currTime, destTime);
+                    logHR += Math.log(rate / coalescentDistr.populationFunction.getPopSize(destTime));
+                    break;
+                }
+                logHR += -rate * coalescentDistr.populationFunction.getIntegral(currTime, event.time);
+                currTime = event.time;
+            }
+            prevEvent = event;
+        }
+
+        // 4. Remove reassortment edge
+        logHR += removeReassortmentEdge(edgeToRemove);
+        
+        if (logHR == Double.NEGATIVE_INFINITY)
+            return Double.NEGATIVE_INFINITY;
+
+        // 5. Reverse move probability components
+        // 5a. Source edge/time selection
+        if (randomlySampleAttachmentEdgeInput.get()) {
+            int nPossibleSourceEdges = 0;
+            if (useMaxHeight) {
+                double lociMRCA = NetworkStatsLogger.getSecondHighestLociMRCA(networkInput.get());
+                for (NetworkEdge e : networkEdges) {
+                    if (!e.isRootEdge() && e.hasSegments.cardinality() >= 2 && e.childNode.getHeight() < lociMRCA) {
+                        nPossibleSourceEdges++;
+                    }
+                }
+            } else {
+                for (NetworkEdge e : networkEdges) {
+                    if (!e.isRootEdge() && e.hasSegments.cardinality() >= 2) {
+                        nPossibleSourceEdges++;
+                    }
+                }
+            }
+            logHR += Math.log(1.0/(double)nPossibleSourceEdges) + Math.log(1.0/sourceEdge.getLength());
+        } else {
+            double sumEdgeLengths = 0.0;
+            if (useMaxHeight) {
+                double lociMRCA = NetworkStatsLogger.getSecondHighestLociMRCA(networkInput.get());
+                for (NetworkEdge e : networkEdges) {
+                    if (!e.isRootEdge() && e.hasSegments.cardinality() >= 2 && e.childNode.getHeight() < lociMRCA) {
+                        sumEdgeLengths += e.getLength();
+                    }
+                }
+            } else {
+                for (NetworkEdge e : networkEdges) {
+                    if (!e.isRootEdge() && e.hasSegments.cardinality() >= 2) {
+                        sumEdgeLengths += e.getLength();
+                    }
+                }
+            }
+            logHR += Math.log(1.0 / sumEdgeLengths);
+        }
+
+
+        List<NetworkEdge> reverseTargetEdges = new ArrayList<>();
+        getTargetEdges(sourceEdge, destTime, reverseTargetEdges);
+        reverseTargetEdges = reverseTargetEdges.stream()
+                .distinct()
+                .collect(Collectors.toList());
+
+        
+        int numCandidates = Math.max(1, reverseTargetEdges.size());
+        logHR += Math.log(1.0 / (double) numCandidates);
+
+        return logHR;
+    }
+
+    
+    // Traverse up the network (forward in time) - only direct ancestors
+    private void getTargetEdges(NetworkEdge currentEdge, double destTime, 
+                                List<NetworkEdge> targetEdges) {
+        
+        if (currentEdge.isRootEdge()) {
+            // Reached root
+            targetEdges.add(currentEdge);
+            return;
+        }
+        
+		if (currentEdge.childNode.getHeight() <= destTime && currentEdge.parentNode.getHeight() >= destTime) {
+			// Current edge spans destTime - add to target edges
+			targetEdges.add(currentEdge);
+            // if the parentNode is a coalescent event, check the sister edge as well
+//            if (currentEdge.parentNode.isCoalescence()) {
+//                NetworkEdge sisterEdge = getSisterEdge(currentEdge);
+//                if (sisterEdge.childNode.getHeight() <= destTime && sisterEdge.parentNode.getHeight() >= destTime) {
+//                    targetEdges.add(sisterEdge);
+//                }
+//            }
+			return;
+		}else {
+            for (NetworkEdge e : currentEdge.parentNode.getParentEdges()) {
+            	getTargetEdges(e, destTime, targetEdges);
+            }
+
+		}
+    }
+    
  }

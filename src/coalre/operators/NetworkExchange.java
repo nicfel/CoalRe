@@ -36,7 +36,10 @@ public class NetworkExchange extends DivertSegmentOperator {
 		network.startEditing(this);
 
 		if (isNarrow) {
+//			System.out.println(network);
 			logHR = narrow(network);
+//			System.out.println(network+"\n");
+//			System.out.println(logHR);
 		} else {
 			logHR = wide(network);
 		}
@@ -55,6 +58,15 @@ public class NetworkExchange extends DivertSegmentOperator {
 			return false;
 		}
 	}
+	
+    private int isg(final Node n) {
+        return (n.getLeft().isLeaf() && n.getRight().isLeaf()) ? 0 : 1;
+      }
+
+    private int sisg(final Node n) {
+        return n.isLeaf() ? 0 : isg(n);
+    }
+
 
 	/**
 	 * Perform equivalent of narrow tree exchange on a network.
@@ -66,58 +78,171 @@ public class NetworkExchange extends DivertSegmentOperator {
 	public double narrow(final Network network) {
 
 		double logHR = 0.0;
+		
+		// pick a random segment
+		int segment = Randomizer.nextInt(network.getSegmentCount());
+		// get a node on the tree that is eligble for a narrow exchange
+        final int internalNodes = segmentTrees.get(segment).getInternalNodeCount();
+        if (internalNodes <= 1) {
+            return Double.NEGATIVE_INFINITY;
+        }
 
-//		List<NetworkEdge> networkEdges = new ArrayList<>(network.getEdges());
+        Node grandParent = segmentTrees.get(segment).getNode(internalNodes + 1 + Randomizer.nextInt(internalNodes));
+        while (grandParent.getLeft().isLeaf() && grandParent.getRight().isLeaf()) {
+            grandParent = segmentTrees.get(segment).getNode(internalNodes + 1 + Randomizer.nextInt(internalNodes));
+        }
 
-		final List<NetworkEdge> possibleGrandParentEdges = networkEdges.stream()
-				.filter(e -> e.childNode.isCoalescence())
-				.filter(e -> hasCoalescenceKid(e.childNode))
+        Node parentIndex = grandParent.getLeft();
+        Node uncle = grandParent.getRight();
+        if (parentIndex.getHeight() < uncle.getHeight()) {
+            parentIndex = grandParent.getRight();
+            uncle = grandParent.getLeft();
+        }
+        
+        if( parentIndex.isLeaf() ) {
+            // tree with dated tips
+            return Double.NEGATIVE_INFINITY;
+        }
+
+
+        int validGP = 0;
+        {
+            for(int i = internalNodes + 1; i < 1 + 2*internalNodes; ++i) {
+                validGP += isg(segmentTrees.get(segment).getNode(i));
+            }
+        }
+        
+        final int c2 = sisg(parentIndex) + sisg(uncle);
+
+//        System.out.println(segmentTrees.get(segment));
+//        System.out.println(parentIndex.getHeight() + " " + uncle.getHeight());
+//        System.out.println(parentIndex.isLeaf() + " " + uncle.isLeaf());
+        
+        
+        int parentInd = parentIndex.getNr();
+        int uncleInd = uncle.getNr();
+        // find the network edge that has parentIndex coalescing and uncle coalescing
+		List<NetworkEdge> parentEdge = networkEdges.stream()
+				.filter(e -> !e.isRootEdge())
+				.filter(e -> e.parentNode.isCoalescence())
+				.filter(e -> e.parentNode.segmentIndices != null)
+				.filter(e -> e.parentNode.segmentIndices[segment] == parentInd)
+				.filter(e -> e.parentNode.getChildEdges().get(0).hasSegments.get(segment))
+				.filter(e -> e.parentNode.getChildEdges().get(1).hasSegments.get(segment))
+				.collect(Collectors.toList());
+		
+		List<NetworkEdge> targetEdge = networkEdges.stream()
+				.filter(e -> e.childNode.segmentIndices != null)
+				.filter(e -> e.childNode.segmentIndices[segment] == uncleInd)
+				.filter(e -> e.childNode.isLeaf() || (e.childNode.getChildEdges().get(0).hasSegments.get(segment) &&
+														e.childNode.getChildEdges().get(1).hasSegments.get(segment)))
 				.collect(Collectors.toList());
 
-		final int possibleGrandParents = possibleGrandParentEdges.size();
-		if (possibleGrandParents < 1) {
-			return Double.NEGATIVE_INFINITY;
+		NetworkEdge iEdge = parentEdge.get(Randomizer.nextInt(2));
+		
+		Integer[] treeChildNodeList = new Integer[network.getSegmentCount()];
+		getTreeNodesDown(iEdge, (BitSet) iEdge.hasSegments.clone(), treeChildNodeList);
+
+				
+//		System.out.println(iEdge.childNode.getHeight());
+//		System.out.println(targetEdge.size());
+		
+		// find the edge above targetEdge, following segment, that has parent>iEdge.parent and child<iEdge.parent
+		NetworkEdge jEdge = getEdgeWithHeight(targetEdge.get(0), iEdge.parentNode.getHeight(), segment);
+		
+		logHR += addReassortmentEdge(iEdge, (iEdge.parentNode.getHeight()+iEdge.childNode.getHeight())/2, 
+                jEdge, iEdge.parentNode.getHeight());
+		
+		
+//		System.out.println(iEdge.parentNode.getParentEdges().get(0).hasSegments + " " + iEdge.parentNode.getParentEdges().get(1).hasSegments);
+		if (iEdge.parentNode.getParentEdges().get(0).hasSegments.cardinality()==0)
+			removeReassortmentEdge(iEdge.parentNode.getParentEdges().get(0));
+		else
+			removeReassortmentEdge(iEdge.parentNode.getParentEdges().get(1));
+		
+		
+
+
+
+        final int validGPafter = validGP - c2 + sisg(parentIndex) + sisg(uncle);
+
+        logHR += Math.log((float)validGP/validGPafter);
+//        System.out.println("logHR: " + logHR);
+        return logHR;
+
+		
+//		System.out.println(network);
+		
+
+//		System.exit(0);
+        
+        
+        
+        
+        
+        
+
+//		final List<NetworkEdge> possibleGrandParentEdges = networkEdges.stream()
+//				.filter(e -> e.childNode.isCoalescence())
+//				.filter(e -> hasCoalescenceKid(e.childNode))
+//				.collect(Collectors.toList());
+//
+//		final int possibleGrandParents = possibleGrandParentEdges.size();
+//		if (possibleGrandParents < 1) {
+//			return Double.NEGATIVE_INFINITY;
+//		}
+//		logHR -= Math.log(1.0 / possibleGrandParents);
+//
+//		final NetworkEdge grandParentEdge = possibleGrandParentEdges.get(Randomizer.nextInt(possibleGrandParents));
+//		final NetworkNode grandParent = grandParentEdge.childNode;
+//
+//		final List<NetworkEdge> possibleParentEdges = grandParent.getChildEdges();
+//		NetworkEdge parentEdge = possibleParentEdges.get(0);
+//		NetworkEdge auntEdge = possibleParentEdges.get(1);
+//
+//		NetworkNode parent = parentEdge.childNode;
+//		NetworkNode aunt = auntEdge.childNode;
+//
+//		if (parent.getHeight() < aunt.getHeight()) {
+//			auntEdge = possibleParentEdges.get(0);
+//			parentEdge = possibleParentEdges.get(1);
+//
+//			parent = parentEdge.childNode;
+//			aunt = auntEdge.childNode;
+//		}
+//
+//		if (!parent.isCoalescence()) {
+//			return Double.NEGATIVE_INFINITY;
+//		}
+//
+//		final int childId = Randomizer.nextInt(parent.getChildEdges().size());
+//		final NetworkEdge childEdge = parent.getChildEdges().get(childId);
+//
+//		logHR += exchangeEdges(childEdge, auntEdge, parent, grandParent);
+//
+//		networkEdges = new ArrayList<>(network.getEdges());
+//
+//		final List<NetworkEdge> possibleGrandParentEdgesAfter = networkEdges.stream()
+//				.filter(e -> e.childNode.isCoalescence()).filter(e -> hasCoalescenceKid(e.childNode))
+//				.collect(Collectors.toList());
+//
+//		final int possibleGrandParentsAfter = possibleGrandParentEdgesAfter.size();
+//
+//		logHR += Math.log(1.0 / possibleGrandParentsAfter);
+
+	}
+
+	private NetworkEdge getEdgeWithHeight(NetworkEdge edge, double height, int segment) {
+		if (edge.parentNode.getHeight() > height && edge.childNode.getHeight() < height) {
+			return edge;
+		}else {
+			for (NetworkEdge parentEdge : edge.parentNode.getParentEdges()) {
+				if (parentEdge.hasSegments.get(segment)) {
+					return getEdgeWithHeight(parentEdge, height, segment);
+				}
+			}
 		}
-		logHR -= Math.log(1.0 / possibleGrandParents);
-
-		final NetworkEdge grandParentEdge = possibleGrandParentEdges.get(Randomizer.nextInt(possibleGrandParents));
-		final NetworkNode grandParent = grandParentEdge.childNode;
-
-		final List<NetworkEdge> possibleParentEdges = grandParent.getChildEdges();
-		NetworkEdge parentEdge = possibleParentEdges.get(0);
-		NetworkEdge auntEdge = possibleParentEdges.get(1);
-
-		NetworkNode parent = parentEdge.childNode;
-		NetworkNode aunt = auntEdge.childNode;
-
-		if (parent.getHeight() < aunt.getHeight()) {
-			auntEdge = possibleParentEdges.get(0);
-			parentEdge = possibleParentEdges.get(1);
-
-			parent = parentEdge.childNode;
-			aunt = auntEdge.childNode;
-		}
-
-		if (!parent.isCoalescence()) {
-			return Double.NEGATIVE_INFINITY;
-		}
-
-		final int childId = Randomizer.nextInt(parent.getChildEdges().size());
-		final NetworkEdge childEdge = parent.getChildEdges().get(childId);
-
-		logHR += exchangeEdges(childEdge, auntEdge, parent, grandParent);
-
-		networkEdges = new ArrayList<>(network.getEdges());
-
-		final List<NetworkEdge> possibleGrandParentEdgesAfter = networkEdges.stream()
-				.filter(e -> e.childNode.isCoalescence()).filter(e -> hasCoalescenceKid(e.childNode))
-				.collect(Collectors.toList());
-
-		final int possibleGrandParentsAfter = possibleGrandParentEdgesAfter.size();
-
-		logHR += Math.log(1.0 / possibleGrandParentsAfter);
-
-		return logHR;
+		return null;
 	}
 
 	/**
