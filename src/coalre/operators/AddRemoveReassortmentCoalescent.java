@@ -747,6 +747,11 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
     private void getTargetEdges(NetworkEdge currentEdge, double destTime, 
                                 List<NetworkEdge> targetEdges) {
         
+        // Check if this edge is already in target edges - prevent exponential growth
+        if (targetEdges.contains(currentEdge)) {
+            return;
+        }
+        
         if (currentEdge.isRootEdge()) {
             // Reached root
             targetEdges.add(currentEdge);
