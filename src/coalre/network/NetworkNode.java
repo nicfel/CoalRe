@@ -49,6 +49,10 @@ public class NetworkNode {
     public NetworkNode() {
     }
 
+    public NetworkNode(double height) {
+        this.height = height;
+    }
+
     public double getHeight() {
         return height;
     }
@@ -79,6 +83,28 @@ public class NetworkNode {
 
     public List<NetworkEdge> getChildEdges() {
         return children;
+    }
+    /**
+     * Retrieve parent edge in the local tree of the given segment
+     *
+     * @return sister of given edge for segment
+     */
+    public NetworkEdge getParentEdge(int segment) {
+        return getParentEdges().stream()
+                .filter(e -> e.hasSegments.get(segment))
+                .findFirst()
+                .get();
+    }
+
+    /**
+     * Retrieve parent edge in the local tree of the given segment
+     *
+     * @return sister of given edge for segment
+     */
+    public List<NetworkEdge> getChildEdges(int segment) {
+        return getChildEdges().stream()
+                .filter(e -> e.hasSegments.get(segment))
+                .toList();
     }
 
     public NetworkNode addChildEdge(NetworkEdge newChildEdge) {
