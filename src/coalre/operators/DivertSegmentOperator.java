@@ -9,15 +9,13 @@ import beast.base.evolution.tree.Node;
 import beast.base.util.Randomizer;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
-import coalre.util.BitSetFun;
+
 
 public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 
 	public Input<Boolean> divertOneSegmentInput = new Input<>("divertOneSegment",
 			"If true, only one segment is diverted", false);
 
-	
-	
 	@Override
 	public double networkProposal() {
 		double logHR = 0.0;
@@ -271,12 +269,6 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
     Integer[] getTreeNodesDown(NetworkEdge edge, BitSet segsToRemove) {
         Integer[] treeNodeList = new Integer[network.getSegmentCount()];
         getTreeNodesDown(edge, segsToRemove, treeNodeList);
-        System.out.println();
-        System.out.println(segsToRemove);
-        System.out.print("[");
-        for (Object x : treeNodeList)
-            System.out.print(x + ", ");
-        System.out.println("]");
         return treeNodeList;
     }
 
