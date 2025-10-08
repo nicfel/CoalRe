@@ -39,6 +39,10 @@ public class SubNetworkSlide extends DivertSegmentOperator {
     
 	public Input<Boolean> randomlySampleAttachmentEdgeInput = new Input<>("randomlySampleAttachmentEdge",
 			"Randomly sample edge to attach to", true);
+	
+	public Input<Boolean> useEdgeLengthInput = new Input<>("useEdgeLength",
+			"Use edge length to scale the size of the move", false);
+
 
     // shadows size
     double size;
@@ -54,13 +58,13 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 
 	@Override
 	public double networkProposal() {
+//		System.out.println(network);
 
 		double logHR = 0.0;
 		
 		List<NetworkEdge> edges = networkEdges.stream()
 				.filter(e -> !e.isRootEdge())
 				.filter(e -> e.hasSegments.cardinality() >= 1)
-				.filter(e -> e.parentNode.isReassortment())
 				.collect(Collectors.toList());
 
 		if (edges.isEmpty()) {
@@ -72,7 +76,15 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 		NetworkNode iParent = iEdge.parentNode;
 		NetworkNode iChild = iEdge.childNode;
 		
-        final double delta = Math.abs(getDelta());
+		double delta;
+		double logForwardDeltaProb;
+		if (useEdgeLengthInput.get()) {
+	        delta = Math.abs(getDelta(iEdge.getLength()));        
+	        logForwardDeltaProb = getLogDeltaProb(delta, iEdge.getLength());
+		}else {
+			delta = Math.abs(getDelta(1.0));
+			logForwardDeltaProb = getLogDeltaProb(delta, 1.0);
+		}
         // get all potential reattachment Edges
         Map<NetworkEdge, Double> targetEdges = new HashMap<>();
         if (!iEdge.isRootEdge() && iParent.isReassortment()) {
@@ -170,6 +182,15 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 
 
 			}
+
+			double logReverseDeltaProb;
+			if (useEdgeLengthInput.get())
+				logReverseDeltaProb = getLogDeltaProb(delta, iEdge.getLength());
+			else
+		    	logReverseDeltaProb = getLogDeltaProb(delta, 1.0);
+		    
+		    // Delta probabilities cancel out if using same edge length
+		    logHR += logReverseDeltaProb - logForwardDeltaProb; // This equals 0 for symmetric case
 
 
 			Map<NetworkEdge, Double> reverseTargetEdges = new HashMap<>();
@@ -269,7 +290,8 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 			
         }
         
-
+//        System.out.println(network);
+//        System.out.println("logHR: " + logHR);
 		return logHR;
 	}
 	
@@ -496,6 +518,32 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 
         return true;
     }
+    
+    private double getDelta(double edgeLength) {
+        double effectiveSize = size * edgeLength;
+        
+        if (!gaussianInput.get()) {
+            return (Randomizer.nextDouble() * effectiveSize) - (effectiveSize / 2.0);
+        } else {
+            return Randomizer.nextGaussian() * effectiveSize;
+        }
+    }
+
+    private double getLogDeltaProb(double delta, double edgeLength) {
+        double effectiveSize = size * edgeLength;
+        
+        if (!gaussianInput.get()) {
+            if (Math.abs(delta) <= effectiveSize / 2.0) {
+                return -Math.log(effectiveSize);
+            } else {
+                return Double.NEGATIVE_INFINITY;
+            }
+        } else {
+            double variance = effectiveSize * effectiveSize;
+            return -0.5 * Math.log(2 * Math.PI * variance) - (delta * delta) / (2 * variance);
+        }
+    }
+
     
     /**
      * automatic parameter tuning *

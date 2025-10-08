@@ -289,6 +289,19 @@ public class Network extends StateNode {
         }
 
         result.append("[&");
+        
+        boolean realCoal = false;
+        if (currentEdge.childNode.isCoalescence()) {
+        	for (int i = 0; i < getSegmentCount(); i++)
+				if (currentEdge.childNode.getChildEdges().get(0).hasSegments.get(i) && currentEdge.childNode.getChildEdges().get(1).hasSegments.get(i)) {
+                    realCoal = true;
+                    break;
+                }
+        }
+        
+        
+        
+        
 //        if (segmentNames!=null) {
 //    		result.append("segments={");
 //    		String str = "rem";
@@ -301,6 +314,7 @@ public class Network extends StateNode {
 //        	result.append("}");
 //        }else {
         	result.append("segments=").append(currentEdge.hasSegments);
+        	result.append(",realCoal=").append(realCoal);
 //        }
         if (verbose) {
             for (int segIdx=0; segIdx<getSegmentCount(); segIdx++) {

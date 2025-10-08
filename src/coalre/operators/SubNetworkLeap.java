@@ -57,6 +57,7 @@ public class SubNetworkLeap extends DivertSegmentOperator {
 	
 	@Override
 	public double networkProposal() {
+		
 		try {
 			if (randomlySampleAttachmentEdgeInput.get()) {
 				return networkProposalRandom();
