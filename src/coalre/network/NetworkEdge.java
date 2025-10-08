@@ -9,11 +9,11 @@ public class NetworkEdge {
 
     public NetworkEdge() { }
 
-    public NetworkEdge(NetworkNode parentNode, NetworkNode childNode,
-                       BitSet hasSegments) {
-        this.parentNode = parentNode;
-        this.childNode = childNode;
-
+    public NetworkEdge(NetworkNode parentNode, NetworkNode childNode, BitSet hasSegments) {
+        if (childNode != null)
+            childNode.addParentEdge(this);
+        if (parentNode != null)
+            parentNode.addChildEdge(this);
         this.hasSegments = hasSegments;
     }
 
