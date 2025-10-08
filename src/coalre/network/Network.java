@@ -7,6 +7,8 @@ import beast.base.evolution.tree.Tree;
 import coalre.network.parser.NetworkBaseVisitor;
 import coalre.network.parser.NetworkLexer;
 import coalre.network.parser.NetworkParser;
+import coalre.util.BitSetFun;
+import coalre.util.Util;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -15,6 +17,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import java.io.PrintStream;
 import java.util.*;
 import java.util.stream.Collectors;
+
 
 public class Network extends StateNode {
 
@@ -174,6 +177,20 @@ public class Network extends StateNode {
   		
 	    for (NetworkEdge childEdge : edge.childNode.getChildEdges())
 	    	getEdgesRecurseNew(childEdge, networkEdgeSet);
+    }
+
+    public Set<NetworkEdge> getSegmentEdges(int segment) {
+        Set<NetworkEdge> segEdges = new HashSet<>();
+        getSegmentEdgesRecurse(segment, rootEdge, segEdges);
+        return segEdges;
+    }
+
+    private void getSegmentEdgesRecurse(int segment, NetworkEdge e, Set<NetworkEdge> segEdges) {
+        assert e.hasSegments.get(segment);
+        segEdges.add(e);
+        for (NetworkEdge childEdge : e.childNode.getChildEdges(segment)) {
+            getSegmentEdgesRecurse(segment, childEdge, segEdges);
+        }
     }
 
     
@@ -889,6 +906,73 @@ public class Network extends StateNode {
         
         return thisClade;
     }    
+
+
+    public boolean isValid() {
+        // Root has no parents
+        assert rootEdge.parentNode == null;
+
+        // Root has all segments
+        assert rootEdge.hasSegments.cardinality() == getSegmentCount();
+
+        for (NetworkNode node : getNodes()) {
+
+            BitSet childSegments, parentSegments;
+
+            // Node is leaf, coalescent or reassort event
+            if (node.getChildCount() == 0) {
+                // Node is leaf
+                assert node.getParentCount() == 1;
+
+                // Same segments on child nodes as on parent node
+                childSegments = BitSetFun.full(getSegmentCount());
+                parentSegments = node.getParentEdges().get(0).hasSegments;
+
+
+            } else if (node.getChildCount() == 1) {
+                // Node is reassortment
+                assert node.getParentCount() == 2;
+
+                // The parent edges need to have disjoint segments
+                NetworkEdge p0 = node.getParentEdges().get(0);
+                NetworkEdge p1 = node.getParentEdges().get(1);
+                assert BitSetFun.and(p0.hasSegments, p1.hasSegments).isEmpty();
+
+                // Same segments on child nodes as on parent node
+                parentSegments = BitSetFun.or(p0.hasSegments, p1.hasSegments);
+                childSegments = node.getChildEdges().get(0).hasSegments;
+
+            } else if (node.getChildCount() == 2) {
+                // Node is coalescence
+                assert node.getParentCount() == 1;
+
+                NetworkEdge c0 = node.getChildEdges().get(0);
+                NetworkEdge c1 = node.getChildEdges().get(1);
+
+                // Same segments on child nodes as on parent node
+                parentSegments = node.getParentEdges().get(0).hasSegments;
+                childSegments = BitSetFun.or(c0.hasSegments, c1.hasSegments);
+            } else {
+                return false;
+            }
+            // Same segments on child nodes as on parent node
+            assert childSegments.equals(parentSegments);
+
+            // Child and parent edges are unique
+            assert Util.allElementsUnique(node.getChildEdges());
+            assert Util.allElementsUnique(node.getParentEdges());
+
+        }
+
+        for (NetworkEdge edge : getEdges()) {
+            // Parents must be older than their children
+            if (!edge.isRootEdge())
+                assert edge.parentNode.getHeight() >= edge.childNode.getHeight();
+        }
+
+        // If no check failed, we assume the rARG is valid
+        return true;
+    }
 
     /**
      * Will be used in the next version of BEAST to prevent date trait cloning
