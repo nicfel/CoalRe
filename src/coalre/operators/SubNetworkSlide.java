@@ -64,7 +64,8 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 		
 		List<NetworkEdge> edges = networkEdges.stream()
 				.filter(e -> !e.isRootEdge())
-				.filter(e -> e.hasSegments.cardinality() >= 1)
+//				.filter(e -> e.parentNode.isReassortment())
+//				.filter(e -> e.hasSegments.cardinality() >= 1)
 				.collect(Collectors.toList());
 
 		if (edges.isEmpty()) {
@@ -87,6 +88,7 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 		}
         // get all potential reattachment Edges
         Map<NetworkEdge, Double> targetEdges = new HashMap<>();
+        List<NetworkEdge> visited = new ArrayList<>();
         if (!iEdge.isRootEdge() && iParent.isReassortment()) {
         	
         	NetworkEdge iParentEdge = iParent.getParentEdges().get(Randomizer.nextInt(2));            	
@@ -96,8 +98,8 @@ public class SubNetworkSlide extends DivertSegmentOperator {
         	
     		
         	// get the other pare
-        	targetEdges.putAll(getTargetEdgesUp(getSpouseEdge(iParentEdge), delta, maxHeight, minHeight));
-        	targetEdges.putAll(getTargetEdgesDown(iEdge, delta, maxHeight, minHeight));  
+        	getTargetEdgesUp(getSpouseEdge(iParentEdge), delta, maxHeight, minHeight, targetEdges, visited);
+        	getTargetEdgesDown(iEdge, delta, maxHeight, minHeight, targetEdges, visited);  
         	
     		// keep the current segments of edge i 
     		final BitSet iParentSegs = (BitSet) iParentEdge.hasSegments.clone();
@@ -119,12 +121,17 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 				iParent.setHeight(targetEdges.get(jEdge));
 			}else {			
 
-	            // check that jEdge has all segments in iSegs
-				for (int i = 0; i < iParentSegs.length(); i++) {
-					if (iParentSegs.get(i) && !jEdge.hasSegments.get(i)) {
-						return Double.NEGATIVE_INFINITY; // cannot move segments that are not present in jEdge
-					}
-				}	
+				// check if the move is up or down
+				boolean down = false;
+				if (targetEdges.get(jEdge) < iParentEdge.parentNode.getHeight()) {
+		            // check that jEdge has all segments in iSegs
+					for (int i = 0; i < iParentSegs.length(); i++) {
+						if (iParentSegs.get(i) && !jEdge.hasSegments.get(i)) {
+							return Double.NEGATIVE_INFINITY; // cannot move segments that are not present in jEdge
+						}
+					}	
+					down = true;
+				}
 				
 				// remove iParentEdge from child node
 				NetworkEdge grandChildEdge = iParentEdge.childNode.getChildEdges().get(0);
@@ -142,8 +149,10 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 //	    		System.out.println(network.getExtendedNewick());
 
 				
-				if (reconnectSegmentTrees(treeChildNodeList, otherParentEdge, iParentSegs))
+				if (reconnectSegmentTrees(treeChildNodeList, otherParentEdge, iParentSegs)) {
 					return Double.NEGATIVE_INFINITY;
+				}
+				
 
 				
 				uncle.removeChildEdge(otherParentEdge);
@@ -194,8 +203,9 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 
 
 			Map<NetworkEdge, Double> reverseTargetEdges = new HashMap<>();
-            reverseTargetEdges.putAll(getTargetEdgesUp(getSpouseEdge(iParentEdge), delta, maxHeight, minHeight));
-            reverseTargetEdges.putAll(getTargetEdgesDown(jEdge, delta, maxHeight, minHeight));
+			List<NetworkEdge> reverseVisited = new ArrayList<>();
+            getTargetEdgesUp(getSpouseEdge(iParentEdge), delta, maxHeight, minHeight, reverseTargetEdges, reverseVisited);
+            getTargetEdgesDown(jEdge, delta, maxHeight, minHeight, reverseTargetEdges, reverseVisited);
                   
             
 			logHR += Math.log(1.0/reverseTargetEdges.size());  
@@ -204,9 +214,9 @@ public class SubNetworkSlide extends DivertSegmentOperator {
     		// calculate the max height of the new child
     		double maxHeight = Double.POSITIVE_INFINITY;
     		double minHeight = iChild.getHeight();
-        	targetEdges.putAll(getTargetEdgesUp(iParent.getParentEdges().get(0), delta, maxHeight, minHeight));
+        	getTargetEdgesUp(iParent.getParentEdges().get(0), delta, maxHeight, minHeight, targetEdges, visited);
         	// get the other child edge that is not iEdge
-        	targetEdges.putAll(getTargetEdgesDown(getSisterEdge(iEdge), delta, maxHeight, minHeight));
+        	getTargetEdgesDown(getSisterEdge(iEdge), delta, maxHeight, minHeight, targetEdges, visited);
         	
         	logHR -= Math.log(1.0/targetEdges.size());
           				        	
@@ -282,8 +292,9 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 			
 			
 			Map<NetworkEdge, Double> reverseTargetEdges = new HashMap<>();
-			reverseTargetEdges.putAll(getTargetEdgesUp(iEdge.parentNode.getParentEdges().get(0), delta, maxHeight, minHeight));
-			reverseTargetEdges.putAll(getTargetEdgesDown(getSisterEdge(iEdge), delta, maxHeight, minHeight));  
+			List<NetworkEdge> reverseVisited = new ArrayList<>();
+			getTargetEdgesUp(iEdge.parentNode.getParentEdges().get(0), delta, maxHeight, minHeight, reverseTargetEdges, reverseVisited);
+			getTargetEdgesDown(getSisterEdge(iEdge), delta, maxHeight, minHeight, reverseTargetEdges, reverseVisited);  
 			
 			
 			logHR += Math.log(1.0/reverseTargetEdges.size());  
@@ -296,72 +307,78 @@ public class SubNetworkSlide extends DivertSegmentOperator {
 	}
 	
 	 
-    private Map<NetworkEdge, Double> getTargetEdgesUp(NetworkEdge edge, double delta, double maxHeight, double minHeight) {
+    private void getTargetEdgesUp(NetworkEdge edge, double delta, double maxHeight, double minHeight, Map<NetworkEdge, Double> targetEdges, List<NetworkEdge> visited) {
     	// initalize map
-        Map<NetworkEdge, Double> targetEdges = new HashMap<>();
-        
+      
   		if (edge.isRootEdge()) {
 			double newHeight = edge.childNode.getHeight() + delta;
 			if (newHeight > maxHeight)
-				return targetEdges; // no valid targets
+				return; // no valid targets
 
 			targetEdges.put(edge, newHeight);			
-			return targetEdges;
+			return;
 		}        
+  		
+  		// check if targetEdges contains edge already
+  		if (visited.contains(edge))
+  			return;
+  		visited.add(edge);
 		
         // get the difference between the current height and the new height
         delta -= edge.getLength();
 		if (delta <= 0.0) {
 			double newHeight = edge.childNode.getHeight() + delta + edge.getLength();
 			if (newHeight > maxHeight)
-				return targetEdges; // no valid targets
+				return; // no valid targets
 			targetEdges.put(edge, newHeight);			
-			return targetEdges; 
+			return; 
 		} else {
 			// proceed to the next event
 			if (edge.parentNode.isReassortment()) {
 				// if reassortment, follow both parents
-				targetEdges.putAll(getTargetEdgesUp(edge.parentNode.getParentEdges().get(0), delta, maxHeight, minHeight));
-				targetEdges.putAll(getTargetEdgesUp(edge.parentNode.getParentEdges().get(1), delta, maxHeight, minHeight));				
+				getTargetEdgesUp(edge.parentNode.getParentEdges().get(0), delta, maxHeight, minHeight, targetEdges, visited);
+				getTargetEdgesUp(edge.parentNode.getParentEdges().get(1), delta, maxHeight, minHeight, targetEdges, visited);				
 			} else {
 				// else it is a coalescent event
-				targetEdges.putAll(getTargetEdgesUp(edge.parentNode.getParentEdges().get(0), delta, maxHeight, minHeight));
+				getTargetEdgesUp(edge.parentNode.getParentEdges().get(0), delta, maxHeight, minHeight, targetEdges, visited);
 //				targetEdges.putAll(getTargetEdgesDown(getSisterEdge(edge), delta, maxHeight, minHeight));
 			}
 		}
-		return targetEdges;
+		return;
 	}
 
 	
-    private Map<NetworkEdge, Double> getTargetEdgesDown(NetworkEdge edge, double delta, double maxHeight, double minHeight) {
-        Map<NetworkEdge, Double> targetEdges = new HashMap<>();
-        
-        
+    private void getTargetEdgesDown(NetworkEdge edge, double delta, double maxHeight, double minHeight, Map<NetworkEdge, Double> targetEdges, List<NetworkEdge> visited) {
         // get the difference between the current height and the new height
         delta -= edge.getLength();
+        // check if targetEdges contains edge already
+        if (visited.contains(edge))
+        	return;
+        
+        visited.add(edge);
         
         if (delta <= 0.0) {
         	double newHeight = edge.parentNode.getHeight() - delta - edge.getLength();
             if (newHeight < minHeight)
-            	return targetEdges; // no valid targets
+            	return; // no valid targets
             
 			targetEdges.put(edge, edge.parentNode.getHeight() - (delta + edge.getLength()));
-			return targetEdges; 
+			return; 
 		} else {
 			// proceed to the next event
 			if (edge.childNode.isLeaf()) {
-				return targetEdges; // no valid targets
+				return; // no valid targets
 			}else if (edge.childNode.isReassortment()) {
 				// if reassortment, follow the other parent up and the child down
 //				targetEdges.putAll(getTargetEdgesUp(getSpouseEdge(edge), delta, maxHeight, minHeight));
-				targetEdges.putAll(getTargetEdgesDown(edge.childNode.getChildEdges().get(0), delta, maxHeight, minHeight));
+				getTargetEdgesDown(edge.childNode.getChildEdges().get(0), delta, maxHeight, minHeight, targetEdges, visited);
 			} else {
 				// if coalescent event, follow both children down
-				targetEdges.putAll(getTargetEdgesDown(edge.childNode.getChildEdges().get(0), delta, maxHeight, minHeight));
-				targetEdges.putAll(getTargetEdgesDown(edge.childNode.getChildEdges().get(1), delta, maxHeight, minHeight));			
+				getTargetEdgesDown(edge.childNode.getChildEdges().get(0), delta, maxHeight, minHeight, targetEdges, visited);
+				getTargetEdgesDown(edge.childNode.getChildEdges().get(1), delta, maxHeight, minHeight, targetEdges, visited);			
 			}
 		}
-        return targetEdges;
+        return;
 	}
 
 //	public double checkAncestralSegments(NetworkEdge edge) {

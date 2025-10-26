@@ -26,6 +26,9 @@
 <packageapp class="coalre.networkannotator.MarkClades"
             description="MarkCladesFromCladeFile"/>
 
+<packageapp class="coalre.networkannotator.ClusterSizeComparison"
+            description="ClusterSizeComparison"/>
+
       <service type="beast.base.core.BEASTInterface">
         <provider classname="coalre.distribution.CoalescentWithReassortment"/>
         <provider classname="coalre.distribution.emptyNetworkEdgesPrior"/>
