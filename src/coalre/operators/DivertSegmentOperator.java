@@ -5,6 +5,7 @@ import beast.base.evolution.tree.Node;
 import beast.base.util.Randomizer;
 import cern.colt.Arrays;
 import coalre.distribution.CoalescentWithReassortment;
+import coalre.distribution.NetworkEvent;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
@@ -499,15 +500,40 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 					totalReassortmentObsProb += observableReassortmentProbs[i];
 				}
 
-			// Calculate time to next coalescent event (only for free lineages)
+			// Calculate time to next coalescent event using network intervals
+			// This accounts for free lineages coalescing with existing network lineages
 			double timeToNextCoal = Double.POSITIVE_INFINITY;
 			if (coalLins >= 1) {
-				// TODO: include the other lineages existing in the network for coalescence
-				
-				double currentTransformedTime = coalescentDistrInput.get().populationFunction.getIntensity(currentTime);
-				double transformedTimeToNextCoal = Randomizer.nextExponential(0.5 * coalLins);
-				timeToNextCoal = coalescentDistrInput.get().populationFunction.getInverseIntensity(
-						transformedTimeToNextCoal + currentTransformedTime) - currentTime;
+		    	// Get network event intervals
+		    	List<NetworkEvent> networkEventList = coalescentDistrInput.get().intervals.getNetworkEventList();
+
+		    	double currTime = currentTime;
+		    	NetworkEvent prevEvent = null;
+		    	double sampledCoalTime = 0.0;
+
+		    	for (NetworkEvent event : networkEventList) {
+		    		if (event.time > currTime) {
+		    			// Rate = 0.5 * coalLins * (coalLins - 1 + 2 * prevEvent.lineages)
+		    			// Accounts for free-free and free-existing coalescence
+		    			double rate = 0.5 * coalLins * (coalLins - 1 + 2 * prevEvent.lineages);
+		                double currentTransformedTime = coalescentDistrInput.get().populationFunction.getIntensity(currTime);
+		                double transformedTimeToNextCoal = Randomizer.nextExponential(rate);
+		                sampledCoalTime = coalescentDistrInput.get().populationFunction.getInverseIntensity(
+		                        transformedTimeToNextCoal + currentTransformedTime);
+
+		                if (sampledCoalTime < event.time) {
+		                	// Coalescent happens in this interval
+		                	timeToNextCoal = sampledCoalTime - currentTime;
+		                	logP -= -rate * coalescentDistrInput.get().populationFunction.getIntegral(currTime, sampledCoalTime) +
+		                			Math.log(rate / coalescentDistrInput.get().populationFunction.getPopSize(sampledCoalTime));
+		                	break;
+		                }
+		                // No coalescent in this interval, continue to next
+		                logP -= -rate * coalescentDistrInput.get().populationFunction.getIntegral(currTime, event.time);
+		    			currTime = event.time;
+		    		}
+		    		prevEvent = event;
+		        }
 			}
 
 			// Calculate time to next reassortment event (using total observable reassortment probability)
