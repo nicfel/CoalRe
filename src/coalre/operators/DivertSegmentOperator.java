@@ -4,8 +4,6 @@ import beast.base.core.Input;
 import beast.base.evolution.tree.Node;
 import beast.base.util.Randomizer;
 import cern.colt.Arrays;
-import coalre.distribution.CoalescentWithReassortment;
-import coalre.distribution.NetworkEvent;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
@@ -20,10 +18,6 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 
 	public Input<Boolean> divertOneSegmentInput = new Input<>("divertOneSegment",
 			"If true, only one segment is diverted", false);
-	
-    public Input<CoalescentWithReassortment> coalescentDistrInput = new Input<>("coalescentWithReassortment",
-            "Mean of exponential used for choosing root attachment times.",
-            Input.Validate.REQUIRED);
 
 	
 	
@@ -446,130 +440,6 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 
 		return logP;
 	}
-	
-	protected double addSegmentsToAncestorsThroughSimulation(NetworkEdge edge, BitSet segsToAdd) {
-		double logP = 0.0;
-
-		List<NetworkEdge> currentEdges = new ArrayList<>();
-		List<Boolean> alreadyExists = new ArrayList<>();
-		List<BitSet> segmentsToAddList = new ArrayList<>();
-		currentEdges.add(edge);
-		alreadyExists.add(true);
-		segmentsToAddList.add(segsToAdd);
-
-		double currentTime = edge.childNode.getHeight();
-
-		// now, simulate the reassortment and coalescence of new edges.
-		// existing edges can only have reassortment but not coalescent events
-		while (currentEdges.size() > 0) {
-
-			// Process each lineage to calculate rates and observation probabilities
-			int coalLins = 0; // Free lineages that can coalesce
-			double[] observableReassortmentProbs = new double[currentEdges.size()];
-			double totalReassortmentObsProb = 0.0; // Total observable reassortment probability
-			double timeToNextNetworkEvent = Double.POSITIVE_INFINITY;
-
-			for (int i = 0; i < currentEdges.size(); i++) {
-				if (alreadyExists.get(i)) {
-					// Existing edge: find time to next network event
-					NetworkEdge e = currentEdges.get(i);
-					double timeToParent = e.parentNode.getHeight() - currentTime;
-					if (timeToParent < timeToNextNetworkEvent) {
-						timeToNextNetworkEvent = timeToParent;
-					}
-
-					// For existing edges, only count observable reassortments involving NEW segments
-					// A reassortment is observable if it splits the new segments from existing segments
-					// OR if it splits the new segments among themselves
-					// For now, we only care about the new segments
-					BitSet newSegs = segmentsToAddList.get(i);
-					int numNewSegs = newSegs.cardinality();
-					// Observation probability = 1 - 2*(0.5)^n
-					// This is the prob that reassortment creates two non-empty groups from new segments
-					observableReassortmentProbs[i] = 1.0 - 2.0 * Math.pow(0.5, numNewSegs);
-					// correct for any event taht includes an existing segment
-					// TODO correct for existing segments
-				} else {
-					// Free lineage: can coalesce and can have observable reassortment
-					coalLins++;
-
-					// For free lineages, all segments can reassort
-					BitSet allSegs = segmentsToAddList.get(i);
-					int numSegs = allSegs.cardinality();
-					observableReassortmentProbs[i] = 1.0 - 2.0 * Math.pow(0.5, numSegs);
-					totalReassortmentObsProb += observableReassortmentProbs[i];
-				}
-
-			// Calculate time to next coalescent event using network intervals
-			// This accounts for free lineages coalescing with existing network lineages
-			double timeToNextCoal = Double.POSITIVE_INFINITY;
-			if (coalLins >= 1) {
-		    	// Get network event intervals
-		    	List<NetworkEvent> networkEventList = coalescentDistrInput.get().intervals.getNetworkEventList();
-
-		    	double currTime = currentTime;
-		    	NetworkEvent prevEvent = null;
-		    	double sampledCoalTime = 0.0;
-
-		    	for (NetworkEvent event : networkEventList) {
-		    		if (event.time > currTime) {
-		    			// Rate = 0.5 * coalLins * (coalLins - 1 + 2 * prevEvent.lineages)
-		    			// Accounts for free-free and free-existing coalescence
-		    			double rate = 0.5 * coalLins * (coalLins - 1 + 2 * prevEvent.lineages);
-		                double currentTransformedTime = coalescentDistrInput.get().populationFunction.getIntensity(currTime);
-		                double transformedTimeToNextCoal = Randomizer.nextExponential(rate);
-		                sampledCoalTime = coalescentDistrInput.get().populationFunction.getInverseIntensity(
-		                        transformedTimeToNextCoal + currentTransformedTime);
-
-		                if (sampledCoalTime < event.time) {
-		                	// Coalescent happens in this interval
-		                	timeToNextCoal = sampledCoalTime - currentTime;
-		                	logP -= -rate * coalescentDistrInput.get().populationFunction.getIntegral(currTime, sampledCoalTime) +
-		                			Math.log(rate / coalescentDistrInput.get().populationFunction.getPopSize(sampledCoalTime));
-		                	break;
-		                }
-		                // No coalescent in this interval, continue to next
-		                logP -= -rate * coalescentDistrInput.get().populationFunction.getIntegral(currTime, event.time);
-		    			currTime = event.time;
-		    		}
-		    		prevEvent = event;
-		        }
-			}
-
-			// Calculate time to next reassortment event (using total observable reassortment probability)
-			double timeToNextReassortment = Double.POSITIVE_INFINITY;
-			if (totalReassortmentObsProb > 0) {
-				if (coalescentDistrInput.get().timeVaryingReassortmentRatesInput.get() != null) {
-					double currentTransformedReaTime = coalescentDistrInput.get().timeVaryingReassortmentRatesInput.get()
-							.getIntensity(currentTime);
-					double transformedTimeToNextRea = Randomizer.nextExponential(totalReassortmentObsProb);
-					timeToNextReassortment = coalescentDistrInput.get().timeVaryingReassortmentRatesInput.get()
-							.getInverseIntensity(transformedTimeToNextRea + currentTransformedReaTime) - currentTime;
-				} else {
-					timeToNextReassortment = Randomizer.nextExponential(
-							totalReassortmentObsProb * coalescentDistrInput.get().reassortmentRateInput.get().getArrayValue());
-				}
-			}
-
-			// get which of the three events happens next
-			double minTime = Math.min(timeToNextCoal, Math.min(timeToNextReassortment, timeToNextNetworkEvent));	
-			currentTime += minTime;
-			// now process the event
-			if (minTime == timeToNextCoal) {
-				// coalescent event between two free lineages	
-			} else if (minTime == timeToNextReassortment) {
-				// reassortment event
-			} else {
-				// network event
-			}	
-
-			break; // Temporary - remove when implementing event handling
-		}
-
-		return logP;
-	}
-
-
 
 	/**
 	 * Add segments to this edge and ancestors.
@@ -617,16 +487,6 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 		return logP;
 	}
 
-	
-	protected double addSegmentToNewAncestor(NetworkEdge edge, BitSet segsToAdd) {
-		// sample time to next coalescent or reassortment event
-        double currentTransformedTime = populationFunction.getIntensity(currentTime);
-        double transformedTimeToNextCoal = k>=2 ? Randomizer.nextExponential(0.5*k*(k-1)) : Double.POSITIVE_INFINITY;
-        double timeToNextCoal = populationFunction.getInverseIntensity(
-                transformedTimeToNextCoal + currentTransformedTime) - currentTime;
-
-	}
-	
 	protected BitSet getRandomUnconditionedSubset(BitSet sourceSegments) {
 		BitSet destSegments = new BitSet();
 
