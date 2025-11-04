@@ -1,6 +1,5 @@
 package coalre.operators;
 
-import beast.base.core.Function;
 import beast.base.core.Input;
 import beast.base.evolution.tree.Node;
 import beast.base.util.Randomizer;
@@ -22,7 +21,6 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 			"Coalescent distribution for sampling reassortment events.",
 			Input.Validate.OPTIONAL);
 
-	private Function reassortmentRate;
 	private CoalescentWithReassortment coalescentDistr;
 
 	@Override
@@ -30,13 +28,15 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 		super.initAndValidate();
 		if (coalescentDistrInput.get() != null) {
 			coalescentDistr = coalescentDistrInput.get();
-			reassortmentRate = coalescentDistr.reassortmentRateInput.get();
 		}
 	}
+	
+	boolean exitOnError = false;
 
 	@Override
 	public double networkProposal() {
 		double logHR = 0.0;
+//		System.out.println(network.getExtendedNewickVerbose(0));
 		
 		List<Integer> sourceEdges = new ArrayList<>();
 		for (int i = 0; i < networkEdges.size(); i++) {
@@ -59,6 +59,8 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 		if (divertOneSegmentInput.get()) {
 			segsToDivert = getRandomSegment(sourceEdge.hasSegments);
 			logHR -= Math.log(1. / sourceEdge.hasSegments.cardinality());
+			// throw not implemetned error
+			throw new IllegalArgumentException("Divert one segment not implemented yet");
 		} else {
 			segsToDivert = getRandomUnconditionedSubset(sourceEdge.hasSegments);
 			logHR -= getLogUnconditionedSubsetProb(sourceEdge.hasSegments);
@@ -78,13 +80,19 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 		
 		
 		int reverseSourceEdgeCount = 0;
-		for (int i = 0; i < networkEdges.size(); i++) {
-			if (networkEdges.get(i).childNode.isReassortment() && networkEdges.get(i).hasSegments.cardinality() > 0) {
-				reverseSourceEdgeCount++;
-			}
+		for (NetworkEdge edge : network.getEdges()){
+			if (edge.childNode.isReassortment()){
+                reverseSourceEdgeCount++;
+            }
 		}
+//		for (int i = 0; i < .size(); i++) {
+//			if (networkEdges.get(i).childNode.isReassortment() && networkEdges.get(i).hasSegments.cardinality() > 0) {
+//				reverseSourceEdgeCount++;
+//			}
+//		}
 
 		logHR += Math.log(1.0 / reverseSourceEdgeCount);
+//		System.out.println(network.getExtendedNewickVerbose(0) + "\n");
 
 		return logHR;
 	}
@@ -93,14 +101,64 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 		double logHR = 0.0;
 
 		Integer[] treeChildNodeList = new Integer[network.getSegmentCount()];
-		
+
 		getTreeNodesDown(sourceEdge, segsToDivert, treeChildNodeList);
 
-		logHR -= addSegmentsToAncestors(destEdge, segsToDivert);
-		logHR += removeSegmentsFromAncestors(sourceEdge, segsToDivert);
-		
+//		System.out.println("source Edge c p heights " + sourceEdge.childNode.getHeight() + " " + sourceEdge.parentNode.getHeight());
+//		System.out.println("dest   Edge c p heights " + destEdge.childNode.getHeight() + " " + destEdge.parentNode.getHeight());
+//		System.out.println(segsToDivert);
+		exitOnError=false;
+
+		List<NetworkEdge> edgesAdded = new ArrayList<>();
+//		System.out.println(segsToDivert + " " + destEdge.childNode.getHeight() + " " + destEdge.parentNode.getHeight());
+//		System.out.println(network.getExtendedNewickVerbose(0));
+		logHR -= divertSegmentsToAncestors(sourceEdge, destEdge, segsToDivert, edgesAdded);
+//		System.out.println(network.getExtendedNewickVerbose(0));
+//		logHR += removeSegmentsFromAncestors(sourceEdge, segsToDivert);
+//		System.out.println(network.getExtendedNewickVerbose(0));
+
 		if (reconnectSegmentTrees(treeChildNodeList, destEdge, segsToDivert))
 			return Double.NEGATIVE_INFINITY;
+
+		logHR += cleanEmptyEdgesTopDown();
+//		System.out.println(network.getExtendedNewickVerbose(0));
+//
+//		if (exitOnError) {
+//			System.exit(0);
+//		}
+		
+		// Validation: Check that all true coalescent nodes have segmentIndices for their segments
+		for (NetworkEdge edge : network.getEdges()) {
+			if (edge.parentNode != null && edge.parentNode.isCoalescence()) {
+				NetworkEdge sisterEdge = getSisterEdge(edge);
+				// This is a true coalescent node if both child edges have segments
+				for (int segIdx = 0; segIdx < network.getSegmentCount(); segIdx++) {
+					if (edge.hasSegments.get(segIdx) && sisterEdge.hasSegments.get(segIdx)) {
+						// Both children have this segment, so parent must be a coalescent node for it
+						if (edge.parentNode.segmentIndices == null) {
+							System.err.println("ERROR: Coalescent node at height " + edge.parentNode.getHeight() +
+									" has no segmentIndices for segment " + segIdx);
+							System.err.println("Edge: " + edge.childNode.getHeight() + " -> " + edge.parentNode.getHeight());
+							System.err.println("Sister: " + sisterEdge.childNode.getHeight() + " -> " + sisterEdge.parentNode.getHeight());
+							System.exit(0);
+						}else {
+							// check that the segment index is set correctly
+							
+						}
+					}
+				}
+			}
+		}
+
+//		if (edgesAdded.size()== 3) {
+//			System.out.println(network.getExtendedNewickVerbose(0));
+//			System.exit(0);
+//		}
+//			
+		
+//		System.out.println(destEdge.hasSegments + " " + sourceEdge.hasSegments);
+		
+		
 
 		return logHR;
 	}
@@ -364,43 +422,6 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 		}
 	}
 
-	/**
-	 * Remove segments from this edge and ancestors.
-	 *
-	 * @param edge         edge at which to start removal
-	 * @param segsToRemove segments to remove from edge and ancestors
-	 * @return log probability of reverse operation
-	 */
-	protected double removeSegmentsFromAncestors(NetworkEdge edge, BitSet segsToRemove) {
-		double logP = 0.0;
-
-		segsToRemove = (BitSet) segsToRemove.clone();
-		segsToRemove.and(edge.hasSegments);
-
-		if (segsToRemove.isEmpty())
-			return logP;
-
-		edge.hasSegments.andNot(segsToRemove);
-
-		if (edge.isRootEdge())
-			return logP;
-
-		if (edge.parentNode.isReassortment()) {
-
-			logP += Math.log(0.5) * segsToRemove.cardinality();
-
-			logP += removeSegmentsFromAncestors(edge.parentNode.getParentEdges().get(0), segsToRemove);
-			logP += removeSegmentsFromAncestors(edge.parentNode.getParentEdges().get(1), segsToRemove);
-
-		} else {
-			segsToRemove.andNot(getSisterEdge(edge).hasSegments);
-
-			logP += removeSegmentsFromAncestors(edge.parentNode.getParentEdges().get(0), segsToRemove);
-
-		}
-
-		return logP;
-	}
 
 	/**
 	 * Add segments to this edge and ancestors, potentially sampling new reassortment events.
@@ -409,51 +430,64 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 	 * @param segsToAdd segments to add to the edge and ancestors
 	 * @return log probability of operation
 	 */
-	protected double addSegmentsToAncestors(NetworkEdge edge, BitSet segsToAdd) {
-		double logP = 0.0;
-
+	protected double divertSegmentsToAncestors(NetworkEdge sourceEdge, NetworkEdge destEdge, BitSet segsToAdd, List<NetworkEdge> edgesAdded) {
+		double logHR = 0.0;
+		
 		segsToAdd = (BitSet) segsToAdd.clone();
-		segsToAdd.andNot(edge.hasSegments);
-
-		if (segsToAdd.isEmpty())
-			return logP;
-
-		// do this in the loop, so we can keep track of the segments that are added to the edge
-		// edge.hasSegments.or(segsToAdd);
-
-		if (edge.isRootEdge())
-			return logP;
-
 		// startwith keeping a list of active edges and the segs to Add
 		List<NetworkEdge> activeEdges = new ArrayList<>();
 		List<BitSet> segsToAddList = new ArrayList<>();
-		List<Boolean> existingEdges = new ArrayList<>(); // edge that can't coalesce, because we just follow it's history
-		activeEdges.add(edge);
+		
+		List<NetworkEdge> inactiveEdges = new ArrayList<>();
+		List<BitSet> segsToRemoveList = new ArrayList<>();
+		
+		activeEdges.add(destEdge);
 		segsToAddList.add(segsToAdd);
-		existingEdges.add(true);
+		
+		inactiveEdges.add(sourceEdge);
+		segsToRemoveList.add((BitSet) segsToAdd.clone());
 
 		// Track the current time (start at the bottom of the lowest edge)
-		double currentTime = edge.childNode.getHeight();
+		double currentTime = destEdge.childNode.getHeight();
+		NetworkEdge rootEdge = network.getRootEdge();
+		
+		// Get network events to determine lineages at different times, they will contain any inactive Edges, but not newly added active ones
+		List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
+
 
 
 		// now, sample the time to the next reassortment or coalescent event on the active edges,
 		// i.e. essentially simulate the history of these edges and segments until there is nothing left. The
 		// goal is to avoid the creation of empty
-		while (!activeEdges.isEmpty()) {
+		while (!activeEdges.isEmpty() || !inactiveEdges.isEmpty()) {
+			// check if the only active edge is the root edge
+			if (activeEdges.size() == 1 && activeEdges.get(0) == rootEdge && inactiveEdges.isEmpty()) {
+				// simply add the segments to the root edge and finish
+				activeEdges.get(0).hasSegments.or(segsToAddList.get(0));
+				break;
+			}
+			
 			int coalLines = 0;
+			int negLines = 0;
+			List<NetworkEdge> excludedEdges = new ArrayList<>();
 			double[] reassortmentObsProb = new double[activeEdges.size()];
 			double totalReassortmentProb = 0.0;
 			double timeToNextEdgeEvent = Double.POSITIVE_INFINITY;
+			int nextEventIndex = -1;
+			int nextInactiveEventIndex = -1;
 			for (int i = 0; i < activeEdges.size(); i++) {
-				if (existingEdges.get(i)) {
-					int nSegs = activeEdges.get(i).hasSegments.cardinality() + segsToAddList.get(i).cardinality();
-					// now, calculate the observation probability of a reassortment event, that does not involve any of the segments that are already on the edge
-					double obsProb = 1.0 - 2.0 * Math.pow(0.5, nSegs);
-					obsProb -= 
-					reassortmentObsProb[i] = nSegs * reassortmentRate.getArrayValue() * obsProb;
+				if (!activeEdges.get(i).hasSegments.isEmpty()){
+					int m = activeEdges.get(i).hasSegments.cardinality();
+					int k = segsToAddList.get(i).cardinality();
+
+					double obsProb = Math.pow(2, 1 - m) - Math.pow(2, 1 - (m + k));
+
+					reassortmentObsProb[i] = obsProb;
 					totalReassortmentProb += reassortmentObsProb[i];
-					if (timeToNextEdgeEvent > activeEdges.get(i).parentNode.getHeight()) {
+					
+					if (!activeEdges.get(i).isRootEdge() &&  timeToNextEdgeEvent > activeEdges.get(i).parentNode.getHeight()) {
 						timeToNextEdgeEvent = activeEdges.get(i).parentNode.getHeight();
+						nextEventIndex = i;
 					}
 				}else{
 					// For newly created edges (not existing), they can coalesce
@@ -461,25 +495,46 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 					// Calculate reassortment obs prob for the segments being added
 					int nSegs = segsToAddList.get(i).cardinality();
 					double obsProb = 1.0 - 2.0 * Math.pow(0.5, nSegs);
-					reassortmentObsProb[i] = nSegs * reassortmentRate.getArrayValue() * obsProb;
+					reassortmentObsProb[i] = nSegs * obsProb;
 					totalReassortmentProb += reassortmentObsProb[i];
 				}
 			}
 
+			for (int i = 0; i < inactiveEdges.size(); i++) {
+				if (!inactiveEdges.get(i).isRootEdge()
+						&& timeToNextEdgeEvent > inactiveEdges.get(i).parentNode.getHeight()) {
+					timeToNextEdgeEvent = inactiveEdges.get(i).parentNode.getHeight();
+					nextInactiveEventIndex = i;
+					
+					// check if the lineage would be empty after removing the segments
+					if (inactiveEdges.get(i).hasSegments.cardinality() == segsToRemoveList.get(i).cardinality()) {
+                        negLines++;
+                        excludedEdges.add(inactiveEdges.get(i));
+					}
+				}
+			}
 			
 			// Sample time to next reassortment
 			double timeToNextReassortment = Double.POSITIVE_INFINITY;
 			if (totalReassortmentProb > 0) {
-				timeToNextReassortment = Randomizer.nextExponential(totalReassortmentProb);
+
+	            if (coalescentDistr.timeVaryingReassortmentRates!= null) {
+	                double currentTransformedReaTime = coalescentDistr.timeVaryingReassortmentRates.getIntensity(currentTime);
+	                double transformedTimeToNextRea = Randomizer.nextExponential(totalReassortmentProb);
+	            	timeToNextReassortment = coalescentDistr.timeVaryingReassortmentRates.getInverseIntensity(
+	            			transformedTimeToNextRea + currentTransformedReaTime) - currentTime;
+	            }else {
+	            	timeToNextReassortment = Randomizer.nextExponential(totalReassortmentProb*coalescentDistr.reassortmentRateInput.get().getArrayValue());
+	            }
 			}
+			
+			
 			
 			// Sample time to next coalescence using network intervals approach
 			// Like AddRemoveReassortmentCoalescent, use the network event list to track lineages
 			double timeToNextCoalescence = Double.POSITIVE_INFINITY;
 			double coalRate = 0.0;
 			if (coalLines >= 1) {
-				// Get network events to determine lineages at different times
-				List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
 				
 				double checkTime = currentTime;
 				NetworkEvent prevEvent = null;
@@ -498,8 +553,8 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 						
 						// prevEvent.lineages is the number of existing lineages in the network
 						// Add our new lineages (coalLines) to get total
-						int totalLineages = prevEvent.lineages + coalLines;
-						coalRate = 0.5 * totalLineages * (totalLineages - 1);
+						int totalLineages = prevEvent.lineages + coalLines - negLines; 
+						coalRate = 0.5 * coalLines * (totalLineages - 1); // TODO actually needs to represent how many pairs of combinations with the coalLines exist
 						
 						// Sample coalescence time in this interval
 						double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(checkTime);
@@ -524,8 +579,8 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 				// If we've gone past all events and haven't reached stop time, coalescence can still happen above the root
 				if ((sampledCoalTime > network.getRootEdge().childNode.getHeight() || timeToNextCoalescence == Double.POSITIVE_INFINITY) 
 						&& checkTime < stopTime) {
-					int totalLineages = coalLines;  // Only new lineages left
-					coalRate = 0.5 * totalLineages * (totalLineages - 1);
+					int totalLineages = coalLines+1;  // Only new lineages left
+					coalRate = 0.5 * coalLines * (totalLineages - 1);
 					
 					double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(
 							Math.max(checkTime, network.getRootEdge().childNode.getHeight()));
@@ -541,127 +596,749 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 			}
 			
 			// Determine which event happens first
-			double timeUntilNextEvent = Math.min(Math.min(timeToNextCoalescence, timeToNextReassortment), 
+			double timeUntilNextEvent = Math.min(Math.min(timeToNextCoalescence, timeToNextReassortment),
 					timeToNextEdgeEvent - currentTime);
-			
+
+			// Store the event time for logHR calculation
+			double eventTime = currentTime + timeUntilNextEvent;
+
 			// Update current time
-			currentTime += timeUntilNextEvent;
+			currentTime = eventTime;
 			
-			// Determine what type of event occurred
-			if (timeUntilNextEvent == timeToNextCoalescence) {
-				// Coalescence event - TODO: implement
-				break; // Placeholder
-			} else if (timeUntilNextEvent == timeToNextReassortment) {
-				// Reassortment event - TODO: implement
-				break; // Placeholder
-			} else {
-				// Edge event - reached parent node of an existing edge
-				// TODO: implement
-				break; // Placeholder
-			}
-		}
+//			System.out.println(timeUntilNextEvent + " " + timeToNextCoalescence + " " + timeToNextReassortment + " " + timeToNextEdgeEvent);
+//			System.out.println(network.getExtendedNewickVerbose(0));
+//			System.out.println(segsToRemoveList);
+//			System.out.println(segsToAddList);
+//			for (int i = 0; i < inactiveEdges.size(); i++) {
+//				System.out.println(inactiveEdges.get(i).hasSegments + " " + segsToRemoveList.get(i));
+//			}
+			
+			// Add logHR contributions for all competing processes up to the event time
 
-		if (edge.parentNode.isReassortment()) {
-
-			BitSet segsToAddLeft = new BitSet();
-			BitSet segsToAddRight = new BitSet();
-
-			for (int segIdx = segsToAdd.nextSetBit(0); segIdx != -1; segIdx = segsToAdd.nextSetBit(segIdx + 1)) {
-				if (Randomizer.nextBoolean())
-					segsToAddLeft.set(segIdx);
-				else
-					segsToAddRight.set(segIdx);
-
-				logP += Math.log(0.5);
-			}
-
-			logP += addSegmentsToAncestors(edge.parentNode.getParentEdges().get(0), segsToAddLeft);
-			logP += addSegmentsToAncestors(edge.parentNode.getParentEdges().get(1), segsToAddRight);
-
-		} else {
-			// Sample potential reassortment event on this edge
-			if (reassortmentRate != null && segsToAdd.cardinality() > 0) {
-				double edgeLength = edge.parentNode.getHeight() - edge.childNode.getHeight();
-				
-				// Sample time to reassortment for the segments being added
-				// Rate is proportional to the number of segments being added
-				double rate = segsToAdd.cardinality() * reassortmentRate.getArrayValue();
-				double timeToReassortment = Randomizer.nextExponential(rate);
-				
-				// Check if reassortment occurs on this edge
-				if (timeToReassortment < edgeLength) {
-					// Create reassortment event
-					double reassortmentTime = edge.childNode.getHeight() + timeToReassortment;
-					
-					// Split segments at reassortment
-					BitSet segsToAddLeft = new BitSet();
-					BitSet segsToAddRight = new BitSet();
-					
-					for (int segIdx = segsToAdd.nextSetBit(0); segIdx != -1; segIdx = segsToAdd.nextSetBit(segIdx + 1)) {
-						if (Randomizer.nextBoolean()) {
-							segsToAddLeft.set(segIdx);
-						} else {
-							segsToAddRight.set(segIdx);
-						}
-						logP += Math.log(0.5);
-					}
-					
-					// Only create observable reassortment (both sides have segments)
-					if (segsToAddLeft.cardinality() > 0 && segsToAddRight.cardinality() > 0) {
-						// Log probability of sampling this reassortment time
-						logP += -rate * timeToReassortment + Math.log(rate);
-						
-						// Create new reassortment node
-						NetworkNode reassortmentNode = new NetworkNode();
-						reassortmentNode.setHeight(reassortmentTime);
-						
-						// Split the edge at the reassortment point
-						NetworkNode parentNode = edge.parentNode;
-						parentNode.removeChildEdge(edge);
-						reassortmentNode.addChildEdge(edge);
-						
-						// Create two new edges going up from the reassortment
-						NetworkEdge leftEdge = new NetworkEdge();
-						NetworkEdge rightEdge = new NetworkEdge();
-						
-						reassortmentNode.addParentEdge(leftEdge);
-						reassortmentNode.addParentEdge(rightEdge);
-						parentNode.addChildEdge(leftEdge);
-						parentNode.addChildEdge(rightEdge);
-						
-						// Set segments on the new edges
-						leftEdge.hasSegments = (BitSet) edge.hasSegments.clone();
-						leftEdge.hasSegments.or(segsToAddLeft);
-						
-						rightEdge.hasSegments = (BitSet) edge.hasSegments.clone();
-						rightEdge.hasSegments.or(segsToAddRight);
-						
-						// Add edges to network edge list
-						networkEdges.add(leftEdge);
-						networkEdges.add(rightEdge);
-						
-						// Continue recursively on both branches
-						logP += addSegmentsToAncestors(leftEdge, segsToAddLeft);
-						logP += addSegmentsToAncestors(rightEdge, segsToAddRight);
-						
-						return logP;
-					} else {
-						// Unobservable reassortment, proceed without creating it
-						// Log probability of not having observable reassortment in this interval
-						logP += -rate * edgeLength;
-					}
-				} else {
-					// No reassortment on this edge
-					// Log probability of not having reassortment in this interval
-					logP += -rate * edgeLength;
+			// 1. Coalescence contribution (probability of no coalescence until eventTime, or coalescence at eventTime if that's the event)
+			if (coalRate > 0) {
+				logHR -= -coalRate * coalescentDistr.populationFunction.getIntegral(currentTime - timeUntilNextEvent, eventTime);
+				if (timeUntilNextEvent == timeToNextCoalescence) {
+					// If coalescence occurred, add the density at this time
+					logHR -= Math.log(coalRate / coalescentDistr.populationFunction.getPopSize(eventTime));
 				}
 			}
-			
-			// No reassortment created, continue normally
-			logP += addSegmentsToAncestors(edge.parentNode.getParentEdges().get(0), segsToAdd);
+
+			// 2. Reassortment contribution (probability of no reassortment until eventTime, or reassortment at eventTime if that's the event)
+			if (totalReassortmentProb > 0) {
+				if (coalescentDistr.timeVaryingReassortmentRates != null) {
+					double prevTransformedTime = coalescentDistr.timeVaryingReassortmentRates.getIntensity(currentTime - timeUntilNextEvent);
+					double currTransformedTime = coalescentDistr.timeVaryingReassortmentRates.getIntensity(eventTime);
+					logHR -= -totalReassortmentProb * (currTransformedTime - prevTransformedTime);
+					if (timeUntilNextEvent == timeToNextReassortment) {
+						// If reassortment occurred, add the density at this time
+						logHR -= Math.log(totalReassortmentProb * coalescentDistr.timeVaryingReassortmentRates.getPopSize(eventTime));
+					}
+				} else {
+					logHR -= -totalReassortmentProb * coalescentDistr.reassortmentRateInput.get().getArrayValue() * timeUntilNextEvent;
+					if (timeUntilNextEvent == timeToNextReassortment) {
+						// If reassortment occurred, add the density at this time
+						logHR -= Math.log(totalReassortmentProb * coalescentDistr.reassortmentRateInput.get().getArrayValue());
+					}
+				}
+			}
+
+			// Determine what type of event occurred and handle it
+			if (timeUntilNextEvent == timeToNextCoalescence) {
+//				System.out.println("Coalescence event at time " + currentTime + " with " + coalLines + " coal lines");
+				handleCoalescenceEvent(coalLines, activeEdges, excludedEdges, segsToAddList, currentTime, rootEdge, edgesAdded);
+//				return Double.NEGATIVE_INFINITY;
+			} else if (timeUntilNextEvent == timeToNextReassortment) {
+//				System.out.println("Reassortment event at time " + currentTime);
+				handleReassortmentEvent(activeEdges, inactiveEdges, segsToAddList, segsToRemoveList, reassortmentObsProb, totalReassortmentProb, currentTime, edgesAdded);
+//				return Double.NEGATIVE_INFINITY;
+			} else {
+//				System.out.println("Edge traversal event at time " + currentTime + " " + nextInactiveEventIndex + " " + nextEventIndex);
+				handleEdgeTraversalEvent(nextInactiveEventIndex, nextEventIndex, inactiveEdges, segsToRemoveList, activeEdges, segsToAddList);
+			}
+//			System.out.println("active Edges size : " + activeEdges.size());
 		}
 
-		return logP;
+		return logHR;
+	}
+
+	private void handleCoalescenceEvent(int coalLines, List<NetworkEdge> activeEdges, List<NetworkEdge> excludedEdges, List<BitSet> segsToAddList,
+			double currentTime, NetworkEdge rootEdge, List<NetworkEdge> edgesAdded) {
+//				System.out.println("Coalescence at time " + currentTime);
+				// Step 1: sample which of the coalLines will coalesce
+				int coalLineIdx1 = Randomizer.nextInt(coalLines);
+				// find the corresponding index within activeEdges
+				int idx = -1;
+				int count = 0;
+				for (int i = 0; i < activeEdges.size(); i++) {
+					if (activeEdges.get(i).hasSegments.isEmpty()) {
+						if (count == coalLineIdx1) {
+							idx = i;
+							break;
+						}
+						count++;
+					}
+				}
+
+				NetworkEdge edge1 = activeEdges.get(idx);
+
+
+				// Step 2: sample which lineage it will coalesce with, can be other coalLines or any of the existing lineages
+				List<NetworkEdge> coexistingLineages = new ArrayList<>();
+				for (NetworkEdge e : network.getEdges()) {
+				    if (!e.isRootEdge() && 
+				    		e.parentNode.getHeight() > currentTime && 
+				    		e.childNode.getHeight() < currentTime &&
+				    		!excludedEdges.contains(e)) {
+				        coexistingLineages.add(e);
+				    }
+				}
+
+//				for (int i = 0; i < networkEdges.size(); i++) {
+//					if (!networkEdges.get(i).isRootEdge() && networkEdges.get(i).parentNode.getHeight()>currentTime && networkEdges.get(i).childNode.getHeight()<currentTime) {
+//						coexistingLineages.add(networkEdges.get(i));
+//					}
+//				}
+
+				// if higher than root time, add root edge
+				if (rootEdge.childNode.getHeight() < currentTime) {
+					coexistingLineages.add(rootEdge);
+				}
+
+				// add the coalLines that are not coalLineIdx1 to the coexistingLineages list
+				count = 0;
+				for (int i = 0; i < activeEdges.size(); i++) {
+					if (activeEdges.get(i).hasSegments.isEmpty()) {
+						if (count != coalLineIdx1) {
+							coexistingLineages.add(activeEdges.get(i));
+						}
+						count++;
+					}else{
+						// also add active edges with segments
+//						coexistingLineages.add(activeEdges.get(i));
+					}
+				}
+//				System.out.println(activeEdges.size() + " " + currentTime);
+
+				int coalLineIdx2 = Randomizer.nextInt(coexistingLineages.size());
+
+				// Step 3: create a new coalescent node and add it to the network
+				NetworkNode coalescentNode = new NetworkNode();
+				coalescentNode.setHeight(currentTime);
+
+				NetworkEdge edge2 = coexistingLineages.get(coalLineIdx2);
+				if (edge2.hasSegments.isEmpty()) { // there isn't an established edge and we need to add a new node
+//					System.out.println("Coalescence between two coal lines at time " + currentTime);
+
+					// add the corresponding segs to add to both edges
+					edge1.hasSegments.or(segsToAddList.get(idx));
+
+					// find which index this edge corresponds to in the activeEdges list
+					int idx2 = -1;
+					for (int i = 0; i < activeEdges.size(); i++) {
+						if (activeEdges.get(i) == edge2) {
+							idx2 = i;
+							break;
+						}
+					}
+					edge2.hasSegments.or(segsToAddList.get(idx2));
+
+//					System.out.println(segsToAddList.get(idx) + " " + segsToAddList.get(idx2));
+
+
+					BitSet parentSegs = (BitSet) edge1.hasSegments.clone();
+					parentSegs.or(edge2.hasSegments);
+
+					coalescentNode.addChildEdge(edge2);
+					coalescentNode.addChildEdge(edge1);
+                    NetworkEdge parentEdge = new NetworkEdge();
+                    parentEdge.hasSegments = new BitSet();
+                    coalescentNode.addParentEdge(parentEdge);
+
+//                    System.out.println(activeEdges.size() + " " + idx + " " + idx2);
+
+					activeEdges.remove(Math.max(idx, idx2));
+					activeEdges.remove(Math.min(idx, idx2));
+					segsToAddList.remove(Math.max(idx, idx2));
+					segsToAddList.remove(Math.min(idx, idx2));
+
+					activeEdges.add(parentEdge);
+					segsToAddList.add(parentSegs);
+
+					edgesAdded.add(parentEdge);
+
+
+				}else if (activeEdges.contains(edge2)) {
+//					System.out.println("Coalescence between coal and active " + currentTime + " " + edge2.isRootEdge());
+					int idx2 = -1;
+					for (int i = 0; i < activeEdges.size(); i++) {
+						if (activeEdges.get(i) == edge2) {
+							idx2 = i;
+							break;
+						}
+					}
+//					System.out.println(segsToAddList.get(idx) + " " + segsToAddList.get(idx2));
+//					System.out.println(activeEdges.get(idx2).parentNode.getHeight());
+//					System.out.println(activeEdges.get(idx2).childNode.getHeight() + " " + activeEdges.get(idx).childNode.getHeight());
+//					System.out.println(activeEdges.get(idx2).hasSegments + " " + activeEdges.get(idx).hasSegments);
+//					System.out.println(segsToAddList.get(idx2) + " " + segsToAddList.get(idx));
+					exitOnError=true;
+					NetworkNode parent = new NetworkNode();
+					parent.setHeight(currentTime);
+					NetworkNode grandParent = edge2.parentNode;
+					NetworkEdge parentEdge = new NetworkEdge();
+
+					BitSet parentSegsToAdd = (BitSet) segsToAddList.get(idx).clone();
+					parentSegsToAdd.andNot(edge2.hasSegments);
+					parentSegsToAdd.or(segsToAddList.get(idx2));
+
+					// Set parentEdge.hasSegments
+					parentEdge.hasSegments = (BitSet) edge2.hasSegments.clone();
+
+					edge1.hasSegments.or(segsToAddList.get(idx));
+					edge2.hasSegments.or(segsToAddList.get(idx2));
+
+
+					if (grandParent != null) {
+						grandParent.removeChildEdge(edge2);
+						grandParent.addChildEdge(parentEdge);
+					}else if (!edge2.hasSegments.isEmpty()) {
+						// we are making a new root edge
+						// was root edge
+						network.setRootEdge(parentEdge);
+						rootEdge = parentEdge;
+					}
+
+					parent.addChildEdge(edge2);
+					parent.addChildEdge(edge1);
+					parent.addParentEdge(parentEdge);
+
+
+//					System.out.println(grandParent == null);
+//
+//					System.out.println(parentEdge.childNode.getChildEdges().get(0).parentNode.getHeight());
+//					System.out.println(parentEdge.childNode.getChildEdges().get(1).parentNode.getHeight());
+
+
+//					System.out.println(activeEdges.size());
+
+
+					activeEdges.remove(Math.max(idx, idx2));
+					activeEdges.remove(Math.min(idx, idx2));
+					segsToAddList.remove(Math.max(idx, idx2));
+					segsToAddList.remove(Math.min(idx, idx2));
+
+					if (!parentSegsToAdd.isEmpty()){
+						activeEdges.add(parentEdge);
+						segsToAddList.add(parentSegsToAdd);
+					}
+//					System.out.println(parentSegsToAdd);
+//					System.out.println(parentEdge.hasSegments);
+//					System.out.println(parent.getHeight());
+//					System.out.println(parentEdge.childNode.getChildEdges().get(0).parentNode.getHeight());
+//							System.out.println(		" " + parentEdge.childNode.getChildEdges().get(1).parentNode.getHeight());
+
+					edgesAdded.add(parentEdge);
+
+//					System.out.println(activeEdges.size());
+
+				}else {
+//					System.out.println("Coalescence between coal line and existing lineage at time " + currentTime+ " " + edge2.isRootEdge());
+//					System.out.println(edge2.hasSegments);
+					NetworkNode grandParent = edge2.parentNode;
+					if (grandParent != null) {
+//						System.out.println(edge2.parentNode.getHeight() + " " + edge2.childNode.getHeight());
+						grandParent.removeChildEdge(edge2);
+					}
+					coalescentNode.addChildEdge(edge2);
+					coalescentNode.addChildEdge(edge1);
+
+					edge1.hasSegments.or(segsToAddList.get(idx));
+
+
+					NetworkEdge parentEdge = new NetworkEdge();
+					parentEdge.hasSegments = (BitSet) edge2.hasSegments.clone();
+					coalescentNode.addParentEdge(parentEdge);
+					if (grandParent != null) {
+						grandParent.addChildEdge(parentEdge);
+					}else {
+						// was root edge
+						network.setRootEdge(parentEdge);
+						rootEdge = parentEdge;
+					}
+
+					segsToAddList.get(idx).andNot(edge2.hasSegments);
+
+					if (segsToAddList.get(idx).isEmpty()) {
+						activeEdges.remove(idx);
+						segsToAddList.remove(idx);
+					}else {
+						activeEdges.set(idx, parentEdge);
+//						System.out.println("replace " + parentEdge.parentNode==null);
+					}
+
+					edgesAdded.add(parentEdge);
+//					System.out.println(activeEdges.size());
+
+				}
+	}
+
+	private void handleReassortmentEvent(List<NetworkEdge> activeEdges, List<NetworkEdge> inactiveEdges, 
+			List<BitSet> segsToAddList, List<BitSet> segsToRemoveList,
+			double[] reassortmentObsProb, double totalReassortmentProb, double currentTime, List<NetworkEdge> edgesAdded) {
+//				System.out.println("Reassortment at time " + currentTime);
+
+				// Step 1: sample which edge the reassortment occurs on (weighted by reassortmentObsProb)
+				double randomChoice = Randomizer.nextDouble() * totalReassortmentProb;
+				double cumulative = 0.0;
+				int reassortEdgeIdx = -1;
+				for (int i = 0; i < activeEdges.size(); i++) {
+					cumulative += reassortmentObsProb[i];
+					if (randomChoice <= cumulative) {
+						reassortEdgeIdx = i;
+						break;
+					}
+				}
+
+				// Sample which segments will reassort (each with 0.5 probability, conditional on observable reassortment)
+				BitSet segsToReassort = segsToAddList.get(reassortEdgeIdx);
+				BitSet segsToStay = new BitSet();
+				BitSet segsToGo = new BitSet();
+
+				// Sample segments with 0.5 probability each, conditional on at least one on each side
+				if (activeEdges.get(reassortEdgeIdx).hasSegments.isEmpty()) {
+					do {
+						segsToStay.clear();
+						segsToGo.clear();
+						for (int segIdx = segsToReassort.nextSetBit(0); segIdx != -1; segIdx = segsToReassort.nextSetBit(segIdx + 1)) {
+							if (Randomizer.nextBoolean()) {
+								segsToStay.set(segIdx);
+							} else {
+								segsToGo.set(segIdx);
+							}
+						}
+					} while (segsToGo.cardinality() == 0 || segsToStay.cardinality() == 0);
+				} else {
+					do {
+						segsToStay.clear();
+						segsToGo.clear();
+						for (int segIdx = segsToReassort.nextSetBit(0); segIdx != -1; segIdx = segsToReassort.nextSetBit(segIdx + 1)) {
+							if (Randomizer.nextBoolean()) {
+								segsToStay.set(segIdx);
+							} else {
+								segsToGo.set(segIdx);
+							}
+						}
+					} while (segsToGo.cardinality() == 0);
+
+				}
+
+//				System.out.println("Segs to stay: " + segsToStay + ", Segs to go: " + segsToGo + " segs to reassort " + segsToReassort);
+//				System.out.println(activeEdges.get(reassortEdgeIdx).hasSegments);
+
+				// Step 2: create a new reassortment node and add it to the network
+				NetworkNode newGrandParent = activeEdges.get(reassortEdgeIdx).parentNode;
+				NetworkNode reassortmentNode = new NetworkNode();
+				reassortmentNode.setHeight(currentTime);
+
+				NetworkEdge parentToStay = new NetworkEdge();
+				parentToStay.hasSegments = (BitSet) activeEdges.get(reassortEdgeIdx).hasSegments.clone();
+
+				if (newGrandParent!=null) {
+					newGrandParent.removeChildEdge(activeEdges.get(reassortEdgeIdx));
+					newGrandParent.addChildEdge(parentToStay);
+				}
+
+				NetworkEdge parentToGo = new NetworkEdge();
+				parentToGo.hasSegments = new BitSet();
+
+				activeEdges.get(reassortEdgeIdx).hasSegments.or(segsToReassort);
+
+
+				reassortmentNode.addParentEdge(parentToStay);
+				reassortmentNode.addParentEdge(parentToGo);
+				reassortmentNode.addChildEdge(activeEdges.get(reassortEdgeIdx));
+				
+				
+				if (inactiveEdges.contains(activeEdges.get(reassortEdgeIdx))){
+					int idx = inactiveEdges.indexOf(activeEdges.get(reassortEdgeIdx));
+					activeEdges.get(reassortEdgeIdx).hasSegments.andNot(segsToRemoveList.get(idx));
+					inactiveEdges.set(idx, parentToStay);
+				}
+
+
+
+				// replace the active edge with the parentToStay edge
+				if (segsToStay.isEmpty()) {
+					activeEdges.remove(reassortEdgeIdx);
+					segsToAddList.remove(reassortEdgeIdx);
+                } else {
+    				activeEdges.set(reassortEdgeIdx, parentToStay);
+    				segsToAddList.set(reassortEdgeIdx, segsToStay);
+                }
+
+				edgesAdded.add(parentToGo);
+				edgesAdded.add(parentToStay);
+
+
+
+				activeEdges.add(parentToGo);
+				segsToAddList.add(segsToGo);
+				
+
+//				System.out.println(activeEdges.size());
+	}
+
+	private void handleEdgeTraversalEvent(int nextInactiveEventIndex, int nextEventIndex,
+			List<NetworkEdge> inactiveEdges, List<BitSet> segsToRemoveList,
+			List<NetworkEdge> activeEdges, List<BitSet> segsToAddList) {
+		
+		
+		
+		
+		if (nextInactiveEventIndex != -1) {
+			handleInactiveEdgeTraversal(nextInactiveEventIndex, inactiveEdges, segsToRemoveList, activeEdges);
+		} else { // the edge is both an active and an inactive edge
+			handleActiveEdgeTraversal(nextEventIndex, activeEdges, segsToAddList, inactiveEdges, segsToRemoveList);
+		}
+	}
+
+	private void handleInactiveEdgeTraversal(int idx, List<NetworkEdge> inactiveEdges, 
+			List<BitSet> segsToRemoveList, List<NetworkEdge> activeEdges) {
+//		System.out.println("handleInactiveEdgeTraversal");
+		if (inactiveEdges.get(idx).parentNode.isReassortment()) {
+			handleReassortment(activeEdges, segsToRemoveList, inactiveEdges, segsToRemoveList, inactiveEdges.get(idx));
+//			handleInactiveReassortmentTraversal(idx, inactiveEdges, segsToRemoveList);
+		} else {
+			NetworkEdge sisterEdge = getSisterEdge(inactiveEdges.get(idx));
+			handleCoalescence(activeEdges, segsToRemoveList, inactiveEdges, segsToRemoveList, inactiveEdges.get(idx), sisterEdge);
+			
+//			if (!activeEdges.contains(sisterEdge) && !inactiveEdges.contains(sisterEdge)) {
+//				handleInactiveCoalescenceSisterNotInLists(idx, inactiveEdges, segsToRemoveList, sisterEdge);
+//			} else if (inactiveEdges.contains(sisterEdge) && !activeEdges.contains(sisterEdge)) {
+//				handleInactiveCoalescenceSisterInInactive(idx, inactiveEdges, segsToRemoveList, sisterEdge);
+//			} else {
+//				// missing implementation
+//				throw new UnsupportedOperationException("Not yet implemented");
+//			}
+		}
+	}
+
+
+	private void handleActiveEdgeTraversal(int idx, List<NetworkEdge> activeEdges, 
+			List<BitSet> segsToAddList, List<NetworkEdge> inactiveEdges, List<BitSet> segsToRemoveList) {
+//		System.out.println("handleActiveEdgeTraversal");
+//		System.out.println(segsToAddList.get(idx));
+		if (activeEdges.get(idx).parentNode.isReassortment()) {
+			handleReassortment(activeEdges, segsToAddList, inactiveEdges, segsToRemoveList, activeEdges.get(idx));
+		} else {
+			NetworkEdge sisterEdge = getSisterEdge(activeEdges.get(idx));
+			handleCoalescence(activeEdges, segsToAddList, inactiveEdges, segsToRemoveList, activeEdges.get(idx), sisterEdge);
+		}
+	}
+
+	private void handleReassortment(List<NetworkEdge> activeEdges, List<BitSet> segsToAddList,
+			List<NetworkEdge> inactiveEdges, List<BitSet> segsToRemoveList, NetworkEdge edge) {
+
+//		System.out.println("handleReassortment");
+
+		int idx = -1;
+		int iidx = -1;
+
+
+		for (int i = 0; i < activeEdges.size(); i++) {
+			if (activeEdges.get(i) == edge) {
+				idx = i;
+				break;
+			}
+		}
+
+		for (int i = 0; i < inactiveEdges.size(); i++) {
+			if (inactiveEdges.get(i) == edge) {
+				iidx = i;
+				break;
+			}
+		}
+		
+//		System.out.println("Reassortment - idx in active: " + idx + ", idx in inactive: " + iidx);
+//		System.out.println("Edge height: " + edge.childNode.getHeight() + " -> " + edge.parentNode.getHeight());
+//		System.out.println("Edge hasSegments: " + edge.hasSegments);
+//		if (idx != -1) {
+//			System.out.println("segsToAdd: " + segsToAddList.get(idx));
+//		}
+//		if (iidx != -1) {
+//			System.out.println("segsToRemove: " + segsToRemoveList.get(iidx));
+//		}
+		
+		BitSet segsToGoLeft = new BitSet();
+		BitSet segsToGoRight = new BitSet();
+		// randomly assign each segment to go left or right
+		if (idx != -1) {
+			for (int segIdx = segsToAddList.get(idx).nextSetBit(0); segIdx != -1; segIdx = segsToAddList.get(idx).nextSetBit(segIdx + 1)) {
+				if (Randomizer.nextBoolean()) {
+					segsToGoLeft.set(segIdx);
+				} else {
+					segsToGoRight.set(segIdx);
+				}
+			}
+		}
+		
+		// now, check what to remove
+		BitSet segsToRemoveLeft = new BitSet();
+		BitSet segsToRemoveRight = new BitSet();
+
+
+		// remove from inactive edges
+		if (iidx != -1) {
+			segsToRemoveLeft.or(segsToRemoveList.get(iidx));
+			segsToRemoveRight.or(segsToRemoveList.get(iidx));
+			
+			edge.hasSegments.andNot(segsToRemoveList.get(iidx));
+			inactiveEdges.remove(iidx);
+			segsToRemoveList.remove(iidx);
+			
+			segsToRemoveLeft.and(edge.parentNode.getParentEdges().get(0).hasSegments);
+			segsToRemoveRight.and(edge.parentNode.getParentEdges().get(1).hasSegments);
+		}
+
+		// remove from active edges
+		if (idx != -1) {
+			edge.hasSegments.or(segsToAddList.get(idx));
+			activeEdges.remove(idx);
+			segsToAddList.remove(idx);
+		}
+
+//		System.out.println("segsToGoLeft: " + segsToGoLeft + ", segsToGoRight: " + segsToGoRight);
+//		System.out.println("segsToRemoveLeft: " + segsToRemoveLeft + ", segsToRemoveRight: " + segsToRemoveRight);
+//		
+		// now, check if we add
+		if (!segsToGoLeft.isEmpty()) {
+			activeEdges.add(edge.parentNode.getParentEdges().get(0));
+			segsToAddList.add(segsToGoLeft);
+//			System.out.println("Added left parent to activeEdges");
+		}
+		if (!segsToGoRight.isEmpty()) {
+			activeEdges.add(edge.parentNode.getParentEdges().get(1));
+			segsToAddList.add(segsToGoRight);
+//			System.out.println("Added right parent to activeEdges");
+		}
+		
+		if (!segsToRemoveLeft.isEmpty()) {
+			inactiveEdges.add(edge.parentNode.getParentEdges().get(0));
+			segsToRemoveList.add(segsToRemoveLeft);
+//			System.out.println("Added left parent to inactiveEdges");
+		}
+		if (!segsToRemoveRight.isEmpty()) {
+			inactiveEdges.add(edge.parentNode.getParentEdges().get(1));
+			segsToRemoveList.add(segsToRemoveRight);
+//			System.out.println("Added right parent to inactiveEdges");
+		}
+		
+//		System.out.println("After handleReassortment - activeEdges size: " + activeEdges.size() + ", inactiveEdges size: " + inactiveEdges.size());
+		
+	}
+	
+	private void handleCoalescence(List<NetworkEdge> activeEdges, List<BitSet> segsToAddList,
+			List<NetworkEdge> inactiveEdges, List<BitSet> segsToRemoveList, NetworkEdge edge,  NetworkEdge sisterEdge) {
+		
+//		System.out.println("handleCoalescence");
+		
+		int idx1 = -1;
+		int idx2 = -1;
+		
+		int iidx1 = -1;
+		int iidx2 = -1;
+		
+		BitSet segsToAdd1 = new BitSet();
+		BitSet segsToAdd2 = new BitSet();
+		
+		BitSet segsToRemove1 = new BitSet();
+		BitSet segsToRemove2 = new BitSet();
+		
+		BitSet segsBefore1 = (BitSet) edge.hasSegments.clone();
+		BitSet segsBefore2 = (BitSet) sisterEdge.hasSegments.clone();
+		
+		for (int i = 0; i < activeEdges.size(); i++) {
+			if (activeEdges.get(i) == edge) {
+				idx1 = i;
+				segsToAdd1.or(segsToAddList.get(i));
+			} else if (activeEdges.get(i) == sisterEdge) {
+				idx2 = i;
+				segsToAdd2.or(segsToAddList.get(i));
+			}
+		}
+		
+		for (int i = 0; i < inactiveEdges.size(); i++) {
+			if (inactiveEdges.get(i) == edge) {
+				iidx1 = i;
+				segsToRemove1.or(segsToRemoveList.get(i));
+			} else if (inactiveEdges.get(i) == sisterEdge) {
+				iidx2 = i;
+				segsToRemove2.or(segsToRemoveList.get(i));
+			}
+		}
+		
+//		System.out.println("Coalescence - edge idx in active: " + idx1 + ", in inactive: " + iidx1);
+//		System.out.println("Coalescence - sister idx in active: " + idx2 + ", in inactive: " + iidx2);
+//		System.out.println("Edge height: " + edge.childNode.getHeight() + " -> " + edge.parentNode.getHeight());
+//		System.out.println("Sister height: " + sisterEdge.childNode.getHeight() + " -> " + sisterEdge.parentNode.getHeight());
+//		System.out.println("Edge hasSegments before: " + segsBefore1 + ", sister hasSegments before: " + segsBefore2);
+//		System.out.println("segsToAdd1: " + segsToAdd1 + ", segsToAdd2: " + segsToAdd2);
+//		System.out.println("segsToRemove1: " + segsToRemove1 + ", segsToRemove2: " + segsToRemove2);
+		
+		edge.hasSegments.or(segsToAdd1);
+		sisterEdge.hasSegments.or(segsToAdd2);
+		
+		edge.hasSegments.andNot(segsToRemove1);
+		sisterEdge.hasSegments.andNot(segsToRemove2);
+		
+		// now, remove
+		segsToAdd1.andNot(segsBefore2);
+		segsToAdd2.andNot(segsBefore1);
+		
+		segsToRemove1.andNot(sisterEdge.hasSegments);
+		segsToRemove2.andNot(edge.hasSegments);
+		
+//		System.out.println(segsBefore1 + " " + segsBefore2);
+		
+		// remove from inactive edges
+		if (iidx1 != -1 &&  iidx2 != -1) {
+			inactiveEdges.remove(Math.max(iidx1, iidx2));
+			segsToRemoveList.remove(Math.max(iidx1, iidx2));
+			inactiveEdges.remove(Math.min(iidx1, iidx2));
+			segsToRemoveList.remove(Math.min(iidx1, iidx2));
+		} else if (iidx1 != -1 || iidx2 != -1) {
+			int removeIdx = iidx1 != -1 ? iidx1 : iidx2;
+			inactiveEdges.remove(removeIdx);
+			segsToRemoveList.remove(removeIdx);
+		}
+		
+		// remove from active edges
+		if (idx1 != -1 && idx2 != -1) {
+			activeEdges.remove(Math.max(idx1, idx2));
+			segsToAddList.remove(Math.max(idx1, idx2));
+			activeEdges.remove(Math.min(idx1, idx2));
+			segsToAddList.remove(Math.min(idx1, idx2));
+		} else if (idx1 != -1 || idx2 != -1) {
+			int removeIdx = idx1 != -1 ? idx1 : idx2;
+			activeEdges.remove(removeIdx);
+			segsToAddList.remove(removeIdx);
+		}
+		
+		// now, check if we add
+		segsToAdd1.or(segsToAdd2);
+		segsToRemove1.or(segsToRemove2);
+		
+//		System.out.println("After processing - edge hasSegments: " + edge.hasSegments + ", sister hasSegments: " + sisterEdge.hasSegments);
+//		System.out.println("Combined segsToAdd: " + segsToAdd1 + ", combined segsToRemove: " + segsToRemove1);
+		
+		if (!segsToAdd1.isEmpty()) {
+			activeEdges.add(edge.parentNode.getParentEdges().get(0));
+			segsToAddList.add(segsToAdd1);
+//			System.out.println("Added parent to activeEdges");
+		}
+		if (!segsToRemove1.isEmpty()) {
+			inactiveEdges.add(edge.parentNode.getParentEdges().get(0));
+			segsToRemoveList.add(segsToRemove1);
+//			System.out.println("Added parent to inactiveEdges");
+		}
+		
+//		System.out.println("After handleCoalescence - activeEdges size: " + activeEdges.size() + ", inactiveEdges size: " + inactiveEdges.size());
+	}
+
+	/**
+	 * Clean up empty reassortment edges.
+	 * Uses the same pattern as EmptyEdgesNetworkOperator.RemoveAllEmptyNetworkSegments()
+	 *
+	 * @return log probability contribution for reverse operation
+	 */
+	protected double cleanEmptyEdgesTopDown() {
+		double logHR = 0.0;
+
+		// Create a local list of network edges to track during removal
+		List<NetworkEdge> localNetworkEdges = new ArrayList<>(network.getEdges());
+
+		List<Integer> removableEdges = new ArrayList<>();
+		for (int i = 0; i < localNetworkEdges.size(); i++) {
+			NetworkEdge edge = localNetworkEdges.get(i);
+			if (!edge.isRootEdge() && edge.childNode.isReassortment()
+					&& edge.parentNode.isCoalescence() && edge.hasSegments.cardinality() == 0) {
+				removableEdges.add(i);
+			}
+		}
+
+		// Remove all empty edges iteratively
+		while (removableEdges.size() > 0) {
+			// TODO: For proper Hastings ratio, would need:
+			// logHR -= Math.log(1.0 / removableEdges.size());
+
+			int edgeInd = 0; // For now, deterministically remove first one (can randomize later)
+
+			logHR += removeEmptyReassortmentEdgeAdapted(localNetworkEdges, localNetworkEdges.get(removableEdges.get(edgeInd)));
+
+			if (logHR == Double.NEGATIVE_INFINITY)
+				return Double.NEGATIVE_INFINITY;
+
+			// Rebuild the list of removable edges
+			removableEdges = new ArrayList<>();
+			for (int i = 0; i < localNetworkEdges.size(); i++) {
+				NetworkEdge edge = localNetworkEdges.get(i);
+				if (!edge.isRootEdge() && edge.childNode.isReassortment()
+						&& edge.parentNode.isCoalescence() && edge.hasSegments.cardinality() == 0) {
+					removableEdges.add(i);
+				}
+			}
+		}
+
+		// TODO: Reverse probability - Poisson probability of adding n empty edges
+		// logHR += Math.log(Math.pow(lambda, nEmptyEdgesRemoved)) - lambda - logFactorial(nEmptyEdgesRemoved);
+
+		return logHR;
+	}
+
+	/**
+	 * Remove an empty reassortment edge, following the exact pattern from EmptyEdgesNetworkOperator.
+	 * Updates the localNetworkEdges list to track removed edges.
+	 */
+	private double removeEmptyReassortmentEdgeAdapted(List<NetworkEdge> localNetworkEdges, NetworkEdge edgeToRemove) {
+		double logHR = 0.0;
+
+		NetworkNode nodeToRemove = edgeToRemove.childNode;
+		NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
+		NetworkNode edgeToRemoveSpouseParent = edgeToRemoveSpouse.parentNode;
+
+		// Update local edges list (same as parent class lines 355-356)
+		localNetworkEdges.remove(edgeToRemove);
+		localNetworkEdges.remove(edgeToRemoveSpouse);
+
+		// Remove edge and associated nodes
+		NetworkEdge edgeToExtend = nodeToRemove.getChildEdges().get(0);
+		nodeToRemove.removeChildEdge(edgeToExtend);
+		nodeToRemove.removeParentEdge(edgeToRemove);
+		nodeToRemove.removeParentEdge(edgeToRemoveSpouse);
+		edgeToRemoveSpouseParent.removeChildEdge(edgeToRemoveSpouse);
+		edgeToRemoveSpouseParent.addChildEdge(edgeToExtend);
+
+		NetworkNode secondNodeToRemove = edgeToRemove.parentNode;
+		NetworkEdge secondEdgeToExtend = getSisterEdge(edgeToRemove);
+
+		secondNodeToRemove.removeChildEdge(secondEdgeToExtend);
+		secondNodeToRemove.removeChildEdge(edgeToRemove);
+
+		// Update local edges list (same as parent class line 372)
+		localNetworkEdges.remove(secondNodeToRemove.getParentEdges().get(0));
+
+		if (secondNodeToRemove.getParentEdges().get(0).isRootEdge()) {
+			network.setRootEdge(secondEdgeToExtend);
+		} else {
+			NetworkEdge secondNodeToRemoveParentEdge = secondNodeToRemove.getParentEdges().get(0);
+			NetworkNode secondNodeToRemoveParent = secondNodeToRemoveParentEdge.parentNode;
+			secondNodeToRemoveParent.removeChildEdge(secondNodeToRemoveParentEdge);
+			secondNodeToRemove.removeParentEdge(secondNodeToRemoveParentEdge);
+			secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
+		}
+
+		return logHR;
 	}
 
 	protected BitSet getRandomUnconditionedSubset(BitSet sourceSegments) {
