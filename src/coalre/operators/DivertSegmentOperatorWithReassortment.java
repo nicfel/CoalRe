@@ -47,7 +47,7 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 	@Override
 	public double networkProposal() {
 		double logHR = 0.0;
-		String networkBefore = network.getExtendedNewickVerbose(0).toString();
+//		String networkBefore = network.getExtendedNewickVerbose(0).toString();
 //		System.out.println(network.getExtendedNewickVerbose(0));
 		
 		List<Integer> sourceEdges = new ArrayList<>();

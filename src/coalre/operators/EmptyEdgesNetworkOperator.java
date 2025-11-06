@@ -108,10 +108,10 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 //		if (!networkTerminatesAtMRCA())
 //			return Double.NEGATIVE_INFINITY;
 		
-		ii++;
-		if (netChange <-5) {
-			System.out.println(this.getID() + " " + netChange + " " + logHR + " " + logHRproposal);
-		}
+//		ii++;
+//		if (netChange <-5) {
+//			System.out.println(this.getID() + " " + netChange + " " + logHR + " " + logHRproposal);
+//		}
 
 		return logHR;
 	}
