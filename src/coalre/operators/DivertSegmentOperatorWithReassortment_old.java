@@ -3,7 +3,6 @@ package coalre.operators;
 import beast.base.core.Input;
 import beast.base.evolution.tree.Node;
 import beast.base.util.Randomizer;
-import cern.colt.Arrays;
 import coalre.distribution.CoalescentWithReassortment;
 import coalre.distribution.NetworkEvent;
 import coalre.network.NetworkEdge;
@@ -16,7 +15,7 @@ import java.util.List;
 public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOperator {
 
 	public Input<Boolean> divertOneSegmentInput = new Input<>("divertOneSegment",
-			"If true, only one segment is diverted", true);
+			"If true, only one segment is diverted", false);
 
 	public Input<CoalescentWithReassortment> coalescentDistrInput = new Input<>("coalescentWithReassortment",
 			"Coalescent distribution for sampling reassortment events.",
@@ -30,18 +29,13 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 		if (coalescentDistrInput.get() != null) {
 			coalescentDistr = coalescentDistrInput.get();
 		}
-		// if the super class has a lambda parameter, set its value to zero
 	}
 	
 	boolean exitOnError = false;
-	String networkBefore ="";
-	int eventsBefore =0;
-	int eventsAfter =0;
+
 	@Override
 	public double networkProposal() {
 		double logHR = 0.0;
-//		networkBefore = network.getExtendedNewickVerbose(0).toString();
-//		System.out.println(network.getExtendedNewickVerbose(0));
 		
 		List<Integer> sourceEdges = new ArrayList<>();
 		for (int i = 0; i < networkEdges.size(); i++) {
@@ -52,7 +46,6 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 
 		if (sourceEdges.isEmpty())
 			return Double.NEGATIVE_INFINITY;
-		
 
 		logHR -= Math.log(1.0 / sourceEdges.size());
 
@@ -64,10 +57,11 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 		if (divertOneSegmentInput.get()) {
 			segsToDivert = getRandomSegment(sourceEdge.hasSegments);
 			logHR -= Math.log(1. / sourceEdge.hasSegments.cardinality());
+			// throw not implemetned error
+			throw new IllegalArgumentException("Divert one segment not implemented yet");
 		} else {
-			segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
+			segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments, 0.5);
 			logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments, segsToDivert, 0.5);
-//			throw new IllegalArgumentException("Divert one segment not implemented yet");
 		}
 
 		if (segsToDivert.cardinality() == 0)
@@ -84,6 +78,7 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 			logHR += getLogConditionedSubsetProb(destEdge.hasSegments, segsToDivert, 0.5);
 		}
 		
+		
 		int reverseSourceEdgeCount = 0;
 		for (NetworkEdge edge : network.getEdges()){
 			if (edge.childNode.isReassortment() && edge.hasSegments.cardinality()>1){
@@ -91,10 +86,26 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
             }
 		}
 		logHR += Math.log(1.0 / reverseSourceEdgeCount);
+//		System.out.println(logDivert);
+//		
+//		if (logDivert>10) {
+//			System.out.println(segsToDivert);
+//			System.out.println(logHR);
+//			System.out.println(networkBefore);
+//			System.out.println(network.getExtendedNewickVerbose(0));
+//			System.exit(0);
+//		}
+		
+//		if (logHR==Double.POSITIVE_INFINITY) {
+//			System.out.println(logDivert);
+//			System.out.println(networkBefore);
+//			System.out.println(network.getExtendedNewickVerbose(0));
+//			System.exit(0);
+//		}
 
+		
 		return logHR;
 	}
-	
 
 	protected double divertSegments(NetworkEdge destEdge, NetworkEdge sourceEdge, BitSet segsToDivert) {
 		double logHR = 0.0;
@@ -114,12 +125,12 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 		cleanEmptyEdgesTopDown();
 		
 //		double logPafter = coalescentDistr.calculateLogP();
-		
+//		
 //		System.out.println(logHR + " " + (logPafter - logPbefore));
 		
 		
+
 		return logHR;
-//		return (logPbefore - logPafter);
 	}
 
 	protected boolean reconnectSegmentTrees(Integer[] treeChildNodeList, NetworkEdge destEdge, BitSet segsToDivert) {
@@ -417,6 +428,17 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 		List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
 		
 		
+//		System.out.println("");
+		// Initialize HR tracking groups for this iteration
+//		logHR_coalSurvival = 0.0;
+//		logHR_reassortSurvival = 0.0;
+//		logHR_coalDensity = 0.0;
+//		logHR_reassortDensity = 0.0;
+//		logHR_coalEvent = 0.0;
+//		logHR_reassortEvent = 0.0;
+//		logHR_edgeTraversal = 0.0;
+//		count=0;
+
 		// now, sample the time to the next reassortment or coalescent event on the active edges,
 		// i.e. essentially simulate the history of these edges and segments until there is nothing left. The
 		// goal is to avoid the creation of empty
@@ -430,7 +452,9 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 			}
 			
 			int coalLines = 0;
-			int negLines = 0;			
+			int negLines = 0;
+			
+			
 			
 			List<NetworkEdge> excludedEdges = new ArrayList<>();
 			List<NetworkEdge> excludedEdgesReverse = new ArrayList<>(); // excluded partners for calculation with inactive edges
@@ -444,10 +468,10 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 					int m = activeEdges.get(i).hasSegments.cardinality();
 					int k = segsToAddList.get(i).cardinality();
 
-					// Probablity of observable reassortment for m segments 
-					// already on the edge that didn't reassort, k being added					
-					double obsProb = 2.0 * (Math.pow(0.5, m)*(1-Math.pow(0.5, k)));
-					
+					// Full observable probability for m+k total segments on edge
+					// = 1 - 2 * 0.5^(m+k)
+					double obsProb = 1.0 - 2.0 * Math.pow(0.5, m + k);
+
 					reassortmentObsProb[i] = obsProb;
 					totalReassortmentProb += reassortmentObsProb[i];
 
@@ -485,14 +509,13 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 					totalReverseReassortmentProb += reassortmentObsProbInactive[i];
 				}else {
 					int m = inactiveEdges.get(i).hasSegments.cardinality();
-					int k = segsToRemoveList.get(i).cardinality();
-					// reverse reassortment: Probability of observable reassortment for m segments
-					// that will be on the edge after removing k segments, but none
-					// of the m-k segments reassorted
-					double obsProb = 2.0 * (Math.pow(0.5, m-k)*(1-Math.pow(0.5, k)));
+					// Full observable probability for m total segments on edge
+					// = 1 - 2 * 0.5^m
+					double obsProb = 1.0 - 2.0 * Math.pow(0.5, m);
 					reassortmentObsProbInactive[i] = obsProb;
 					totalReverseReassortmentProb += obsProb;
 				}
+				
 			}
 			
 			// Sample time to next reassortment event
@@ -517,6 +540,7 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 				
 				double checkTime = currentTime;
 				NetworkEvent prevEvent = null;
+				double sampledCoalTime = 0.0;
 				
 				// Calculate the earliest stopping time (reassortment or edge event)
 				double stopTime = Math.min(currentTime + timeToNextReassortment, timeToNextEdgeEvent);
@@ -531,12 +555,13 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 						
 						// prevEvent.lineages is the number of existing lineages in the network
 						// Add our new lineages (coalLines) to get total
-//						int totalLineages = prevEvent.lineages + coalLines - negLines; 
-						coalRate = 0.5 * coalLines * (coalLines - 1) + coalLines * prevEvent.lineages;
+						int totalLineages = prevEvent.lineages + coalLines - negLines; 
+						coalRate = 0.5 * coalLines * (totalLineages - 1);
 						
-//						int totalLineagesReverse = prevEvent.lineages;
-						reverseCoalRate = 0.5 * negLines * (negLines - 1) + negLines * (prevEvent.lineages - negLines);
-																		
+						int totalLineagesReverse = prevEvent.lineages + negLines - coalLines;
+						reverseCoalRate = 0.5 * negLines * (totalLineagesReverse - 1);
+						
+												
 						// Sample coalescence time in this interval
 						double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(checkTime);
 						double transformedTimeToNextCoal = Randomizer.nextExponential(coalRate);
@@ -551,13 +576,17 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 						double reverseCoalSurv = -reverseCoalRate * integral;
 						logHR -= coalSurv;
 						logHR += reverseCoalSurv;
+//						logHR_coalSurvival -= coalSurv;
+//						logHR_coalSurvival += reverseCoalSurv;
 						
+						sampledCoalTime = coalescenceTime;
 						
 						// Check if coalescence happens before next event AND before stop time
 						if (coalescenceTime == minNextTime) {
 							// add the event contribution
 							double coalDens = Math.log(coalRate/coalescentDistr.populationFunction.getPopSize(coalescenceTime));
 							logHR -= coalDens;
+//							logHR_coalDensity -= coalDens;
 							timeToNextCoalescence = coalescenceTime - currentTime;
 							break;
 						}
@@ -569,35 +598,31 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 				}
 				
 				// If we've gone past all events and haven't reached stop time, coalescence can still happen above the root
-				if (stopTime > checkTime && checkTime >= network.getRootEdge().childNode.getHeight() && coalLines > 0) {
-					
-					int totalLineages = coalLines + 1;  // Only new lineages left (plus the existing root)
+				if ((sampledCoalTime > network.getRootEdge().childNode.getHeight() || timeToNextCoalescence == Double.POSITIVE_INFINITY) 
+						&& checkTime < stopTime) {
+					int totalLineages = coalLines+1;  // Only new lineages left
 					coalRate = 0.5 * coalLines * (totalLineages - 1);
+					double coalSurv2 = -coalRate * coalescentDistr.populationFunction.getIntegral(checkTime,
+							network.getRootEdge().childNode.getHeight());
+					logHR -= coalSurv2;
+//					logHR_coalSurvival -= coalSurv2;
 					
-					double startTime = Math.max(checkTime, network.getRootEdge().childNode.getHeight());
 					
-					double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(startTime);
+			
+					
+					double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(
+							Math.max(checkTime, network.getRootEdge().childNode.getHeight()));
 					double transformedTimeToNextCoal = Randomizer.nextExponential(coalRate);
 					double coalescenceTime = coalescentDistr.populationFunction.getInverseIntensity(
 							transformedTimeToNextCoal + currentTransformedTime);
-					
-					
-					double integral = coalescentDistr.populationFunction.getIntegral(startTime,coalescenceTime);
-					
-					double coalSurv2 = -coalRate * integral;
-					logHR -= coalSurv2;
-
-					// Reverse survival: negLines lineages among themselves
-					if (negLines > 0) {
-						throw new IllegalArgumentException("Negative lineages above root not allowed");
-					}
-
 					
 					// Only use this if it happens before stop time
 					if (coalescenceTime < stopTime) {
 						timeToNextCoalescence = coalescenceTime - currentTime;
 						double coalDens2 = Math.log(coalRate/coalescentDistr.populationFunction.getPopSize(coalescenceTime));
 						logHR -= coalDens2;
+//						logHR_coalDensity -= coalDens2;
+
 					}
 				}
 			}
@@ -629,7 +654,16 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 					logHR -= reassortSurvFwd;
 					logHR += reassortSurvRev;
 				}
+//				logHR_reassortSurvival -= reassortSurvFwd;
+//				logHR_reassortSurvival += reassortSurvRev;
 			}
+//			if (count==0) {
+//				System.out.println(totalReassortmentProb + " " + totalReverseReassortmentProb + " " + Arrays.toString(reassortmentObsProb) + " " + Arrays.toString(reassortmentObsProbInactive));
+//				val+=totalReverseReassortmentProb-totalReassortmentProb;
+//				System.out.println(val);
+//			}
+//			count++;
+
 			
 
 			// Determine what type of event occurred and handle it
@@ -637,6 +671,7 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 				// add the event contribution
 				double coalEventHR = handleCoalescenceEvent(coalLines, activeEdges, excludedEdges, segsToAddList, currentTime, rootEdge, edgesAdded);
 				logHR += coalEventHR;
+//				logHR_coalEvent += coalEventHR;
 			} else if (timeUntilNextEvent == timeToNextReassortment) {
 				// add the event contribution
 				double reassortDens = 0.0;
@@ -646,15 +681,42 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 					reassortDens = Math.log(totalReassortmentProb*coalescentDistr.reassortmentRateInput.get().getArrayValue());
 				}
 				logHR -= reassortDens;
+//				logHR_reassortDensity -= reassortDens;
 					
 				double reassortEventHR = handleReassortmentEvent(activeEdges, inactiveEdges, segsToAddList, segsToRemoveList, reassortmentObsProb, totalReassortmentProb, currentTime, edgesAdded);
 				logHR += reassortEventHR;
+//				logHR_reassortEvent += reassortEventHR;
 			} else {
 				double edgeTraversalHR = handleEdgeTraversalEvent(nextInactiveEventIndex, nextEventIndex, inactiveEdges, segsToRemoveList, activeEdges, 
 						segsToAddList, reverseCoalRate, totalReverseReassortmentProb, reassortmentObsProbInactive, negLines, excludedEdgesReverse);
 				logHR += edgeTraversalHR;
+//				logHR_edgeTraversal += edgeTraversalHR;
 			}
+			
+//			System.out.println(logHR_edgeTraversal + " " + currentTime);
+
+//			
+//			// Print HR breakdown for this iteration
+//			System.out.println("=== Iteration HR Breakdown ===");
+//			System.out.println("Coalescence Survival: " + logHR_coalSurvival);
+//			System.out.println("Coalescence Density: " + logHR_coalDensity);
+//			System.out.println("Reassortment Survival: " + logHR_reassortSurvival);
+//			System.out.println("Reassortment Density: " + logHR_reassortDensity);
+//			System.out.println("Coalescence Event: " + logHR_coalEvent);
+//			System.out.println("Reassortment Event: " + logHR_reassortEvent);
+//			System.out.println("Edge Traversal: " + logHR_edgeTraversal);
+//			System.out.println("Iteration Total: " + (logHR_coalSurvival + logHR_reassortSurvival + logHR_coalDensity + logHR_reassortDensity + logHR_coalEvent + logHR_reassortEvent + logHR_edgeTraversal));
+//			System.out.println("=============================");
 		}
+//		System.out.println("Average reassortment survival: " + val);
+		
+		
+		
+//		System.out.println("Reassortment Survival: " + logHR_reassortDensity);
+//		if (logHR_edgeTraversal!=0.0)
+//			System.exit(0);
+		
+//		System.out.println(logHR );
 
 		return logHR;
 	}
@@ -704,6 +766,7 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 				if (e.childNode.getHeight() < currentTime && !excludedEdges.contains(e)) {
 					coexistingLineages.add(e);
 				}
+						
 			}else {
 			    if (e.parentNode.getHeight() > currentTime && 
 			    		e.childNode.getHeight() < currentTime &&
@@ -724,7 +787,6 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 			}
 		}
 		if (coexistingLineages.contains(edge1)) {
-			System.out.println("Error: coexisting lineages contains edge1");
 			System.exit(0);
 		}
 
@@ -873,16 +935,17 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 				break;
 			}
 		}
-		
+
 		// Forward proposal probability: choosing which edge
-		logHR -= Math.log(reassortmentObsProb[reassortEdgeIdx] / totalReassortmentProb);
+//		logHR -= Math.log(reassortmentObsProb[reassortEdgeIdx] / totalReassortmentProb);
 
 		// Sample which segments will reassort (each with 0.5 probability, conditional on observable reassortment)
 		BitSet segsToReassort = segsToAddList.get(reassortEdgeIdx);
 		BitSet segsToStay = new BitSet();
 		BitSet segsToGo = new BitSet();
-		
+
 		// Forward proposal probability: For each segment, choose a parent at random
+
 
 		// Sample segments with 0.5 probability each, conditional on at least one on each side
 		if (activeEdges.get(reassortEdgeIdx).hasSegments.isEmpty()) {
@@ -897,10 +960,8 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 					}
 				}
 			} while (segsToGo.cardinality() == 0 || segsToStay.cardinality() == 0);
-			int k = segsToReassort.cardinality();
-
 			// Forward proposal probability subtract the case where all segments go to one parent
-			logHR -= Math.log(Math.pow(0.5, k) / (1.0 - 2.0 * Math.pow(0.5, k)));
+			logHR += Math.log(1.0 - 2.0*Math.pow(0.5, segsToReassort.cardinality()));
 		} else {
 			do {
 				segsToStay.clear();
@@ -913,11 +974,10 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 					}
 				}
 			} while (segsToGo.cardinality() == 0);
-			int m = activeEdges.get(reassortEdgeIdx).hasSegments.cardinality();
 			int k = segsToReassort.cardinality();
-//			logHR -= Math.log(1.0/k);
-			logHR -= k * Math.log(0.5) - Math.log(1.0 - Math.pow(0.5, k));
-			
+
+			// Forward proposal probability subtract the case where all k segments go to "stay"
+			logHR += Math.log(1.0 - Math.pow(0.5, k));
 		}
 
 		// Step 2: create a new reassortment node and add it to the network
@@ -1061,47 +1121,32 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 			// Reverse proposal probability: For each segment, choose a parent at random
 
 			boolean createdEmptyEdge = false;
-			if (inactiveEdges.get(iidx).hasSegments.cardinality() == segsCard){// movr creates two empty parents
+			if (inactiveEdges.get(iidx).hasSegments.cardinality() == segsCard){// move creates two empty parents
+				System.exit(0);
 				createdEmptyEdge = true;
 				// Reverse proposal probability subtract the case where all segments go to one parent
-//				logHR += Math.log(1.0/(segsCard)) + Math.log(1.0/(segsCard-1));
-				logHR += Math.log(Math.pow(0.5, segsCard) / (1.0 - 2.0 * Math.pow(0.5, segsCard)));
-
+				logHR -= Math.log(1.0 - 2.0*Math.pow(0.5, segsCard));
 			}else if (segsToRemoveLeft.cardinality()==edge.parentNode.getParentEdges().get(0).hasSegments.cardinality()){ // move creates one empty parent
 				createdEmptyEdge = true;
-				
-				
-				logHR += segsCard * Math.log(0.5) - Math.log(1.0 - Math.pow(0.5, segsCard));
-
-//			    logHR += Math.log(0.5); // choosing which side m goes
-//			    logHR += Math.log(1.0 - Math.pow(0.5, segsCard)); // conditioning on k
-//			    logHR += segsCard * Math.log(0.5); // assigning k segments
-
-				
-//				logHR += Math.log(1.0/segsCard);
 				// Reverse proposal probability subtract the case where all k segments go to "stay"
-//				logHR += Math.log(Math.pow(0.5, segsCard-1));
+//				logHR -= Math.log(2*Math.pow(0.5, segsCard));
 
 			}else if (segsToRemoveRight.cardinality()==edge.parentNode.getParentEdges().get(1).hasSegments.cardinality()){  // move creates one empty parent
 				createdEmptyEdge = true;
-				// choose the segment to go to the other parent
-//				logHR += Math.log(1.0/segsCard);
 				// Reverse proposal probability subtract the case where all k segments go to "stay"
-				logHR += segsCard * Math.log(0.5) - Math.log(1.0 - Math.pow(0.5, segsCard));
-
-//				logHR += Math.log(Math.pow(0.5, segsCard-1));
+//				logHR -= Math.log(2*Math.pow(0.5, segsCard));
 
 			}
 			if (createdEmptyEdge) {
 				// Reverse proposal probability: choosing which edge
-				logHR += Math.log(reassortmentObsProbInactive[iidx] / totalReverseReassortmentProb);
-				
+//				logHR += Math.log(reassortmentObsProbInactive[iidx] / totalReverseReassortmentProb);
+
 				if (coalescentDistr.timeVaryingReassortmentRates != null) {
 					double popSize = coalescentDistr.timeVaryingReassortmentRates.getPopSize(edge.parentNode.getHeight());
 					logHR += Math.log(totalReverseReassortmentProb * popSize);
 				} else {
 					logHR += Math.log(totalReverseReassortmentProb * coalescentDistr.reassortmentRateInput.get().getArrayValue());
-				}			
+				}
 			}else {
 				logHR += Math.log(0.5) * segsCard;
 			}
@@ -1194,9 +1239,10 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 				calculateReverseProb = true;
 			}
 			if (calculateReverseProb) {
+				exitOnError=true;
 
 				logHR += Math.log(reverseCoalRate/(coalescentDistr.populationFunction.getPopSize(edge.parentNode.getHeight())));
-				
+	
 				// Count coexisting lineages at the time of coalescence (edge.parentNode.getHeight())
 				List<NetworkEdge> reverseCoexistingLineages = new ArrayList<>();
 				for (NetworkEdge e : network.getEdges()) {
@@ -1212,7 +1258,7 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 					}
 				}
 				// Only add reverse probabilities if we have valid counts
-				if (reverseCoalLines > 0) {
+				if (reverseCoalLines > 0 && reverseCoexistingLineages.size() > -1) {
 					logHR += Math.log(1.0 / reverseCoalLines);
 					logHR += Math.log(1.0 / (reverseCoexistingLineages.size()+1)); // the +1 is to account for the sister edge being there as well
 				}else {
