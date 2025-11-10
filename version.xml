@@ -42,7 +42,7 @@
         <provider classname="coalre.operators.AddRemoveReassortmentExponential"/>
         <provider classname="coalre.operators.BranchUniform"/>
         <provider classname="coalre.operators.DivertSegmentOperator"/>
-        <provider classname="coalre.operators.DivertSegmentOperatorWithReassortment"/>
+        <provider classname="coalre.operators.DivertSegmentAndResimulate"/>
         <provider classname="coalre.operators.GibbsOperatorAboveSegmentRoots"/>
         <provider classname="coalre.operators.MultiTipDatesRandomWalker"/>
         <provider classname="coalre.operators.NetworkExchange"/>

@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOperator {
+public class DivertSegmentOperatorWithReassortment_old2 extends EmptyEdgesNetworkOperator {
 
 	public Input<Boolean> divertOneSegmentInput = new Input<>("divertOneSegment",
 			"If true, only one segment is diverted", true);
@@ -35,8 +35,8 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 	
 	boolean exitOnError = false;
 	String networkBefore ="";
-	int eventsBefore =0;
-	int eventsAfter =0;
+	int eventsBefore = 0;
+	int eventsAfter = 0;
 	@Override
 	public double networkProposal() {
 		double logHR = 0.0;
@@ -571,9 +571,11 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 				// If we've gone past all events and haven't reached stop time, coalescence can still happen above the root
 				if (stopTime > checkTime && checkTime >= network.getRootEdge().childNode.getHeight() && coalLines > 0) {
 					
-					int totalLineages = coalLines + 1;  // Only new lineages left (plus the existing root)
-					coalRate = 0.5 * coalLines * (totalLineages - 1);
+//					int totalLineages = coalLines + 1;  // Only new lineages left (plus the existing root)
+//					coalRate = 0.5 * coalLines * (totalLineages - 1);
 					
+					coalRate = 0.5 * coalLines * (coalLines - 1) + coalLines * 1;
+
 					double startTime = Math.max(checkTime, network.getRootEdge().childNode.getHeight());
 					
 					double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(startTime);
@@ -1211,10 +1213,19 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 						}
 					}
 				}
-				// Only add reverse probabilities if we have valid counts
+				
+				// Check if sister edge is also becoming empty
+				boolean sisterAlsoEmpty = false;
+				if (iidx1 != -1 && iidx2 != -1) {
+				    // Both edges becoming empty - sister is already in negLines
+				    sisterAlsoEmpty = true;
+				}
+
 				if (reverseCoalLines > 0) {
-					logHR += Math.log(1.0 / reverseCoalLines);
-					logHR += Math.log(1.0 / (reverseCoexistingLineages.size()+1)); // the +1 is to account for the sister edge being there as well
+				    logHR += Math.log(1.0 / reverseCoalLines);
+				    // Only add +1 for sister if it's not also becoming empty
+				    int partnerCount = sisterAlsoEmpty ? reverseCoexistingLineages.size() : reverseCoexistingLineages.size() + 1;
+				    logHR += Math.log(1.0 / partnerCount);
 				}else {
 					throw new RuntimeException("Error calculating reverse coalescence probability, reverseCoalLines: " + reverseCoalLines + ", reverseCoexistingLineages: " + reverseCoexistingLineages.size());
 				}

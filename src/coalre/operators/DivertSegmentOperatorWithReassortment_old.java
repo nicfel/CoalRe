@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOperator {
+public class DivertSegmentOperatorWithReassortment_old extends EmptyEdgesNetworkOperator {
 
 	public Input<Boolean> divertOneSegmentInput = new Input<>("divertOneSegment",
 			"If true, only one segment is diverted", false);
@@ -540,7 +540,6 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 				
 				double checkTime = currentTime;
 				NetworkEvent prevEvent = null;
-				double sampledCoalTime = 0.0;
 				
 				// Calculate the earliest stopping time (reassortment or edge event)
 				double stopTime = Math.min(currentTime + timeToNextReassortment, timeToNextEdgeEvent);
@@ -579,7 +578,6 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 //						logHR_coalSurvival -= coalSurv;
 //						logHR_coalSurvival += reverseCoalSurv;
 						
-						sampledCoalTime = coalescenceTime;
 						
 						// Check if coalescence happens before next event AND before stop time
 						if (coalescenceTime == minNextTime) {
@@ -598,31 +596,36 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 				}
 				
 				// If we've gone past all events and haven't reached stop time, coalescence can still happen above the root
-				if ((sampledCoalTime > network.getRootEdge().childNode.getHeight() || timeToNextCoalescence == Double.POSITIVE_INFINITY) 
-						&& checkTime < stopTime) {
-					int totalLineages = coalLines+1;  // Only new lineages left
+				if (stopTime > checkTime && checkTime >= network.getRootEdge().childNode.getHeight() && coalLines > 0) {
+					int totalLineages = coalLines + 1;  // Only new lineages left (plus the existing root)
 					coalRate = 0.5 * coalLines * (totalLineages - 1);
-					double coalSurv2 = -coalRate * coalescentDistr.populationFunction.getIntegral(checkTime,
-							network.getRootEdge().childNode.getHeight());
-					logHR -= coalSurv2;
-//					logHR_coalSurvival -= coalSurv2;
 					
+					double startTime = Math.max(checkTime, network.getRootEdge().childNode.getHeight());
 					
-			
-					
-					double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(
-							Math.max(checkTime, network.getRootEdge().childNode.getHeight()));
+					double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(startTime);
 					double transformedTimeToNextCoal = Randomizer.nextExponential(coalRate);
 					double coalescenceTime = coalescentDistr.populationFunction.getInverseIntensity(
 							transformedTimeToNextCoal + currentTransformedTime);
+					
+					
+					double integral = coalescentDistr.populationFunction.getIntegral(startTime,coalescenceTime);
+					
+					double coalSurv2 = -coalRate * integral;
+					logHR -= coalSurv2;
+
+					// Reverse survival: negLines lineages among themselves
+					if (negLines > 0) {
+						throw new IllegalArgumentException("Negative lineages above root not allowed");
+					}
+
 					
 					// Only use this if it happens before stop time
 					if (coalescenceTime < stopTime) {
 						timeToNextCoalescence = coalescenceTime - currentTime;
 						double coalDens2 = Math.log(coalRate/coalescentDistr.populationFunction.getPopSize(coalescenceTime));
 						logHR -= coalDens2;
-//						logHR_coalDensity -= coalDens2;
-
+					}else {
+						throw new IllegalArgumentException("Coalescence above root must happen before stop time");
 					}
 				}
 			}
@@ -787,6 +790,7 @@ public class DivertSegmentOperatorWithReassortment extends EmptyEdgesNetworkOper
 			}
 		}
 		if (coexistingLineages.contains(edge1)) {
+			System.out.println("Error: coexisting lineages contains edge1");
 			System.exit(0);
 		}
 
