@@ -22,7 +22,7 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 			"Coalescent distribution for sampling reassortment events.",
 			Input.Validate.OPTIONAL);
 
-	private CoalescentWithReassortment coalescentDistr;
+	protected CoalescentWithReassortment coalescentDistr;
 
 	@Override
 	public void initAndValidate() {
@@ -67,7 +67,6 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 		} else {
 			segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
 			logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments, segsToDivert, 0.5);
-//			throw new IllegalArgumentException("Divert one segment not implemented yet");
 		}
 
 		if (segsToDivert.cardinality() == 0)
@@ -81,6 +80,7 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 		if (divertOneSegmentInput.get()) {
 			logHR += Math.log(1.0 / destEdge.hasSegments.cardinality());
 		} else {
+//			System.err.println("this part of the operator has an error");
 			logHR += getLogConditionedSubsetProb(destEdge.hasSegments, segsToDivert, 0.5);
 		}
 		
@@ -98,6 +98,24 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 
 	protected double divertSegments(NetworkEdge destEdge, NetworkEdge sourceEdge, BitSet segsToDivert) {
 		double logHR = 0.0;
+
+		BitSet segsToAdd = (BitSet) segsToDivert.clone();
+		// startwith keeping a list of active edges and the segs to Add
+		List<NetworkEdge> activeEdges = new ArrayList<>();
+		List<BitSet> segsToAddList = new ArrayList<>();
+		
+		List<NetworkEdge> inactiveEdges = new ArrayList<>();
+		List<BitSet> segsToRemoveList = new ArrayList<>();
+		
+		activeEdges.add(destEdge);
+		segsToAddList.add(segsToAdd);
+		
+		inactiveEdges.add(sourceEdge);
+		segsToRemoveList.add((BitSet) segsToAdd.clone());
+
+		// Track the current time (start at the bottom of the lowest edge)
+		double currentTime = destEdge.childNode.getHeight();
+
 		
 //		double logPbefore = coalescentDistr.calculateLogP();
 
@@ -107,7 +125,12 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 		exitOnError=false;
 
 		List<NetworkEdge> edgesAdded = new ArrayList<>();
-		logHR += divertSegmentsToAncestors(sourceEdge, destEdge, segsToDivert, edgesAdded);
+		// Get network events to determine lineages at different times, they will contain any inactive Edges, but not newly added active ones
+		List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
+
+		logHR += divertSegmentsToAncestors(activeEdges, inactiveEdges, segsToAddList, segsToRemoveList, currentTime, edgesAdded, networkEventList);
+
+		
 		if (reconnectSegmentTrees(treeChildNodeList, destEdge, segsToDivert))
 			return Double.NEGATIVE_INFINITY;
 		
@@ -392,31 +415,11 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 	 * @param eventTimes 
 	 * @return log probability of operation
 	 */
-	protected double divertSegmentsToAncestors(NetworkEdge sourceEdge, NetworkEdge destEdge, BitSet segsToAdd, List<NetworkEdge> edgesAdded) {
+	protected double divertSegmentsToAncestors(List<NetworkEdge> activeEdges, List<NetworkEdge> inactiveEdges, List<BitSet> segsToAddList, List<BitSet> segsToRemoveList, double currentTime, List<NetworkEdge> edgesAdded, List<NetworkEvent> networkEventList) {
 		double logHR = 0.0;
 		
-		segsToAdd = (BitSet) segsToAdd.clone();
-		// startwith keeping a list of active edges and the segs to Add
-		List<NetworkEdge> activeEdges = new ArrayList<>();
-		List<BitSet> segsToAddList = new ArrayList<>();
-		
-		List<NetworkEdge> inactiveEdges = new ArrayList<>();
-		List<BitSet> segsToRemoveList = new ArrayList<>();
-		
-		activeEdges.add(destEdge);
-		segsToAddList.add(segsToAdd);
-		
-		inactiveEdges.add(sourceEdge);
-		segsToRemoveList.add((BitSet) segsToAdd.clone());
-
-		// Track the current time (start at the bottom of the lowest edge)
-		double currentTime = destEdge.childNode.getHeight();
 		NetworkEdge rootEdge = network.getRootEdge();
-		
-		// Get network events to determine lineages at different times, they will contain any inactive Edges, but not newly added active ones
-		List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
-		
-		
+				
 		// now, sample the time to the next reassortment or coalescent event on the active edges,
 		// i.e. essentially simulate the history of these edges and segments until there is nothing left. The
 		// goal is to avoid the creation of empty
@@ -506,8 +509,8 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 	            }else {
 	            	timeToNextReassortment = Randomizer.nextExponential(totalReassortmentProb*coalescentDistr.reassortmentRateInput.get().getArrayValue());
 	            }
-			}			
-				
+			}	
+			
 			// Sample time to next coalescence using network intervals approach
 			// Like AddRemoveReassortmentCoalescent, use the network event list to track lineages
 			double timeToNextCoalescence = Double.POSITIVE_INFINITY;
@@ -532,10 +535,10 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 						// prevEvent.lineages is the number of existing lineages in the network
 						// Add our new lineages (coalLines) to get total
 //						int totalLineages = prevEvent.lineages + coalLines - negLines; 
-						coalRate = 0.5 * coalLines * (coalLines - 1) + coalLines * prevEvent.lineages;
+						coalRate =  coalLines * (coalLines - 1) + coalLines * prevEvent.lineages;
 						
 //						int totalLineagesReverse = prevEvent.lineages;
-						reverseCoalRate = 0.5 * negLines * (negLines - 1) + negLines * (prevEvent.lineages - negLines);
+						reverseCoalRate =  negLines * (negLines - 1) + negLines * (prevEvent.lineages - negLines);
 																		
 						// Sample coalescence time in this interval
 						double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(checkTime);
@@ -574,7 +577,8 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 //					int totalLineages = coalLines + 1;  // Only new lineages left (plus the existing root)
 //					coalRate = 0.5 * coalLines * (totalLineages - 1);
 					
-					coalRate = 0.5 * coalLines * (coalLines - 1) + coalLines * 1;
+					coalRate =  coalLines * (coalLines - 1) + coalLines * 1;
+					
 
 					double startTime = Math.max(checkTime, network.getRootEdge().childNode.getHeight());
 					
@@ -901,8 +905,12 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 			} while (segsToGo.cardinality() == 0 || segsToStay.cardinality() == 0);
 			int k = segsToReassort.cardinality();
 
-			// Forward proposal probability subtract the case where all segments go to one parent
-			logHR -= Math.log(Math.pow(0.5, k) / (1.0 - 2.0 * Math.pow(0.5, k)));
+			// Forward proposal: k segments randomly assigned
+			// Conditioning on at least one on each side is already in reassortmentObsProb (line 467)
+			logHR -= k*Math.log(0.5);
+//			logHR -= k*Math.log(Math.pow(2,  k-1)/(Math.pow(2,k)-2));
+
+
 		} else {
 			do {
 				segsToStay.clear();
@@ -917,8 +925,12 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 			} while (segsToGo.cardinality() == 0);
 			int m = activeEdges.get(reassortEdgeIdx).hasSegments.cardinality();
 			int k = segsToReassort.cardinality();
-//			logHR -= Math.log(1.0/k);
-			logHR -= k * Math.log(0.5) - Math.log(1.0 - Math.pow(0.5, k));
+
+			// Forward proposal: k segments randomly assigned, conditioned on at least one going
+			// Base: -k*log(0.5), Conditioning: +log(2^k - 1)
+			logHR -= k*Math.log(Math.pow(2,  k-1)/(Math.pow(2,k)-1));
+			
+//			logHR -= k*Math.log(0.5) + Math.log(Math.pow(2.0, k) - 1.0);
 			
 		}
 
@@ -1063,35 +1075,23 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 			// Reverse proposal probability: For each segment, choose a parent at random
 
 			boolean createdEmptyEdge = false;
-			if (inactiveEdges.get(iidx).hasSegments.cardinality() == segsCard){// movr creates two empty parents
+			if (inactiveEdges.get(iidx).hasSegments.cardinality() == segsCard){// move creates two empty parents
 				createdEmptyEdge = true;
-				// Reverse proposal probability subtract the case where all segments go to one parent
-//				logHR += Math.log(1.0/(segsCard)) + Math.log(1.0/(segsCard-1));
-				logHR += Math.log(Math.pow(0.5, segsCard) / (1.0 - 2.0 * Math.pow(0.5, segsCard)));
+				// Reverse proposal: k segments randomly assigned, conditioned on at least one on each side
+				// Base: +k*log(0.5), Conditioning: -log(2^k - 2)
+				logHR += segsCard * Math.log(0.5);
 
 			}else if (segsToRemoveLeft.cardinality()==edge.parentNode.getParentEdges().get(0).hasSegments.cardinality()){ // move creates one empty parent
 				createdEmptyEdge = true;
-				
-				
-				logHR += segsCard * Math.log(0.5) - Math.log(1.0 - Math.pow(0.5, segsCard));
-
-//			    logHR += Math.log(0.5); // choosing which side m goes
-//			    logHR += Math.log(1.0 - Math.pow(0.5, segsCard)); // conditioning on k
-//			    logHR += segsCard * Math.log(0.5); // assigning k segments
-
-				
-//				logHR += Math.log(1.0/segsCard);
-				// Reverse proposal probability subtract the case where all k segments go to "stay"
-//				logHR += Math.log(Math.pow(0.5, segsCard-1));
+				// contional draws, conditioning on at least least one segment having originated from the other parent
+				logHR += segsCard*Math.log(Math.pow(2,  segsCard-1)/(Math.pow(2,segsCard)-1));
 
 			}else if (segsToRemoveRight.cardinality()==edge.parentNode.getParentEdges().get(1).hasSegments.cardinality()){  // move creates one empty parent
 				createdEmptyEdge = true;
-				// choose the segment to go to the other parent
-//				logHR += Math.log(1.0/segsCard);
-				// Reverse proposal probability subtract the case where all k segments go to "stay"
-				logHR += segsCard * Math.log(0.5) - Math.log(1.0 - Math.pow(0.5, segsCard));
 
-//				logHR += Math.log(Math.pow(0.5, segsCard-1));
+				// Reverse proposal: k segments randomly assigned, conditioned on at least one going
+				// Base: +k*log(0.5), Conditioning: -log(2^k - 1)
+				logHR += segsCard*Math.log(Math.pow(2,  segsCard-1)/(Math.pow(2,segsCard)-1));
 
 			}
 			if (createdEmptyEdge) {
