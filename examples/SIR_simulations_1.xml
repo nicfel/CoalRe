@@ -1,0 +1,42 @@
+<beast version="2.0"
+       namespace="beast.core
+                 :beast.core.util
+                 :beast.core.parameter
+                 :beast.evolution.alignment
+                 :beast.evolution.likelihood
+                 :beast.base.evolution.tree
+                 :beast.base.evolution.tree.coalescent
+                 :beast.base.evolution.sitemodel
+                 :beast.base.evolution.substitutionmodel
+                 :beast.evolution.operators
+                 :beast.math.distributions
+                 :feast.simulation
+                 :coalre.network
+                 :coalre.statistics
+                 :coalre.simulator
+                 :coalre.distribution
+                 :coalre.operators">
+
+    <run spec="GPSimulator" nSims="3">
+        <simulationObject id="network_truth" spec="SIRwithReassortment" 
+        fileName="$(filebase).trees" 
+        transmissionRate="3" 
+        recoveryRate="1" 
+        waningImmunityRate="0.0" 
+        reassortmenProbability="1.0" 
+        samplingProbability="0.0107828622874111" 
+        populationSize="10000" 
+        simulationTime="10000" 
+        nSegments="4" minSamples="10">
+            <segmentTree id="seg1tree_truth" spec="Tree"/>
+            <segmentTree id="seg2tree_truth" spec="Tree"/>
+            <segmentTree id="seg3tree_truth" spec="Tree"/>
+            <segmentTree id="seg4tree_truth" spec="Tree"/>
+        </simulationObject>
+
+        <logger spec="beast.base.inference.Logger" fileName="$(filebase).log" logEvery="1">
+            <log idref="network_truth"/>
+        </logger>
+    </run>
+
+</beast>

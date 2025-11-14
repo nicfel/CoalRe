@@ -61,6 +61,7 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
             logHR += Math.log(addProb/(1.0 - addProb));
         }
         
+        
         return logHR;
     }
 
@@ -239,14 +240,14 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
 	        segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
             logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments, segsToDivert, 0.5);
         }
-        
-        // Use resimulation approach instead of simple divertSegments
-        logHR += divertSegmentsWithResimulation(reassortmentEdge, newEdge1, segsToDivert);
-        
         networkEdges.add(reassortmentEdge);
         networkEdges.add(newEdge1);
         networkEdges.add(newEdge2);
 
+        
+        // Use resimulation approach instead of simple divertSegments
+        logHR += divertSegmentsWithResimulation(reassortmentEdge, newEdge1, segsToDivert);
+        
         return logHR;
     }
 
@@ -601,13 +602,11 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
 		Integer[] treeChildNodeList = new Integer[network.getSegmentCount()];
 
 		getTreeNodesDown(sourceEdge, segsToDivert, treeChildNodeList);
-
-		List<NetworkEdge> edgesAdded = new ArrayList<>();
 		
 		// Get network events to determine lineages at different times
 		List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
 
-		logHR += divertSegmentsToAncestors(activeEdges, inactiveEdges, segsToAddList, segsToRemoveList, currentTime, edgesAdded, networkEventList, true, true);
+		logHR += divertSegmentsToAncestors(activeEdges, inactiveEdges, segsToAddList, segsToRemoveList, currentTime, networkEventList, true, true);
 		
 		if (reconnectSegmentTrees(treeChildNodeList, destEdge, segsToDivert))
 			return Double.NEGATIVE_INFINITY;

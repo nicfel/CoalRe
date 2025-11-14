@@ -41,6 +41,7 @@ public class NetworkExchangeAndResimulate extends SubNetworkLeapAndResimulate {
 		} else {
 			logHR = wide(network);
 		}
+		
 		return logHR;
 	}
 

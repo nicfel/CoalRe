@@ -1,0 +1,27 @@
+<itsabeastystatewerein version='2.0' sample='0'>
+<statenode id='network'>(((t5[&amp;segments={0, 1, 2, 3, 4, 5, 6, 7},realCoal=false,segsCarried=8]:1.3477264382486696,(t4[&amp;segments={0, 1, 2, 3, 4, 5, 6, 7},realCoal=false,segsCarried=8]:0.006642191656060281,t2[&amp;segments={0, 1, 2, 3, 4, 5, 6, 7},realCoal=false,segsCarried=8]:0.20664219165606026)[&amp;segments={0, 1, 2, 3, 4, 5, 6, 7},realCoal=true,segsCarried=8]:1.4410842465926093)[&amp;segments={0, 1, 2, 3, 4, 5, 6, 7},realCoal=true,segsCarried=8]:0.0023882879152061776,t3[&amp;segments={0, 1, 2, 3, 4, 5, 6, 7},realCoal=false,segsCarried=8]:1.5501147261638757)[&amp;segments={0, 1, 2, 3, 4, 5, 6, 7},realCoal=true,segsCarried=8]:0.16919614272916728,t1[&amp;segments={0, 1, 2, 3, 4, 5, 6, 7},realCoal=false,segsCarried=8]:1.919310868893043)[&amp;segments={0, 1, 2, 3, 4, 5, 6, 7},realCoal=true,segsCarried=8]:0.0;</statenode>
+<statenode id='tree1'>((4[&amp;dirty=0]:1.3477264382486696,(3[&amp;dirty=0]:0.006642191656060281,1[&amp;dirty=0]:0.20664219165606026)7[&amp;dirty=0]:1.4410842465926093)6[&amp;dirty=0]:0.0023882879152061776,(0[&amp;dirty=0]:0.830595130527801,2[&amp;dirty=0]:0.630595130527801)5[&amp;dirty=0]:0.9195195956360747)8[&amp;dirty=0]:0.0</statenode>
+<statenode id='tree2'>((4[&amp;dirty=0]:1.3477264382486696,(3[&amp;dirty=0]:0.006642191656060281,1[&amp;dirty=0]:0.20664219165606026)7[&amp;dirty=0]:1.4410842465926093)6[&amp;dirty=0]:0.0023882879152061776,(0[&amp;dirty=0]:0.830595130527801,2[&amp;dirty=0]:0.630595130527801)5[&amp;dirty=0]:0.9195195956360747)8[&amp;dirty=0]:0.0</statenode>
+<statenode id='tree3'>((4[&amp;dirty=0]:1.3477264382486696,(3[&amp;dirty=0]:0.006642191656060281,1[&amp;dirty=0]:0.20664219165606026)7[&amp;dirty=0]:1.4410842465926093)6[&amp;dirty=0]:0.0023882879152061776,(0[&amp;dirty=0]:0.830595130527801,2[&amp;dirty=0]:0.630595130527801)5[&amp;dirty=0]:0.9195195956360747)8[&amp;dirty=0]:0.0</statenode>
+<statenode id='tree4'>((4[&amp;dirty=0]:1.3477264382486696,(3[&amp;dirty=0]:0.006642191656060281,1[&amp;dirty=0]:0.20664219165606026)7[&amp;dirty=0]:1.4410842465926093)6[&amp;dirty=0]:0.0023882879152061776,(0[&amp;dirty=0]:0.830595130527801,2[&amp;dirty=0]:0.630595130527801)5[&amp;dirty=0]:0.9195195956360747)8[&amp;dirty=0]:0.0</statenode>
+<statenode id='tree5'>((4[&amp;dirty=0]:1.3477264382486696,(3[&amp;dirty=0]:0.006642191656060281,1[&amp;dirty=0]:0.20664219165606026)7[&amp;dirty=0]:1.4410842465926093)6[&amp;dirty=0]:0.0023882879152061776,(0[&amp;dirty=0]:0.830595130527801,2[&amp;dirty=0]:0.630595130527801)5[&amp;dirty=0]:0.9195195956360747)8[&amp;dirty=0]:0.0</statenode>
+<statenode id='tree6'>((4[&amp;dirty=0]:1.3477264382486696,(3[&amp;dirty=0]:0.006642191656060281,1[&amp;dirty=0]:0.20664219165606026)7[&amp;dirty=0]:1.4410842465926093)6[&amp;dirty=0]:0.0023882879152061776,(0[&amp;dirty=0]:0.830595130527801,2[&amp;dirty=0]:0.630595130527801)5[&amp;dirty=0]:0.9195195956360747)8[&amp;dirty=0]:0.0</statenode>
+<statenode id='tree7'>((4[&amp;dirty=0]:1.3477264382486696,(3[&amp;dirty=0]:0.006642191656060281,1[&amp;dirty=0]:0.20664219165606026)7[&amp;dirty=0]:1.4410842465926093)6[&amp;dirty=0]:0.0023882879152061776,(0[&amp;dirty=0]:0.830595130527801,2[&amp;dirty=0]:0.630595130527801)5[&amp;dirty=0]:0.9195195956360747)8[&amp;dirty=0]:0.0</statenode>
+<statenode id='tree8'>((4[&amp;dirty=0]:1.3477264382486696,(3[&amp;dirty=0]:0.006642191656060281,1[&amp;dirty=0]:0.20664219165606026)7[&amp;dirty=0]:1.4410842465926093)6[&amp;dirty=0]:0.0023882879152061776,(0[&amp;dirty=0]:0.830595130527801,2[&amp;dirty=0]:0.630595130527801)5[&amp;dirty=0]:0.9195195956360747)8[&amp;dirty=0]:0.0</statenode>
+</itsabeastystatewerein>
+<!--
+{"operators":[
+{"id":"oneSegExpo","p":"NaN","accept":0,"reject":0,"acceptFC":0,"rejectFC":0,"rejectIv":0,"rejectOp":0},
+{"id":"AddRemoveAndResimulate","p":"NaN","accept":0,"reject":0,"acceptFC":0,"rejectFC":0,"rejectIv":0,"rejectOp":0},
+{"id":"DivertSegmentAndResimulate","p":"NaN","accept":0,"reject":1,"acceptFC":0,"rejectFC":0,"rejectIv":1,"rejectOp":1},
+{"id":"NetworkScale","p":0.9,"accept":0,"reject":0,"acceptFC":0,"rejectFC":0,"rejectIv":0,"rejectOp":0},
+{"id":"NetworkScaleRootOnly","p":0.8999999999999999,"accept":1,"reject":0,"acceptFC":0,"rejectFC":0,"rejectIv":0,"rejectOp":0},
+{"id":"IntervalsScaler","p":0.8999999999999999,"accept":3,"reject":0,"acceptFC":0,"rejectFC":0,"rejectIv":0,"rejectOp":0},
+{"id":"Narrow","p":1,"accept":0,"reject":0,"acceptFC":0,"rejectFC":0,"rejectIv":0,"rejectOp":0},
+{"id":"Wide","p":1,"accept":0,"reject":0,"acceptFC":0,"rejectFC":0,"rejectIv":0,"rejectOp":0},
+{"id":"ReassortmentSlide","p":1,"accept":1,"reject":0,"acceptFC":0,"rejectFC":0,"rejectIv":0,"rejectOp":0},
+{"id":"resimLeap","p":1,"accept":0,"reject":0,"acceptFC":0,"rejectFC":0,"rejectIv":0,"rejectOp":0},
+{"id":"Leap","p":1,"accept":1,"reject":2,"acceptFC":0,"rejectFC":0,"rejectIv":0,"rejectOp":0},
+{"id":"weighted","p":1,"accept":0,"reject":0,"acceptFC":0,"rejectFC":0,"rejectIv":0,"rejectOp":0}
+]}
+-->

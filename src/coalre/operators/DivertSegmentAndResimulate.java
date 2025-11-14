@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
+public class DivertSegmentAndResimulate extends NetworkOperator {
 
 	public Input<Boolean> divertOneSegmentInput = new Input<>("divertOneSegment",
 			"If true, only one segment is diverted", true);
@@ -40,11 +40,34 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 	String networkBefore ="";
 	int eventsBefore = 0;
 	int eventsAfter = 0;
+	
+	List<NetworkEdge> networkEdges;
+	
+	
+    public double proposal() {
+		double logHR = 0.0;
+
+		if (network.segmentTreesNeedInit) {			
+			System.out.println("restore segment trees in first move");
+			// update all segment trees			
+            for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
+          		network.updateSegmentTree(segmentTrees.get(segmentTreeMap[segIdx]), segmentTreeMap[segIdx]); 
+            
+            network.segmentTreesNeedInit = false;
+			return Double.POSITIVE_INFINITY;
+		}
+		
+		network.startEditing(this);
+		networkEdges = new ArrayList<>(network.getEdges());
+		
+		logHR = networkProposal();
+		
+		return logHR;
+    }
+	
 	@Override
 	public double networkProposal() {
 		double logHR = 0.0;
-//		networkBefore = network.getExtendedNewickVerbose(0).toString();
-//		System.out.println(network.getExtendedNewickVerbose(0));
 		
 		List<Integer> sourceEdges = new ArrayList<>();
 		for (int i = 0; i < networkEdges.size(); i++) {
@@ -87,8 +110,9 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 			logHR += getLogConditionedSubsetProb(destEdge.hasSegments, segsToDivert, 0.5);
 		}
 		
+		
 		int reverseSourceEdgeCount = 0;
-		for (NetworkEdge edge : network.getEdges()){
+		for (NetworkEdge edge : networkEdges){
 			if (edge.childNode.isReassortment() && edge.hasSegments.cardinality()>1){
                 reverseSourceEdgeCount++;
             }
@@ -127,21 +151,16 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 		getTreeNodesDown(sourceEdge, segsToDivert, treeChildNodeList);
 		exitOnError=false;
 
-		List<NetworkEdge> edgesAdded = new ArrayList<>();
 		// Get network events to determine lineages at different times, they will contain any inactive Edges, but not newly added active ones
 		List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
 
-		logHR += divertSegmentsToAncestors(activeEdges, inactiveEdges, segsToAddList, segsToRemoveList, currentTime, edgesAdded, networkEventList, false, false);
-
+		logHR += divertSegmentsToAncestors(activeEdges, inactiveEdges, segsToAddList, segsToRemoveList, currentTime, networkEventList, false, false);
+		
 		
 		if (reconnectSegmentTrees(treeChildNodeList, destEdge, segsToDivert))
 			return Double.NEGATIVE_INFINITY;
 		
 		cleanEmptyEdgesTopDown();
-		
-//		double logPafter = coalescentDistr.calculateLogP();
-		
-//		System.out.println(logHR + " " + (logPafter - logPbefore));
 		
 		
 		return logHR;
@@ -424,11 +443,12 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 			List<NetworkEdge> inactiveEdges, 
 			List<BitSet> segsToAddList, 
 			List<BitSet> segsToRemoveList, 
-			double currentTime, List<NetworkEdge> edgesAdded, List<NetworkEvent> networkEventList, 
+			double currentTime, List<NetworkEvent> networkEventList, 
 			boolean zeroActiveReassortment, boolean zeroInactiveReassortment) {
 		double logHR = 0.0;
 		
 		NetworkEdge rootEdge = network.getRootEdge();
+		List<NetworkEdge> edgesAdded = new ArrayList<>();
 				
 		// now, sample the time to the next reassortment or coalescent event on the active edges,
 		// i.e. essentially simulate the history of these edges and segments until there is nothing left. The
@@ -720,6 +740,8 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 				logHR += edgeTraversalHR;
 			}
 		}
+		
+		networkEdges.addAll(edgesAdded);
 
 		return logHR;
 	}
@@ -1350,11 +1372,11 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 	protected void cleanEmptyEdgesTopDown() {
 
 		// Create a local list of network edges to track during removal
-		List<NetworkEdge> localNetworkEdges = new ArrayList<>(network.getEdges());
+		;
 
 		List<Integer> removableEdges = new ArrayList<>();
-		for (int i = 0; i < localNetworkEdges.size(); i++) {
-			NetworkEdge edge = localNetworkEdges.get(i);
+		for (int i = 0; i < networkEdges.size(); i++) {
+			NetworkEdge edge = networkEdges.get(i);
 			if (!edge.isRootEdge() && edge.childNode.isReassortment()
 					&& edge.parentNode.isCoalescence() && edge.hasSegments.cardinality() == 0) {
 				removableEdges.add(i);
@@ -1365,12 +1387,12 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 		while (removableEdges.size() > 0) {
 			int edgeInd = 0; // deterministically remove edges as their random contribution is already accounted for
 
-			removeEmptyReassortmentEdgeAdapted(localNetworkEdges, localNetworkEdges.get(removableEdges.get(edgeInd)));
+			removeEmptyReassortmentEdgeAdapted(networkEdges, networkEdges.get(removableEdges.get(edgeInd)));
 
 			// Rebuild the list of removable edges
 			removableEdges = new ArrayList<>();
-			for (int i = 0; i < localNetworkEdges.size(); i++) {
-				NetworkEdge edge = localNetworkEdges.get(i);
+			for (int i = 0; i < networkEdges.size(); i++) {
+				NetworkEdge edge = networkEdges.get(i);
 				if (!edge.isRootEdge() && edge.childNode.isReassortment()
 						&& edge.parentNode.isCoalescence() && edge.hasSegments.cardinality() == 0) {
 					removableEdges.add(i);
@@ -1409,6 +1431,10 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 
 		// Update local edges list (same as parent class line 372)
 		localNetworkEdges.remove(secondNodeToRemove.getParentEdges().get(0));
+		
+		networkEdges.remove(secondNodeToRemove.getParentEdges().get(0));
+		networkEdges.remove(edgeToRemove);
+		networkEdges.remove(edgeToRemoveSpouse);
 
 		if (secondNodeToRemove.getParentEdges().get(0).isRootEdge()) {
 			network.setRootEdge(secondEdgeToExtend);
