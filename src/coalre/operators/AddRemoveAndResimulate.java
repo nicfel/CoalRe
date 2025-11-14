@@ -13,15 +13,27 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
     
 	public Input<Boolean> randomlySampleAttachmentEdgeInput = new Input<>("randomlySampleAttachmentEdge",
 			"Randomly sample edge to attach to", true);
+	
+	public Input<Boolean> localMove = new Input<>("localMove",
+			"If true, only reassortment edges that are ancestral to the reassortment event are considered.", false);
+
+	public Input<Integer> edgeDistanceInput = new Input<>("edgeDistance",
+			"Number of edges to traverse when selecting destination edge for local move.", 1);
+	
+	public Input<Double> alphaInput = new Input<>("alpha",
+			"Mean of exponential used for choosing root attachment times.", 1.0);
+	
 		
     CoalescentWithReassortment coalescentDistr;
     
     double addProb = 0.5;
+    private double alpha;
     
     @Override
     public void initAndValidate() {
         super.initAndValidate();
         coalescentDistr = coalescentDistrInput.get();
+        alpha = alphaInput.get();
     }
 
     @Override
@@ -34,10 +46,18 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
 
 
         if (Randomizer.nextDouble()< addProb) {
-    		logHR = addRecombination();        	
+        	if (localMove.get()) {
+        		logHR = addLocalReassortment();
+        	}else {
+        		logHR = addRecombination();
+        	}
         	logHR += Math.log((1.0 - addProb)/addProb);
         }else {
-			logHR = removeRecombination();
+        	if (localMove.get()) {
+        		logHR = removeLocalReassortment();
+        	}else {
+        		logHR = removeRecombination();
+        	}
             logHR += Math.log(addProb/(1.0 - addProb));
         }
         
@@ -338,6 +358,220 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
         return logHR;
     }
 
+    double addLocalReassortment() {
+		double logHR = 0.0;
+		
+		
+		// 1. get all possible source edges		
+		List<NetworkEdge> potentialSourceEdges = networkEdges.stream()
+				.filter(e -> !e.isRootEdge())
+				.filter(e -> e.hasSegments.cardinality() > 1)		
+				.collect(Collectors.toList());
+		
+		// if no source edges, return negative infinity
+		if (potentialSourceEdges.isEmpty())
+			return Double.NEGATIVE_INFINITY;
+		
+		// select source edge and count HR contribution
+		NetworkEdge sourceEdge = potentialSourceEdges.get(Randomizer.nextInt(potentialSourceEdges.size()));
+		logHR -= Math.log(1.0 / potentialSourceEdges.size());
+		
+		// 2.select source time and count HR contribution
+		double newSourceTime = Randomizer.nextDouble() * sourceEdge.getLength() + sourceEdge.childNode.getHeight();
+		logHR -= Math.log(1.0 / sourceEdge.getLength());
+
+		// get all target edges
+		List<NetworkEdge> potentialDestEdges = new ArrayList<>();
+		getTargetEdgesUp(sourceEdge, potentialDestEdges, edgeDistanceInput.get(), newSourceTime);
+        // only keep unique target Edges
+		potentialDestEdges = potentialDestEdges.stream()
+                .distinct()
+                .collect(Collectors.toList());
+
+		if (potentialDestEdges.isEmpty())
+			return Double.NEGATIVE_INFINITY;
+
+		// 3. select dest edge
+        NetworkEdge destEdge = potentialDestEdges.get(Randomizer.nextInt(potentialDestEdges.size()));
+        logHR -= Math.log(1.0/potentialDestEdges.size());
+
+        // 4. select dest time
+        double minTime = Math.max(newSourceTime, destEdge.childNode.getHeight());
+		double newDestTime;
+		if (destEdge.isRootEdge()) {
+			newDestTime = minTime + Randomizer.nextExponential(1.0 / alpha);
+			logHR -= -(1.0 / alpha) * (newDestTime - minTime) + Math.log(1.0 / alpha);
+			
+		} else {
+			newDestTime = Randomizer.nextDouble() * (destEdge.parentNode.getHeight()-minTime) + minTime;
+			logHR -= Math.log(1.0 / (destEdge.parentNode.getHeight()-minTime));
+		}		
+		// 5. Create new reassortment edge
+		
+		logHR += addReassortmentEdge(sourceEdge, newSourceTime, destEdge, newDestTime);
+		if (logHR == Double.NEGATIVE_INFINITY)
+			return Double.NEGATIVE_INFINITY;
+				
+		// 6. Select removable edge - only those that could have been added by local move
+        List<Integer> removableEdges = new ArrayList<>();
+        for (int i = 0; i < networkEdges.size(); i++) {
+            NetworkEdge edge = networkEdges.get(i);
+            if (!edge.isRootEdge() && edge.childNode.isReassortment()
+                    && edge.parentNode.isCoalescence() && edge.hasSegments.cardinality() >= 1) {
+
+                NetworkEdge potentialSourceEdge = getSpouseEdge(edge);
+                NetworkEdge trueDestEdge = getSisterEdge(edge);
+
+                // Check if destEdge is reachable from sourceEdge via delta traversal
+                List<NetworkEdge> reachableEdges = new ArrayList<>();
+                int dist = edgeDistanceInput.get();
+        			getTargetEdgesUp(potentialSourceEdge, reachableEdges, dist, edge.childNode.getHeight());
+
+                boolean isReachable = reachableEdges.contains(trueDestEdge);
+                if (!isReachable && !trueDestEdge.isRootEdge()) {
+                    isReachable = reachableEdges.contains(trueDestEdge.parentNode.getParentEdges().get(0));
+                }
+                if (isReachable) {
+                    removableEdges.add(i);
+                }
+            }
+        }
+        
+        
+        // 7. HR contribution for reverse move for the amount of removable edges
+        logHR += Math.log(1.0/removableEdges.size());
+
+        return logHR;
+	}
+
+	double removeLocalReassortment() {
+		double logHR = 0.0;
+
+		// 1. get all possible removable edges
+        List<Integer> removableEdges = new ArrayList<>();
+        for (int i = 0; i < networkEdges.size(); i++) {
+            NetworkEdge edge = networkEdges.get(i);
+            if (!edge.isRootEdge() && edge.childNode.isReassortment()
+                    && edge.parentNode.isCoalescence() && edge.hasSegments.cardinality() >= 1) {
+
+                NetworkEdge potentialSourceEdge = getSpouseEdge(edge);
+                NetworkEdge trueDestEdge = getSisterEdge(edge);
+
+                // 2. Check if destEdge is reachable from sourceEdge via delta traversal
+                List<NetworkEdge> reachableEdges = new ArrayList<>();
+                int dist = edgeDistanceInput.get();
+        			getTargetEdgesUp(potentialSourceEdge, reachableEdges, dist, edge.childNode.getHeight());
+
+                boolean isReachable = reachableEdges.contains(trueDestEdge);
+                if (!isReachable && !trueDestEdge.isRootEdge()) {
+                    isReachable = reachableEdges.contains(trueDestEdge.parentNode.getParentEdges().get(0));
+                }
+                if (isReachable) {
+                    removableEdges.add(i);
+                }
+            }
+        }
+
+
+        // only keep unique edges
+        if (removableEdges.isEmpty())
+            return Double.NEGATIVE_INFINITY;
+
+        NetworkEdge edgeToRemove = networkEdges.get(removableEdges.get(Randomizer.nextInt(removableEdges.size())));
+        logHR -= Math.log(1.0/(removableEdges.size()));
+
+
+
+		// 3. Extract source/dest information
+        double sourceTime = edgeToRemove.childNode.getHeight();
+        NetworkEdge sourceEdge = edgeToRemove.childNode.getChildEdges().get(0);
+        NetworkEdge destEdge = getSisterEdge(edgeToRemove);
+        if (destEdge.childNode == edgeToRemove.childNode)
+            destEdge = sourceEdge;
+        double destTime = edgeToRemove.parentNode.getHeight();
+
+		logHR += removeReassortmentEdge(edgeToRemove);
+
+		if (logHR == Double.NEGATIVE_INFINITY)
+			return Double.NEGATIVE_INFINITY;
+
+
+		// 4. get all possible reverse target edges
+        List<NetworkEdge> reverseTargetEdges = new ArrayList<>();
+    	getTargetEdgesUp(sourceEdge, reverseTargetEdges, edgeDistanceInput.get(), sourceTime);
+        reverseTargetEdges = reverseTargetEdges.stream()
+                .distinct()
+                .collect(Collectors.toList());
+		// 6. HR contribution for reverse move for the amount of reverse target edges
+        logHR += Math.log(1.0 / reverseTargetEdges.size());
+		// 7. HR contribution for reverse move for the amount of source edge length
+        logHR += Math.log(1.0 / sourceEdge.getLength());
+		// 8. HR contribution for reverse move for the amount of dest edge height
+        double minTime = Math.max(destEdge.childNode.getHeight(), sourceTime);
+		if (destEdge.isRootEdge()) {
+			logHR += -(1.0 / alpha) * (destTime - minTime) + Math.log(1.0 / alpha);
+		} else {
+			logHR += Math.log(1.0 / (destEdge.parentNode.getHeight()-minTime));
+		}
+
+		// 9. get the possible desEdges for reverse calculation
+		int nPossibleDestEdges = (int) networkEdges.stream()
+				.filter(e -> !e.isRootEdge())
+				.filter(e -> e.hasSegments.cardinality() > 1)
+                .count();
+		logHR += Math.log(1.0 / nPossibleDestEdges);
+
+		return logHR;
+	}
+
+	
+    // Traverse up the network (forward in time) - only direct ancestors
+    private void getTargetEdgesUp(NetworkEdge currentEdge,
+                                List<NetworkEdge> targetEdges, int remainingEdgeCount, double minHeight) {
+
+        remainingEdgeCount--;
+
+        // Check if we've hit a root edge (parentNode is null)
+        if (currentEdge.isRootEdge()) {
+            // Include root edge as potential target
+            targetEdges.add(currentEdge);
+            return;
+        }
+
+        if (remainingEdgeCount < 0 || currentEdge.parentNode.getHeight() < minHeight) {
+            return;
+        }
+
+        targetEdges.add(currentEdge);
+
+		if (currentEdge.parentNode.isCoalescence()) {
+			NetworkEdge sisterEdge = getSisterEdge(currentEdge);
+			getTargetEdgesDown(sisterEdge, targetEdges, remainingEdgeCount, minHeight);
+			getTargetEdgesUp(currentEdge.parentNode.getParentEdges().get(0), targetEdges, remainingEdgeCount, minHeight);
+		}else {
+			getTargetEdgesUp(currentEdge.parentNode.getParentEdges().get(0), targetEdges, remainingEdgeCount, minHeight);
+			getTargetEdgesUp(currentEdge.parentNode.getParentEdges().get(1), targetEdges, remainingEdgeCount, minHeight);
+		}
+
+    }
+    
+	private void getTargetEdgesDown(NetworkEdge currentEdge,
+            List<NetworkEdge> targetEdges, int remainingEdgeCount, double minHeight) {
+        remainingEdgeCount--;
+
+        if (currentEdge.isRootEdge() || remainingEdgeCount < 0 || currentEdge.parentNode.getHeight() < minHeight) {
+            return;
+        }
+
+        targetEdges.add(currentEdge);
+        if (currentEdge.childNode.isCoalescence()) {
+			getTargetEdgesDown(currentEdge.childNode.getChildEdges().get(0), targetEdges, remainingEdgeCount, minHeight);
+			getTargetEdgesDown(currentEdge.childNode.getChildEdges().get(1), targetEdges, remainingEdgeCount, minHeight);
+        }else if (currentEdge.childNode.isReassortment()) {
+        	getTargetEdgesDown(currentEdge.childNode.getChildEdges().get(0), targetEdges, remainingEdgeCount, minHeight);
+        }
+
+	}
 
     
     /**

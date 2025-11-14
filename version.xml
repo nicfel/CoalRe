@@ -43,12 +43,15 @@
         <provider classname="coalre.operators.BranchUniform"/>
         <provider classname="coalre.operators.DivertSegmentOperator"/>
         <provider classname="coalre.operators.DivertSegmentAndResimulate"/>
+        <provider classname="coalre.operators.AddRemoveAndResimulate"/>
         <provider classname="coalre.operators.GibbsOperatorAboveSegmentRoots"/>
         <provider classname="coalre.operators.MultiTipDatesRandomWalker"/>
         <provider classname="coalre.operators.NetworkExchange"/>
+        <provider classname="coalre.operators.NetworkExchangeAndResimulate"/>
         <provider classname="coalre.operators.NetworkScaleOperator"/>
         <provider classname="coalre.operators.SubNetworkSlide"/>
         <provider classname="coalre.operators.SubNetworkLeap"/>
+        <provider classname="coalre.operators.SubNetworkLeapAndResimulate"/>
         <provider classname="coalre.operators.NetworkSPR"/>
         <provider classname="coalre.operators.SubTreeSlideOnNetwork"/>
         <provider classname="coalre.operators.TipReheight"/>
