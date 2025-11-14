@@ -3,6 +3,7 @@ package coalre.operators;
 import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.util.Randomizer;
+import coalre.distribution.NetworkEvent;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
@@ -21,15 +22,15 @@ import java.util.stream.Collectors;
  * Implements the subnet slide move with resimulation. General workflow:
  * 1. Choose an edge to move and a child it will carry
  * 2. Make a copy of subnet starting with this child edge
- * 3. Attach a new coppy to the new parent with randomly drawn height
- * 4. Rearrange segments
+ * 3. Attach a new copy to the new parent with randomly drawn height
+ * 4. Resimulate segments forward using coalescent with reassortment
  * 5. Delete subnet starting at the child in the old position
  */
-@Description("Moves the height of an internal node along the branch. " +
+@Description("Moves the height of an internal node along the branch using resimulation. " +
         "If it moves up, it can exceed the root and become a new root. " +
         "If it moves down, it may need to make a choice which branch to " +
         "slide down into.")
-public class SubNetworkLeap extends DivertSegmentOperator {
+public class SubNetworkLeapAndResimulate extends DivertSegmentAndResimulate {
 
     final public Input<Double> sizeInput = new Input<>("size", "size of the slide, default 1.0", 1.0);
     final public Input<Boolean> gaussianInput = new Input<>("gaussian", "Gaussian (=true=default) or uniform delta", true);
@@ -60,7 +61,7 @@ public class SubNetworkLeap extends DivertSegmentOperator {
 	
 	@Override
 	public double networkProposal() {
-		try {
+//		try {
 			if (segmentRootOnlyInput.get()) {
 				
 //				System.out.println(network);
@@ -74,10 +75,10 @@ public class SubNetworkLeap extends DivertSegmentOperator {
 				double logHR = networkProposalWeighted();
 				return logHR;
 			}
-		} catch (Exception e) {
-			System.err.println(e.getMessage());
-			return Double.NEGATIVE_INFINITY;
-		}
+//		} catch (Exception e) {
+//			System.err.println(e.getMessage());
+//			return Double.NEGATIVE_INFINITY;
+//		}
 	}
 
 	public double networkProposalRandom() {
@@ -140,7 +141,6 @@ public class SubNetworkLeap extends DivertSegmentOperator {
       				        	
         List<NetworkEdge> potentialNewTargets = targetEdges.keySet().stream().collect(Collectors.toList());        
 		NetworkEdge jEdge = potentialNewTargets.get(Randomizer.nextInt(potentialNewTargets.size()));
-		
 		if (jEdge == iParent.getParentEdges().get(0) || jEdge == getSisterEdge(iEdge)) {
 			// change the height of jParent, but no topological changes
 			iParent.setHeight(targetEdges.get(jEdge));
@@ -148,6 +148,7 @@ public class SubNetworkLeap extends DivertSegmentOperator {
 				for (int i = 0; i < iParent.segmentIndices.length; i++) {
 					if (iParent.getChildEdges().get(0).hasSegments.get(i)
 							&& iParent.getChildEdges().get(1).hasSegments.get(i)) {
+//						System.out.println(iParent.getHeight());
 						segmentTrees.get(i).getNode(iParent.segmentIndices[i]).setHeight(targetEdges.get(jEdge));
 					}	
 				}
@@ -155,54 +156,8 @@ public class SubNetworkLeap extends DivertSegmentOperator {
 		}else {
     		// keep the current segments of edge i 
     		final BitSet iSegs = (BitSet) iEdge.hasSegments.clone();
-    		//topology will change
-    		Integer[] treeChildNodeList = new Integer[network.getSegmentCount()];
-    		getTreeNodesDown(iEdge, iSegs, treeChildNodeList);
-    		// remove iSegs from iEdge
-    		logHR += removeSegmentsFromAncestors(iEdge, iSegs);	
-    		
-    		// check if parent edge is the root edge
-			NetworkEdge parentEdge = iParent.getParentEdges().get(0);
-    		if (parentEdge.isRootEdge()) {
-	    		NetworkEdge sibEdge = getSisterEdge(iEdge);
-	    		iParent.removeChildEdge(sibEdge);
-	    		network.setRootEdge(sibEdge);
-	    		
-	    		NetworkNode newGrandParent = jEdge.parentNode;
-	    		newGrandParent.removeChildEdge(jEdge);
-	    		newGrandParent.addChildEdge(parentEdge);
-	    		iParent.addChildEdge(jEdge);
-	    		parentEdge.hasSegments = (BitSet) jEdge.hasSegments.clone();
-    		}else {
-    			NetworkNode grandParent = parentEdge.parentNode;	    				    			
-	    		NetworkEdge sibEdge = getSisterEdge(iEdge);
-	    		
-	    		// reattach the sibling edge to the grandparent
-	    		grandParent.removeChildEdge(parentEdge);
-	    		
-	    		iParent.removeChildEdge(sibEdge);		    		
-	    		grandParent.addChildEdge(sibEdge);
-	    		
-	    		// ensure that the parent Edge has the same segments as jEdge
-	    		parentEdge.hasSegments = (BitSet) jEdge.hasSegments.clone();
-	    		 
-	    		// readd to jEdge
-	    		if (!jEdge.isRootEdge()) {
-		    		NetworkNode newGrandParent = jEdge.parentNode;
-		    		newGrandParent.removeChildEdge(jEdge);
-		    		newGrandParent.addChildEdge(parentEdge);
-		    		iParent.addChildEdge(jEdge);	
-	    		}else {
-		    		iParent.addChildEdge(jEdge);
-		    		network.setRootEdge(parentEdge);
-	    		}
-    		}  
-    		iEdge.parentNode.setHeight(targetEdges.get(jEdge));
-    		logHR -= addSegmentsToAncestors(iEdge, iSegs);
-    		
-    		
-    		if (reconnectSegmentTrees(treeChildNodeList, iEdge, iSegs))
-    			return Double.NEGATIVE_INFINITY;
+    		// Use resimulation approach instead of simple add/remove
+    		logHR += divertSegmentsWithResimulation(iEdge, jEdge, iSegs, targetEdges.get(jEdge));
     		
 		}
 		
@@ -242,6 +197,7 @@ public class SubNetworkLeap extends DivertSegmentOperator {
 		logHR -= Math.log(1.0/sizeBefore);  // Forward
 		logHR += Math.log(1.0/sizeAfter);  // Reverse
 							    
+//		System.out.println("");
 		return logHR;
 	}
 	
@@ -338,54 +294,12 @@ public class SubNetworkLeap extends DivertSegmentOperator {
 		}else {
     		// keep the current segments of edge i 
     		final BitSet iSegs = (BitSet) iEdge.hasSegments.clone();
-    		//topology will change
+    		//topology will change - use resimulation approach
     		Integer[] treeChildNodeList = new Integer[network.getSegmentCount()];
     		getTreeNodesDown(iEdge, iSegs, treeChildNodeList);
-    		// remove iSegs from iEdge
-    		logHR += removeSegmentsFromAncestors(iEdge, iSegs);	
     		
-    		// check if parent edge is the root edge
-			NetworkEdge parentEdge = iParent.getParentEdges().get(0);
-    		if (parentEdge.isRootEdge()) {
-	    		NetworkEdge sibEdge = getSisterEdge(iEdge);
-	    		iParent.removeChildEdge(sibEdge);
-	    		network.setRootEdge(sibEdge);
-	    		
-	    		NetworkNode newGrandParent = jEdge.parentNode;
-	    		newGrandParent.removeChildEdge(jEdge);
-	    		newGrandParent.addChildEdge(parentEdge);
-	    		iParent.addChildEdge(jEdge);
-	    		parentEdge.hasSegments = (BitSet) jEdge.hasSegments.clone();
-    		}else {
-    			NetworkNode grandParent = parentEdge.parentNode;	    				    			
-	    		NetworkEdge sibEdge = getSisterEdge(iEdge);
-	    		
-	    		// reattach the sibling edge to the grandparent
-	    		grandParent.removeChildEdge(parentEdge);
-	    		
-	    		iParent.removeChildEdge(sibEdge);		    		
-	    		grandParent.addChildEdge(sibEdge);
-	    		
-	    		// ensure that the parent Edge has the same segments as jEdge
-	    		parentEdge.hasSegments = (BitSet) jEdge.hasSegments.clone();
-	    		 
-	    		// readd to jEdge
-	    		if (!jEdge.isRootEdge()) {
-		    		NetworkNode newGrandParent = jEdge.parentNode;
-		    		newGrandParent.removeChildEdge(jEdge);
-		    		newGrandParent.addChildEdge(parentEdge);
-		    		iParent.addChildEdge(jEdge);	
-	    		}else {
-		    		iParent.addChildEdge(jEdge);
-		    		network.setRootEdge(parentEdge);
-	    		}
-    		}  
-    		iEdge.parentNode.setHeight(targetEdges.get(jEdge));
-    		logHR -= addSegmentsToAncestors(iEdge, iSegs);
-    		
-    		
-    		if (reconnectSegmentTrees(treeChildNodeList, iEdge, iSegs))
-    			return Double.NEGATIVE_INFINITY;
+    		// Use resimulation approach instead of simple add/remove
+    		logHR += divertSegmentsWithResimulation(iEdge, jEdge, iSegs, targetEdges.get(jEdge));
     		
 		}
 		maxcount = 0; // should not be necessary TODO: investigate why this is needed
@@ -488,54 +402,12 @@ public class SubNetworkLeap extends DivertSegmentOperator {
 		}else {
     		// keep the current segments of edge i 
     		final BitSet iSegs = (BitSet) iEdge.hasSegments.clone();
-    		//topology will change
+    		//topology will change - use resimulation approach
     		Integer[] treeChildNodeList = new Integer[network.getSegmentCount()];
     		getTreeNodesDown(iEdge, iSegs, treeChildNodeList);
-    		// remove iSegs from iEdge
-    		logHR += removeSegmentsFromAncestors(iEdge, iSegs);	
     		
-    		// check if parent edge is the root edge
-			NetworkEdge parentEdge = iParent.getParentEdges().get(0);
-    		if (parentEdge.isRootEdge()) {
-	    		NetworkEdge sibEdge = getSisterEdge(iEdge);
-	    		iParent.removeChildEdge(sibEdge);
-	    		network.setRootEdge(sibEdge);
-	    		
-	    		NetworkNode newGrandParent = jEdge.parentNode;
-	    		newGrandParent.removeChildEdge(jEdge);
-	    		newGrandParent.addChildEdge(parentEdge);
-	    		iParent.addChildEdge(jEdge);
-	    		parentEdge.hasSegments = (BitSet) jEdge.hasSegments.clone();
-    		}else {
-    			NetworkNode grandParent = parentEdge.parentNode;	    				    			
-	    		NetworkEdge sibEdge = getSisterEdge(iEdge);
-	    		
-	    		// reattach the sibling edge to the grandparent
-	    		grandParent.removeChildEdge(parentEdge);
-	    		
-	    		iParent.removeChildEdge(sibEdge);		    		
-	    		grandParent.addChildEdge(sibEdge);
-	    		
-	    		// ensure that the parent Edge has the same segments as jEdge
-	    		parentEdge.hasSegments = (BitSet) jEdge.hasSegments.clone();
-	    		 
-	    		// readd to jEdge
-	    		if (!jEdge.isRootEdge()) {
-		    		NetworkNode newGrandParent = jEdge.parentNode;
-		    		newGrandParent.removeChildEdge(jEdge);
-		    		newGrandParent.addChildEdge(parentEdge);
-		    		iParent.addChildEdge(jEdge);	
-	    		}else {
-		    		iParent.addChildEdge(jEdge);
-		    		network.setRootEdge(parentEdge);
-	    		}
-    		}  
-    		iEdge.parentNode.setHeight(targetEdges.get(jEdge));
-    		logHR -= addSegmentsToAncestors(iEdge, iSegs);
-    		
-    		
-    		if (reconnectSegmentTrees(treeChildNodeList, iEdge, iSegs))
-    			return Double.NEGATIVE_INFINITY;
+    		// Use resimulation approach instead of simple add/remove
+    		logHR += divertSegmentsWithResimulation(iEdge, jEdge, iSegs, targetEdges.get(jEdge));
     		
 		}
 		
@@ -566,7 +438,6 @@ public class SubNetworkLeap extends DivertSegmentOperator {
 		return logHR;
 	}
 	
-
 
 	 
     private NetworkEdge getRandomSegmentRootEdge(int segment, NetworkEdge e) {
@@ -779,6 +650,91 @@ public class SubNetworkLeap extends DivertSegmentOperator {
 		return false;
 	}
 
+	/**
+	 * Divert segments from sourceEdge to destEdge using resimulation approach.
+	 * This method handles the topological changes and resimulates the history forward.
+	 */
+	protected double divertSegmentsWithResimulation(NetworkEdge sourceEdge, NetworkEdge destEdge, BitSet segsToDivert, double newHeight) {
+		double logHR = 0.0;
+		
+
+		// Get network events to determine lineages at different times
+		List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
+				
+        // make a temporary new node on the source edge that is below the new height
+        NetworkNode sourceNode = new NetworkNode();
+        NetworkNode destNode = new NetworkNode();
+        NetworkNode oldSourceParent = sourceEdge.parentNode;
+        double sourceHeight = Math.min(newHeight, sourceEdge.parentNode.getHeight())+sourceEdge.childNode.getHeight();
+        
+        sourceNode.setHeight(sourceHeight/2);
+        destNode.setHeight(newHeight);
+        
+        NetworkEdge newEdgeLeft = new NetworkEdge();
+        NetworkEdge newEdgeRight = new NetworkEdge();
+        NetworkEdge newDestChildEdge = new NetworkEdge();
+        newDestChildEdge.hasSegments = (BitSet) destEdge.hasSegments.clone();
+        newEdgeLeft.hasSegments = (BitSet) sourceEdge.hasSegments.clone();
+        newEdgeRight.hasSegments = new BitSet();
+        
+        NetworkNode destChild = destEdge.childNode;
+        destChild.removeParentEdge(destEdge);
+        destChild.addParentEdge(newDestChildEdge);
+        
+        
+        oldSourceParent.removeChildEdge(sourceEdge);
+        oldSourceParent.addChildEdge(newEdgeLeft);
+
+        sourceNode.addParentEdge(newEdgeLeft);
+        sourceNode.addParentEdge(newEdgeRight);
+        destNode.addChildEdge(newDestChildEdge);        
+        destNode.addChildEdge(newEdgeRight);
+        destNode.addParentEdge(destEdge);
+        sourceNode.addChildEdge(sourceEdge);
+        
+
+        
+        // Prepare for resimulation
+		BitSet segsToAdd = (BitSet) segsToDivert.clone();
+		List<NetworkEdge> activeEdges = new ArrayList<>();
+		List<BitSet> segsToAddList = new ArrayList<>();
+		
+		List<NetworkEdge> inactiveEdges = new ArrayList<>();
+		List<BitSet> segsToRemoveList = new ArrayList<>();
+		
+		// Track tree nodes before removal
+		Integer[] treeChildNodeList = new Integer[network.getSegmentCount()];
+		getTreeNodesDown(sourceEdge, segsToDivert, treeChildNodeList);
+
+        
+		
+		// Set up for resimulation
+		activeEdges.add(newEdgeRight);
+		segsToAddList.add(segsToAdd);
+		
+		inactiveEdges.add(newEdgeLeft);
+		segsToRemoveList.add((BitSet) segsToDivert.clone());
+		
+		// Track the current time (start at the bottom of the lowest edge)
+		double currentTime = sourceNode.getHeight();
+		
+		List<NetworkEdge> edgesAdded = new ArrayList<>();
+		
+		
+		// Use resimulation approach
+		logHR += divertSegmentsToAncestors(activeEdges, inactiveEdges, segsToAddList, segsToRemoveList, 
+				currentTime, edgesAdded, networkEventList, true, true);
+
+		if (reconnectSegmentTrees(treeChildNodeList, newEdgeRight, segsToDivert))
+			return Double.NEGATIVE_INFINITY;
+		
+
+		cleanEmptyEdgesTopDown();
+		
+
+		return logHR;
+	}
+
     
     /**
      * automatic parameter tuning *
@@ -834,3 +790,4 @@ public class SubNetworkLeap extends DivertSegmentOperator {
         } else return "";
     }
 }
+

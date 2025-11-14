@@ -27,6 +27,9 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 	@Override
 	public void initAndValidate() {
 		super.initAndValidate();
+		// set the value of lambda to be 0 in the super class
+		
+		
 		if (coalescentDistrInput.get() != null) {
 			coalescentDistr = coalescentDistrInput.get();
 		}
@@ -128,7 +131,7 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 		// Get network events to determine lineages at different times, they will contain any inactive Edges, but not newly added active ones
 		List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
 
-		logHR += divertSegmentsToAncestors(activeEdges, inactiveEdges, segsToAddList, segsToRemoveList, currentTime, edgesAdded, networkEventList);
+		logHR += divertSegmentsToAncestors(activeEdges, inactiveEdges, segsToAddList, segsToRemoveList, currentTime, edgesAdded, networkEventList, false, false);
 
 		
 		if (reconnectSegmentTrees(treeChildNodeList, destEdge, segsToDivert))
@@ -409,13 +412,20 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 	double val2 = 0.0;
 	/**
 	 * Add segments to this edge and ancestors, potentially sampling new reassortment events.
+	 * @param c 
+	 * @param b 
 	 *
 	 * @param edge      edge at which to start addition
 	 * @param segsToAdd segments to add to the edge and ancestors
 	 * @param eventTimes 
 	 * @return log probability of operation
 	 */
-	protected double divertSegmentsToAncestors(List<NetworkEdge> activeEdges, List<NetworkEdge> inactiveEdges, List<BitSet> segsToAddList, List<BitSet> segsToRemoveList, double currentTime, List<NetworkEdge> edgesAdded, List<NetworkEvent> networkEventList) {
+	protected double divertSegmentsToAncestors(List<NetworkEdge> activeEdges, 
+			List<NetworkEdge> inactiveEdges, 
+			List<BitSet> segsToAddList, 
+			List<BitSet> segsToRemoveList, 
+			double currentTime, List<NetworkEdge> edgesAdded, List<NetworkEvent> networkEventList, 
+			boolean zeroActiveReassortment, boolean zeroInactiveReassortment) {
 		double logHR = 0.0;
 		
 		NetworkEdge rootEdge = network.getRootEdge();
@@ -424,7 +434,6 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 		// i.e. essentially simulate the history of these edges and segments until there is nothing left. The
 		// goal is to avoid the creation of empty
 		while (!activeEdges.isEmpty() || !inactiveEdges.isEmpty()) {
-			
 			// check if the only active edge is the root edge
 			if (activeEdges.size() == 1 && activeEdges.get(0) == rootEdge && inactiveEdges.isEmpty()) {
 				// simply add the segments to the root edge and finish
@@ -443,15 +452,22 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 			int nextEventIndex = -1;
 			int nextInactiveEventIndex = -1;
 			for (int i = 0; i < activeEdges.size(); i++) {
-				if (!activeEdges.get(i).hasSegments.isEmpty()){
+				if (!activeEdges.get(i).hasSegments.isEmpty() || zeroActiveReassortment){
 					int m = activeEdges.get(i).hasSegments.cardinality();
 					int k = segsToAddList.get(i).cardinality();
 
-					// Probablity of observable reassortment for m segments 
-					// already on the edge that didn't reassort, k being added					
-					double obsProb = 2.0 * (Math.pow(0.5, m)*(1-Math.pow(0.5, k)));
-					
-					reassortmentObsProb[i] = obsProb;
+//					// Check if edge is also being removed from (both active and inactive)
+//					if (inactiveEdges.contains(activeEdges.get(i))) {
+//						m -= segsToRemoveList.get(inactiveEdges.indexOf(activeEdges.get(i))).cardinality();
+////						if (m==0) {
+////							reassortmentObsProb[i] = 1.0 - 2.0 * Math.pow(0.5, k);
+////						}else {
+//							reassortmentObsProb[i] = 2.0 * (Math.pow(0.5, m)*(1-Math.pow(0.5, k)));
+////						}
+//					} else {
+						reassortmentObsProb[i] = 2.0 * (Math.pow(0.5, m)*(1-Math.pow(0.5, k)));
+//					}
+
 					totalReassortmentProb += reassortmentObsProb[i];
 
 					if (!activeEdges.get(i).isRootEdge() &&  timeToNextEdgeEvent > activeEdges.get(i).parentNode.getHeight()) {
@@ -481,13 +497,26 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 					
 				// check if the lineage would be empty after removing the segments
 				if (inactiveEdges.get(i).hasSegments.cardinality() == segsToRemoveList.get(i).cardinality()) {
-                    negLines++;
-                    excludedEdges.add(inactiveEdges.get(i));
-					int nSegs = segsToRemoveList.get(i).cardinality();
-					reassortmentObsProbInactive[i] = 1.0 - 2.0 * Math.pow(0.5, nSegs);
+					int k = segsToRemoveList.get(i).cardinality();
+					if (activeEdges.contains(inactiveEdges.get(i))) { 
+						// the edge is simoultaneously being filled with new segments that can only undergo their seperate reassortment events.
+						int m = segsToAddList.get(activeEdges.indexOf(inactiveEdges.get(i))).cardinality();
+	                    reassortmentObsProbInactive[i] = 2.0 * (Math.pow(0.5, m)*(1-Math.pow(0.5, k)));
+					}else { // truly inactive
+	                    negLines++;
+	                    excludedEdges.add(inactiveEdges.get(i));
+						reassortmentObsProbInactive[i] = 1.0 - 2.0 * Math.pow(0.5, k);
+					}
 					totalReverseReassortmentProb += reassortmentObsProbInactive[i];
 				}else {
 					int m = inactiveEdges.get(i).hasSegments.cardinality();
+
+					// Check if edge is also being added to (both active and inactive)
+					if (activeEdges.contains(inactiveEdges.get(i))) {
+						// the edge is simoultaneously being filled with other segments
+						m += segsToAddList.get(activeEdges.indexOf(inactiveEdges.get(i))).cardinality();
+					}
+
 					int k = segsToRemoveList.get(i).cardinality();
 					// reverse reassortment: Probability of observable reassortment for m segments
 					// that will be on the edge after removing k segments, but none
@@ -497,10 +526,12 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 					totalReverseReassortmentProb += obsProb;
 				}
 			}
-			
 			// Sample time to next reassortment event
 			double timeToNextReassortment = Double.POSITIVE_INFINITY;
-			if (totalReassortmentProb > 0) {
+			
+			// clean up if there is supposed to be zero active or inactive reassortment, meaning that
+			// until the first node is reached, we shouldn't allow for new branches
+			if (totalReassortmentProb > 0 && !zeroActiveReassortment) {
 	            if (coalescentDistr.timeVaryingReassortmentRates!= null) {
 	                double currentTransformedReaTime = coalescentDistr.timeVaryingReassortmentRates.getIntensity(currentTime);
 	                double transformedTimeToNextRea = Randomizer.nextExponential(totalReassortmentProb);
@@ -541,11 +572,17 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 						reverseCoalRate =  negLines * (negLines - 1) + negLines * (prevEvent.lineages - negLines);
 																		
 						// Sample coalescence time in this interval
+						if (zeroActiveReassortment) {
+							coalRate = 0.0;
+						}
+						if (zeroInactiveReassortment) {
+							reverseCoalRate = 0.0;
+						}
 						double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(checkTime);
 						double transformedTimeToNextCoal = Randomizer.nextExponential(coalRate);
 						double coalescenceTime = coalescentDistr.populationFunction.getInverseIntensity(
 								transformedTimeToNextCoal + currentTransformedTime);
-						
+												
 						// calculate the hastings ratio contribution from here until min(event.time, stopTime)
 						double minNextTime = Math.min(coalescenceTime, Math.min(event.time, stopTime));
 						
@@ -578,7 +615,8 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 //					coalRate = 0.5 * coalLines * (totalLineages - 1);
 					
 					coalRate =  coalLines * (coalLines - 1) + coalLines * 1;
-					
+					if (zeroActiveReassortment)
+						coalRate = 0.0;
 
 					double startTime = Math.max(checkTime, network.getRootEdge().childNode.getHeight());
 					
@@ -607,11 +645,31 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 					}
 				}
 			}
+
+			
+//			System.out.println(currentTime + " " + logHR + " "+ zeroActiveReassortment + " " + zeroInactiveReassortment + " " + timeToNextCoalescence + " " + timeToNextReassortment + " " + timeToNextEdgeEvent);
+//			System.out.println(Arrays.toString(reassortmentObsProbInactive) + " " + Arrays.toString(reassortmentObsProb));
+//			System.out.println(nextEventIndex + " " + nextInactiveEventIndex);
+			if (zeroActiveReassortment) {
+				totalReassortmentProb = 0.0;
+				if (nextInactiveEventIndex == -1) {
+					zeroActiveReassortment = false;
+				}
+			}
+			if (zeroInactiveReassortment) {
+				totalReverseReassortmentProb = 0.0;
+				if (nextInactiveEventIndex != -1) {
+					zeroInactiveReassortment = false;
+				}
+			}
+
+			
 			
 			// Determine which event happens first
 			double timeUntilNextEvent = Math.min(Math.min(timeToNextCoalescence, timeToNextReassortment),
 					timeToNextEdgeEvent - currentTime);
-
+//			System.out.println(zeroActiveReassortment + " " + zeroInactiveReassortment + " " + coalLines + " " + negLines);
+//			System.out.println(totalReassortmentProb + " " + totalReverseReassortmentProb + " " + logHR + " " + currentTime + " " + (currentTime + timeUntilNextEvent));
 			// Store the previous and new event times for logHR calculation
 			double prevTime = currentTime;
 			double eventTime = currentTime + timeUntilNextEvent;
@@ -636,7 +694,8 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 					logHR += reassortSurvRev;
 				}
 			}
-			
+//			System.out.println("logHR "+logHR);
+
 
 			// Determine what type of event occurred and handle it
 			if (timeUntilNextEvent == timeToNextCoalescence) {
@@ -888,10 +947,21 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 		BitSet segsToStay = new BitSet();
 		BitSet segsToGo = new BitSet();
 		
-		// Forward proposal probability: For each segment, choose a parent at random
+		NetworkEdge parentToStay = new NetworkEdge();
+		parentToStay.hasSegments = (BitSet) activeEdges.get(reassortEdgeIdx).hasSegments.clone();
+		
+		
+		int segsBeingRemoved = 0;
+		if (inactiveEdges.contains(activeEdges.get(reassortEdgeIdx))){
+			int idx = inactiveEdges.indexOf(activeEdges.get(reassortEdgeIdx));
+			activeEdges.get(reassortEdgeIdx).hasSegments.andNot(segsToRemoveList.get(idx));
+			inactiveEdges.set(idx, parentToStay);
+			segsBeingRemoved = segsToRemoveList.get(idx).cardinality();
+		}
 
+		
 		// Sample segments with 0.5 probability each, conditional on at least one on each side
-		if (activeEdges.get(reassortEdgeIdx).hasSegments.isEmpty()) {
+		if (activeEdges.get(reassortEdgeIdx).hasSegments.isEmpty() && segsBeingRemoved == 0) {
 			do {
 				segsToStay.clear();
 				segsToGo.clear();
@@ -923,14 +993,11 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 					}
 				}
 			} while (segsToGo.cardinality() == 0);
-			int m = activeEdges.get(reassortEdgeIdx).hasSegments.cardinality();
 			int k = segsToReassort.cardinality();
 
 			// Forward proposal: k segments randomly assigned, conditioned on at least one going
 			// Base: -k*log(0.5), Conditioning: +log(2^k - 1)
 			logHR -= k*Math.log(Math.pow(2,  k-1)/(Math.pow(2,k)-1));
-			
-//			logHR -= k*Math.log(0.5) + Math.log(Math.pow(2.0, k) - 1.0);
 			
 		}
 
@@ -938,10 +1005,7 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 		NetworkNode newGrandParent = activeEdges.get(reassortEdgeIdx).parentNode;
 		NetworkNode reassortmentNode = new NetworkNode();
 		reassortmentNode.setHeight(currentTime);
-
-		NetworkEdge parentToStay = new NetworkEdge();
-		parentToStay.hasSegments = (BitSet) activeEdges.get(reassortEdgeIdx).hasSegments.clone();
-
+		
 		if (newGrandParent!=null) {
 			newGrandParent.removeChildEdge(activeEdges.get(reassortEdgeIdx));
 			newGrandParent.addChildEdge(parentToStay);
@@ -956,15 +1020,6 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 		reassortmentNode.addParentEdge(parentToStay);
 		reassortmentNode.addParentEdge(parentToGo);
 		reassortmentNode.addChildEdge(activeEdges.get(reassortEdgeIdx));
-		
-		
-		if (inactiveEdges.contains(activeEdges.get(reassortEdgeIdx))){
-			int idx = inactiveEdges.indexOf(activeEdges.get(reassortEdgeIdx));
-			activeEdges.get(reassortEdgeIdx).hasSegments.andNot(segsToRemoveList.get(idx));
-			inactiveEdges.set(idx, parentToStay);
-		}
-
-
 
 		// replace the active edge with the parentToStay edge
 		if (segsToStay.isEmpty()) {
@@ -1055,6 +1110,10 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 			}
 			// Forward proposal probability: For each segment, choose a parent at random
 			logHR -= Math.log(0.5) * segsToAddList.get(idx).cardinality();
+			
+			edge.hasSegments.or(segsToAddList.get(idx));
+			activeEdges.remove(idx);
+			segsToAddList.remove(idx);
 
 		}
 		
@@ -1081,12 +1140,12 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 				// Base: +k*log(0.5), Conditioning: -log(2^k - 2)
 				logHR += segsCard * Math.log(0.5);
 
-			}else if (segsToRemoveLeft.cardinality()==edge.parentNode.getParentEdges().get(0).hasSegments.cardinality()){ // move creates one empty parent
+			}else if (segsToRemoveLeft.cardinality()==edge.parentNode.getParentEdges().get(0).hasSegments.cardinality() && segsToGoLeft.isEmpty()){ // move creates one empty parent
 				createdEmptyEdge = true;
 				// contional draws, conditioning on at least least one segment having originated from the other parent
 				logHR += segsCard*Math.log(Math.pow(2,  segsCard-1)/(Math.pow(2,segsCard)-1));
 
-			}else if (segsToRemoveRight.cardinality()==edge.parentNode.getParentEdges().get(1).hasSegments.cardinality()){  // move creates one empty parent
+			}else if (segsToRemoveRight.cardinality()==edge.parentNode.getParentEdges().get(1).hasSegments.cardinality() && segsToGoRight.isEmpty()){  // move creates one empty parent
 				createdEmptyEdge = true;
 
 				// Reverse proposal: k segments randomly assigned, conditioned on at least one going
@@ -1115,13 +1174,6 @@ public class DivertSegmentAndResimulate extends EmptyEdgesNetworkOperator {
 
 
 
-		}
-
-		// remove from active edges
-		if (idx != -1) {
-			edge.hasSegments.or(segsToAddList.get(idx));
-			activeEdges.remove(idx);
-			segsToAddList.remove(idx);
 		}
 
 		// now, check if we add
