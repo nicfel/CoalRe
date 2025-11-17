@@ -28,6 +28,8 @@ public abstract class NetworkOperator extends Operator {
     int[] segmentTreeMap;
     
 	protected BitSet segmentsChanged = new BitSet();
+	
+	
 
 
     @Override

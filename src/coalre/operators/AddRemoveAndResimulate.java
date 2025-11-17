@@ -40,11 +40,6 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
     public double networkProposal() {
         double logHR;
         
-        for (int i = 0; i < segmentTrees.size(); i++) {
-    		segmentsChanged.set(i, false);
-        }
-
-
         if (Randomizer.nextDouble()< addProb) {
         	if (localMove.get()) {
         		logHR = addLocalReassortment();
@@ -110,6 +105,7 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
 		}
                 
     	// Calculate tree intervals
+		coalescentDistr.intervals.update();
     	List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
 
     	double currTime = sourceTime;
@@ -118,12 +114,12 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
     	
     	for (NetworkEvent event : networkEventList) {
     		if (event.time>currTime) {
-    			double rate = 0.5*prevEvent.lineages;
+    			double rate = 0.5 * prevEvent.lineages;
                 double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(currTime);
                 double transformedTimeToNextCoal = Randomizer.nextExponential(rate);
                 double timeToNextCoal = coalescentDistr.populationFunction.getInverseIntensity(
                         transformedTimeToNextCoal + currentTransformedTime);
-                
+
 
                 attachmentTime = timeToNextCoal;
                 if (timeToNextCoal < event.time) {
@@ -135,18 +131,18 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
     			currTime = event.time;
     		}
     		prevEvent = event;
-        }    	
-    	
-    	if (attachmentTime>network.getRootEdge().childNode.getHeight()) {    		
+        }
+
+    	if (attachmentTime>network.getRootEdge().childNode.getHeight()) {
             double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(network.getRootEdge().childNode.getHeight());
     		double transformedTimeToNextCoal = Randomizer.nextExponential(0.5);
             attachmentTime = coalescentDistr.populationFunction.getInverseIntensity(
                     transformedTimeToNextCoal + currentTransformedTime);
-            
+
             logHR -= -0.5 * coalescentDistr.populationFunction.getIntegral(network.getRootEdge().childNode.getHeight(), attachmentTime);
         	logHR -= Math.log(0.5/coalescentDistr.populationFunction.getPopSize(attachmentTime));
 
-    	}    	
+    	}
 
     	double destTime = attachmentTime;
         // keep only those that coexist at the time of attachment
@@ -167,7 +163,7 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
             return Double.NEGATIVE_INFINITY;
       
         // Create new reassortment edge
-        logHR += addReassortmentEdge(sourceEdge, sourceTime, destEdge, destTime);
+        logHR += addReassortmentEdge(sourceEdge, sourceTime, destEdge, destTime, networkEventList);
        
         if (logHR == Double.NEGATIVE_INFINITY)
             return Double.NEGATIVE_INFINITY;  
@@ -181,10 +177,11 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
     }
 
     double addReassortmentEdge(NetworkEdge sourceEdge, double sourceTime,
-                               NetworkEdge destEdge, double destTime) {
+                               NetworkEdge destEdge, double destTime, List<NetworkEvent> networkEventList) {
 
         double logHR = 0.0;
 
+//        System.out.println(network.getExtendedNewick(0));
         boolean sourceisroot = sourceEdge.isRootEdge();
         NetworkNode sourceNode = new NetworkNode();
         sourceNode.setHeight(sourceTime);
@@ -243,11 +240,9 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
         networkEdges.add(reassortmentEdge);
         networkEdges.add(newEdge1);
         networkEdges.add(newEdge2);
-
         
         // Use resimulation approach instead of simple divertSegments
-        logHR += divertSegmentsWithResimulation(reassortmentEdge, newEdge1, segsToDivert);
-        
+        logHR += divertSegmentsWithResimulation(reassortmentEdge, newEdge1, segsToDivert, networkEventList);
         return logHR;
     }
 
@@ -277,16 +272,17 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
             destEdge = sourceEdge;
         double destTime = edgeToRemove.parentNode.getHeight();        
     	// Calculate tree intervals
+        coalescentDistr.intervals.update();
     	List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
 
     	double currTime = sourceTime;
     	NetworkEvent prevEvent = null;
     	
     	for (NetworkEvent event : networkEventList) {
-    		if (event.time>currTime) {                
+    		if (event.time>currTime) {
             	double rate = 0.5 * (prevEvent.lineages-1);
                 if (destTime<=event.time) {
-                	logHR += -rate* coalescentDistr.populationFunction.getIntegral(currTime, destTime);                	
+                	logHR += -rate* coalescentDistr.populationFunction.getIntegral(currTime, destTime);
                 	logHR += Math.log(rate/coalescentDistr.populationFunction.getPopSize(destTime));
                 	break;
                 }
@@ -294,10 +290,10 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
     			currTime = event.time;
     		}
     		prevEvent = event;
-        }    	
+        }
     	
         // Remove reassortment edge
-        logHR += removeReassortmentEdge(edgeToRemove);        
+        logHR += removeReassortmentEdge(edgeToRemove, networkEventList);        
     	
         if (logHR == Double.NEGATIVE_INFINITY)
             return Double.NEGATIVE_INFINITY;
@@ -341,14 +337,14 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
         return logHR;
     }
 
-    double removeReassortmentEdge(NetworkEdge edgeToRemove) {
+    double removeReassortmentEdge(NetworkEdge edgeToRemove, List<NetworkEvent> networkEventList) {
         double logHR = 0.0;
 
         NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
 
         // Divert segments away from chosen edge using resimulation
         BitSet segsToDivert = (BitSet) edgeToRemove.hasSegments.clone();
-        logHR += divertSegmentsWithResimulation(edgeToRemoveSpouse, edgeToRemove, segsToDivert);
+        logHR += divertSegmentsWithResimulation(edgeToRemoveSpouse, edgeToRemove, segsToDivert, networkEventList);
         
         if (divertOneSegmentInput.get()) {
             logHR += getLogConditionedSubsetProb(edgeToRemoveSpouse.hasSegments, segsToDivert, 1.0/(double) edgeToRemoveSpouse.hasSegments.cardinality());
@@ -408,8 +404,9 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
 			logHR -= Math.log(1.0 / (destEdge.parentNode.getHeight()-minTime));
 		}		
 		// 5. Create new reassortment edge
+    	List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
 		
-		logHR += addReassortmentEdge(sourceEdge, newSourceTime, destEdge, newDestTime);
+		logHR += addReassortmentEdge(sourceEdge, newSourceTime, destEdge, newDestTime, networkEventList);
 		if (logHR == Double.NEGATIVE_INFINITY)
 			return Double.NEGATIVE_INFINITY;
 				
@@ -490,8 +487,9 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
         if (destEdge.childNode == edgeToRemove.childNode)
             destEdge = sourceEdge;
         double destTime = edgeToRemove.parentNode.getHeight();
+    	List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
 
-		logHR += removeReassortmentEdge(edgeToRemove);
+		logHR += removeReassortmentEdge(edgeToRemove, networkEventList);
 
 		if (logHR == Double.NEGATIVE_INFINITY)
 			return Double.NEGATIVE_INFINITY;
@@ -579,23 +577,9 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
      * Divert segments from sourceEdge to destEdge using resimulation approach.
      * This replaces the simple divertSegments() call with resimulation.
      */
-    protected double divertSegmentsWithResimulation(NetworkEdge destEdge, NetworkEdge sourceEdge, BitSet segsToDivert) {
+    protected double divertSegmentsWithResimulation(NetworkEdge destEdge, NetworkEdge sourceEdge, BitSet segsToDivert, List<NetworkEvent> networkEventList) {
 		double logHR = 0.0;
 
-		BitSet segsToAdd = (BitSet) segsToDivert.clone();
-		// startwith keeping a list of active edges and the segs to Add
-		List<NetworkEdge> activeEdges = new ArrayList<>();
-		List<BitSet> segsToAddList = new ArrayList<>();
-		
-		List<NetworkEdge> inactiveEdges = new ArrayList<>();
-		List<BitSet> segsToRemoveList = new ArrayList<>();
-		
-		activeEdges.add(destEdge);
-		segsToAddList.add(segsToAdd);
-		
-		inactiveEdges.add(sourceEdge);
-		segsToRemoveList.add((BitSet) segsToDivert.clone());
-		
 		// Track the current time (start at the bottom of the lowest edge)
 		double currentTime = destEdge.childNode.getHeight();
 
@@ -603,16 +587,57 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
 
 		getTreeNodesDown(sourceEdge, segsToDivert, treeChildNodeList);
 		
-		// Get network events to determine lineages at different times
-		List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
 
-		logHR += divertSegmentsToAncestors(activeEdges, inactiveEdges, segsToAddList, segsToRemoveList, currentTime, networkEventList, true, true);
-		
-		if (reconnectSegmentTrees(treeChildNodeList, destEdge, segsToDivert))
-			return Double.NEGATIVE_INFINITY;
-		
-		cleanEmptyEdgesTopDown();
-		
+		BitSet segsToDivertCopy = (BitSet) segsToDivert.clone();
+
+		// make a defensive implementation by selection one segment at a time to divert, choose the order randomly
+		for (int i = 0; i < segsToDivert.cardinality(); i++) {
+
+
+			// select a random segment from segsToDivertCopy
+			int segIdx = -1;
+			int randIdx = Randomizer.nextInt(segsToDivertCopy.cardinality());
+			for (int j = 0; j <= randIdx; j++) {
+				segIdx = segsToDivertCopy.nextSetBit(segIdx + 1);
+			}
+			segsToDivertCopy.set(segIdx, false);
+			
+			BitSet currentSegsToDivert = new BitSet();
+			currentSegsToDivert.set(segIdx);
+			
+	        // Prepare for resimulation
+			BitSet segsToAdd = (BitSet) currentSegsToDivert.clone();
+			// startwith keeping a list of active edges and the segs to Add
+			List<NetworkEdge> activeEdges = new ArrayList<>();
+			List<BitSet> segsToAddList = new ArrayList<>();
+			
+			List<NetworkEdge> inactiveEdges = new ArrayList<>();
+			List<BitSet> segsToRemoveList = new ArrayList<>();
+			
+			activeEdges.add(destEdge);
+			segsToAddList.add(segsToAdd);
+			
+			inactiveEdges.add(sourceEdge);
+			segsToRemoveList.add((BitSet) currentSegsToDivert.clone());
+
+			
+			logHR += divertSegmentsToAncestors(activeEdges, inactiveEdges, segsToAddList, segsToRemoveList, currentTime, networkEventList, true, true);
+			
+			if (reconnectSegmentTrees(treeChildNodeList, destEdge, currentSegsToDivert))
+				return Double.NEGATIVE_INFINITY;
+			
+			cleanEmptyEdgesTopDown();
+			
+			if (i != segsToDivert.cardinality() - 1) {
+				coalescentDistr.intervals.update();
+
+				// Get network events to determine lineages at different times
+				networkEventList = coalescentDistr.intervals.getNetworkEventList();
+
+			}
+			
+		}
+			
 		return logHR;
 	}
 }

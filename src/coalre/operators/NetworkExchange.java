@@ -83,7 +83,8 @@ public class NetworkExchange extends DivertSegmentOperator {
 		int segment = Randomizer.nextInt(network.getSegmentCount());
 		// get a node on the tree that is eligble for a narrow exchange
         final int internalNodes = segmentTrees.get(segment).getInternalNodeCount();
-        if (internalNodes <= 1) {
+        if (internalNodes <= 2) {
+        	System.err.println("too few internal nodes to perform narrow operation");
             return Double.NEGATIVE_INFINITY;
         }
 

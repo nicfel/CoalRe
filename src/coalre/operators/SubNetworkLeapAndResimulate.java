@@ -87,7 +87,6 @@ public class SubNetworkLeapAndResimulate extends DivertSegmentAndResimulate {
         List<NetworkEdge> edges = networkEdges.stream()
 				.filter(e -> !e.isRootEdge())
 				.filter(e -> e.parentNode.isCoalescence())
-				.filter(e -> e.hasSegments.cardinality() >= 1)		
 				.filter(e -> isCoalNode(e))
 				.collect(Collectors.toList());
 
@@ -185,13 +184,14 @@ public class SubNetworkLeapAndResimulate extends DivertSegmentAndResimulate {
 		int sizeAfter = (int) networkEdges.stream()
 				.filter(e -> !e.isRootEdge())
 				.filter(e -> e.parentNode.isCoalescence())
-				.filter(e -> e.hasSegments.cardinality() >= 1)	
 				.filter(e -> isCoalNode(e))
 				.count();
 
 		logHR -= Math.log(1.0/sizeBefore);  // Forward
 		logHR += Math.log(1.0/sizeAfter);  // Reverse
-							    
+							 
+//		if (sizeAfter != sizeBefore)
+//			System.out.println(sizeBefore - sizeAfter);
 //		System.out.println("");
 		return logHR;
 	}
@@ -495,18 +495,21 @@ public class SubNetworkLeapAndResimulate extends DivertSegmentAndResimulate {
 	protected double divertSegmentsWithResimulation(NetworkEdge sourceEdge, NetworkEdge destEdge, BitSet segsToDivert, double newHeight) {
 		double logHR = 0.0;
 		
-
+		coalescentDistr.intervals.update();
 		// Get network events to determine lineages at different times
-		List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
-				
+		List<NetworkEvent> networkEventList;
+
+		
         // make a temporary new node on the source edge that is below the new height
         NetworkNode sourceNode = new NetworkNode();
         NetworkNode destNode = new NetworkNode();
         NetworkNode oldSourceParent = sourceEdge.parentNode;
-        double sourceHeight = Math.min(newHeight, sourceEdge.parentNode.getHeight())+sourceEdge.childNode.getHeight();
         
-        sourceNode.setHeight(sourceHeight/2);
+        double sourceHeight = Math.min(newHeight, sourceEdge.parentNode.getHeight());
+        
+        sourceNode.setHeight((sourceHeight + sourceEdge.childNode.getHeight()) / 2.0);
         destNode.setHeight(newHeight);
+        
         
         NetworkEdge newEdgeLeft = new NetworkEdge();
         NetworkEdge newEdgeRight = new NetworkEdge();
@@ -536,40 +539,67 @@ public class SubNetworkLeapAndResimulate extends DivertSegmentAndResimulate {
         
 
         
-        // Prepare for resimulation
-		BitSet segsToAdd = (BitSet) segsToDivert.clone();
-		List<NetworkEdge> activeEdges = new ArrayList<>();
-		List<BitSet> segsToAddList = new ArrayList<>();
-		
-		List<NetworkEdge> inactiveEdges = new ArrayList<>();
-		List<BitSet> segsToRemoveList = new ArrayList<>();
 		
 		// Track tree nodes before removal
 		Integer[] treeChildNodeList = new Integer[network.getSegmentCount()];
 		getTreeNodesDown(sourceEdge, segsToDivert, treeChildNodeList);
 
-        
-		
-		// Set up for resimulation
-		activeEdges.add(newEdgeRight);
-		segsToAddList.add(segsToAdd);
-		
-		inactiveEdges.add(newEdgeLeft);
-		segsToRemoveList.add((BitSet) segsToDivert.clone());
-		
-		// Track the current time (start at the bottom of the lowest edge)
-		double currentTime = sourceNode.getHeight();
+		BitSet segsToDivertCopy = (BitSet) segsToDivert.clone();
+
+		// make a defensive implementation by selection one segment at a time to divert, choose the order randomly
+		for (int i = 0; i < segsToDivert.cardinality(); i++) {
+			// Get network events to determine lineages at different times
+			networkEventList = coalescentDistr.intervals.getNetworkEventList();
+
+					
+
+			// select a random segment from segsToDivertCopy
+			int segIdx = -1;
+			int randIdx = Randomizer.nextInt(segsToDivertCopy.cardinality());
+			for (int j = 0; j <= randIdx; j++) {
+				segIdx = segsToDivertCopy.nextSetBit(segIdx + 1);
+			}
+			segsToDivertCopy.set(segIdx, false);
 			
-		
-		// Use resimulation approach
-		logHR += divertSegmentsToAncestors(activeEdges, inactiveEdges, segsToAddList, segsToRemoveList, 
-				currentTime, networkEventList, true, true);
+			BitSet currentSegsToDivert = new BitSet();
+			currentSegsToDivert.set(segIdx);
+			
+	        // Prepare for resimulation
+			BitSet segsToAdd = (BitSet) currentSegsToDivert.clone();
+			List<NetworkEdge> activeEdges = new ArrayList<>();
+			List<BitSet> segsToAddList = new ArrayList<>();
+			
+			List<NetworkEdge> inactiveEdges = new ArrayList<>();
+			List<BitSet> segsToRemoveList = new ArrayList<>();
 
-		if (reconnectSegmentTrees(treeChildNodeList, newEdgeRight, segsToDivert))
-			return Double.NEGATIVE_INFINITY;
 		
+			// Set up for resimulation
+			activeEdges.add(newEdgeRight);
+			segsToAddList.add(segsToAdd);
+			
+			inactiveEdges.add(newEdgeLeft);
+			segsToRemoveList.add((BitSet) currentSegsToDivert.clone());
+			
+			// Track the current time (start at the bottom of the lowest edge)
+			double currentTime = sourceNode.getHeight();
+	//		System.out.println(network);
+	//        System.out.println(sourceHeight +", "+ newHeight + ", "+ sourceNode.getHeight());
+	//        System.exit(0);
+	
+			
+			// Use resimulation approach
+			logHR += divertSegmentsToAncestors(activeEdges, inactiveEdges, segsToAddList, segsToRemoveList, 
+					currentTime, networkEventList, true, true);
+	
+			if (reconnectSegmentTrees(treeChildNodeList, newEdgeRight, currentSegsToDivert))
+				return Double.NEGATIVE_INFINITY;
+				
 
-		cleanEmptyEdgesTopDown();
+			cleanEmptyEdgesTopDown();
+			if (segsToDivert.cardinality()!=i+1) {
+				coalescentDistr.intervals.update();
+			}
+		}
 		
 
 		return logHR;

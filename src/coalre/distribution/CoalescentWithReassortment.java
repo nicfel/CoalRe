@@ -90,8 +90,8 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 		
 		double lociMRCA = oriLociMRCA;
 		// get the second highest segment root
-		if (maxHeightRatioInput.get()<Double.POSITIVE_INFINITY || maxHeightInput.get()<Double.POSITIVE_INFINITY)
-			lociMRCA = NetworkStatsLogger.getSecondHighestLociMRCA(networkIntervalsInput.get().networkInput.get());
+//		if (maxHeightRatioInput.get()<Double.POSITIVE_INFINITY || maxHeightInput.get()<Double.POSITIVE_INFINITY)
+//			lociMRCA = NetworkStatsLogger.getSecondHighestLociMRCA(networkIntervalsInput.get().networkInput.get());
 		
 		double maxHeight = Math.min(maxHeightInput.get(),lociMRCA * maxHeightRatioInput.get());
 
@@ -216,6 +216,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 		if (nextEvent.time > oriLociMRCA && prevEvent.lineages == 1) {
 //			System.out.println(intervals.networkInput.get());
 //			System.err.println("Warning");
+//			System.exit(0);			
 			// ensures that root is actually the root, this was previous done by the network terminates at tMRCA class
 			// however, this is a more efficient way of keeping track of that
 			return Double.NEGATIVE_INFINITY;

@@ -141,7 +141,7 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
     	
     	for (NetworkEvent event : networkEventList) {
     		if (event.time>currTime) {
-    			double rate = 0.5*prevEvent.lineages;
+    			double rate = 1*prevEvent.lineages;
                 double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(currTime);
                 double transformedTimeToNextCoal = Randomizer.nextExponential(rate);
                 double timeToNextCoal = coalescentDistr.populationFunction.getInverseIntensity(
@@ -162,12 +162,12 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
     	
     	if (attachmentTime>network.getRootEdge().childNode.getHeight()) {    		
             double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(network.getRootEdge().childNode.getHeight());
-    		double transformedTimeToNextCoal = Randomizer.nextExponential(0.5);
+    		double transformedTimeToNextCoal = Randomizer.nextExponential(1);
             attachmentTime = coalescentDistr.populationFunction.getInverseIntensity(
                     transformedTimeToNextCoal + currentTransformedTime);
             
-            logHR -= -0.5 * coalescentDistr.populationFunction.getIntegral(network.getRootEdge().childNode.getHeight(), attachmentTime);
-        	logHR -= Math.log(0.5/coalescentDistr.populationFunction.getPopSize(attachmentTime));
+            logHR -= -1 * coalescentDistr.populationFunction.getIntegral(network.getRootEdge().childNode.getHeight(), attachmentTime);
+        	logHR -= Math.log(1/coalescentDistr.populationFunction.getPopSize(attachmentTime));
 
     	}    	
 
@@ -334,7 +334,7 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 //    	double logHRBefore = logHR;
     	for (NetworkEvent event : networkEventList) {
     		if (event.time>currTime) {                
-            	double rate = 0.5 * (prevEvent.lineages-1);
+            	double rate = 1 * (prevEvent.lineages-1);
                 if (destTime<=event.time) {
                 	logHR += -rate* coalescentDistr.populationFunction.getIntegral(currTime, destTime);                	
                 	logHR += Math.log(rate/coalescentDistr.populationFunction.getPopSize(destTime));
