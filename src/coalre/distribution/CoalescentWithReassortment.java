@@ -8,6 +8,7 @@ import beast.base.evolution.tree.coalescent.PopulationFunction;
 import coalre.network.NetworkNode;
 import coalre.statistics.NetworkStatsLogger;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -80,6 +81,15 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 		}
             
     }
+	
+	public double reaContributionEvent;
+	public double coaContributionEvent;
+	public double reaContribution;
+	public double coaContribution;
+	public List<Double> coaContributions;
+	
+
+	@Override
 
 	public double calculateLogP() {		
     	logP = 0;
@@ -96,6 +106,12 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 		double maxHeight = Math.min(maxHeightInput.get(),lociMRCA * maxHeightRatioInput.get());
 
 		NetworkEvent prevEvent = null;
+		
+		reaContribution = 0;
+		coaContribution = 0;
+		reaContributionEvent = 0;
+		coaContributionEvent = 0;
+//		coaContributions = new ArrayList<>();
 
     	for (NetworkEvent event : intervals.networkEventList) {
         	if (prevEvent != null)
@@ -152,6 +168,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 		
 		if (event.time<=maxHeight) {
 			if (isTimeVarying) {
+				reaContributionEvent += Math.log(timeVaryingReassortmentRates.getPopSize(event.time)) + logBinomval;
 				return Math.log(timeVaryingReassortmentRates.getPopSize(event.time))
 						+ logBinomval;
 				
@@ -169,6 +186,8 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 	}
 
 	private double coalesce(NetworkEvent event) {
+		reaContributionEvent += Math.log(1.0/populationFunction.getPopSize(event.time));
+//		coaContributions.add(Math.log(1.0/populationFunction.getPopSize(event.time)));
 		return Math.log(1.0/populationFunction.getPopSize(event.time));
 	}
 
@@ -210,8 +229,16 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 				result += -redFactor * reassortmentRate.getArrayValue() * prevEvent.totalReassortmentObsProb
 						* (nextEvent.time - prevEvent.time);
 		}
+		
+		reaContribution += result;
+
 		result += -0.5*prevEvent.lineages*(prevEvent.lineages-1)
                 * populationFunction.getIntegral(prevEvent.time, nextEvent.time);
+		
+		coaContribution += -0.5*prevEvent.lineages*(prevEvent.lineages-1)
+                * populationFunction.getIntegral(prevEvent.time, nextEvent.time);
+//		coaContributions.add(-0.5 * prevEvent.lineages * (prevEvent.lineages - 1)
+//				* populationFunction.getIntegral(prevEvent.time, nextEvent.time));
 		
 		if (nextEvent.time > oriLociMRCA && prevEvent.lineages == 1) {
 //			System.out.println(intervals.networkInput.get());
