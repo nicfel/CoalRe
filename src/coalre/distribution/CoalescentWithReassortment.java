@@ -90,7 +90,6 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 	
 
 	@Override
-
 	public double calculateLogP() {		
     	logP = 0;
     	// Calculate tree intervals
@@ -106,6 +105,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 		double maxHeight = Math.min(maxHeightInput.get(),lociMRCA * maxHeightRatioInput.get());
 
 		NetworkEvent prevEvent = null;
+		
 		
 		reaContribution = 0;
 		coaContribution = 0;
@@ -135,8 +135,9 @@ public class CoalescentWithReassortment extends NetworkDistribution {
        			break;
 
         	prevEvent = event;
-        }
-
+        }		
+		
+		
 		return logP;
     }
     
@@ -186,7 +187,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 	}
 
 	private double coalesce(NetworkEvent event) {
-		reaContributionEvent += Math.log(1.0/populationFunction.getPopSize(event.time));
+		coaContributionEvent += Math.log(1.0/populationFunction.getPopSize(event.time));
 //		coaContributions.add(Math.log(1.0/populationFunction.getPopSize(event.time)));
 		return Math.log(1.0/populationFunction.getPopSize(event.time));
 	}
@@ -265,6 +266,15 @@ public class CoalescentWithReassortment extends NetworkDistribution {
     		return true;
     	
         return super.requiresRecalculation();
+    }
+    
+    @Override
+	public void store() {
+    	super.store();
+    	if (storedLogP==Double.NEGATIVE_INFINITY) {
+    		System.out.println(networkIntervalsInput.get().networkInput.get());
+    		System.exit(0);
+    	}
     }
 
 

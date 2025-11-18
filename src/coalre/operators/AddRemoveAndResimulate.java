@@ -586,57 +586,30 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
 		Integer[] treeChildNodeList = new Integer[network.getSegmentCount()];
 
 		getTreeNodesDown(sourceEdge, segsToDivert, treeChildNodeList);
+        // Prepare for resimulation
+		BitSet segsToAdd = (BitSet) segsToDivert.clone();
+		// startwith keeping a list of active edges and the segs to Add
+		List<NetworkEdge> activeEdges = new ArrayList<>();
+		List<BitSet> segsToAddList = new ArrayList<>();
 		
+		List<NetworkEdge> inactiveEdges = new ArrayList<>();
+		List<BitSet> segsToRemoveList = new ArrayList<>();
+		
+		activeEdges.add(destEdge);
+		segsToAddList.add(segsToAdd);
+		
+		inactiveEdges.add(sourceEdge);
+		segsToRemoveList.add((BitSet) segsToDivert.clone());
 
-		BitSet segsToDivertCopy = (BitSet) segsToDivert.clone();
-
-		// make a defensive implementation by selection one segment at a time to divert, choose the order randomly
-		for (int i = 0; i < segsToDivert.cardinality(); i++) {
-
-
-			// select a random segment from segsToDivertCopy
-			int segIdx = -1;
-			int randIdx = Randomizer.nextInt(segsToDivertCopy.cardinality());
-			for (int j = 0; j <= randIdx; j++) {
-				segIdx = segsToDivertCopy.nextSetBit(segIdx + 1);
-			}
-			segsToDivertCopy.set(segIdx, false);
+		
+		logHR += divertSegmentsToAncestors(activeEdges, inactiveEdges, segsToAddList, segsToRemoveList, currentTime, networkEventList, true, true);
+		
+		if (reconnectSegmentTrees(treeChildNodeList, destEdge, segsToDivert))
+			return Double.NEGATIVE_INFINITY;
+		
+		logHR += cleanEmptyEdgesTopDown();
 			
-			BitSet currentSegsToDivert = new BitSet();
-			currentSegsToDivert.set(segIdx);
-			
-	        // Prepare for resimulation
-			BitSet segsToAdd = (BitSet) currentSegsToDivert.clone();
-			// startwith keeping a list of active edges and the segs to Add
-			List<NetworkEdge> activeEdges = new ArrayList<>();
-			List<BitSet> segsToAddList = new ArrayList<>();
-			
-			List<NetworkEdge> inactiveEdges = new ArrayList<>();
-			List<BitSet> segsToRemoveList = new ArrayList<>();
-			
-			activeEdges.add(destEdge);
-			segsToAddList.add(segsToAdd);
-			
-			inactiveEdges.add(sourceEdge);
-			segsToRemoveList.add((BitSet) currentSegsToDivert.clone());
-
-			
-			logHR += divertSegmentsToAncestors(activeEdges, inactiveEdges, segsToAddList, segsToRemoveList, currentTime, networkEventList, true, true);
-			
-			if (reconnectSegmentTrees(treeChildNodeList, destEdge, currentSegsToDivert))
-				return Double.NEGATIVE_INFINITY;
-			
-			cleanEmptyEdgesTopDown();
-			
-			if (i != segsToDivert.cardinality() - 1) {
-				coalescentDistr.intervals.update();
-
-				// Get network events to determine lineages at different times
-				networkEventList = coalescentDistr.intervals.getNetworkEventList();
-
-			}
-			
-		}
+		
 			
 		return logHR;
 	}

@@ -48,7 +48,7 @@ public class SubNetworkLeapAndResimulate extends DivertSegmentAndResimulate {
     private double limit;
     int maxcount;
     
-    boolean useSingleSegmentDiversion = true;
+    boolean useSingleSegmentDiversion = false;
 
 	@Override
 	public void initAndValidate() {
@@ -639,7 +639,7 @@ public class SubNetworkLeapAndResimulate extends DivertSegmentAndResimulate {
 				return Double.NEGATIVE_INFINITY;
 				
 
-			cleanEmptyEdgesTopDown();
+			logHR += cleanEmptyEdgesTopDown();
 		}
 		
 
