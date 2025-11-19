@@ -58,6 +58,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
 	public double redFactor;
 	double[][] logBinomval;
+	
 		
 	@Override
     public void initAndValidate(){
@@ -81,13 +82,6 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 		}
             
     }
-	
-	public double reaContributionEvent;
-	public double coaContributionEvent;
-	public double reaContribution;
-	public double coaContribution;
-	public List<Double> coaContributions;
-	
 
 	@Override
 	public double calculateLogP() {		
@@ -106,12 +100,6 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
 		NetworkEvent prevEvent = null;
 		
-		
-		reaContribution = 0;
-		coaContribution = 0;
-		reaContributionEvent = 0;
-		coaContributionEvent = 0;
-//		coaContributions = new ArrayList<>();
 
     	for (NetworkEvent event : intervals.networkEventList) {
         	if (prevEvent != null)
@@ -136,8 +124,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
         	prevEvent = event;
         }		
-		
-		
+    	
 		return logP;
     }
     
@@ -163,13 +150,11 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 				}
 				System.err.println("empty edge remaining, should not happen, event at time "+ event.time);
 				return Double.NEGATIVE_INFINITY;
-//				logBinomval=1;
 			}
 		}
 		
 		if (event.time<=maxHeight) {
 			if (isTimeVarying) {
-				reaContributionEvent += Math.log(timeVaryingReassortmentRates.getPopSize(event.time)) + logBinomval;
 				return Math.log(timeVaryingReassortmentRates.getPopSize(event.time))
 						+ logBinomval;
 				
@@ -187,8 +172,6 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 	}
 
 	private double coalesce(NetworkEvent event) {
-		coaContributionEvent += Math.log(1.0/populationFunction.getPopSize(event.time));
-//		coaContributions.add(Math.log(1.0/populationFunction.getPopSize(event.time)));
 		return Math.log(1.0/populationFunction.getPopSize(event.time));
 	}
 
@@ -230,21 +213,11 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 				result += -redFactor * reassortmentRate.getArrayValue() * prevEvent.totalReassortmentObsProb
 						* (nextEvent.time - prevEvent.time);
 		}
-		
-		reaContribution += result;
 
 		result += -0.5*prevEvent.lineages*(prevEvent.lineages-1)
                 * populationFunction.getIntegral(prevEvent.time, nextEvent.time);
 		
-		coaContribution += -0.5*prevEvent.lineages*(prevEvent.lineages-1)
-                * populationFunction.getIntegral(prevEvent.time, nextEvent.time);
-//		coaContributions.add(-0.5 * prevEvent.lineages * (prevEvent.lineages - 1)
-//				* populationFunction.getIntegral(prevEvent.time, nextEvent.time));
-		
 		if (nextEvent.time > oriLociMRCA && prevEvent.lineages == 1) {
-//			System.out.println(intervals.networkInput.get());
-//			System.err.println("Warning");
-//			System.exit(0);			
 			// ensures that root is actually the root, this was previous done by the network terminates at tMRCA class
 			// however, this is a more efficient way of keeping track of that
 			return Double.NEGATIVE_INFINITY;
@@ -271,10 +244,10 @@ public class CoalescentWithReassortment extends NetworkDistribution {
     @Override
 	public void store() {
     	super.store();
-    	if (storedLogP==Double.NEGATIVE_INFINITY) {
-    		System.out.println(networkIntervalsInput.get().networkInput.get());
-    		System.exit(0);
-    	}
+//    	if (storedLogP==Double.NEGATIVE_INFINITY) {
+//    		System.out.println(networkIntervalsInput.get().networkInput.get());
+//    		System.exit(0);
+//    	}
     }
 
 

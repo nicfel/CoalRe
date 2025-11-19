@@ -198,7 +198,7 @@ public class NetworkExchangeAndResimulate extends SubNetworkLeapAndResimulate {
 		final List<NetworkEdge> possibleEdges = networkEdges.stream()
 				.filter(e -> !e.isRootEdge())
 				.filter(e -> e.parentNode.isCoalescence())
-				.filter(e -> isCoalNode(e))
+//				.filter(e -> isCoalNode(e))
 				.collect(Collectors.toList());
 
 		int edgeCount = possibleEdges.size();
@@ -215,13 +215,13 @@ public class NetworkExchangeAndResimulate extends SubNetworkLeapAndResimulate {
 				.filter(e -> !e.isRootEdge())
 				.filter(e -> e.parentNode.getHeight() > iEdge.parentNode.getHeight())
 				.filter(e -> e.childNode.getHeight() < iEdge.parentNode.getHeight())
-				.filter(e -> segmentOverlap(e, iEdge.hasSegments))
+//				.filter(e -> segmentOverlap(e, iEdge.hasSegments))
 				.collect(Collectors.toList());
 
 		if (possibleDestinationEdges.isEmpty())
 			return Double.NEGATIVE_INFINITY;
 
-		int forwardDestCount = possibleDestinationEdges.size();
+//		int forwardDestCount = possibleDestinationEdges.size();
 
 //		System.out.println(network.getExtendedNewick(0));
 
@@ -235,7 +235,7 @@ public class NetworkExchangeAndResimulate extends SubNetworkLeapAndResimulate {
 		final List<NetworkEdge> possibleEdgesReverse = networkEdges.stream()
 				.filter(e -> !e.isRootEdge())
 				.filter(e -> e.parentNode.isCoalescence())
-				.filter(e -> isCoalNode(e))
+//				.filter(e -> isCoalNode(e))
 				.collect(Collectors.toList());
 
 //		reaDiff -= (int) networkEdges.stream()
@@ -250,18 +250,18 @@ public class NetworkExchangeAndResimulate extends SubNetworkLeapAndResimulate {
 		// Account for destination edge selection
 		// In reverse, we would select a destination edge at the height of jEdge.parentNode
 		// Note: After the move, jEdge now has the segments that were on iEdge
-		final List<NetworkEdge> possibleReverseDestinationEdges = networkEdges.stream()
-				.filter(e -> !e.isRootEdge())
-				.filter(e -> e.parentNode.getHeight() > jEdge.parentNode.getHeight())
-				.filter(e -> e.childNode.getHeight() < jEdge.parentNode.getHeight())
-				.filter(e -> segmentOverlap(e, segsToDivert))
-				.collect(Collectors.toList());
+//		final List<NetworkEdge> possibleReverseDestinationEdges = networkEdges.stream()
+//				.filter(e -> !e.isRootEdge())
+//				.filter(e -> e.parentNode.getHeight() > jEdge.parentNode.getHeight())
+//				.filter(e -> e.childNode.getHeight() < jEdge.parentNode.getHeight())
+//				.filter(e -> segmentOverlap(e, segsToDivert))
+//				.collect(Collectors.toList());
 
-		if (possibleReverseDestinationEdges.isEmpty())
-			return Double.NEGATIVE_INFINITY;
-
-		int reverseDestCount = possibleReverseDestinationEdges.size();
-		logHR += Math.log((double) forwardDestCount / reverseDestCount);
+//		if (possibleReverseDestinationEdges.isEmpty())
+//			return Double.NEGATIVE_INFINITY;
+//
+//		int reverseDestCount = possibleReverseDestinationEdges.size();
+//		logHR += Math.log((double) forwardDestCount / reverseDestCount);
 
 //		if (logHR == Double.POSITIVE_INFINITY) {
 //			System.out.println(network.getExtendedNewick(0));
