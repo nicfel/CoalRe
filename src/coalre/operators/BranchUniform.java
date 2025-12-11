@@ -44,21 +44,26 @@ public class BranchUniform extends DivertSegmentOperator {
     @Override
     public double networkProposal() {
         double logHR = 0.0;
-//        System.out.println(network);
         
         List<Integer> candidateEdges = new ArrayList<>();
 		for (int i = 0; i < networkEdges.size(); i++) {
 			NetworkEdge edge = networkEdges.get(i);
-			if (!edge.isRootEdge()&& edge.childNode.isReassortment()
+			if (!edge.isRootEdge() && edge.childNode.isReassortment()
 					&& edge.parentNode.isCoalescence() 
+					&& !edge.parentNode.getParentEdges().get(0).isRootEdge()
 					&& edge.hasSegments.cardinality() == 1
 					&& validEdge(edge)) {
 				candidateEdges.add(i);
 			}
 		}
-		
+//		System.out.println("candidate edges: " + candidateEdges.size());
 		if (candidateEdges.isEmpty())
 			return Double.NEGATIVE_INFINITY;
+		
+		
+//        System.out.println(network);
+		
+
 		
         NetworkEdge edgeToMove = networkEdges.get(candidateEdges.get(Randomizer.nextInt(candidateEdges.size())));
         int segment = edgeToMove.hasSegments.nextSetBit(0);
@@ -174,6 +179,7 @@ public class BranchUniform extends DivertSegmentOperator {
 			NetworkEdge edge = networkEdges.get(i);
 			if (!edge.isRootEdge()&& edge.childNode.isReassortment()
 					&& edge.parentNode.isCoalescence() 
+					&& !edge.parentNode.getParentEdges().get(0).isRootEdge()
 					&& edge.hasSegments.cardinality() == 1
 					&& validEdge(edge)) {
 				reverseCandidateEdges.add(i);
@@ -181,6 +187,17 @@ public class BranchUniform extends DivertSegmentOperator {
 		}
 		
         logHR += Math.log(1.0/((double) reverseCandidateEdges.size()));
+        
+        // check if any edges have length<=0 if so print         	System.out.println(network);
+
+        for (NetworkEdge e: networkEdges) {
+        	if (!e.isRootEdge() &&e.getLength()<=0) {
+				System.err.println("edge length <=0");
+//				System.err.println(saveOldNetwork);
+				System.err.println(network);
+				System.exit(0);
+			}
+    	}
         
         // do reverse delta calculation
 //        double probabReverse = getLogDeltaProb(-delta, currentDistance + delta);

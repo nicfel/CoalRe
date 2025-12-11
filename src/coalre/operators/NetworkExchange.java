@@ -138,7 +138,13 @@ public class NetworkExchange extends DivertSegmentOperator {
 														e.childNode.getChildEdges().get(1).hasSegments.get(segment)))
 				.collect(Collectors.toList());
 
+
+		if (parentEdge.size() != 2) {
+			System.out.println(network);
+		}
 		NetworkEdge iEdge = parentEdge.get(Randomizer.nextInt(2));
+
+		
 		
 		Integer[] treeChildNodeList = new Integer[network.getSegmentCount()];
 		getTreeNodesDown(iEdge, (BitSet) iEdge.hasSegments.clone(), treeChildNodeList);

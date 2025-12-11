@@ -37,6 +37,8 @@ public class SubNetworkLeap extends DivertSegmentOperator {
     final public Input<Double> limitInput = new Input<>("limit", "limit on step size, default disable, " +
             "i.e. -1. (when positive, gets multiplied by network-height/log2(n-taxa).", -1.0);
     
+    final public Input<Boolean> segmentRootOnlyInput = new Input<>("segmentRootOnly", "only move nodes that are segment roots", false);
+    
 	public Input<Boolean> randomlySampleAttachmentEdgeInput = new Input<>("randomlySampleAttachmentEdge",
 			"Randomly sample edge to attach to", true);
 	public Input<Boolean> useEdgeLengthInput = new Input<>("useEdgeLength",
@@ -53,17 +55,22 @@ public class SubNetworkLeap extends DivertSegmentOperator {
 
         size = sizeInput.get();
         limit = limitInput.get();
+        
 	}
 	
 	@Override
 	public double networkProposal() {
-		
 		try {
-			if (randomlySampleAttachmentEdgeInput.get()) {
+			if (segmentRootOnlyInput.get()) {
+//				System.out.println(network);
+				double logHR = networkProposalRoot();
+//				System.out.println(network);
+				return logHR;
+			}else if (randomlySampleAttachmentEdgeInput.get()) {
 				return networkProposalRandom();
 			} else {
-//				System.out.println("w");
-				return networkProposalWeighted();
+				double logHR = networkProposalWeighted();
+				return logHR;
 			}
 		} catch (Exception e) {
 			System.err.println(e.getMessage());
@@ -424,9 +431,164 @@ public class SubNetworkLeap extends DivertSegmentOperator {
 		return logHR;
 	}
 	
+	
+	public double networkProposalRoot() {
+
+		double logHR = 0.0;
+		        
+        int segment = Randomizer.nextInt(network.getSegmentCount());
+
+
+		NetworkEdge iEdge = getRandomSegmentRootEdge(segment, network.getRootEdge());
+		
+		NetworkNode iParent = iEdge.parentNode;		
+		NetworkNode iChild = iEdge.childNode;
+		
+		
+		double delta;
+		double logForwardDeltaProb;
+		if (useEdgeLengthInput.get()) {
+	        delta = Math.abs(getDelta(iEdge.getLength()));        
+	        logForwardDeltaProb = getLogDeltaProb(delta, iEdge.getLength());
+		}else {
+			delta = Math.abs(getDelta(1.0));
+			logForwardDeltaProb = getLogDeltaProb(delta, 1.0);
+		}
+
+        
+        // get all potential reattachment Edges
+        Map<NetworkEdge, Double> targetEdges = new HashMap<>();
+
+		// calculate the max height of the new child
+		double minHeight = iChild.getHeight();
+
+		maxcount = 0; // should not be neccessary TODO: investigate why this is needed
+		
+    	targetEdges.putAll(getTargetEdgesUp(iParent.getParentEdges().get(0), delta, minHeight, iEdge, segment));
+    	// get the other child edge that is not iEdge
+    	targetEdges.putAll(getTargetEdgesDown(getSisterEdge(iEdge), delta, minHeight, iEdge, segment));
+    	logHR -= Math.log(1.0/targetEdges.size());
+      				        	
+        List<NetworkEdge> potentialNewTargets = targetEdges.keySet().stream().collect(Collectors.toList());        
+		NetworkEdge jEdge = potentialNewTargets.get(Randomizer.nextInt(potentialNewTargets.size()));
+		
+		if (jEdge == iParent.getParentEdges().get(0) || jEdge == getSisterEdge(iEdge)) {
+			// change the height of jParent, but no topological changes
+			iParent.setHeight(targetEdges.get(jEdge));
+			if (iParent.segmentIndices != null && iParent.isCoalescence()) {
+				for (int i = 0; i < iParent.segmentIndices.length; i++) {
+					if (iParent.getChildEdges().get(0).hasSegments.get(i)
+							&& iParent.getChildEdges().get(1).hasSegments.get(i)) {
+						segmentTrees.get(i).getNode(iParent.segmentIndices[i]).setHeight(targetEdges.get(jEdge));
+					}	
+				}
+			}
+		}else {
+    		// keep the current segments of edge i 
+    		final BitSet iSegs = (BitSet) iEdge.hasSegments.clone();
+    		//topology will change
+    		Integer[] treeChildNodeList = new Integer[network.getSegmentCount()];
+    		getTreeNodesDown(iEdge, iSegs, treeChildNodeList);
+    		// remove iSegs from iEdge
+    		logHR += removeSegmentsFromAncestors(iEdge, iSegs);	
+    		
+    		// check if parent edge is the root edge
+			NetworkEdge parentEdge = iParent.getParentEdges().get(0);
+    		if (parentEdge.isRootEdge()) {
+	    		NetworkEdge sibEdge = getSisterEdge(iEdge);
+	    		iParent.removeChildEdge(sibEdge);
+	    		network.setRootEdge(sibEdge);
+	    		
+	    		NetworkNode newGrandParent = jEdge.parentNode;
+	    		newGrandParent.removeChildEdge(jEdge);
+	    		newGrandParent.addChildEdge(parentEdge);
+	    		iParent.addChildEdge(jEdge);
+	    		parentEdge.hasSegments = (BitSet) jEdge.hasSegments.clone();
+    		}else {
+    			NetworkNode grandParent = parentEdge.parentNode;	    				    			
+	    		NetworkEdge sibEdge = getSisterEdge(iEdge);
+	    		
+	    		// reattach the sibling edge to the grandparent
+	    		grandParent.removeChildEdge(parentEdge);
+	    		
+	    		iParent.removeChildEdge(sibEdge);		    		
+	    		grandParent.addChildEdge(sibEdge);
+	    		
+	    		// ensure that the parent Edge has the same segments as jEdge
+	    		parentEdge.hasSegments = (BitSet) jEdge.hasSegments.clone();
+	    		 
+	    		// readd to jEdge
+	    		if (!jEdge.isRootEdge()) {
+		    		NetworkNode newGrandParent = jEdge.parentNode;
+		    		newGrandParent.removeChildEdge(jEdge);
+		    		newGrandParent.addChildEdge(parentEdge);
+		    		iParent.addChildEdge(jEdge);	
+	    		}else {
+		    		iParent.addChildEdge(jEdge);
+		    		network.setRootEdge(parentEdge);
+	    		}
+    		}  
+    		iEdge.parentNode.setHeight(targetEdges.get(jEdge));
+    		logHR -= addSegmentsToAncestors(iEdge, iSegs);
+    		
+    		
+    		if (reconnectSegmentTrees(treeChildNodeList, iEdge, iSegs))
+    			return Double.NEGATIVE_INFINITY;
+    		
+		}
+		
+		maxcount = 0; // should not be necessary TODO: investigate why this is needed
+		Map<NetworkEdge, Double> reverseTargetEdges = new HashMap<>();
+		List<NetworkEdge> visitedNodes2 = new ArrayList<>();
+//		System.out.println("c");
+		reverseTargetEdges.putAll(getTargetEdgesUp(iEdge.parentNode.getParentEdges().get(0), delta, minHeight, iEdge, segment));
+//		System.out.println("d");
+		reverseTargetEdges.putAll(getTargetEdgesDown(getSisterEdge(iEdge), delta, minHeight, iEdge, segment));  
+		
+				
+		logHR += Math.log(1.0/reverseTargetEdges.size());  
+		// compute the reverse number of segments
+		BitSet coalSegmentsReverse = (BitSet) iEdge.hasSegments.clone();
+		coalSegmentsReverse.and(getSisterEdge(iEdge).hasSegments);
+		
+		
+		double logReverseDeltaProb;
+		if (useEdgeLengthInput.get())
+			logReverseDeltaProb = getLogDeltaProb(delta, iEdge.getLength());
+		else
+	    	logReverseDeltaProb = getLogDeltaProb(delta, 1.0);
+
+	    // Delta probabilities cancel out if using same edge length
+	    logHR += logReverseDeltaProb - logForwardDeltaProb; // This equals 0 for symmetric case
+	    	    
+		return logHR;
+	}
+	
+
 
 	 
-    private Map<NetworkEdge, Double> getTargetEdgesUp(NetworkEdge edge, double delta, double minHeight, NetworkEdge iEdge, int segment) {
+    private NetworkEdge getRandomSegmentRootEdge(int segment, NetworkEdge e) {
+		if (e.childNode.isCoalescence()) {
+			// if both children have the segment, pick this node
+			if (e.childNode.getChildEdges().get(0).hasSegments.get(segment)
+					&& e.childNode.getChildEdges().get(1).hasSegments.get(segment)) {
+				// return a random child
+				if (Randomizer.nextBoolean()) {
+                    return e.childNode.getChildEdges().get(0);
+                } else {
+                	return e.childNode.getChildEdges().get(1);
+                }
+			}else if (e.childNode.getChildEdges().get(0).hasSegments.get(segment)) {
+				return getRandomSegmentRootEdge(segment, e.childNode.getChildEdges().get(0));
+			}else {
+				return getRandomSegmentRootEdge(segment, e.childNode.getChildEdges().get(1));
+			}
+		}else {
+			return getRandomSegmentRootEdge(segment, e.childNode.getChildEdges().get(0));
+		}
+	}
+
+	private Map<NetworkEdge, Double> getTargetEdgesUp(NetworkEdge edge, double delta, double minHeight, NetworkEdge iEdge, int segment) {
 
     	maxcount++;
 		if (maxcount > 1000000) {

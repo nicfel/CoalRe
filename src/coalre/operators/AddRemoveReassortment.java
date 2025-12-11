@@ -42,7 +42,9 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 		double logHR;
 		if (Randomizer.nextBoolean()) {
 			if (localMove.get()) {
+//				System.out.println(network);
 				logHR = addLocalReassortment();
+//				System.out.println(network+"\n");
 			}else {
 				logHR = addReassortment();
 			}
@@ -169,6 +171,7 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 	double addLocalReassortment() {
 		double logHR = 0.0;
 		
+		
 		// 1. get all possible source edges		
 		List<NetworkEdge> potentialSourceEdges = networkEdges.stream()
 				.filter(e -> !e.isRootEdge())
@@ -189,20 +192,31 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 
 		// get all target edges
 		List<NetworkEdge> potentialDestEdges = new ArrayList<>();
+//		for (NetworkEdge e : sourceEdge.parentNode.getParentEdges())
 		getTargetEdgesUp(sourceEdge, potentialDestEdges, edgeDistanceInput.get(), newSourceTime);
         // only keep unique target Edges
 		potentialDestEdges = potentialDestEdges.stream()
                 .distinct()
                 .collect(Collectors.toList());
-		
+
+		if (potentialDestEdges.isEmpty())
+			return Double.NEGATIVE_INFINITY;
+
 		// 3. select dest edge
         NetworkEdge destEdge = potentialDestEdges.get(Randomizer.nextInt(potentialDestEdges.size()));
         logHR -= Math.log(1.0/potentialDestEdges.size());
-        
+
         // 4. select dest time
         double minTime = Math.max(newSourceTime, destEdge.childNode.getHeight());
-		double newDestTime = Randomizer.nextDouble() * (destEdge.parentNode.getHeight()-minTime) + minTime;
-		logHR -= Math.log(1.0 / (destEdge.parentNode.getHeight()-minTime));		
+		double newDestTime;
+		if (destEdge.isRootEdge()) {
+			newDestTime = minTime + Randomizer.nextExponential(1.0 / alpha);
+			logHR -= -(1.0 / alpha) * (newDestTime - minTime) + Math.log(1.0 / alpha);
+			
+		} else {
+			newDestTime = Randomizer.nextDouble() * (destEdge.parentNode.getHeight()-minTime) + minTime;
+			logHR -= Math.log(1.0 / (destEdge.parentNode.getHeight()-minTime));
+		}		
 		// 5. Create new reassortment edge
 		
 		logHR += addReassortmentEdge(sourceEdge, newSourceTime, destEdge, newDestTime);
@@ -215,19 +229,20 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
             NetworkEdge edge = networkEdges.get(i);
             if (!edge.isRootEdge() && edge.childNode.isReassortment()
                     && edge.parentNode.isCoalescence() && edge.hasSegments.cardinality() >= 1) {
-                
+
                 NetworkEdge potentialSourceEdge = getSpouseEdge(edge);
                 NetworkEdge trueDestEdge = getSisterEdge(edge);
-                
-                if (edge.parentNode.isCoalescence() && edge.parentNode.getParentEdges().get(0).isRootEdge())
-                	continue;
-                
+
                 // Check if destEdge is reachable from sourceEdge via delta traversal
                 List<NetworkEdge> reachableEdges = new ArrayList<>();
                 int dist = edgeDistanceInput.get();
-                getTargetEdgesUp(potentialSourceEdge, reachableEdges, dist , edge.childNode.getHeight());
-                                
-                if (reachableEdges.contains(trueDestEdge)|| reachableEdges.contains(trueDestEdge.parentNode.getParentEdges().get(0))) {
+        			getTargetEdgesUp(potentialSourceEdge, reachableEdges, dist, edge.childNode.getHeight());
+
+                boolean isReachable = reachableEdges.contains(trueDestEdge);
+                if (!isReachable && !trueDestEdge.isRootEdge()) {
+                    isReachable = reachableEdges.contains(trueDestEdge.parentNode.getParentEdges().get(0));
+                }
+                if (isReachable) {
                     removableEdges.add(i);
                 }
             }
@@ -242,31 +257,32 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 
 	double removeLocalReassortment() {
 		double logHR = 0.0;
-		
+
 		// 1. get all possible removable edges
         List<Integer> removableEdges = new ArrayList<>();
         for (int i = 0; i < networkEdges.size(); i++) {
             NetworkEdge edge = networkEdges.get(i);
             if (!edge.isRootEdge() && edge.childNode.isReassortment()
                     && edge.parentNode.isCoalescence() && edge.hasSegments.cardinality() >= 1) {
-                
+
                 NetworkEdge potentialSourceEdge = getSpouseEdge(edge);
                 NetworkEdge trueDestEdge = getSisterEdge(edge);
-                
-                if (edge.parentNode.isCoalescence() && edge.parentNode.getParentEdges().get(0).isRootEdge())
-                	continue;
-                
+
                 // 2. Check if destEdge is reachable from sourceEdge via delta traversal
                 List<NetworkEdge> reachableEdges = new ArrayList<>();
                 int dist = edgeDistanceInput.get();
-                getTargetEdgesUp(potentialSourceEdge, reachableEdges, dist, edge.childNode.getHeight());
-                                
-                if (reachableEdges.contains(trueDestEdge) || reachableEdges.contains(trueDestEdge.parentNode.getParentEdges().get(0))) {
+        			getTargetEdgesUp(potentialSourceEdge, reachableEdges, dist, edge.childNode.getHeight());
+
+                boolean isReachable = reachableEdges.contains(trueDestEdge);
+                if (!isReachable && !trueDestEdge.isRootEdge()) {
+                    isReachable = reachableEdges.contains(trueDestEdge.parentNode.getParentEdges().get(0));
+                }
+                if (isReachable) {
                     removableEdges.add(i);
                 }
             }
         }
-        
+
 
         // only keep unique edges
         if (removableEdges.isEmpty())
@@ -274,8 +290,8 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 
         NetworkEdge edgeToRemove = networkEdges.get(removableEdges.get(Randomizer.nextInt(removableEdges.size())));
         logHR -= Math.log(1.0/(removableEdges.size()));
-        
-        
+
+
 
 		// 3. Extract source/dest information
         double sourceTime = edgeToRemove.childNode.getHeight();
@@ -283,17 +299,17 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
         NetworkEdge destEdge = getSisterEdge(edgeToRemove);
         if (destEdge.childNode == edgeToRemove.childNode)
             destEdge = sourceEdge;
-        double destTime = edgeToRemove.parentNode.getHeight();		
-        
+        double destTime = edgeToRemove.parentNode.getHeight();
+
 		logHR += removeReassortmentEdge(edgeToRemove);
 
 		if (logHR == Double.NEGATIVE_INFINITY)
 			return Double.NEGATIVE_INFINITY;
-		
-		
+
+
 		// 4. get all possible reverse target edges
         List<NetworkEdge> reverseTargetEdges = new ArrayList<>();
-        getTargetEdgesUp(sourceEdge, reverseTargetEdges, edgeDistanceInput.get(), sourceTime);
+    	getTargetEdgesUp(sourceEdge, reverseTargetEdges, edgeDistanceInput.get(), sourceTime);
         reverseTargetEdges = reverseTargetEdges.stream()
                 .distinct()
                 .collect(Collectors.toList());
@@ -303,13 +319,17 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
         logHR += Math.log(1.0 / sourceEdge.getLength());
 		// 8. HR contribution for reverse move for the amount of dest edge height
         double minTime = Math.max(destEdge.childNode.getHeight(), sourceTime);
-        logHR += Math.log(1.0 / (destEdge.parentNode.getHeight()-minTime));
-		
+		if (destEdge.isRootEdge()) {
+			logHR += -(1.0 / alpha) * (destTime - minTime) + Math.log(1.0 / alpha);
+		} else {
+			logHR += Math.log(1.0 / (destEdge.parentNode.getHeight()-minTime));
+		}
+
 		// 9. get the possible desEdges for reverse calculation
 		int nPossibleDestEdges = (int) networkEdges.stream()
 				.filter(e -> !e.isRootEdge())
-				.filter(e -> e.hasSegments.cardinality() > 1)	
-                .count();		
+				.filter(e -> e.hasSegments.cardinality() > 1)
+                .count();
 		logHR += Math.log(1.0 / nPossibleDestEdges);
 
 		return logHR;
@@ -318,16 +338,24 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 	
 	
     // Traverse up the network (forward in time) - only direct ancestors
-    private void getTargetEdgesUp(NetworkEdge currentEdge, 
+    private void getTargetEdgesUp(NetworkEdge currentEdge,
                                 List<NetworkEdge> targetEdges, int remainingEdgeCount, double minHeight) {
-        
+
         remainingEdgeCount--;
-        if (currentEdge.isRootEdge() || remainingEdgeCount < 0 || currentEdge.parentNode.getHeight() < minHeight) {
+
+        // Check if we've hit a root edge (parentNode is null)
+        if (currentEdge.isRootEdge()) {
+            // Include root edge as potential target
+            targetEdges.add(currentEdge);
             return;
         }
-        
+
+        if (remainingEdgeCount < 0 || currentEdge.parentNode.getHeight() < minHeight) {
+            return;
+        }
+
         targetEdges.add(currentEdge);
-        
+
 		if (currentEdge.parentNode.isCoalescence()) {
 			NetworkEdge sisterEdge = getSisterEdge(currentEdge);
 			getTargetEdgesDown(sisterEdge, targetEdges, remainingEdgeCount, minHeight);
@@ -336,17 +364,17 @@ public class AddRemoveReassortment extends DivertSegmentOperator {
 			getTargetEdgesUp(currentEdge.parentNode.getParentEdges().get(0), targetEdges, remainingEdgeCount, minHeight);
 			getTargetEdgesUp(currentEdge.parentNode.getParentEdges().get(1), targetEdges, remainingEdgeCount, minHeight);
 		}
-        
+
     }
     
-	private void getTargetEdgesDown(NetworkEdge currentEdge, 
+	private void getTargetEdgesDown(NetworkEdge currentEdge,
             List<NetworkEdge> targetEdges, int remainingEdgeCount, double minHeight) {
         remainingEdgeCount--;
 
         if (currentEdge.isRootEdge() || remainingEdgeCount < 0 || currentEdge.parentNode.getHeight() < minHeight) {
             return;
         }
-        
+
         targetEdges.add(currentEdge);
         if (currentEdge.childNode.isCoalescence()) {
 			getTargetEdgesDown(currentEdge.childNode.getChildEdges().get(0), targetEdges, remainingEdgeCount, minHeight);

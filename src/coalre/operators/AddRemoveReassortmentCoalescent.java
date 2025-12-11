@@ -23,7 +23,8 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 	public Input<Boolean> useDirectAncestorsOnlyInput = new Input<>("useDirectAncestorsOnly",
 			"if true, only use direct ancestors of segment trees when sampling attachment edge", false);
 	
-
+	
+	
     CoalescentWithReassortment coalescentDistr;
 
     boolean useMaxHeight = false;
@@ -525,7 +526,7 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
         
         for (NetworkEvent event : networkEventList) {
             if (event.time > currTime) {
-                double rate = 0.5 * prevEvent.lineages;
+                double rate = 0.1 * prevEvent.lineages;
                 double currentTransformedTime = coalescentDistr.populationFunction.getIntensity(currTime);
                 double transformedTimeToNextCoal = Randomizer.nextExponential(rate);
                 double timeToNextCoal = coalescentDistr.populationFunction.getInverseIntensity(
@@ -549,14 +550,15 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
             attachmentTime = coalescentDistr.populationFunction.getInverseIntensity(
                     transformedTimeToNextCoal + currentTransformedTime);
             
-            logHR -= -0.5 * coalescentDistr.populationFunction.getIntegral(network.getRootEdge().childNode.getHeight(), attachmentTime);
-            logHR -= Math.log(0.5/coalescentDistr.populationFunction.getPopSize(attachmentTime));
+            logHR -= -0.1 * coalescentDistr.populationFunction.getIntegral(network.getRootEdge().childNode.getHeight(), attachmentTime);
+            logHR -= Math.log(0.1/coalescentDistr.populationFunction.getPopSize(attachmentTime));
         }
 
         double destTime = attachmentTime;
 
         List<NetworkEdge> targetEdges = new ArrayList<>();
-        getTargetEdges(sourceEdge, destTime, targetEdges);
+        List<NetworkEdge> visitedEdges = new ArrayList<>();
+        getTargetEdges(sourceEdge, destTime, targetEdges, visitedEdges);
         
         // only keep unique target Edges
         targetEdges = targetEdges.stream()
@@ -596,7 +598,8 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
                 
                 // Check if destEdge is reachable from sourceEdge via delta traversal
                 List<NetworkEdge> reachableEdges = new ArrayList<>();
-                getTargetEdges(potentialSourceEdge, trueDestTime, reachableEdges);
+                visitedEdges = new ArrayList<>();
+                getTargetEdges(potentialSourceEdge, trueDestTime, reachableEdges, visitedEdges);
                 
 //                System.out.println("Checking edge: " + trueDestTime + " " + trueDestEdge.childNode.getHeight() + " - " + trueDestEdge.parentNode.getHeight());
 //                
@@ -634,7 +637,8 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
                 
                 // Check if destEdge is reachable from sourceEdge via delta traversal
                 List<NetworkEdge> reachableEdges = new ArrayList<>();
-                getTargetEdges(potentialSourceEdge, trueDestTime, reachableEdges);
+                List<NetworkEdge> visitedEdges = new ArrayList<>();
+                getTargetEdges(potentialSourceEdge, trueDestTime, reachableEdges, visitedEdges);
                 
 //                System.out.println("Checking edge: " + trueDestTime + " " + trueDestEdge.childNode.getHeight() + " - " + trueDestEdge.parentNode.getHeight());
 //                
@@ -730,7 +734,8 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 
 
         List<NetworkEdge> reverseTargetEdges = new ArrayList<>();
-        getTargetEdges(sourceEdge, destTime, reverseTargetEdges);
+        List<NetworkEdge> visitedEdges = new ArrayList<>();
+        getTargetEdges(sourceEdge, destTime, reverseTargetEdges, visitedEdges);
         reverseTargetEdges = reverseTargetEdges.stream()
                 .distinct()
                 .collect(Collectors.toList());
@@ -745,12 +750,13 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
     
     // Traverse up the network (forward in time) - only direct ancestors
     private void getTargetEdges(NetworkEdge currentEdge, double destTime, 
-                                List<NetworkEdge> targetEdges) {
+                                List<NetworkEdge> targetEdges, List<NetworkEdge> visitedEdges) {
         
         // Check if this edge is already in target edges - prevent exponential growth
-        if (targetEdges.contains(currentEdge)) {
+        if (visitedEdges.contains(currentEdge)) {
             return;
         }
+        visitedEdges.add(currentEdge);
         
         if (currentEdge.isRootEdge()) {
             // Reached root
@@ -771,7 +777,7 @@ public class AddRemoveReassortmentCoalescent extends DivertSegmentOperator {
 			return;
 		}else {
             for (NetworkEdge e : currentEdge.parentNode.getParentEdges()) {
-            	getTargetEdges(e, destTime, targetEdges);
+            	getTargetEdges(e, destTime, targetEdges, visitedEdges);
             }
 
 		}
