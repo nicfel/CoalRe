@@ -1,516 +1,113 @@
 package coalre.operators;
 
-import beast.base.core.Input;
 import beast.base.evolution.tree.Node;
-import beast.base.inference.parameter.RealParameter;
 import beast.base.util.Randomizer;
-import cern.colt.Arrays;
-import coalre.distribution.CoalescentWithReassortment;
 import coalre.distribution.NetworkEvent;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
 
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class DivertSegmentAndResimulate extends NetworkOperator {
+/**
+ * Operator that removes a segment from parental edges and re-adds it starting from the same edge.
+ */
+public class RemoveSegmentAndResimulate extends DivertSegmentAndResimulate {
 
-	public Input<Boolean> divertOneSegmentInput = new Input<>("divertOneSegment",
-			"If true, only one segment is diverted", true);
-
-	public Input<CoalescentWithReassortment> coalescentDistrInput = new Input<>("coalescentWithReassortment",
-			"Coalescent distribution for sampling reassortment events.",
-			Input.Validate.REQUIRED);
-	
-	public Input<List<RealParameter>> segmentRatesInput = new Input<>("segmentRates", "Rates for each segment.",
-			new ArrayList<>());
-
-	protected CoalescentWithReassortment coalescentDistr;
 
 	@Override
 	public void initAndValidate() {
 		super.initAndValidate();
-		// set the value of lambda to be 0 in the super class
-		
-		
 		if (coalescentDistrInput.get() != null) {
 			coalescentDistr = coalescentDistrInput.get();
 		}
-		// if the super class has a lambda parameter, set its value to zero
 	}
-	
-	boolean exitOnError = false;
-	String networkBefore ="";
-	int eventsBefore = 0;
-	int eventsAfter = 0;
-	
-	double logCoaHR = 0.0;
-	double logReaHR = 0.0;
-	double logCoaHRInterval = 0.0;
-	double logReaHRInterval = 0.0;
-	
-	List<Double> eventTimesBefore;
-	
-	String networkBeforeClean = "";
-	
-	List<NetworkEdge> networkEdges;
-	
-	@Override
-    public double proposal() {
-		double logHR = 0.0;
-		
-		
 
-		if (network.segmentTreesNeedInit) {			
-			System.out.println("restore segment trees in first move");
-			// update all segment trees			
-            for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
-          		network.updateSegmentTree(segmentTrees.get(segmentTreeMap[segIdx]), segmentTreeMap[segIdx]); 
-            
-            network.segmentTreesNeedInit = false;
-			return Double.POSITIVE_INFINITY;
-		}
-		
-		network.startEditing(this);
-		networkEdges = new ArrayList<>(network.getEdges());
-		
-		double[] treeLenghts = new double[segmentTrees.size()];
-		if (!segmentRatesInput.get().isEmpty()) {
-			for (int i = 0; i < segmentTrees.size(); i++) {
-				for (int j = 0; j < segmentTrees.get(i).getNodeCount(); j++) {
-					treeLenghts[i] += segmentTrees.get(i).getNode(j).getLength();
-				}
-			}
-		}
-		
-		
-//		int edgesBefore = networkEdges.size();
-//		String networkBefore = network.getExtendedNewick();
-		logHR = networkProposal();
-		
-//		int edgesAfter = network.getEdges().size();
-//		int reassortmentNodes = 0;
-//		for (int i = 0; i < networkEdges.size(); i++) {
-//			if (networkEdges.get(i).childNode.isReassortment()) {
-//				reassortmentNodes++;
-//			}
-//		}
-//
-//		if (reassortmentNodes !=0) {
-//			System.out.println((edgesAfter-edgesBefore) + " " + logHR + " " + getID());
-//		}
-		
-		if (Double.isNaN(logHR)) {
-			throw new IllegalArgumentException("NaN in proposal logHR");
-		}
-		if (logHR ==Double.POSITIVE_INFINITY) {
-			System.err.println(getID() + " proposal returned positive infinity");
-			System.out.println(network);
-			return Double.NEGATIVE_INFINITY;
-//			throw new IllegalArgumentException("Positive Infinity in proposal logHR " + getID());
-		}
-		
-		double[] treeAfter = new double[segmentTrees.size()];
-		if (!segmentRatesInput.get().isEmpty()) {
-			for (int i = 0; i < segmentTrees.size(); i++) {
-				for (int j = 0; j < segmentTrees.get(i).getNodeCount(); j++) {
-					treeAfter[i] += segmentTrees.get(i).getNode(j).getLength();
-				}
-				
-				double scaler = treeLenghts[i]/treeAfter[i];
-				if (Math.abs(scaler-1.0)>1e-6) {
-					// scale the rate
-					double currentRate = segmentRatesInput.get().get(i).getValue();
-					
-					segmentRatesInput.get().get(i).setValue(currentRate * scaler);
-				}
-			}				
-		}
-		
-		
-		
-
-		
-		return logHR;
-    }
-	
 	@Override
 	public double networkProposal() {
 		double logHR = 0.0;
+		// pick a segment at random
+		int segmentIdx = Randomizer.nextInt(network.getSegmentCount());
+		System.out.println(network.getExtendedNewickVerbose(segmentIdx));
+		// get the corresponding tree node
+		Node n = segmentTrees.get(segmentIdx).getRoot();
+		// get the two children of the tree node
+		Node leftChild = n.getLeft();
+		Node rightChild = n.getRight();
+		// now, find th two edges in the network that correspond to the children
+		NetworkEdge edge1 = null;
+		NetworkEdge edge2 = null;
+		for (NetworkEdge e : networkEdges) {
+			if ((e.childNode.isCoalescence() 
+					&& e.childNode.getChildEdges().get(0).hasSegments.get(segmentIdx) 
+					&& e.childNode.getChildEdges().get(1).hasSegments.get(segmentIdx)) ||
+					(e.childNode.isLeaf() && e.hasSegments.get(segmentIdx))){
+				int nodeIdx = e.childNode.segmentIndices[segmentIdx];
+				if (nodeIdx == leftChild.getNr()) {
+					edge1 = e;
+				} else if (nodeIdx == rightChild.getNr()) {
+					edge2 = e;
+				}
+			}			
+		}
 		
-		List<Integer> sourceEdges = new ArrayList<>();
-		for (int i = 0; i < networkEdges.size(); i++) {
-			if (networkEdges.get(i).childNode.isReassortment() && networkEdges.get(i).hasSegments.cardinality()>1) {
-				sourceEdges.add(i);
+		
+		
+		
+		// now, set edge1 to be the one with the higher childNode height
+		if (edge1.childNode.getHeight() < edge2.childNode.getHeight()) {
+			NetworkEdge temp = edge1;
+			edge1 = edge2;
+			edge2 = temp;
+		}
+		// now, trace edge2 up until the edge crosses the height of edge1
+		while (edge2.parentNode.getHeight() > edge1.parentNode.getHeight()) {
+			if (edge2.parentNode.isCoalescence()) {
+				edge2 = edge2.parentNode.getParentEdges().get(0);
+			} else {
+				if (edge2.parentNode.getParentEdges().get(0).hasSegments.get(segmentIdx)) {
+					edge2 = edge2.parentNode.getParentEdges().get(0);
+				} else {
+					edge2 = edge2.parentNode.getParentEdges().get(1);
+				}
 			}
 		}
 
-		if (sourceEdges.isEmpty())
-			return Double.NEGATIVE_INFINITY;
-		
-
-		logHR -= Math.log(1.0 / sourceEdges.size());
-
-		NetworkEdge sourceEdge = networkEdges.get(sourceEdges.get(Randomizer.nextInt(sourceEdges.size())));
-		NetworkEdge destEdge = getSpouseEdge(sourceEdge);
-
-		BitSet segsToDivert;
-
-		if (divertOneSegmentInput.get()) {
-			segsToDivert = getRandomSegment(sourceEdge.hasSegments);
-			logHR -= Math.log(1. / sourceEdge.hasSegments.cardinality());
-		} else {
-			segsToDivert = getRandomConditionedSubset(sourceEdge.hasSegments);
-			logHR -= getLogConditionedSubsetProb(sourceEdge.hasSegments, segsToDivert, 0.5);
-		}
-
-		if (segsToDivert.cardinality() == 0)
-			return Double.NEGATIVE_INFINITY;
-
-		double logDivert = divertSegments(destEdge, sourceEdge, segsToDivert);
-		
-		logHR += logDivert;
-
-
-		if (divertOneSegmentInput.get()) {
-			logHR += Math.log(1.0 / destEdge.hasSegments.cardinality());
-		} else {
-//			System.err.println("this part of the operator has an error");
-			logHR += getLogConditionedSubsetProb(destEdge.hasSegments, segsToDivert, 0.5);
-		}
-		
-		
-		int reverseSourceEdgeCount = 0;
-		for (NetworkEdge edge : networkEdges){
-			if (edge.childNode.isReassortment() && edge.hasSegments.cardinality()>1){
-                reverseSourceEdgeCount++;
-            }
-		}
-		logHR += Math.log(1.0 / reverseSourceEdgeCount);
-
-		return logHR;
-	}
-	
-
-	protected double divertSegments(NetworkEdge destEdge, NetworkEdge sourceEdge, BitSet segsToDivert) {
-		double logHR = 0.0;
-		
-				
-		logCoaHR = 0.0;
-		logReaHR = 0.0;
-		logCoaHRInterval = 0.0;
-		logReaHRInterval = 0.0;
-
-		// Get network events to determine lineages at different times, they will contain any inactive Edges, but not newly added active ones
-		Integer[] treeChildNodeList = new Integer[network.getSegmentCount()];
-
-		getTreeNodesDown(sourceEdge, segsToDivert, treeChildNodeList);
-		exitOnError=false;
-		
-		double currentTime = destEdge.childNode.getHeight();
-
-			
-		BitSet segsToAdd = (BitSet) segsToDivert.clone();
-		// startwith keeping a list of active edges and the segs to Add
+		// now, start the segs to divert, the active and inactive edges
 		List<NetworkEdge> activeEdges = new ArrayList<>();
 		List<BitSet> segsToAddList = new ArrayList<>();
-		
 		List<NetworkEdge> inactiveEdges = new ArrayList<>();
 		List<BitSet> segsToRemoveList = new ArrayList<>();
-		
-		activeEdges.add(destEdge);
-		segsToAddList.add(segsToAdd);
-		
-		inactiveEdges.add(sourceEdge);
-		segsToRemoveList.add((BitSet) segsToDivert.clone());
-		
+		activeEdges.add(edge1);
+		activeEdges.add(edge2);
+		inactiveEdges.add(edge1);
+		inactiveEdges.add(edge2);
+
+		BitSet segsToDivert = new BitSet();
+		segsToDivert.set(segmentIdx);
+		segsToAddList.add(segsToDivert);
+		segsToAddList.add(segsToDivert);
+		segsToRemoveList.add(segsToDivert);
+		segsToRemoveList.add(segsToDivert);
+
 		coalescentDistr.intervals.update();
 		List<NetworkEvent> networkEventList = coalescentDistr.intervals.getNetworkEventList();
 
-		
-		// Track the current time (start at the bottom of the lowest edge)
-		logHR += divertSegmentsToAncestors(activeEdges, inactiveEdges, segsToAddList, segsToRemoveList, currentTime, networkEventList, false, false);
-		
-		if (reconnectSegmentTrees(treeChildNodeList, destEdge, segsToDivert))
-			return Double.NEGATIVE_INFINITY;
+		double currentTime = edge1.childNode.getHeight();
+		logHR += divertSegmentsToAncestors(new ArrayList<>(), inactiveEdges, new ArrayList<>(), segsToRemoveList, 
+				currentTime, networkEventList, false, false);
+		System.out.println(network.getExtendedNewickVerbose(segmentIdx) + "\n");
 
-		logHR += cleanEmptyEdgesTopDown();
+		logHR += divertSegmentsToAncestors(activeEdges, new ArrayList<>(), segsToAddList, new ArrayList<>(), 
+				currentTime, networkEventList, false, false);
+		
+		System.out.println(network.getExtendedNewickVerbose(segmentIdx) + "\n");
+		System.exit(0);
 
 		return logHR;
 	}
 
-	protected boolean reconnectSegmentTrees(Integer[] treeChildNodeList, NetworkEdge destEdge, BitSet segsToDivert) {
-
-		List<NetworkNode> targetNodeIndices = new ArrayList<>();
-		for (int i = 0; i < network.getSegmentCount(); i++)
-			targetNodeIndices.add(null);
-		Integer[] newTargetNode = new Integer[network.getSegmentCount()];
-		Double[] newNodeHeights = new Double[network.getSegmentCount()];
-
-		getTreeNodes(destEdge, segsToDivert, targetNodeIndices, newTargetNode, newNodeHeights, treeChildNodeList);
-
-		// update the corresponding tree
-		for (int i = 0; i < network.getSegmentCount(); i++) {
-
-			if (treeChildNodeList[i] != null && newTargetNode[i] != null) {
-				Node startChild = segmentTrees.get(i).getNode(treeChildNodeList[i]);
-				if (startChild.isRoot())
-					continue;
-				
-				Node oldParent = startChild.getParent();
-				Node newSibling = segmentTrees.get(i).getNode(newTargetNode[i]);
-
-				if (oldParent.isRoot()) {
-
-					if (oldParent==newSibling) {
-						oldParent.setHeight(newNodeHeights[i]);
-					}else if (newSibling.getParent()==oldParent) {
-						oldParent.setHeight(newNodeHeights[i]);
-					}else {
-
-						// the node that will become the new root
-						Node oldSibling = oldParent.getChild(0).getNr() == treeChildNodeList[i] ? oldParent.getChild(1) : oldParent.getChild(0);
-						
-						int prevNumberNewRoot = oldSibling.getNr();
-						int rootNumber = segmentTrees.get(i).getRoot().getNr();
-						double newRootHeight = oldSibling.getHeight();
-						
-						// update the segmentIndices of the network node
-						if (targetNodeIndices.get(i).segmentIndices == null)
-							targetNodeIndices.get(i).segmentIndices = new int[network.getSegmentCount()];
-						targetNodeIndices.get(i).segmentIndices[i] = prevNumberNewRoot;
-
-						updatePreviousRootNumber(i, network.getRootEdge().childNode, rootNumber, newRootHeight);
-						
-						Node newGrandParent = newSibling.getParent();
-						newGrandParent.removeChild(newSibling);
-						newGrandParent.addChild(oldParent);
-						oldParent.addChild(newSibling);
-						// do the corresponding tree move
-						oldParent.removeChild(oldSibling);
-						oldParent.setHeight(newNodeHeights[i]);
-						oldSibling.setParent(null);
-						
-						segmentTrees.get(i).setRoot(oldSibling);
-					}
-					
-				}else {
-					Node oldGrandParent = oldParent.getParent();
-					Node oldSibling = oldParent.getChild(0).getNr() == treeChildNodeList[i] ? oldParent.getChild(1) : oldParent.getChild(0);
-					Node newGrandParent = newSibling.getParent();
-					
-					if (newGrandParent==oldParent) {
-						oldParent.setHeight(newNodeHeights[i]);
-					}else if (oldGrandParent==newGrandParent) {
-						if (oldParent==newSibling) {
-							throw new IllegalArgumentException("oldParent==newSibling " + oldParent.getHeight() + " " + newSibling.getHeight());
-						}
-						
-						newGrandParent.removeChild(newSibling);
-						oldParent.removeChild(oldSibling);
-						newGrandParent.addChild(oldSibling);
-						
-						oldParent.addChild(newSibling);
-						oldParent.setHeight(newNodeHeights[i]);
-						
-					}else {
-						
-						oldGrandParent.removeChild(oldParent);
-						oldGrandParent.addChild(oldSibling);
-						if (newGrandParent==null) {
-							// changing the root node also changes the node number
-							// which is an issue here 
-							oldParent.setParent(null);
-							
-							int prevRootNumber = oldParent.getNr();
-							double oldRootHeight = segmentTrees.get(i).getRoot().getHeight();
-							
-							// find the network node corresponding to the old root height
-							// and change the corresponding segment index
-							updatePreviousRootNumber(i,targetNodeIndices.get(i), prevRootNumber, oldRootHeight);
-													oldParent.removeChild(oldSibling);
-							oldParent.addChild(newSibling);
-							oldParent.setHeight(newNodeHeights[i]);
-
-							segmentTrees.get(i).setRoot(oldParent);
-							
-							// update the segmentIndices of the network node
-							if (targetNodeIndices.get(i).segmentIndices == null)
-								targetNodeIndices.get(i).segmentIndices = new int[network.getSegmentCount()];
-							targetNodeIndices.get(i).segmentIndices[i] = oldParent.getNr();
-	
-						}else {
-							newGrandParent.removeChild(newSibling);
-							oldParent.removeChild(oldSibling);
-							newGrandParent.addChild(oldParent);
-							oldParent.addChild(newSibling);
-							oldParent.setHeight(newNodeHeights[i]);
-						}
-					}
-				}
-			}
-
-		}	
-		return false;
-	}
-
-	private void updatePreviousRootNumber(int i, NetworkNode n, int prevRootNumber, double oldRootHeight) {
-		if (n.getHeight()<oldRootHeight) {
-			return;
-		}
-		
-		if (n.isCoalescence()) {
-			if (n.getHeight() == oldRootHeight) {
-				// update the segment index
-				if (n.segmentIndices == null)
-					n.segmentIndices = new int[network.getSegmentCount()];
-				n.segmentIndices[i] = prevRootNumber;
-				return;
-			}
-			
-			if (n.getChildEdges().get(0).hasSegments.get(i))
-				updatePreviousRootNumber(i, n.getChildEdges().get(0).childNode, prevRootNumber, oldRootHeight);
-			if (n.getChildEdges().get(1).hasSegments.get(i))
-				updatePreviousRootNumber(i, n.getChildEdges().get(1).childNode, prevRootNumber, oldRootHeight);
-		} else if (n.isReassortment()) {
-			updatePreviousRootNumber(i, n.getChildEdges().get(0).childNode, prevRootNumber, oldRootHeight);
-		}
-		return;
-	}
-
-	void getTreeNodesDown(NetworkEdge edge, BitSet segsToRemove, Integer[] treeNodeList) {
-		if (segmentTrees.size() == 0) {
-			return;
-		}
-			
-		segsToRemove = (BitSet) segsToRemove.clone();
-		segsToRemove.and(edge.hasSegments);
-
-		if (segsToRemove.isEmpty())
-			return;
-		
-		if (edge.childNode.isReassortment()) {
-			getTreeNodesDown(edge.childNode.getChildEdges().get(0), segsToRemove, treeNodeList);
-		} else if (edge.childNode.isCoalescence()) { // check if this node corresponds to the tree node
-			if (segmentTrees.size() > 0 && edge.childNode.segmentIndices != null) {
-				for (int segIdx = 0; segIdx < segsToRemove.length(); segIdx++) {
-					// get the corresponding tree node
-					if (segsToRemove.get(segIdx) && 
-							edge.childNode.getChildEdges().get(0).hasSegments.get(segIdx) && 
-							edge.childNode.getChildEdges().get(1).hasSegments.get(segIdx)) {
-						
-						treeNodeList[segIdx] = edge.childNode.segmentIndices[segIdx];
-
-						// set bitset to false
-						segsToRemove.set(segIdx, false);
-					}
-				}
-			}
-
-			getTreeNodesDown(edge.childNode.getChildEdges().get(0), segsToRemove, treeNodeList);
-			getTreeNodesDown(edge.childNode.getChildEdges().get(1), segsToRemove, treeNodeList);
-
-		} else {
-			// loop over the segsToRemove Left and update the Tree Nodes
-			for (int segIdx = 0; segIdx < segsToRemove.length(); segIdx++) {
-				if (segsToRemove.get(segIdx)) {
-					treeNodeList[segIdx] = edge.childNode.segmentIndices[segIdx];
-				}
-			}
-		}
-
-		return;
-	}
-
-	void getTreeNodes(NetworkEdge edge, BitSet segsToRemove, List<NetworkNode> targetNodeIndices,
-			Integer[] treeNodeList, Double[] nodeHeightList, Integer[] treeChildNodeList) {
-		segsToRemove = (BitSet) segsToRemove.clone();
-		segsToRemove.and(edge.hasSegments);
-
-		if (segsToRemove.isEmpty())
-			return;
-
-		if (edge.isRootEdge())
-			return;
-
-		if (edge.parentNode.isReassortment()) {
-
-			getTreeNodes(edge.parentNode.getParentEdges().get(0), segsToRemove, targetNodeIndices, treeNodeList,
-					nodeHeightList, treeChildNodeList);
-			getTreeNodes(edge.parentNode.getParentEdges().get(1), segsToRemove, targetNodeIndices, treeNodeList,
-					nodeHeightList, treeChildNodeList);
-
-		} else {
-			if (segmentTrees.size() > 0) {
-				BitSet sibSegs = getSisterEdge(edge).hasSegments;
-
-				if (segmentTrees.size() > 0) {
-					for (int segIdx = 0; segIdx < segsToRemove.length(); segIdx++) {
-						
-						if (segsToRemove.get(segIdx) && sibSegs.get(segIdx)) {
-							nodeHeightList[segIdx] = edge.parentNode.getHeight();
-							treeNodeList[segIdx] = getTreeNodeIndex(getSisterEdge(edge), segIdx);
-							targetNodeIndices.set(segIdx, edge.parentNode);
-							
-							if (edge.parentNode.segmentIndices == null)
-								edge.parentNode.segmentIndices = new int[network.getSegmentCount()];
-							try {
-							edge.parentNode.segmentIndices[segIdx] = segmentTrees.get(segIdx)
-									.getNode(treeChildNodeList[segIdx]).getParent().getNr();
-							}catch (Exception e) {
-								System.out.println(segmentTrees.get(segIdx)
-									.getNode(treeChildNodeList[segIdx]).getHeight());
-								System.out.println(treeChildNodeList[segIdx]);
-								System.out.println("Error in segment tree " + segIdx + " " + edge.parentNode.getHeight());
-								System.out.println(network.getExtendedNewick(segIdx));
-								System.out.println(segmentTrees.get(segIdx) + ";");
-								System.exit(0);
-							}
-							segsToRemove.set(segIdx, false);
-						}
-					}
-				}
-
-			}
-
-			getTreeNodes(edge.parentNode.getParentEdges().get(0), segsToRemove, targetNodeIndices, treeNodeList,
-					nodeHeightList, treeChildNodeList);
-
-		}
-
-		return;
-	}
-
-	private Integer getTreeNodeIndex(NetworkEdge edge, int segIdx) {
-		if (edge.childNode.isLeaf()) {
-			return edge.childNode.segmentIndices[segIdx];
-		} else if (edge.childNode.isReassortment()) {
-			return getTreeNodeIndex(edge.childNode.getChildEdges().get(0), segIdx);
-		} else {
-			if (edge.childNode.segmentIndices != null && 
-					edge.childNode.getChildEdges().get(0).hasSegments.get(segIdx) && 
-					edge.childNode.getChildEdges().get(1).hasSegments.get(segIdx)) {
-				return edge.childNode.segmentIndices[segIdx];
-			}
-			return edge.childNode.getChildEdges().get(0).hasSegments.get(segIdx)
-					? getTreeNodeIndex(edge.childNode.getChildEdges().get(0), segIdx)
-					: getTreeNodeIndex(edge.childNode.getChildEdges().get(1), segIdx);
-		}
-	}
-
-	/**
-	 * Add segments to this edge and ancestors, potentially sampling new reassortment events.
-	 * @param c 
-	 * @param b 
-	 *
-	 * @param edge      edge at which to start addition
-	 * @param segsToAdd segments to add to the edge and ancestors
-	 * @param eventTimes 
-	 * @return log probability of operation
-	 */
 	protected double divertSegmentsToAncestors(List<NetworkEdge> activeEdges, 
 			List<NetworkEdge> inactiveEdges, 
 			List<BitSet> segsToAddList, 
@@ -877,6 +474,7 @@ public class DivertSegmentAndResimulate extends NetworkOperator {
 	 * @param edgesAdded    list to track newly added edges
 	 * @return log probability of the coalescence event
 	 */
+	@Override
 	protected double handleCoalescenceEvent(int coalLines, List<NetworkEdge> activeEdges, List<NetworkEdge> excludedEdges, List<BitSet> segsToAddList,
 			List<NetworkEdge> inactiveEdges, List<BitSet> segsToRemoveList,
 			double currentTime, NetworkEdge rootEdge, List<NetworkEdge> edgesAdded, boolean coalAboveRoot) {
@@ -1104,6 +702,7 @@ public class DivertSegmentAndResimulate extends NetworkOperator {
 		return logHR;
 	}
 
+	@Override
 	protected double handleReassortmentEvent(List<NetworkEdge> activeEdges, List<NetworkEdge> inactiveEdges,
 			List<BitSet> segsToAddList, List<BitSet> segsToRemoveList,
 			double[] reassortmentObsProb, double totalReassortmentProb, double currentTime, List<NetworkEdge> edgesAdded) {
@@ -1220,6 +819,7 @@ public class DivertSegmentAndResimulate extends NetworkOperator {
 		return logHR;
 	}
 
+	@Override
 	protected double handleEdgeTraversalEvent(int nextInactiveEventIndex, int nextEventIndex,
 			List<NetworkEdge> inactiveEdges, List<BitSet> segsToRemoveList,
 			List<NetworkEdge> activeEdges, List<BitSet> segsToAddList, double reverseCoalRate, double totalReverseReassortmentProb, double[] reassortmentObsProbInactive, int reverseCoalLines, List<NetworkEdge> excludedEdgesReverse) {
@@ -1232,6 +832,7 @@ public class DivertSegmentAndResimulate extends NetworkOperator {
 		return logHR;
 	}
 
+	@Override
 	protected double handleInactiveEdgeTraversal(int idx, List<NetworkEdge> inactiveEdges, 
 			List<BitSet> segsToRemoveList, List<NetworkEdge> activeEdges, double reverseCoalRate, double totalReverseReassortmentProb, double[] reassortmentObsProbInactive, int reverseCoalLines, List<NetworkEdge> excludedEdgesReverse) {
 		double logHR = 0.0;
@@ -1244,6 +845,7 @@ public class DivertSegmentAndResimulate extends NetworkOperator {
 		return logHR;
 	}
 
+	@Override
 	protected double handleActiveEdgeTraversal(int idx, List<NetworkEdge> activeEdges, 
 			List<BitSet> segsToAddList, List<NetworkEdge> inactiveEdges, List<BitSet> segsToRemoveList, double reverseCoalRate, double totalReverseReassortmentProb, double[] reassortmentObsProbInactive, int reverseCoalLines, List<NetworkEdge> excludedEdgesReverse) {
 		double logHR = 0.0;
@@ -1256,6 +858,7 @@ public class DivertSegmentAndResimulate extends NetworkOperator {
 		return logHR;
 	}
 
+	@Override
 	protected double handleReassortment(List<NetworkEdge> activeEdges, List<BitSet> segsToAddList,
 			List<NetworkEdge> inactiveEdges, List<BitSet> segsToRemoveList, NetworkEdge edge, double totalReverseReassortmentProb, double[] reassortmentObsProbInactive) {
 
@@ -1410,6 +1013,7 @@ public class DivertSegmentAndResimulate extends NetworkOperator {
 		return logHR;
 	}
 	
+	@Override
 	protected double handleCoalescence(List<NetworkEdge> activeEdges, List<BitSet> segsToAddList,
 			List<NetworkEdge> inactiveEdges, List<BitSet> segsToRemoveList, NetworkEdge edge,  NetworkEdge sisterEdge, double reverseCoalRate, int reverseCoalLines, List<NetworkEdge> excludedEdgesReverse) {
 		
@@ -1567,317 +1171,4 @@ public class DivertSegmentAndResimulate extends NetworkOperator {
 	}
 
 
-	/**
-	 * Clean up empty reassortment edges.
-	 * Uses the same pattern as EmptyEdgesNetworkOperator.RemoveAllEmptyNetworkSegments()
-	 */
-	protected double cleanEmptyEdgesTopDown() {
-		double logHR = 0.0;
-//		networkBeforeClean = network.getExtendedNewick();
-		// Create a local list of network edges to track during removal
-//		System.out.println(network);
-		List<Integer> removableEdges = new ArrayList<>();
-		for (int i = 0; i < networkEdges.size(); i++) {
-			NetworkEdge edge = networkEdges.get(i);
-			if (!edge.isRootEdge() && edge.childNode.isReassortment()
-					&& edge.parentNode.isCoalescence() && edge.hasSegments.cardinality() == 0) {
-				removableEdges.add(i);
-			}
-		}
-
-		// Remove all empty edges iteratively
-		while (removableEdges.size() > 0) {
-			int edgeInd = 0; // deterministically remove edges as their random contribution is already accounted for
-
-			logHR += removeEmptyReassortmentEdgeAdapted(networkEdges, networkEdges.get(removableEdges.get(edgeInd)));
-
-			// Rebuild the list of removable edges
-			removableEdges = new ArrayList<>();
-			for (int i = 0; i < networkEdges.size(); i++) {
-				NetworkEdge edge = networkEdges.get(i);
-				if (!edge.isRootEdge() && edge.childNode.isReassortment()
-						&& edge.parentNode.isCoalescence() && edge.hasSegments.cardinality() == 0) {
-					removableEdges.add(i);
-				}
-			}
-		}
-		
-		double reroot = networkTerminatesAtMRCA();
-		
-		if (reroot!=0.0) {
-			logHR += reroot;
-			reroot = networkTerminatesAtMRCA();
-			if (reroot!=0.0) {
-				throw new RuntimeException("Error rerooting network at MRCA after removing empty edges.");
-			}
-		}
-		
-//		System.out.println("sakld")
-//		System.out.println(network.getExtendedNewick());
-		
-		return logHR;
-
-	}
-
-	/**
-	 * Remove an empty reassortment edge, following the exact pattern from EmptyEdgesNetworkOperator.
-	 * Updates the localNetworkEdges list to track removed edges.
-	 */
-	private double removeEmptyReassortmentEdgeAdapted(List<NetworkEdge> localNetworkEdges, NetworkEdge edgeToRemove) {
-		double logHR=0.0;
-//		System.out.println(network.getExtendedNewick());
-		NetworkNode nodeToRemove = edgeToRemove.childNode;
-		NetworkEdge edgeToRemoveSpouse = getSpouseEdge(edgeToRemove);
-		NetworkNode edgeToRemoveSpouseParent = edgeToRemoveSpouse.parentNode;
-
-		// Update local edges list (same as parent class lines 355-356)
-		localNetworkEdges.remove(edgeToRemove);
-		localNetworkEdges.remove(edgeToRemoveSpouse);
-		
-		// keep track fo teh edge to remove spouse length and it's cardinality
-//		System.out.println(edgeToRemove.getLength() + " " + edgeToRemoveSpouse.getLength());
-
-		// Remove edge and associated nodes
-		NetworkEdge edgeToExtend = nodeToRemove.getChildEdges().get(0);
-		nodeToRemove.removeChildEdge(edgeToExtend);
-		nodeToRemove.removeParentEdge(edgeToRemove);
-		nodeToRemove.removeParentEdge(edgeToRemoveSpouse);
-		edgeToRemoveSpouseParent.removeChildEdge(edgeToRemoveSpouse);
-		edgeToRemoveSpouseParent.addChildEdge(edgeToExtend);
-
-		NetworkNode secondNodeToRemove = edgeToRemove.parentNode;
-		NetworkEdge secondEdgeToExtend = getSisterEdge(edgeToRemove);
-		
-		double from = secondEdgeToExtend.childNode.getHeight();
-		double to = secondEdgeToExtend.parentNode.getHeight();
-		int edgeToRemoveSpouseCardinality = secondEdgeToExtend.hasSegments.cardinality();
-
-
-		secondNodeToRemove.removeChildEdge(secondEdgeToExtend);
-		secondNodeToRemove.removeChildEdge(edgeToRemove);
-
-		// Update local edges list (same as parent class line 372)
-		localNetworkEdges.remove(secondNodeToRemove.getParentEdges().get(0));
-		
-		networkEdges.remove(secondNodeToRemove.getParentEdges().get(0));
-		networkEdges.remove(edgeToRemove);
-		networkEdges.remove(edgeToRemoveSpouse);
-
-		if (secondNodeToRemove.getParentEdges().get(0).isRootEdge()) {
-//			System.out.println("updating root edge");
-			// calculate the integral of this reassortment contribution
-//			System.out.println(edgeToRemoveSpouseLength + " " + edgeToRemoveSpouseCardinality);
-			
-			// calculate the integral of reassortment on this edge
-			if (coalescentDistr.timeVaryingReassortmentRates != null) {
-				double integral = coalescentDistr.timeVaryingReassortmentRates
-						.getIntegral(from, to);
-				integral *= 1 - 2.0*Math.pow(0.5, edgeToRemoveSpouseCardinality);
-				logReaHRInterval -= integral;
-//				System.out.println("Integral reassortment contribution removed: " + integral);
-				logHR -= integral;
-			}
-				
-			
-			network.setRootEdge(secondEdgeToExtend);
-		} else {
-			NetworkEdge secondNodeToRemoveParentEdge = secondNodeToRemove.getParentEdges().get(0);
-			NetworkNode secondNodeToRemoveParent = secondNodeToRemoveParentEdge.parentNode;
-			secondNodeToRemoveParent.removeChildEdge(secondNodeToRemoveParentEdge);
-			secondNodeToRemove.removeParentEdge(secondNodeToRemoveParentEdge);
-			secondNodeToRemoveParent.addChildEdge(secondEdgeToExtend);
-		}
-		return logHR;
-	}
-
-	protected BitSet getRandomUnconditionedSubset(BitSet sourceSegments) {
-		BitSet destSegments = new BitSet();
-
-		destSegments.clear();
-
-		for (int segIdx = sourceSegments.nextSetBit(0); segIdx != -1; segIdx = sourceSegments.nextSetBit(segIdx + 1)) {
-
-			if (Randomizer.nextBoolean())
-				destSegments.set(segIdx);
-		}
-
-		return destSegments;
-	}
-
-	protected double getLogUnconditionedSubsetProb(BitSet sourceSegments) {
-		return sourceSegments.cardinality() * Math.log(0.5);
-	}
-	
-    protected double getLogConditionedSubsetProb(BitSet sourceSegments, BitSet chosenSubset, double binomProb) {
-
-        if (sourceSegments.cardinality() < 2) {
-            return Double.NEGATIVE_INFINITY;
-        }
-
-        int n = sourceSegments.cardinality();
-        int k = chosenSubset.cardinality();
-
-        double logProb = k * Math.log(binomProb)
-                       + (n - k) * Math.log(1.0 - binomProb)
-                       - Math.log(1.0 - Math.pow(binomProb, n) - Math.pow(1.0 - binomProb, n));
-
-        return logProb;
-    }
-    
-    protected BitSet getRandomConditionedSubset(BitSet sourceSegments, double binomProb) {
-
-        if (sourceSegments.cardinality() < 2) {
-            return null;
-        }
-
-        BitSet destSegments = new BitSet();
-
-        do {
-            destSegments.clear();
-
-            for (int segIdx = sourceSegments.nextSetBit(0);
-                 segIdx != -1;
-                 segIdx = sourceSegments.nextSetBit(segIdx + 1)) {
-
-                if (Randomizer.nextDouble() < binomProb) {
-                    destSegments.set(segIdx);
-                }
-            }
-
-        } while (destSegments.cardinality() == 0
-                || destSegments.cardinality() == sourceSegments.cardinality());
-        return destSegments;
-    }
-
-	protected BitSet getRandomSegment(BitSet hasSegments) {
-		// pick a random segment to divert.
-		BitSet segsToDivert = new BitSet();
-		segsToDivert.clear();
-
-		int segToDivert = Randomizer.nextInt(hasSegments.cardinality());
-		int segIdx = hasSegments.nextSetBit(0);
-		for (int i = 0; i < segToDivert; i++) {
-			segIdx = hasSegments.nextSetBit(segIdx + 1);
-		}
-		segsToDivert.set(segIdx);
-		return segsToDivert;
-	}
-	
-	protected double networkTerminatesAtMRCA() {
-		
-		List<NetworkNode> sortedNodes = new ArrayList<>(network.getNodes());
-		sortedNodes.sort(Comparator.comparingDouble(NetworkNode::getHeight));
-		List<NetworkNode> sampleNodes = sortedNodes.stream().filter(NetworkNode::isLeaf).collect(Collectors.toList());
-		double maxSampleHeight = sampleNodes.get(sampleNodes.size() - 1).getHeight();
-
-		int lineages = 0;
-		for (NetworkNode node : sortedNodes) {
-			switch (node.getChildEdges().size()) {
-			case 2:
-				// Coalescence
-
-				lineages -= 1;
-				break;
-
-			case 1:
-				// Reassortment
-
-				if (lineages < 2 && node.getHeight() > maxSampleHeight) {
-//					System.out.println(node.getHeight());
-//					System.out.println(network);
-					NetworkEdge newRootEdge = node.getChildEdges().get(0);
-//					System.out.println(network);
-					double logHR = calculateLogHRForEdge(newRootEdge);
-					
-					newRootEdge.parentNode=null;
-					network.setRootEdge(newRootEdge);
-//					System.out.println(logHR);
-					return logHR;
-				}
-
-				lineages += 1;
-				break;
-
-			case 0:
-				// Sample
-
-				lineages += 1;
-				break;
-			}
-		}
-		return 0.0;
-	}
-
-	private double calculateLogHRForEdge(NetworkEdge newRootEdge) {
-		double logHR = 0.0;
-		List<NetworkEdge> networkEdges = new ArrayList<>();
-		networkEdges.add(newRootEdge);
-		double currentTime = newRootEdge.childNode.getHeight();
-		
-		
-		
-		while (!networkEdges.isEmpty()){
-			double nextEvent = Double.POSITIVE_INFINITY;
-			double totalObsProb = 0.0;
-			int nextEventIndex = -1;
-			for (int i = 0; i < networkEdges.size(); i++) {
-				NetworkEdge edge = networkEdges.get(i);
-				totalObsProb += 1-2.0*Math.pow(0.5, edge.hasSegments.cardinality());
-				if (edge.parentNode.getHeight() < nextEvent) {
-					nextEvent = edge.parentNode.getHeight();
-					nextEventIndex = i;
-				}
-			}
-			double coalRate = 0.5*networkEdges.size()*(networkEdges.size()-1);
-//			System.out.println("coalRate " + coalRate + "  " + currentTime + " to " + nextEvent);
-			logHR += -coalRate * coalescentDistr.populationFunction.getIntegral(currentTime, nextEvent);
-			logCoaHRInterval += -coalRate * coalescentDistr.populationFunction.getIntegral(currentTime, nextEvent);
-			logHR += -totalObsProb * coalescentDistr.timeVaryingReassortmentRates.getIntegral(currentTime, nextEvent);
-			logReaHRInterval += -totalObsProb * coalescentDistr.timeVaryingReassortmentRates.getIntegral(currentTime, nextEvent);
-			currentTime = nextEvent;
-			if (networkEdges.get(nextEventIndex).parentNode.isCoalescence()) {
-//				System.out.println("coalescence at " + currentTime);
-				logHR += Math.log(1.0/(coalescentDistr.populationFunction.getPopSize(currentTime)));			
-				logCoaHR += Math.log(1.0/(coalescentDistr.populationFunction.getPopSize(currentTime)));
-				// coalescence
-				NetworkEdge edge1 = networkEdges.get(nextEventIndex);
-				NetworkEdge edge2 = getSisterEdge(edge1);
-
-				networkEdges.remove(edge1);
-				networkEdges.remove(edge2);
-				this.networkEdges.remove(edge1);
-				this.networkEdges.remove(edge2);
-
-				NetworkEdge parentEdge = edge1.parentNode.getParentEdges().get(0);
-				networkEdges.add(parentEdge);
-				if (parentEdge==network.getRootEdge()) {
-					this.networkEdges.remove(parentEdge);
-					this.networkEdges.add(newRootEdge);
-					return logHR;
-				}
-				
-			}else {
-				NetworkEdge edge1 = networkEdges.get(nextEventIndex);
-				double binomval = Math.log(2*Math.pow(0.5, edge1.hasSegments.cardinality()));
-//				System.out.println(binomval + " reassortment at " + currentTime + " " + Math.log(1.0*coalescentDistr.timeVaryingReassortmentRates.getPopSize(currentTime)));
-				logHR += Math.log(1.0*coalescentDistr.timeVaryingReassortmentRates.getPopSize(currentTime))+binomval;
-				logReaHR += Math.log(1.0*coalescentDistr.timeVaryingReassortmentRates.getPopSize(currentTime))+binomval;
-
-				networkEdges.add(edge1.parentNode.getParentEdges().get(0));
-				networkEdges.add(edge1.parentNode.getParentEdges().get(1));
-				networkEdges.remove(edge1);
-				this.networkEdges.remove(edge1);
-				
-			}
-					
-						
-				
-			
-		}
-		return 0;
-	}
-	
-	
-
 }
-

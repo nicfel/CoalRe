@@ -41,7 +41,9 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
 
 		if (Randomizer.nextDouble() < addProb) {
 			if (localMove.get()) {
+//				System.out.println(network.getExtendedNewickVerbose(0));
 				logHR = addLocalReassortment();
+//				System.out.println(network.getExtendedNewickVerbose(0)+"\n");
 			} else {
 				logHR = addRecombination();
 			}
@@ -60,6 +62,8 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
 
 	double addRecombination() {
 		double logHR = 0.0;
+		
+		
 
 		List<Integer> possibleSourceEdges = new ArrayList<>();
 		for (int i = 0; i < networkEdges.size(); i++) {
@@ -125,6 +129,7 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
 				.filter(e -> e.childNode.isReassortment()).count();
 
 		logHR += Math.log(1.0 / nRemovableEdges);
+		
 		return logHR;
 	}
 
@@ -138,17 +143,13 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
 				removableEdges.add(i);
 			}
 		}
-
+		
 		if (removableEdges.isEmpty())
 			return Double.NEGATIVE_INFINITY;
 
 		NetworkEdge edgeToRemove = networkEdges.get(removableEdges.get(Randomizer.nextInt(removableEdges.size())));
-		logHR -= Math.log(1.0 / (removableEdges.size()));
+		logHR -= Math.log(1.0 / ((double) removableEdges.size()));
 
-		if (edgeToRemove.parentNode.getParentEdges().get(0).isRootEdge())
-			return Double.NEGATIVE_INFINITY;
-
-		double sourceTime = edgeToRemove.childNode.getHeight();
 		
 		// Calculate tree intervals
 		coalescentDistr.intervals.update();
@@ -305,6 +306,7 @@ public class AddRemoveAndResimulate extends DivertSegmentAndResimulate {
 
 		// 7. HR contribution for reverse move for the amount of removable edges
 		logHR += Math.log(1.0 / removableEdges.size());
+		
 
 		return logHR;
 	}
