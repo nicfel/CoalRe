@@ -109,6 +109,19 @@ public class BEAUtiConnector {
 		                    continue;
 		
 		                BactrianUpDownOperator upDown = (BactrianUpDownOperator) operator;
+		                
+		                System.out.println("-----------------");
+		                System.out.println("-----------------");
+		                System.out.println("-----------------");
+		                System.out.println("-----------------");
+		                System.out.println("-----------------");
+		                System.out.println("-----------------");
+		                System.out.println("-----------------");
+		                System.out.println("-----------------");
+		                System.out.println("-----------------");
+		                System.out.println("-----------------");
+		                System.out.println(upDown.upInput.get());
+		                System.out.println(upDown.downInput.get());
 		
 		                // Note: built-in up/down operators scale trees _down_ while
 		                // ours scales trees _up_, hence the up/down reversal.

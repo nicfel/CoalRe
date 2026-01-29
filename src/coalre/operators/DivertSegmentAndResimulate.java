@@ -631,7 +631,7 @@ public class DivertSegmentAndResimulate extends NetworkOperator {
 	            	timeToNextReassortment = coalescentDistr.timeVaryingReassortmentRates.getInverseIntensity(
 	            			transformedTimeToNextRea + currentTransformedReaTime) - currentTime;
 	            }else {
-	            	timeToNextReassortment = Randomizer.nextExponential(totalReassortmentProb*coalescentDistr.reassortmentRateInput.get().getArrayValue());
+	            	timeToNextReassortment = Randomizer.nextExponential(reassortmentObsProb.length*coalescentDistr.reassortmentRateInput.get().getArrayValue());
 	            }
 			}	
 
