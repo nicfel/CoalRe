@@ -32,7 +32,9 @@ import java.awt.*;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Turn the network into a single child by folling a user specified segment.
@@ -49,6 +51,7 @@ public class ClusterSizeComparison extends ReassortmentAnnotator {
     private static class NetworkAnnotatorOptions {
         File inFile;
         File outFile = new File("sizecomp.tsv");
+        File cladeFile = null;
         double burninPercentage = 10.0;
         int segment = 0;
 
@@ -57,6 +60,7 @@ public class ClusterSizeComparison extends ReassortmentAnnotator {
             return "Active options:\n" +
                     "Input file: " + inFile + "\n" +
                     "Output file: " + outFile + "\n" +
+                    "Clade file: " + (cladeFile != null ? cladeFile : "none") + "\n" +
                     "Burn-in percentage: " + burninPercentage + "%\n" +
                     "segment/chromsome or plasmid to use as base tree " + segment + "\n"+
                     "-----------------------------------------\n";
@@ -80,24 +84,41 @@ public class ClusterSizeComparison extends ReassortmentAnnotator {
 
 	      System.out.println("\nWriting output to " + options.outFile.getName()
 	      + "...");
-	      
+
+        // Load clade file if provided
+        String[] clades = null;
+        String[] tipNames = null;
+        if (options.cladeFile != null) {
+            List<String> lines = java.nio.file.Files.readAllLines(options.cladeFile.toPath());
+            clades = new String[lines.size() - 1];
+            tipNames = new String[lines.size() - 1];
+            for (int i = 1; i < lines.size(); i++) {
+                String[] split = lines.get(i).split("[,\t]");
+                tipNames[i - 1] = split[0];
+                clades[i - 1] = split[1];
+            }
+        }
+
     	int segmentCount=-1;
 
         int counter=1;
-        
+
         // keeps track of the leave nodes
         List<String> leafNodes = new ArrayList<>();
-        
-        // compute the pairwise reassortment distances 
+
+        // compute the pairwise reassortment distances
         try (PrintStream ps = new PrintStream(options.outFile)) {
-        	ps.print("iteration\ttime\tleafsWith\tleafsWithout\n");
-          	
+        	if (clades != null)
+        		ps.print("iteration\ttime\tleafsWith\tleafsWithout\tresultingClade\tincomingClade\tsegments\n");
+        	else
+        		ps.print("iteration\ttime\tleafsWith\tleafsWithout\n");
+
         	boolean first = true;
-	        for (Network network : logReader){	  
-	        	
+	        for (Network network : logReader){
+
 	        	segmentCount = network.getSegmentCount();
-	        	
-	        	if (first){        		
+
+	        	if (first){
 	            	for (NetworkNode networkNode : network.getNodes()){
 	            		if (networkNode.isLeaf()){
 	            			leafNodes.add(networkNode.getTaxonLabel());
@@ -105,13 +126,17 @@ public class ClusterSizeComparison extends ReassortmentAnnotator {
 	        		}
 	        		first = false;
 	        	}
-	        	
-	        	
-	        	// print the header for the file
+
+	        	// label clade membership along the main segment if a clade file was provided
+	        	if (clades != null) {
+	        		labelClades(network, clades, tipNames, options.segment);
+	        		markRemainingEdges(network, options.segment);
+	        	}
+
 	        	// calculate the cluster size for each node that has two children with different segments
-                // loop over all internal nodes and check if exactly one of the children has a reasosrtment event (i.e. single child node below)
+                // loop over all internal nodes and check if exactly one of the children has a reassortment event (i.e. single child node below)
 	        	for (NetworkNode n : network.getNodes()){
-	        		if (n.isCoalescence()) {        			
+	        		if (n.isCoalescence()) {
 	        			if (n.getChildEdges().get(0).hasSegments.get(options.segment) && n.getChildEdges().get(1).hasSegments.get(options.segment)) {
                             boolean leftIsSingleChild = n.getChildEdges().get(0).childNode.isReassortment();
                             boolean rightIsSingleChild = n.getChildEdges().get(1).childNode.isReassortment();
@@ -119,18 +144,44 @@ public class ClusterSizeComparison extends ReassortmentAnnotator {
                             if ((leftIsSingleChild || rightIsSingleChild) && !bothAreSingleChildren) {
                                 int countwith = 0;
                                 int countwithout = 0;
+                                NetworkNode reassortmentNode;
                                 if (leftIsSingleChild) {
                                     countwith = calculateClusterSize(n.getChildEdges().get(0), options.segment);
-                                    countwithout = calculateClusterSize(n.getChildEdges().get(1), options.segment);                                
-                                }else {
+                                    countwithout = calculateClusterSize(n.getChildEdges().get(1), options.segment);
+                                    reassortmentNode = n.getChildEdges().get(0).childNode;
+                                } else {
                                 	countwith = calculateClusterSize(n.getChildEdges().get(1), options.segment);
                                 	countwithout = calculateClusterSize(n.getChildEdges().get(0), options.segment);
+                                    reassortmentNode = n.getChildEdges().get(1).childNode;
                                 }
-                                ps.print(counter + "\t" + n.getHeight() + "\t" + countwith + "\t" + countwithout + "\n");
+                                if (clades != null) {
+                                    // The incoming parent edge is the one that does NOT carry the main segment.
+                                    // Its parent node's clade tells us where the new segments came from.
+                                    NetworkEdge incomingParentEdge = null;
+                                    for (NetworkEdge parentEdge : reassortmentNode.getParentEdges()) {
+                                        if (!parentEdge.hasSegments.get(options.segment)) {
+                                            incomingParentEdge = parentEdge;
+                                            break;
+                                        }
+                                    }
+                                    String resultingClade = reassortmentNode.getTypeLabel() != null
+                                            ? reassortmentNode.getTypeLabel() : "unknown";
+                                    String cladeInfo = "unknown";
+                                    String segmentInfo = "{}";
+                                    if (incomingParentEdge != null) {
+                                        String typeLabel = incomingParentEdge.parentNode.getTypeLabel();
+                                        cladeInfo = typeLabel != null ? typeLabel : "unknown";
+                                        segmentInfo = incomingParentEdge.hasSegments.toString();
+                                    }
+                                    ps.print(counter + "\t" + n.getHeight() + "\t" + countwith + "\t" + countwithout
+                                            + "\t" + resultingClade + "\t" + cladeInfo + "\t" + segmentInfo + "\n");
+                                } else {
+                                    ps.print(counter + "\t" + n.getHeight() + "\t" + countwith + "\t" + countwithout + "\n");
+                                }
                         }
 	        		}
-	        		
-	        		
+
+
             }   }
 	        	counter=counter+1;
 	        }
@@ -142,6 +193,67 @@ public class ClusterSizeComparison extends ReassortmentAnnotator {
     
 
 	
+	// ---- clade labelling (adapted from MarkClades) -------------------------
+
+	private void labelClades(Network network, String[] clades, String[] tipNames, int followSegment) {
+		labelNodes(network.getRootEdge(), clades, tipNames, followSegment);
+	}
+
+	private List<String> labelNodes(NetworkEdge edge, String[] clades, String[] tipNames, int followSegment) {
+		List<String> hasClades = new ArrayList<>();
+
+		if (edge.childNode.isLeaf()) {
+			String leaf = edge.childNode.getTaxonLabel();
+			for (int i = 0; i < clades.length; i++) {
+				if (leaf.contentEquals(tipNames[i])) {
+					hasClades.add(clades[i]);
+					edge.childNode.setTypeLabel(clades[i]);
+					return hasClades;
+				}
+			}
+		} else {
+			for (NetworkEdge e : edge.childNode.getChildEdges()) {
+				if (e.hasSegments.get(followSegment)) {
+					hasClades.addAll(labelNodes(e, clades, tipNames, followSegment));
+				}
+			}
+		}
+
+		Collections.sort(hasClades);
+		for (int i = hasClades.size() - 1; i > 0; i--) {
+			if (hasClades.get(i - 1).equals(hasClades.get(i))) {
+				hasClades.remove(i);
+				i--;
+			}
+		}
+
+		if (hasClades.size() == 1)
+			edge.childNode.setTypeLabel(hasClades.get(0));
+		else if (hasClades.size() > 1)
+			edge.childNode.setTypeLabel("unknown");
+
+		return hasClades;
+	}
+
+	private void markRemainingEdges(Network network, int followSegment) {
+		List<NetworkEdge> edges = network.getEdges().stream()
+				.filter(e -> !e.hasSegments.get(followSegment))
+				.collect(Collectors.toList());
+
+		do {
+			for (int i = edges.size() - 1; i >= 0; i--) {
+				if (edges.get(i).childNode.getTypeLabel() != null)
+					edges.remove(i);
+			}
+			for (NetworkEdge edge : edges) {
+				if (edge.parentNode.getTypeLabel() != null)
+					edge.childNode.setTypeLabel(edge.parentNode.getTypeLabel());
+			}
+		} while (edges.size() > 0);
+	}
+
+	// -------------------------------------------------------------------------
+
 	private int calculateClusterSize(NetworkEdge e, int segment) {
 		int clusterSize = 0;
 		if (e.childNode.isLeaf()) {
@@ -265,6 +377,7 @@ public class ClusterSizeComparison extends ReassortmentAnnotator {
 
         JLabel logFileLabel = new JLabel("Reassortment Network log file:");
         JLabel outFileLabel = new JLabel("Output file:");
+        JLabel cladeFileLabel = new JLabel("Clade file (optional):");
         JLabel burninLabel = new JLabel("Burn-in percentage:");
         JLabel chromosomeIndexLabel = new JLabel("Index of the chromosome (or plasmid)\nto output, starts counting at 0:");
 
@@ -276,6 +389,11 @@ public class ClusterSizeComparison extends ReassortmentAnnotator {
         outFilename.setText(options.outFile.getName());
         outFilename.setEditable(false);
         JButton outFileButton = new JButton("Choose File");
+
+        JTextField cladeFilename = new JTextField(20);
+        cladeFilename.setText("(none)");
+        cladeFilename.setEditable(false);
+        JButton cladeFileButton = new JButton("Choose File");
 
         JTextField chromosomeIndex = new JTextField(20);
         chromosomeIndex.setText(Integer.toString(options.segment));
@@ -305,16 +423,19 @@ public class ClusterSizeComparison extends ReassortmentAnnotator {
                 .addGroup(layout.createParallelGroup()
                         .addComponent(logFileLabel)
                         .addComponent(outFileLabel)
+                        .addComponent(cladeFileLabel)
                         .addComponent(burninLabel)
                         .addComponent(chromosomeIndexLabel))
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
                         .addComponent(inFilename)
                         .addComponent(outFilename)
+                        .addComponent(cladeFilename)
                         .addComponent(burninSlider)
                         .addComponent(chromosomeIndex))
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
                         .addComponent(inFileButton)
-                        .addComponent(outFileButton))
+                        .addComponent(outFileButton)
+                        .addComponent(cladeFileButton))
                 );
 
         layout.setVerticalGroup(layout.createSequentialGroup()
@@ -332,6 +453,13 @@ public class ClusterSizeComparison extends ReassortmentAnnotator {
                                 GroupLayout.DEFAULT_SIZE,
                                 GroupLayout.PREFERRED_SIZE)
                         .addComponent(outFileButton))
+                .addGroup(layout.createParallelGroup()
+                        .addComponent(cladeFileLabel)
+                        .addComponent(cladeFilename,
+                                GroupLayout.PREFERRED_SIZE,
+                                GroupLayout.DEFAULT_SIZE,
+                                GroupLayout.PREFERRED_SIZE)
+                        .addComponent(cladeFileButton))
                 .addGroup(layout.createParallelGroup()
                         .addComponent(burninLabel)
                         .addComponent(burninSlider,
@@ -392,6 +520,22 @@ public class ClusterSizeComparison extends ReassortmentAnnotator {
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 options.outFile = outFileChooser.getSelectedFile();
                 outFilename.setText(outFileChooser.getSelectedFile().getName());
+            }
+        });
+
+        JFileChooser cladeFileChooser = new JFileChooser();
+        cladeFileButton.addActionListener(e -> {
+            cladeFileChooser.setDialogTitle("Select clade file (TSV/CSV with tipName, cladeLabel columns).");
+            if (options.inFile != null)
+                cladeFileChooser.setCurrentDirectory(options.inFile);
+            else
+                cladeFileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+
+            int returnVal = cladeFileChooser.showOpenDialog(dialog);
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                options.cladeFile = cladeFileChooser.getSelectedFile();
+                cladeFilename.setText(cladeFileChooser.getSelectedFile().getName());
             }
         });
 
@@ -457,8 +601,15 @@ public class ClusterSizeComparison extends ReassortmentAnnotator {
                     + "-help                    Display this usage information.\n"
                     + "-burnin <percentage>     Specify the percentage of the log file to discard\n"
                     + "                         as burn-in. Default is 10%.\n"
-                    + "-segment <index>         Specify the index of the segment to analyze,\n"
-                    + "                         starting from 0. Default is 0.\n"
+                    + "-segment <index>         Specify the index of the segment to follow as the\n"
+                    + "                         main/base segment, starting from 0. Default is 0.\n"
+                    + "-clade <file>            Optional TSV/CSV file mapping tip names to clade\n"
+                    + "                         labels (columns: tipName, cladeLabel; first row is\n"
+                    + "                         header). When provided, each event row gains two\n"
+                    + "                         extra columns: incomingClade (the clade of the\n"
+                    + "                         parent lineage that donated segments at the\n"
+                    + "                         reassortment) and segments (the BitSet of segments\n"
+                    + "                         carried on that incoming parent edge).\n"
                     + "\n"
                     + "If no output file is specified, the default output file name is 'sizecomp.tsv'.\n"
                     + "The inputLogFile is mandatory and must be a valid reassortment network log file.";
@@ -521,6 +672,14 @@ public class ClusterSizeComparison extends ReassortmentAnnotator {
                         printUsageAndError("Error parsing burnin percentage.");
                     }
 
+                    i += 1;
+                    break;
+
+                case "-clade":
+                    if (args.length <= i + 1)
+                        printUsageAndError("-clade must be followed by a file name.");
+
+                    options.cladeFile = new File(args[i + 1]);
                     i += 1;
                     break;
 

@@ -1,4 +1,4 @@
-<package name="CoalRe" version="3.0.3">
+<package name="CoalRe" version="3.0.4">
   <depends on='BEAST.base' atleast='2.7.2'/>
   <depends on='BEAST.app' atleast='2.7.2'/>
 
@@ -60,6 +60,7 @@
         <provider classname="coalre.operators.UniformReassortmentReheight"/>
         <provider classname="coalre.operators.ChangePredictorOperator"/>
         <provider classname="coalre.operators.EffectSizePredictorOperator"/>        
+        <provider classname="coalre.simulator.InitNetworkFromExtendedNewick"/>
         <provider classname="coalre.simulator.SimulatedCoalescentNetwork"/>
         <provider classname="coalre.simulator.SIRwithReassortment"/>
         <provider classname="coalre.simulator.SISwithReassortment"/>
