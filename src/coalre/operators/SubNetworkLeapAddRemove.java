@@ -56,17 +56,6 @@ public class SubNetworkLeapAddRemove extends AddRemoveReassortment {
 	@Override
 	public double networkProposal() {
 		return 0.0;
-//		double logHR = 0.0;
-//		if (Randomizer.nextBoolean()) {
-//			logHR = addReassortmentEvent();
-//		} else {
-//			try {
-//				logHR = removeRecombination();
-//			} catch (Exception e) {
-//				return Double.NEGATIVE_INFINITY;
-//			}
-//		}		
-
 	}
 
 	

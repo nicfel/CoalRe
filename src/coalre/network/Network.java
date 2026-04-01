@@ -730,7 +730,6 @@ public class Network extends StateNode {
 
         if (childrenWithSeg == 0) {
             // Leaf node
-
             thisClade.set(networkNode.getTaxonIndex());
         }
 

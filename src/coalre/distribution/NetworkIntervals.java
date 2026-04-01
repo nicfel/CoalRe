@@ -61,7 +61,7 @@ public class NetworkIntervals extends CalculationNode {
                 : 0.5;
     }
 
-    void update() {
+    public void update() {
 //        if (!eventListDirty)
 //            return;
 

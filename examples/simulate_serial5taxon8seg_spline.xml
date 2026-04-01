@@ -1,0 +1,77 @@
+<beast version="2.0"
+       namespace="beast.base.inference
+                 :beast.core.util
+                 :beast.core.parameter
+                 :beast.base.evolution.alignment
+                 :beast.base.evolution.likelihood
+                 :beast.base.evolution.tree
+                 :beast.base.evolution.tree.coalescent
+				 :beast.base.evolution.alignment
+				 :beast.base.inference.parameter
+                 :beast.base.evolution.sitemodel
+                 :beast.base.evolution.substitutionmodel
+                 :beast.base.evolution.operators
+                 :beast.math.distributions
+				 :beast.base.inference.distribution
+                 :beast.base.evolution.operator
+                 :beast.base.inference.operator.kernel
+                 :feast.simulation
+                 :feast.fileio
+                 :coalre.network
+                 :coalre.statistics
+                 :coalre.simulator
+                 :coalre.distribution
+                 :coalre.operators">
+
+    <network id="network" spec="SimulatedCoalescentNetwork"  nSegments="8"  enableSegmentTreeUpdate="false">
+        <!-- <populationModel spec="ConstantPopulation">
+            <popSize spec="RealParameter" value="1.0"/>
+        </populationModel> -->
+
+
+        <populationModel id="splinePop" spec="coalre.dynamics.NeDynamicsFromSpline">
+            <spline id="spline" spec="coalre.dynamics.Spline" infectedIsNe="true" gridPoints="500">
+                    <logInfected id="logInfected" spec="beast.base.inference.parameter.RealParameter" value="1 1 2 1.5 1 0"/>
+                <rateShifts id="rateShifts" spec="RealParameter" value="0 1 2 3 4 5"/>
+                <uninfectiousRate id="recoveryRate" spec="RealParameter" value="1.0"/>
+            </spline>
+        </populationModel>
+
+
+        <reassortmentRate spec="RealParameter" value="1.0"/>
+
+        <traitSet spec="TraitSet" traitname="date-backward" id="traitSet">
+            <taxa spec="TaxonSet" id="taxonSet">
+                <taxon spec="Taxon" id="t1"/>
+                <taxon spec="Taxon" id="t2"/>
+                <taxon spec="Taxon" id="t3"/>
+                <taxon spec="Taxon" id="t4"/>
+                <taxon spec="Taxon" id="t5"/>
+            </taxa>
+
+            t1=0, t2=0.1, t3=0.2, t4=0.3, t5=0.4
+        </traitSet>
+
+        <segmentTree id="segment1" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment2" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment3" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment4" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment5" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment6" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment7" spec="Tree" trait="@traitSet"/>
+        <segmentTree id="segment8" spec="Tree" trait="@traitSet"/>
+    </network>
+
+    <run spec="GPSimulator" nSims="100000">
+
+        <simulationObject idref="network"/>
+
+        <logger spec="Logger" logEvery="100" mode="tree" fileName="$(filebase).trees">
+            <log idref="network"/>
+        </logger>
+
+        <logger spec="Logger" logEvery="1" fileName="$(filebase).log">
+            <log spec="NetworkStatsLogger" network="@network"/>
+        </logger>
+    </run>
+</beast>

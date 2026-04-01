@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 
 /**
- * Implements the subnet slide move. General workflow:
+ * Implements the subnet slide move with resimulation. General workflow:
  * 1. Choose an edge to move and a child it will carry
  * 2. Make a copy of subnet starting with this child edge
  * 3. Attach a new coppy to the new parent with randomly drawn height
@@ -62,10 +62,12 @@ public class SubNetworkLeap extends DivertSegmentOperator {
 	public double networkProposal() {
 		try {
 			if (segmentRootOnlyInput.get()) {
+				
 //				System.out.println(network);
 				double logHR = networkProposalRoot();
+				throw new UnsupportedOperationException("segmentRootOnly has an issue an is currently disabled");
 //				System.out.println(network);
-				return logHR;
+//				return logHR;
 			}else if (randomlySampleAttachmentEdgeInput.get()) {
 				return networkProposalRandom();
 			} else {
