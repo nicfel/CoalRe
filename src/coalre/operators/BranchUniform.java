@@ -170,7 +170,6 @@ public class BranchUniform extends DivertSegmentOperator {
         
         logHR += Math.log(1.0/((double) reverseTargetEdgesDest.size()));
         logHR += Math.log(1.0/((double) reverseTargetEdgesSource.size()));
-//        System.out.println(network);
         
         addReassortmentEdge(newSourceEdge, newSourceTime, newDestEdge, newDestTime, segment);
       
@@ -203,7 +202,8 @@ public class BranchUniform extends DivertSegmentOperator {
 //        double probabReverse = getLogDeltaProb(-delta, currentDistance + delta);
 //        logHR += probabReverse - probabForward;
         
-        
+//        System.out.println(network +"\n");
+
 //        System.out.println(segmentTrees.get(segment) +";\n");        
 
 //        System.out.println(network+"\n");

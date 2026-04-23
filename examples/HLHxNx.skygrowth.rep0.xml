@@ -1,0 +1,1362 @@
+<beast version="2.0"
+       namespace="beast.base.inference
+                 :beast.core.util
+                 :beast.core.parameter
+                 :beast.base.evolution.alignment
+                 :beast.base.evolution.likelihood
+                 :beast.base.evolution.tree
+                 :beast.base.evolution.tree.coalescent
+				 :beast.base.evolution.alignment
+				 :beast.base.inference.parameter
+                 :beast.base.evolution.sitemodel
+                 :beast.base.evolution.substitutionmodel
+                 :beast.base.evolution.operators
+                 :beast.math.distributions
+				 :beast.base.inference.distribution
+                 :beast.base.evolution.operator
+                 :beast.base.inference.operator.kernel
+                 :feast.simulation
+                 :feast.fileio
+                 :coalre.network
+                 :coalre.statistics
+                 :coalre.simulator
+                 :coalre.distribution
+                 :coalre.operators">
+
+    <alignment id="seg1align" spec="AlignmentFromFasta" fileName="HLHxNx_HA.fasta"/>
+    <alignment id="seg2align" spec="AlignmentFromFasta" fileName="HLHxNx_NA.fasta"/>
+    <alignment id="seg3align" spec="AlignmentFromFasta" fileName="HLHxNx_MP.fasta"/>
+    <alignment id="seg4align" spec="AlignmentFromFasta" fileName="HLHxNx_NS.fasta"/>
+    <alignment id="seg5align" spec="AlignmentFromFasta" fileName="HLHxNx_NP.fasta"/>
+    <alignment id="seg6align" spec="AlignmentFromFasta" fileName="HLHxNx_PB1.fasta"/>
+    <alignment id="seg7align" spec="AlignmentFromFasta" fileName="HLHxNx_PB2.fasta"/>
+    <alignment id="seg8align" spec="AlignmentFromFasta" fileName="HLHxNx_PA.fasta"/>
+	
+
+    <taxonSet spec="TaxonSet" id="taxonSet">
+		<taxon spec="Taxon" id="A/Ruddy_Turnstone/Delaware/754/2024|EPI_ISL_19692256|2024-05-21"/>
+		<taxon spec="Taxon" id="A/laughing_gull/Delaware/CEIRS-217/2023|EPI_ISL_18869341|2023-05-18"/>
+		<taxon spec="Taxon" id="A/mallard/Maine/23-033202-003-original/2023|EPI_ISL_19429941|2023-10-12"/>
+		<taxon spec="Taxon" id="A/green-winged_teal/Mississippi/24-004129-007-original/2024|EPI_ISL_19660933|2024-01-29"/>
+		<taxon spec="Taxon" id="A/mallard/Maine/23-029690-001-original/2023|EPI_ISL_19288870|2023-09-15"/>
+		<taxon spec="Taxon" id="A/green-winged_teal/Texas/23-039199-012-original/2023|EPI_ISL_19559060|2023-11-18"/>
+		<taxon spec="Taxon" id="A/Ruddy_turnstone/Delaware/1029/2022|EPI_ISL_16919089|2022-05-31"/>
+		<taxon spec="Taxon" id="A/American_wigeon/Ohio/23-032269-008-original/2023|EPI_ISL_19387803|2023-10-14"/>
+		<taxon spec="Taxon" id="A/mallard/Michigan/23-031864-006-original/2023|EPI_ISL_19371764|2023-10-14"/>
+		<taxon spec="Taxon" id="A/Mallard/Alberta/516/2023|EPI_ISL_19281424|2023-08-20"/>
+		<taxon spec="Taxon" id="A/pintail/South_Carolina/24-003721-006-original/2024|EPI_ISL_19660929|2024-01-29"/>
+		<taxon spec="Taxon" id="A/Mallard/Alberta/312/2024|EPI_ISL_19715852|2024-08-18"/>
+		<taxon spec="Taxon" id="A/green-winged_teal/South_Carolina/23-037737-004-original/2023|EPI_ISL_19560333|2023-11-22"/>
+		<taxon spec="Taxon" id="A/Mallard/Alberta/40/2023|EPI_ISL_19279599|2023-08-15"/>
+		<taxon spec="Taxon" id="A/mallard/Wisconsin/23-030308-013-original/2022|EPI_ISL_19325217|2022-08-04"/>
+		<taxon spec="Taxon" id="A/ruddy_turnstone/Delaware/CEIRS-383/2023|EPI_ISL_18869330|2023-05-19"/>
+		<taxon spec="Taxon" id="A/ruddy_turnstone/Delaware/CEIRS-734/2023|EPI_ISL_18869358|2023-05-23"/>
+		<taxon spec="Taxon" id="A/mallard/Idaho/23-028149-042/2023|EPI_ISL_19186538|2023-09-12"/>
+		<taxon spec="Taxon" id="A/blue-winged_teal/Illinois/23-033983-021-original/2023|EPI_ISL_19429962|2023-10-28"/>
+		<taxon spec="Taxon" id="A/green-winged_teal/Indiana/23-034642-001-original/2023|EPI_ISL_19490403|2023-11-04"/>
+		<taxon spec="Taxon" id="A/mallard_duck/Ohio/23OS0194/2023|EPI_ISL_19847397|2023-11-06"/>
+		<taxon spec="Taxon" id="A/mallard/New_Hampshire/23-027730-032/2023|EPI_ISL_19131346|2023-09-08"/>
+		<taxon spec="Taxon" id="A/mallard/New_Hampshire/23-028617-024-original/2023|EPI_ISL_19260809|2023-09-14"/>
+		<taxon spec="Taxon" id="A/mallard/Maine/23-033196-002-original/2023|EPI_ISL_19387819|2023-10-04"/>
+		<taxon spec="Taxon" id="A/mallard/Maine/23-033194-001-original/2023|EPI_ISL_19387818|2023-10-03"/>
+		<taxon spec="Taxon" id="A/mallard/Idaho/23-027297-008/2023|EPI_ISL_19131428|2023-09-07"/>
+		<taxon spec="Taxon" id="A/Laughing_Gull/Delaware/156/2024|EPI_ISL_19678956|2024-05-14"/>
+		<taxon spec="Taxon" id="A/northern_shoveler/Nevada/23-034295-004-original/2023|EPI_ISL_19429966|2023-10-14"/>
+		<taxon spec="Taxon" id="A/green-winged_teal/Wisconsin/23-030169-001-original/2023|EPI_ISL_19325216|2023-09-30"/>
+		<taxon spec="Taxon" id="A/mallard/Minnesota/23-029702-001-original/2023|EPI_ISL_19288872|2023-09-23"/>
+		<taxon spec="Taxon" id="A/mallard/Michigan/23-028554-046-original/2023|EPI_ISL_19210866|2023-09-14"/>
+		<taxon spec="Taxon" id="A/Ruddy_turnstone/Delaware/150/2022|EPI_ISL_16919115|2022-05-31"/>
+		<taxon spec="Taxon" id="A/mallard/Minnesota/23-028687-020-original/2023|EPI_ISL_19224061|2023-09-13"/>
+		<taxon spec="Taxon" id="A/Mallard/Alberta/352/2023|EPI_ISL_19070543|2023-08-18"/>
+		<taxon spec="Taxon" id="A/Ruddy_Turnstone/Delaware/729/2024|EPI_ISL_19692261|2024-05-21"/>
+		<taxon spec="Taxon" id="A/Mallard/Alberta/520/2024|EPI_ISL_19716111|2024-08-22"/>
+		<taxon spec="Taxon" id="A/pintail/Utah/23-040304-002-original/n/a|EPI_ISL_19559080|2023-12-14"/>
+		<taxon spec="Taxon" id="A/Northern_Pintail/Alberta/404/2023|EPI_ISL_19070476|2023-08-18"/>
+		<taxon spec="Taxon" id="A/guinea_fowl/New_York/USDA-015240001/2023|EPI_ISL_18898049|2023-05-10"/>
+		<taxon spec="Taxon" id="A/guinea_fowl/New_York/USDA-042021001/2022|EPI_ISL_18898046|2022-12-19"/>
+		<taxon spec="Taxon" id="A/muscovy_duck/New_York/USDA-042022007/2022|EPI_ISL_18898291|2022-12-19"/>
+		<taxon spec="Taxon" id="A/chicken/New_York/USDA-001022001/2023|EPI_ISL_18898068|2023-01-04"/>
+		<taxon spec="Taxon" id="A/muscovy_duck/New_York/USDA-041140001/2022|EPI_ISL_18898287|2022-12-15"/>
+		<taxon spec="Taxon" id="A/muscovy_duck/New_York/USDA-018220004/2021|EPI_ISL_18898300|2021-06-14"/>
+		<taxon spec="Taxon" id="A/turkey/New_York/USDA-008939004/2021|EPI_ISL_18898348|2021-03-22"/>
+		<taxon spec="Taxon" id="A/environment/New_York/USDA-021736001/2021|EPI_ISL_18898054|2021-07-14"/>
+		<taxon spec="Taxon" id="A/guinea_fowl/New_York/USDA-003260001/2022|EPI_ISL_18898037|2022-01-28"/>
+		<taxon spec="Taxon" id="A/chicken/New_York/USDA-006284003/2022|EPI_ISL_18898056|2022-02-23"/>
+		<taxon spec="Taxon" id="A/chicken/New_York/USDA-012806002/2022|EPI_ISL_18898058|2022-04-20"/>
+		<taxon spec="Taxon" id="A/muscovy_duck/New_York/USDA-007692004/2022|EPI_ISL_18898245|2022-03-10"/>
+		<taxon spec="Taxon" id="A/guinea_fowl/New_York/USDA-003806004/2022|EPI_ISL_18898038|2022-01-31"/>
+		<taxon spec="Taxon" id="A/muscovy_duck/New_York/USDA-013818006/2022|EPI_ISL_18898255|2022-05-02"/>
+		<taxon spec="Taxon" id="A/guinea_fowl/New_York/USDA-019319003/2022|EPI_ISL_18898043|2022-06-17"/>
+		<taxon spec="Taxon" id="A/Herring_Gull/NS/FAV-0264-14/2023|EPI_ISL_18702980|2023-04-30"/>
+		<taxon spec="Taxon" id="A/Great_Black-Backed_Gull/NS/FAV-0380-2/2024|EPI_ISL_19750589|2024-10-13"/>
+		<taxon spec="Taxon" id="A/Great_Black-Backed_Gull/NS/FAV-0393-1/2024|EPI_ISL_19750591|2024-11-08"/>
+		<taxon spec="Taxon" id="A/Ringed_Seal/NU/FAV-0410-2/2024|EPI_ISL_19750593|2024-10-09"/>
+		<taxon spec="Taxon" id="A/Ring-billed_Gull/NL/FAV-0430-9/2023|EPI_ISL_19260108|2023-10-23"/>
+		<taxon spec="Taxon" id="A/Snow_Goose/AB/FAV-0044-3/2024|EPI_ISL_19776141|2023-12-08"/>
+		<taxon spec="Taxon" id="A/crow/Iowa/24-006634-001-R/2024|EPI_ISL_19650129|2024-03-01"/>
+		<taxon spec="Taxon" id="A/chicken/California/035979-005/2024|EPI_ISL_19672093|2024-12-01"/>
+		<taxon spec="Taxon" id="A/turkey/California/031284-021/2024|EPI_ISL_19548665|2024-10-17"/>
+		<taxon spec="Taxon" id="A/turkey/California/031284-008/2024|EPI_ISL_19548634|2024-10-17"/>
+		<taxon spec="Taxon" id="A/dairy_cow/California/037049-001/2024|EPI_ISL_19635180|2024-12-09"/>
+		<taxon spec="Taxon" id="A/cat/California/037985-002/2024|EPI_ISL_19645038|2024-12-12"/>
+		<taxon spec="Taxon" id="A/cat/California/037809-001/2024|EPI_ISL_19645059|2024-12-14"/>
+		<taxon spec="Taxon" id="A/chicken/California/037217-032/2024|EPI_ISL_19636605|2024-12-10"/>
+		<taxon spec="Taxon" id="A/chicken/California/037217-014/2024|EPI_ISL_19636626|2024-12-10"/>
+		<taxon spec="Taxon" id="A/dairy_cow/California/24_034837-003-R2/2024|EPI_ISL_19822130|2024-11-19"/>
+		<taxon spec="Taxon" id="A/Canada_goose/Maryland/23-034924-001/2023|EPI_ISL_18749458|2023-11-09"/>
+		<taxon spec="Taxon" id="A/Canada_goose/Michigan/23-035045-002-original/2023|EPI_ISL_19325220|2023-11-08"/>
+		<taxon spec="Taxon" id="A/chicken/Colorado/24-018507-002/2024|EPI_ISL_19260342|2024-06-21"/>
+		<taxon spec="Taxon" id="A/dairy_cow/Minnesota/24_016523-011/2024|EPI_ISL_19228505|2024-06-04"/>
+		<taxon spec="Taxon" id="A/chicken/Colorado/24-020285-012/2024|EPI_ISL_19307290|2024-07-11"/>
+		<taxon spec="Taxon" id="A/chicken/Colorado/24-020796-009/2024|EPI_ISL_19326263|2024-07-15"/>
+		<taxon spec="Taxon" id="A/dairy_cow/Wyoming/24_016134-078/2024|EPI_ISL_19228659|2024-04-29"/>
+		<taxon spec="Taxon" id="A/dairy_cow/Texas/026360-004/2024|EPI_ISL_19444907|2024-05-21"/>
+		<taxon spec="Taxon" id="A/cat/New_Mexico/24-012046-004/2024|EPI_ISL_19227431|2024-04-17"/>
+		<taxon spec="Taxon" id="A/turkey/Michigan/24-011230-002/2024|EPI_ISL_19227527|2024-04-15"/>
+		<taxon spec="Taxon" id="A/cat/Michigan/24-015043-001/2024|EPI_ISL_19227366|2024-05-20"/>
+		<taxon spec="Taxon" id="A/dairy_cow/Minnesota/24_016288-012/2024|EPI_ISL_19228619|2024-06-03"/>
+		<taxon spec="Taxon" id="A/Michigan/90/2024|EPI_ISL_19162802|2024-05-14"/>
+		<taxon spec="Taxon" id="A/dairy_cow/Texas/063200-24-5/2024|EPI_ISL_19155858|2024-03-13"/>
+		<taxon spec="Taxon" id="A/dairy_cow/Texas/24_009310-007/2024|EPI_ISL_19094454|2024-03-21"/>
+		<taxon spec="Taxon" id="A/chicken/Idaho/24-013706-001/2024|EPI_ISL_19227407|2024-05-07"/>
+		<taxon spec="Taxon" id="A/chicken/Idaho/24-012234-002/2024|EPI_ISL_19227504|2024-04-10"/>
+		<taxon spec="Taxon" id="A/chicken/Idaho/24-016669-001/2024|EPI_ISL_19228482|2024-06-04"/>
+		<taxon spec="Taxon" id="A/dairy_cow/Idaho/W241290019-18-P/2024|EPI_ISL_19822014|2024-05-07"/>
+		<taxon spec="Taxon" id="A/dairy_cow/Minnesota/24_020731-004/2024|EPI_ISL_19307269|2024-07-16"/>
+		<taxon spec="Taxon" id="A/chicken/Minnesota/24-018153-004/2024|EPI_ISL_19260314|2024-06-20"/>
+		<taxon spec="Taxon" id="A/turkey/South_Dakota/007379-002/2024|EPI_ISL_19094440|2024-03-08"/>
+		<taxon spec="Taxon" id="A/turkey/South_Dakota/007379-001/2024|EPI_ISL_19094513|2024-03-08"/>
+		<taxon spec="Taxon" id="A/trumpeter_swan/Minnesota/24-000301-001-original/2023|EPI_ISL_19559098|2023-12-28"/>
+		<taxon spec="Taxon" id="A/sanderling/Virginia/W24-190A/2024|EPI_ISL_19178095|2024-03-10"/>
+		<taxon spec="Taxon" id="A/chicken/Iowa/23-037208-002/2023|EPI_ISL_19131447|2023-11-22"/>
+		<taxon spec="Taxon" id="A/Chicken/BC/FAV-0388-2/2023|EPI_ISL_19710918|2023-11-18"/>
+		<taxon spec="Taxon" id="A/Canada_Goose/AB/FAV-0408-6/2023|EPI_ISL_19775981|2023-11-07"/>
+		<taxon spec="Taxon" id="A/peregrine_falcon/Iowa/23-034846-001/2023|EPI_ISL_18749469|2023-11-08"/>
+		<taxon spec="Taxon" id="A/Cackling_Goose/BC/AIVPHL-1412/2023|EPI_ISL_18665602|2023-11-14"/>
+		<taxon spec="Taxon" id="A/green-winged_teal/Kansas/23-035000-007-original/2023|EPI_ISL_19288880|2023-11-05"/>
+		<taxon spec="Taxon" id="A/chicken/Kansas/23-039959-001-original/2023|EPI_ISL_19273326|2023-12-17"/>
+		<taxon spec="Taxon" id="A/Great_Horned_Owl/AB/FAV-0045-2/2024|EPI_ISL_19776160|2024-01-05"/>
+		<taxon spec="Taxon" id="A/turkey/South_Dakota/23-038978-001-original/2023|EPI_ISL_19210890|2023-12-08"/>
+		<taxon spec="Taxon" id="A/mallard/Oregon/23-032795-043/2023|EPI_ISL_19175584|2023-10-21"/>
+		<taxon spec="Taxon" id="A/goat/Minnesota/007234-030/2024|EPI_ISL_19094666|2024-03-08"/>
+		<taxon spec="Taxon" id="A/Chicken/AB/FAV-0417-2/2023|EPI_ISL_19776091|2023-11-24"/>
+		<taxon spec="Taxon" id="A/Chicken/AB/FAV-0417-1/2023|EPI_ISL_19776090|2023-11-24"/>
+		<taxon spec="Taxon" id="A/chicken/Montana/23-034345-002/2023|EPI_ISL_18698990|2023-11-06"/>
+		<taxon spec="Taxon" id="A/Rosss_goose/Kansas/W23-968B/2023|EPI_ISL_19134617|2023-12-12"/>
+		<taxon spec="Taxon" id="A/blue-winged_teal/Louisiana/UGAI23-893/2023|EPI_ISL_19070499|2023-09-01"/>
+		<taxon spec="Taxon" id="A/Great_Horned_Owl/AB/FAV-0446-1/2023|EPI_ISL_19776076|2023-11-21"/>
+		<taxon spec="Taxon" id="A/Canada_Goose/BC/AIVPHL-1343/2023|EPI_ISL_18665631|2023-10-11"/>
+		<taxon spec="Taxon" id="A/chicken/California/24-000135-001/2023|EPI_ISL_18914516|2023-12-29"/>
+		<taxon spec="Taxon" id="A/domestic_duck/California/23-038546-001-original/2023|EPI_ISL_19210882|2023-12-04"/>
+		<taxon spec="Taxon" id="A/green-winged_teal/Illinois/23-033978-005-original/2023|EPI_ISL_19371779|2023-10-29"/>
+		<taxon spec="Taxon" id="A/Chicken/BC/FAV-0369-1/2023|EPI_ISL_19710903|2023-11-12"/>
+		<taxon spec="Taxon" id="A/Black-Billed_Magpie/AB/FAV-0042-4/2024|EPI_ISL_19776109|2023-12-01"/>
+		<taxon spec="Taxon" id="A/turkey/Minnesota/23-031477-001/2023|EPI_ISL_18695161|2023-10-16"/>
+		<taxon spec="Taxon" id="A/Chicken/SK/FAV-0379-1/2023|EPI_ISL_19776015|2023-11-10"/>
+		<taxon spec="Taxon" id="A/Chicken/AB/FAV-0030-1/2024|EPI_ISL_19776024|2023-11-12"/>
+		<taxon spec="Taxon" id="A/black_vulture/South_Carolina/23-036529-004-original/2023|EPI_ISL_19325227|2023-11-13"/>
+		<taxon spec="Taxon" id="A/mallard/Maine/22-041145-003/2022|EPI_ISL_19604164|2022-12-14"/>
+		<taxon spec="Taxon" id="A/Snow_Goose/QC/FAV-1628-15/2022|EPI_ISL_19154776|2022-11-22"/>
+		<taxon spec="Taxon" id="A/Chicken/QC/FAV-0187-SP1/2023|EPI_ISL_19775644|2023-05-07"/>
+		<taxon spec="Taxon" id="A/Chicken/QC/FAV-0191-1/2023|EPI_ISL_19775646|2023-05-12"/>
+		<taxon spec="Taxon" id="A/American_Crow/QC/FAV-1627-5/2022|EPI_ISL_19154702|2022-11-14"/>
+		<taxon spec="Taxon" id="A/canada_goose/Massachusetts/015884-006/2023|EPI_ISL_19736845|2023-02-18"/>
+		<taxon spec="Taxon" id="A/Snow_Goose/QC/FAV-0033-5/2023|EPI_ISL_19775527|2022-12-02"/>
+		<taxon spec="Taxon" id="A/Red-Tailed_Hawk/ON/FAV-0160-2/2023|EPI_ISL_19155270|2023-04-12"/>
+		<taxon spec="Taxon" id="A/Canada_goose/Ohio/23-007195-003/2023|EPI_ISL_17964885|2023-02-24"/>
+		<taxon spec="Taxon" id="A/Turkey_Vulture/ON/FAV-0195-1/2023|EPI_ISL_19775635|2023-05-02"/>
+		<taxon spec="Taxon" id="A/Canada_Goose/ON/FAV-0104-3/2023|EPI_ISL_19155201|2023-03-08"/>
+		<taxon spec="Taxon" id="A/Canada_Goose/ON/FAV-0120-3/2023|EPI_ISL_19155221|2023-03-21"/>
+		<taxon spec="Taxon" id="A/Turkey/BC/FAV-1538-1/2022|EPI_ISL_19154894|2022-11-28"/>
+		<taxon spec="Taxon" id="A/chicken/South_Dakota/22-037701-001/2022|EPI_ISL_16271839|2022-11-19"/>
+		<taxon spec="Taxon" id="A/mallard/Nevada/22-027081-001/2022|EPI_ISL_19604010|2022-08-16"/>
+		<taxon spec="Taxon" id="A/blue_winged_teal/Oklahoma/22-029332-033/2022|EPI_ISL_19606370|2022-09-10"/>
+		<taxon spec="Taxon" id="A/Turkey/QC/FAV-1422-3/2022|EPI_ISL_19154697|2022-11-09"/>
+		<taxon spec="Taxon" id="A/american_green_winged_teal/New_York/22-033592-012-R/2022|EPI_ISL_19606721|2022-10-15"/>
+		<taxon spec="Taxon" id="A/red-tailed_hawk/Massachusetts/014126-065/2024|EPI_ISL_19736788|2024-04-15"/>
+		<taxon spec="Taxon" id="A/american_green_winged_teal/Georgia/22-038443-007/2022|EPI_ISL_19606706|2022-11-19"/>
+		<taxon spec="Taxon" id="A/white-winged_scoter/Massachusetts/007609-002/2024|EPI_ISL_19736818|2024-02-23"/>
+		<taxon spec="Taxon" id="A/wood_duck/New_York/22-027736-001/2022|EPI_ISL_19605167|2022-08-31"/>
+		<taxon spec="Taxon" id="A/chicken/Pennsylvania/USDA-012578-004/2022|EPI_ISL_18132608|2022-04-25"/>
+		<taxon spec="Taxon" id="A/chicken/Pennsylvania/USDA-012092-003/2022|EPI_ISL_18132548|2022-04-19"/>
+		<taxon spec="Taxon" id="A/chicken/Pennsylvania/USDA-011531-001/2022|EPI_ISL_18132626|2022-04-14"/>
+		<taxon spec="Taxon" id="A/chicken/Pennsylvania/22-012742-001/2022|EPI_ISL_16171417|2022-04-26"/>
+		<taxon spec="Taxon" id="A/duck/Pennsylvania/22-016645-002-original/2022|EPI_ISL_19559137|2022-05-21"/>
+		<taxon spec="Taxon" id="A/Canada_Goose/QC/FAV-0239/2024|EPI_ISL_19776209|2024-02-04"/>
+		<taxon spec="Taxon" id="A/Canada_Goose/ON/FAV-0117-3/2024|EPI_ISL_19776215|2024-02-07"/>
+		<taxon spec="Taxon" id="A/chicken/Massachusetts/24-003817-001-original/2024|EPI_ISL_19372817|2024-02-02"/>
+		<taxon spec="Taxon" id="A/bald_eagle/Massachusetts/007606-009/2024|EPI_ISL_19736830|2024-02-20"/>
+		<taxon spec="Taxon" id="A/Turkey/BC/FAV-1656-1/2022|EPI_ISL_19155101|2022-12-14"/>
+		<taxon spec="Taxon" id="A/Northern_Gannet/QC/FAV-0617-7/2022|EPI_ISL_19152518|2022-05-27"/>
+		<taxon spec="Taxon" id="A/Canada_goose/Massachusetts/24-007313-001-original/2024|EPI_ISL_19430006|2024-02-08"/>
+		<taxon spec="Taxon" id="A/red_tailed_hawk/Massachusetts/22-020416-013/2022|EPI_ISL_19605712|2022-06-10"/>
+		<taxon spec="Taxon" id="A/common_eider/Maine/22-036180-008/2022|EPI_ISL_19608137|2022-06-24"/>
+		<taxon spec="Taxon" id="A/chicken/Maine/22-020042-002-original/2022|EPI_ISL_19546783|2022-06-27"/>
+		<taxon spec="Taxon" id="A/common_tern/Maine/22-022526-010/2022|EPI_ISL_16632512|2022-07-07"/>
+		<taxon spec="Taxon" id="A/chicken/Maine/22-008366-001/2022|EPI_ISL_11971470|2022-03-18"/>
+		<taxon spec="Taxon" id="A/American_Black_Duck/Connecticut/USDA-005313-007/2022|EPI_ISL_18133085|2022-02-16"/>
+		<taxon spec="Taxon" id="A/American_Crow/NB/FAV-0131-1/2022|EPI_ISL_19145168|2022-02-15"/>
+		<taxon spec="Taxon" id="A/Sanderling/Massachusetts/USDA-007696-004/2022|EPI_ISL_18132439|2022-03-03"/>
+		<taxon spec="Taxon" id="A/sanderling/MA/22HP00192/2022|EPI_ISL_16641777|2022-03-03"/>
+		<taxon spec="Taxon" id="A/Sanderling/Massachusetts/USDA-007696-005/2022|EPI_ISL_18132443|2022-03-04"/>
+		<taxon spec="Taxon" id="A/chicken/Maine/22-008540-001/2022|EPI_ISL_11971483|2022-03-22"/>
+		<taxon spec="Taxon" id="A/great_horned_owl/MA/22MM00199/2022|EPI_ISL_16641778|2022-03-03"/>
+		<taxon spec="Taxon" id="A/Ring-billed_gull/Minnesota/22-017940-004/2022|EPI_ISL_19605585|2022-06-06"/>
+		<taxon spec="Taxon" id="A/pelican/Iowa/22-011101-006/2022|EPI_ISL_19604333|2022-04-12"/>
+		<taxon spec="Taxon" id="A/Great_Horned_Owl/Minnesota/USDA-011586-004/2022|EPI_ISL_18133500|2022-04-11"/>
+		<taxon spec="Taxon" id="A/Canada_Goose/AB/FAV-1446-2/2022|EPI_ISL_19775476|2022-10-07"/>
+		<taxon spec="Taxon" id="A/Mallard/BC/FAV-0934-74/2022|EPI_ISL_19154162|2022-08-29"/>
+		<taxon spec="Taxon" id="A/great_black_backed_gull/Massachusetts/23-004612-025/2023|EPI_ISL_19607352|2023-01-14"/>
+		<taxon spec="Taxon" id="A/Common_Eider/NL/FAV-0886-6/2022|EPI_ISL_19152918|2022-07-06"/>
+		<taxon spec="Taxon" id="A/snowy_owl/Massachusetts/22-016611-012/2022|EPI_ISL_19605059|2022-04-01"/>
+		<taxon spec="Taxon" id="A/Backyard_bird/Maine/USDA-005158-001/2022|EPI_ISL_18133095|2022-02-17"/>
+		<taxon spec="Taxon" id="A/guineafowl/Pennsylvania/23-008103-001/2023|EPI_ISL_19766133|2023-03-11"/>
+		<taxon spec="Taxon" id="A/Khaki_Campbell_duck/Pennsylvania/23-007063-001-original/2023|EPI_ISL_19490419|2023-02-28"/>
+		<taxon spec="Taxon" id="A/Turkey/ON/FAV-1469-4/2022|EPI_ISL_19154749|2022-11-21"/>
+		<taxon spec="Taxon" id="A/peregrine_falcon/Washington/22-037174-001/2022|EPI_ISL_19604197|2022-10-01"/>
+		<taxon spec="Taxon" id="A/turkey_vulture/Oregon/22-032043-001/2022|EPI_ISL_19604807|2022-10-05"/>
+		<taxon spec="Taxon" id="A/Northern_Gannet/PE/FAV-0652-1/2022|EPI_ISL_19152679|2022-05-31"/>
+		<taxon spec="Taxon" id="A/Great_Black-Backed_Gull/NL/OTH-0114|EPI_ISL_16190849|2021-11-04"/>
+		<taxon spec="Taxon" id="A/Mixed/NL/FAV-0004-16/2022|EPI_ISL_19145144|2021-12-31"/>
+		<taxon spec="Taxon" id="A/emu/NL/FAV-0035-12/2021|EPI_ISL_12968817|2021-12-17"/>
+		<taxon spec="Taxon" id="A/Mixed/NL/FAV-0035-5/2021|EPI_ISL_19145131|2021-12-16"/>
+		<taxon spec="Taxon" id="A/Mallard/Colorado/USDA-009476-001/2022|EPI_ISL_18133149|2022-03-22"/>
+		<taxon spec="Taxon" id="A/Snow_Goose/North_Dakota/USDA-011034-004/2022|EPI_ISL_18132194|2022-04-04"/>
+		<taxon spec="Taxon" id="A/raccoon/Washington/22-018406-002/2022|EPI_ISL_15078252|2022-06-08"/>
+		<taxon spec="Taxon" id="A/wood_duck/Wisconsin/22-016279-001/2022|EPI_ISL_19605197|2022-05-02"/>
+		<taxon spec="Taxon" id="A/chicken/Kansas/22-008259-002/2022|EPI_ISL_11971469|2022-03-16"/>
+		<taxon spec="Taxon" id="A/hawk/Montana/22-015563-001/2022|EPI_ISL_19607575|2022-05-16"/>
+		<taxon spec="Taxon" id="A/canada_goose/Utah/22-025129-001/2022|EPI_ISL_19607697|2022-08-11"/>
+		<taxon spec="Taxon" id="A/chicken/Montana/22-013053-002/2022|EPI_ISL_16171463|2022-04-28"/>
+		<taxon spec="Taxon" id="A/turkey/North_Carolina/22-010448-001/2022|EPI_ISL_13434430|2022-04-06"/>
+		<taxon spec="Taxon" id="A/Great_Horned_Owl/AB/FAV-0505-52/2022|EPI_ISL_16189983|2022-05-02"/>
+		<taxon spec="Taxon" id="A/Great_Horned_Owl/AB/FAV-0505-57/2022|EPI_ISL_16190395|2022-05-06"/>
+		<taxon spec="Taxon" id="A/american_white_pelican/Iowa/22-022114-001/2022|EPI_ISL_19606691|2022-07-01"/>
+		<taxon spec="Taxon" id="A/mallard/Illinois/22-035404-002/2022|EPI_ISL_19604166|2022-10-30"/>
+		<taxon spec="Taxon" id="A/red_tailed_hawk/New_York/22-042014-001/2022|EPI_ISL_19605819|2022-12-19"/>
+		<taxon spec="Taxon" id="A/turkey/Minnesota/22-012034-001/2022|EPI_ISL_16102283|2022-04-17"/>
+		<taxon spec="Taxon" id="A/turkey/Minnesota/22-012036-002/2022|EPI_ISL_16102927|2022-04-18"/>
+		<taxon spec="Taxon" id="A/turkey/BC/AIVPHL-138/2022|EPI_ISL_17051135|2022-05-18"/>
+		<taxon spec="Taxon" id="A/bald_eagle/Washington/22-018403-001/2022|EPI_ISL_19607204|2022-06-07"/>
+		<taxon spec="Taxon" id="A/Snow_Goose/North_Dakota/USDA-011569-002/2022|EPI_ISL_18132312|2022-04-07"/>
+		<taxon spec="Taxon" id="A/Bald_Eagle/Florida/USDA-007915-002/2022|EPI_ISL_18132930|2022-02-28"/>
+		<taxon spec="Taxon" id="A/poultry/Kansas/22-007391-001/2022|EPI_ISL_11897684|2022-03-09"/>
+		<taxon spec="Taxon" id="A/turkey/Missouri/22-007087-002/2022|EPI_ISL_11897678|2022-03-08"/>
+		<taxon spec="Taxon" id="A/Snow_Goose/SK/FAV-0184-1/2022|EPI_ISL_19145214|2022-03-27"/>
+		<taxon spec="Taxon" id="A/Rosss_Goose/SK/FAV-0268-14/2022|EPI_ISL_19145224|2022-03-30"/>
+		<taxon spec="Taxon" id="A/red_tailed_hawk/Minnesota/22-016228-001/2022|EPI_ISL_19605846|2022-05-23"/>
+		<taxon spec="Taxon" id="A/Red-tailed_Hawk/North_Dakota/USDA-011565-002/2022|EPI_ISL_18132400|2022-04-08"/>
+		<taxon spec="Taxon" id="A/Wood_Duck/Minnesota/USDA-012773-003/2022|EPI_ISL_18132489|2022-04-15"/>
+		<taxon spec="Taxon" id="A/great_horned_owl/Oregon/22-018475-001/2022|EPI_ISL_19607221|2022-05-26"/>
+		<taxon spec="Taxon" id="A/Great_Horned_Owl/Minnesota/USDA-011871-006/2022|EPI_ISL_18133494|2022-04-15"/>
+		<taxon spec="Taxon" id="A/hawk/Michigan/22-013957-003/2022|EPI_ISL_19607571|2022-05-02"/>
+		<taxon spec="Taxon" id="A/Swainsons_Hawk/SK/FAV-0802-36/2022|EPI_ISL_19152337|2022-05-19"/>
+		<taxon spec="Taxon" id="A/Great_Horned_Owl/BC/FAV-0795-6/2022|EPI_ISL_19152773|2022-06-08"/>
+		<taxon spec="Taxon" id="A/Canada_Goose/BC/OTH-0134-9/2022|EPI_ISL_19154102|2022-08-15"/>
+		<taxon spec="Taxon" id="A/Chicken/BC/FAV-0027-1/2023|EPI_ISL_19157563|2023-01-19"/>
+		<taxon spec="Taxon" id="A/guinea_fowl/Michigan/22-005440-003/2022|EPI_ISL_11628231|2022-02-22"/>
+		<taxon spec="Taxon" id="A/American_wigeon/South_Carolina/AH0195145/2021|EPI_ISL_9869760|2021-12-30"/>
+		<taxon spec="Taxon" id="A/Snow_Goose/New_York/USDA-008835-004/2022|EPI_ISL_18132226|2022-03-01"/>
+		<taxon spec="Taxon" id="A/Gadwall/South_Carolina/USDA-001743-004/2022|EPI_ISL_18133425|2022-01-06"/>
+		<taxon spec="Taxon" id="A/chicken/Missouri/22-007677-001/2022|EPI_ISL_11897693|2022-03-14"/>
+		<taxon spec="Taxon" id="A/mallard/Oregon/22-026112-046/2022|EPI_ISL_19604088|2022-08-15"/>
+		<taxon spec="Taxon" id="A/red-breasted_merganser/BC/AIVPHL-219/2022|EPI_ISL_17051389|2022-08-02"/>
+		<taxon spec="Taxon" id="A/Backyard_bird/Alaska/USDA-013107-001/2022|EPI_ISL_18133020|2022-04-28"/>
+		<taxon spec="Taxon" id="A/Snow_Goose/AB/FAV-0918-4/2022|EPI_ISL_19151724|2022-04-20"/>
+		<taxon spec="Taxon" id="A/Canada_Goose/BC/FAV-0014-8/2023|EPI_ISL_19775480|2022-10-17"/>
+		<taxon spec="Taxon" id="A/Turkey/BC/FAV-1192-1/2022|EPI_ISL_19154619|2022-10-17"/>
+		<taxon spec="Taxon" id="A/Chicken/BC/FAV-1618-3/2022|EPI_ISL_19155053|2022-12-05"/>
+		<taxon spec="Taxon" id="A/Canada_Goose/BC/OTH-0097-7/2022|EPI_ISL_19157544|2022-04-29"/>
+		<taxon spec="Taxon" id="A/Sandhill_crane/Washington/22-014024-001/2022|EPI_ISL_19605620|2022-05-03"/>
+		<taxon spec="Taxon" id="A/Canada_Goose/AB/FAV-0833-46/2022|EPI_ISL_19152781|2022-06-09"/>
+		<taxon spec="Taxon" id="A/Snow_Goose/AB/FAV-0505-33/2022|EPI_ISL_19157549|2022-04-29"/>
+		<taxon spec="Taxon" id="A/american_crow/North_Dakota/22-015577-002/2022|EPI_ISL_19606637|2022-05-12"/>
+		<taxon spec="Taxon" id="A/Common_Raven/MB/FAV-0364-2/2022|EPI_ISL_19151774|2022-04-24"/>
+		<taxon spec="Taxon" id="A/Black-Billed_Magpie/SK/FAV-0268-34/2022|EPI_ISL_19151559|2022-04-10"/>
+		<taxon spec="Taxon" id="A/chicken/Utah/22-020377-006-original/2022|EPI_ISL_19546788|2022-06-27"/>
+		<taxon spec="Taxon" id="A/goose/Minnesota/22-014294-007/2022|EPI_ISL_16240239|2022-05-08"/>
+		<taxon spec="Taxon" id="A/turkey/Minnesota/22-010126-002/2022|EPI_ISL_13431314|2022-04-04"/>
+		<taxon spec="Taxon" id="A/red_tailed_hawk/Minnesota/22-013667-001/2022|EPI_ISL_19605834|2022-04-29"/>
+		<taxon spec="Taxon" id="A/domestic_duck/Wisconsin/22-013183-004/2022|EPI_ISL_16171478|2022-04-26"/>
+		<taxon spec="Taxon" id="A/waterfowl/Nebraska/22-007805-002/2022|EPI_ISL_11897696|2022-03-14"/>
+		<taxon spec="Taxon" id="A/Snow_Goose/North_Dakota/USDA-011036-003/2022|EPI_ISL_18132263|2022-04-04"/>
+		<taxon spec="Taxon" id="A/Snow_Goose/North_Dakota/USDA-009399-002/2022|EPI_ISL_18132211|2022-03-29"/>
+		<taxon spec="Taxon" id="A/Backyard_bird/Wyoming/USDA-009599-006/2022|EPI_ISL_18132844|2022-03-26"/>
+		<taxon spec="Taxon" id="A/canada_goose/Oregon/22-015734-001/2022|EPI_ISL_19607720|2022-05-16"/>
+		<taxon spec="Taxon" id="A/turkey/Indiana/USDA-004688-006/2022|EPI_ISL_18132242|2022-02-14"/>
+		<taxon spec="Taxon" id="A/turkey/Indiana/USDA-005696-003/2022|EPI_ISL_18132225|2022-02-21"/>
+		<taxon spec="Taxon" id="A/Snow_Goose/North_Dakota/USDA-012770-002/2022|EPI_ISL_18132309|2022-04-21"/>
+		<taxon spec="Taxon" id="A/Snow_Goose/North_Dakota/USDA-009481-016/2022|EPI_ISL_18132164|2022-03-23"/>
+		<taxon spec="Taxon" id="A/bald_eagle/Minnesota/22-013663-007/2022|EPI_ISL_19607154|2022-05-03"/>
+		<taxon spec="Taxon" id="A/chicken/Indiana/USDA-012933-001/2022|EPI_ISL_18132557|2022-04-23"/>
+		<taxon spec="Taxon" id="A/Red-tailed_Hawk/North_Dakota/USDA-011565-001/2022|EPI_ISL_18132396|2022-04-08"/>
+		<taxon spec="Taxon" id="A/Lesser_Snow_Goose_White/Iowa/USDA-007679-001/2022|EPI_ISL_18133265|2022-03-14"/>
+		<taxon spec="Taxon" id="A/American_White_Pelican/Missouri/USDA-010666-001/2022|EPI_ISL_18133152|2022-03-29"/>
+		<taxon spec="Taxon" id="A/canada_goose/New_York/23-001640-001/2023|EPI_ISL_19607712|2023-01-13"/>
+		<taxon spec="Taxon" id="A/Canada_Goose/ON/FAV-0118-9/2023|EPI_ISL_19775581|2023-03-17"/>
+		<taxon spec="Taxon" id="A/black_vulture/Mississippi/23-002621-007/2023|EPI_ISL_19606122|2023-01-17"/>
+		<taxon spec="Taxon" id="A/black_vulture/Pennsylvania/22-039971-001/2022|EPI_ISL_19606235|2022-11-14"/>
+		<taxon spec="Taxon" id="A/vulture/North_Carolina/22-035819-002/2022|EPI_ISL_19604885|2022-11-02"/>
+		<taxon spec="Taxon" id="A/mallard/California/22-026616-001/2022|EPI_ISL_19604181|2022-08-23"/>
+		<taxon spec="Taxon" id="A/goose/California/22-028072-001/2022|EPI_ISL_19605279|2022-08-30"/>
+		<taxon spec="Taxon" id="A/black_vulture/Alaska/22-036371-002/2022|EPI_ISL_19606756|2022-11-07"/>
+		<taxon spec="Taxon" id="A/Laridae/NB/FAV-1619-1/2022|EPI_ISL_19154720|2022-11-16"/>
+		<taxon spec="Taxon" id="A/black_vulture/Georgia/22-034017-001/2022|EPI_ISL_19606255|2022-10-13"/>
+		<taxon spec="Taxon" id="A/black_vulture/Georgia/22-027995-006/2022|EPI_ISL_19608605|2022-08-23"/>
+		<taxon spec="Taxon" id="A/black_vulture/Georgia/W22-736A/2022|EPI_ISL_17185813|2022-09-06"/>
+		<taxon spec="Taxon" id="A/bald_eagle/Alaska/22-040776-001/2022|EPI_ISL_19606617|2022-12-08"/>
+		<taxon spec="Taxon" id="A/bald_eagle/Michigan/22-026960-001/2022|EPI_ISL_19607143|2022-08-10"/>
+		<taxon spec="Taxon" id="A/lesser_scaup/Florida/23-002762-007/2022|EPI_ISL_19605265|2022-12-22"/>
+		<taxon spec="Taxon" id="A/blue_winged_teal/Louisiana/23-013080-008/2022|EPI_ISL_19606452|2022-09-23"/>
+		<taxon spec="Taxon" id="A/chicken/Iowa/22-035700-001/2022|EPI_ISL_16297082|2022-11-03"/>
+		<taxon spec="Taxon" id="A/black_vulture/Virginia/22-032614-001/2022|EPI_ISL_19606466|2022-09-29"/>
+		<taxon spec="Taxon" id="A/black_vulture/Pennsylvania/22-014967-001/2022|EPI_ISL_19606215|2022-05-05"/>
+		<taxon spec="Taxon" id="A/black_vulture/Pennsylvania/22-039984-003/2022|EPI_ISL_19606178|2022-10-10"/>
+		<taxon spec="Taxon" id="A/black_vulture/Pennsylvania/22-039984-002/2022|EPI_ISL_19606173|2022-10-10"/>
+		<taxon spec="Taxon" id="A/Turkey_Vulture/QC/FAV-0957-1/2022|EPI_ISL_19152087|2022-05-09"/>
+		<taxon spec="Taxon" id="A/Mixed/ON/FAV-0179-12/2022|EPI_ISL_19145235|2022-04-01"/>
+		<taxon spec="Taxon" id="A/Turkey_Vulture/QC/FAV-0838-6/2022|EPI_ISL_19151906|2022-05-02"/>
+		<taxon spec="Taxon" id="A/Bald_Eagle/Vermont/USDA-009551-002/2022|EPI_ISL_18132994|2022-03-28"/>
+		<taxon spec="Taxon" id="A/Ring-Billed_Gull/QC/FAV-0891-2/2022|EPI_ISL_19152778|2022-06-08"/>
+		<taxon spec="Taxon" id="A/Great_Black-Backed_Gull/QC/FAV-0870-5/2022|EPI_ISL_19152704|2022-06-01"/>
+		<taxon spec="Taxon" id="A/Mixed/ON/FAV-1033-9/2022|EPI_ISL_19154521|2022-09-29"/>
+		<taxon spec="Taxon" id="A/Mixed/ON/FAV-1124-2/2022|EPI_ISL_19154583|2022-10-08"/>
+		<taxon spec="Taxon" id="A/Turkey_Vulture/ON/FAV-0360-7/2022|EPI_ISL_19151784|2022-04-24"/>
+		<taxon spec="Taxon" id="A/Great_Horned_Owl/ON/FAV-0378-5/2022|EPI_ISL_19151880|2022-04-30"/>
+		<taxon spec="Taxon" id="A/Bald_Eagle/Ohio/USDA-011250-001/2022|EPI_ISL_18132939|2022-03-25"/>
+		<taxon spec="Taxon" id="A/Great_Horned_Owl/Florida/USDA-007915-007/2022|EPI_ISL_18133525|2022-02-24"/>
+		<taxon spec="Taxon" id="A/black_vulture/Mississippi/23-001343-012/2023|EPI_ISL_19606305|2023-01-09"/>
+		<taxon spec="Taxon" id="A/black_vulture/Mississippi/23-001343-008/2023|EPI_ISL_19606301|2023-01-09"/>
+		<taxon spec="Taxon" id="A/black_vulture/Florida/22-012331-001/2022|EPI_ISL_15077376|2022-04-15"/>
+		<taxon spec="Taxon" id="A/black_vulture/Florida/22-020388-002/2022|EPI_ISL_19606743|2022-06-26"/>
+		<taxon spec="Taxon" id="A/wood_duck/Pennsylvania/22-021657-001/2022|EPI_ISL_19605169|2022-05-10"/>
+		<taxon spec="Taxon" id="A/Backyard_bird/New_York/USDA-010200-003/2022|EPI_ISL_18133056|2022-04-04"/>
+		<taxon spec="Taxon" id="A/Chicken/ON/FAV-0261-8/2022|EPI_ISL_19151713|2022-04-20"/>
+		<taxon spec="Taxon" id="A/black_vulture/Florida/22-021012-003/2022|EPI_ISL_19606749|2022-07-02"/>
+		<taxon spec="Taxon" id="A/black_vulture/Florida/22-020386-001/2022|EPI_ISL_19606741|2022-06-28"/>
+		<taxon spec="Taxon" id="A/Duck/ON/FAV-0237-2/2022|EPI_ISL_19151665|2022-04-13"/>
+		<taxon spec="Taxon" id="A/Red_Fox/ON/FAV-0873/2022|EPI_ISL_16013993|2022-04-03"/>
+		<taxon spec="Taxon" id="A/Black_Vulture/Florida/USDA-012628-001/2022|EPI_ISL_18132919|2022-04-20"/>
+		<taxon spec="Taxon" id="A/Black_Vulture/Florida/USDA-008152-001/2022|EPI_ISL_18133070|2022-03-14"/>
+		<taxon spec="Taxon" id="A/red_tailed_hawk/Indiana/22-016541-001/2022|EPI_ISL_19605707|2022-05-25"/>
+		<taxon spec="Taxon" id="A/american_blue_winged_teal/Minnesota/22-032511-077/2022|EPI_ISL_19606653|2022-09-24"/>
+		<taxon spec="Taxon" id="A/turkey/Pennsylvania/22-035743-002/2022|EPI_ISL_19765889|2022-11-06"/>
+		<taxon spec="Taxon" id="A/mallard/Minnesota/23-005533-025/2022|EPI_ISL_19604043|2022-09-15"/>
+		<taxon spec="Taxon" id="A/wild_turkey/New_York/22-034864-002/202|EPI_ISL_16297086|2022-10-28"/>
+		<taxon spec="Taxon" id="A/canada_goose/Minnesota/22-027922-006/2022|EPI_ISL_19607667|2022-09-02"/>
+		<taxon spec="Taxon" id="A/Turkey_Vulture/ON/FAV-1131-7/2022|EPI_ISL_19154466|2022-09-25"/>
+		<taxon spec="Taxon" id="A/Mixed/MB/FAV-0976-1/2022|EPI_ISL_19154480|2022-09-27"/>
+		<taxon spec="Taxon" id="A/caspian_tern/Washington/23-025001-004/2023|EPI_ISL_18737472|2023-08-11"/>
+		<taxon spec="Taxon" id="A/harbor_seal/Washington/23-025744-002/2023|EPI_ISL_18737559|2023-08-19"/>
+		<taxon spec="Taxon" id="A/Western_screech_owl/Washington/23-010027-001/2023|EPI_ISL_17964920|2023-03-23"/>
+		<taxon spec="Taxon" id="A/Great_Blue_Heron/BC/AIVPHL-835/2022|EPI_ISL_18665537|2022-12-14"/>
+		<taxon spec="Taxon" id="A/great_horned_owl/Montana/23-011850-001/2023|EPI_ISL_17964939|2023-04-12"/>
+		<taxon spec="Taxon" id="A/canada_goose/California/22-041399-002/2022|EPI_ISL_19607748|2022-12-01"/>
+		<taxon spec="Taxon" id="A/raven/Alaska/22-042128-001/2022|EPI_ISL_19604276|2022-12-18"/>
+		<taxon spec="Taxon" id="A/mallard/Alaska/22-036139-048/2022|EPI_ISL_19158319|2022-11-02"/>
+		<taxon spec="Taxon" id="A/blue_winged_teal/Louisiana/22-033477-020/2022|EPI_ISL_19606445|2022-09-23"/>
+		<taxon spec="Taxon" id="A/great_horned_owl/Wyoming/22-039597-001/2022|EPI_ISL_19607274|2022-12-06"/>
+		<taxon spec="Taxon" id="A/sanderling/Oregon/23-011964-001/2023|EPI_ISL_17964941|2023-04-13"/>
+		<taxon spec="Taxon" id="A/peregrine_falcon/Indiana/22-032710-001/2022|EPI_ISL_19604222|2022-10-07"/>
+		<taxon spec="Taxon" id="A/Cackling_Goose/BC/FAV-0014-67/2023|EPI_ISL_19775487|2022-10-25"/>
+		<taxon spec="Taxon" id="A/Turkey/BC/FAV-1613-1/2022|EPI_ISL_19155056|2022-12-05"/>
+		<taxon spec="Taxon" id="A/blue_winged_teal/Oklahoma/22-029332-001/2022|EPI_ISL_19606502|2022-09-10"/>
+		<taxon spec="Taxon" id="A/canada_goose/Montana/22-033859-002/2022|EPI_ISL_19607642|2022-10-20"/>
+		<taxon spec="Taxon" id="A/great_horned_owl/California/23-000277-003/2022|EPI_ISL_19607321|2022-12-14"/>
+		<taxon spec="Taxon" id="A/Canada_goose/Iowa/23-030290-001/2022|EPI_ISL_19131437|2022-12-07"/>
+		<taxon spec="Taxon" id="A/mallard/Indiana/22-034829-007-R2/2022|EPI_ISL_19604156|2022-10-28"/>
+		<taxon spec="Taxon" id="A/pheasant/Nebraska/22-032910-001/2022|EPI_ISL_16297351|2022-10-15"/>
+		<taxon spec="Taxon" id="A/pelican/Nebraska/22-032908-001/2022|EPI_ISL_19604213|2022-10-13"/>
+		<taxon spec="Taxon" id="A/snow_goose/Kansas/22-041130-003/2022|EPI_ISL_19605948|2022-12-06"/>
+		<taxon spec="Taxon" id="A/Cooper_s_Hawk/BC/AIVPHL-924/2023|EPI_ISL_18665500|2023-01-30"/>
+		<taxon spec="Taxon" id="A/Turkey/BC/FAV-1458-1/2022|EPI_ISL_19154733|2022-11-18"/>
+		<taxon spec="Taxon" id="A/american_green_winged_teal/Oregon/22-037268-011/2022|EPI_ISL_19606699|2022-11-12"/>
+		<taxon spec="Taxon" id="A/Mixed/AB/FAV-0989-2/2022|EPI_ISL_19154505|2022-09-28"/>
+		<taxon spec="Taxon" id="A/cackling_goose/Alaska/23-002693-023/2022|EPI_ISL_19606411|2022-09-30"/>
+		<taxon spec="Taxon" id="A/american_crow/Colorado/22-042172-002/2022|EPI_ISL_19606664|2022-12-19"/>
+		<taxon spec="Taxon" id="A/Barred_Owl/BC/AIVPHL-1238/2023|EPI_ISL_18665611|2023-07-24"/>
+		<taxon spec="Taxon" id="A/great_horned_owl/Oregon/22-033001-001/2022|EPI_ISL_19607225|2022-10-11"/>
+		<taxon spec="Taxon" id="A/american_green_winged_teal/Alaska/22-031399-019-R/2022|EPI_ISL_19606701|2022-09-02"/>
+		<taxon spec="Taxon" id="A/canada_goose/North_Dakota/23-002238-004/2022|EPI_ISL_19607637|2022-11-29"/>
+		<taxon spec="Taxon" id="A/glaucous_gull/Alaska/22-017953-009/2022|EPI_ISL_19158207|2022-06-06"/>
+		<taxon spec="Taxon" id="A/pelican/BC/AIVPHL-230/2022|EPI_ISL_17051394|2022-08-12"/>
+		<taxon spec="Taxon" id="A/northern_pintail/Alaska/IZ22_0270/2022|EPI_ISL_19158252|2022-09-12"/>
+		<taxon spec="Taxon" id="A/duck/Idaho/22-015275-001/2022|EPI_ISL_16243915|2022-05-16"/>
+		<taxon spec="Taxon" id="A/chicken/Idaho/22-015409-001/2022|EPI_ISL_16244006|2022-05-16"/>
+		<taxon spec="Taxon" id="A/peregrine_falcon/Florida/22-035514-002/2022|EPI_ISL_19604221|2022-10-29"/>
+		<taxon spec="Taxon" id="A/Turkey/AB/FAV-0987-1/2022|EPI_ISL_19154514|2022-09-28"/>
+		<taxon spec="Taxon" id="A/gull/California/23-000936-003/2022|EPI_ISL_19607556|2022-12-16"/>
+		<taxon spec="Taxon" id="A/blue_winged_teal/Texas/22-033479-014/2022|EPI_ISL_19606365|2022-09-22"/>
+		<taxon spec="Taxon" id="A/red-tailed_hawk/Colorado/23-006671-001/2023|EPI_ISL_17964882|2023-02-18"/>
+		<taxon spec="Taxon" id="A/duck/Utah/22-031728-004-R/2022|EPI_ISL_19607914|2022-10-04"/>
+		<taxon spec="Taxon" id="A/Long-Eared_Owl/BC/OTH-0021-5/2023|EPI_ISL_19775539|2022-12-14"/>
+		<taxon spec="Taxon" id="A/herring_gull/California/23-001053-006/2022|EPI_ISL_19607538|2022-12-17"/>
+		<taxon spec="Taxon" id="A/Lesser_Snow_Goose/BC/AIVPHL-709/2022|EPI_ISL_18665509|2022-11-20"/>
+		<taxon spec="Taxon" id="A/sanderling/California/23-006644-001/2023|EPI_ISL_17964876|2023-02-14"/>
+		<taxon spec="Taxon" id="A/trumpeter_swan/Iowa/23-002039-001/2023|EPI_ISL_19605154|2023-01-12"/>
+		<taxon spec="Taxon" id="A/American_Black_Duck/NL/FAV-0111-7/2023|EPI_ISL_19775574|2023-03-06"/>
+		<taxon spec="Taxon" id="A/emu/USA/005938-006/2025|EPI_ISL_19777075|2025-02-17"/>
+		<taxon spec="Taxon" id="A/Bald_Eagle/BC/AIVPHL-2638/2024|EPI_ISL_19751770|2024-11-03"/>
+		<taxon spec="Taxon" id="A/merganser/New_York/002310-001/2025|EPI_ISL_19743215|2025-01-15"/>
+		<taxon spec="Taxon" id="A/goose/New_York/003591-008/2025|EPI_ISL_19743094|2025-01-29"/>
+		<taxon spec="Taxon" id="A/guineafowl/Colorado/004397-002/2025|EPI_ISL_19743223|2025-02-06"/>
+		<taxon spec="Taxon" id="A/Canada_Goose/BC/FAV-0015-15/2024|EPI_ISL_19775984|2023-11-07"/>
+		<taxon spec="Taxon" id="A/chicken/Arkansas/24-037005-001/2024|EPI_ISL_19705380|2024-12-10"/>
+		<taxon spec="Taxon" id="A/red-tailed_hawk/Wyoming/002204-001/2025|EPI_ISL_19743080|2025-01-15"/>
+		<taxon spec="Taxon" id="A/snowy_owl/Michigan/002363-005/2025|EPI_ISL_19743158|2025-01-16"/>
+		<taxon spec="Taxon" id="A/turkey/Minnesota/24-037988-003/2024|EPI_ISL_19711094|2024-12-17"/>
+		<taxon spec="Taxon" id="A/chicken/Iowa/24-036502-002/2024|EPI_ISL_19711054|2024-12-08"/>
+		<taxon spec="Taxon" id="A/red_tailed_hawk/Oregon/23-002977-001/2023|EPI_ISL_19605595|2023-01-10"/>
+		<taxon spec="Taxon" id="A/canada_goose/Illinois/000616-011/2024|EPI_ISL_19705477|2024-12-31"/>
+		<taxon spec="Taxon" id="A/Black-billed_Magpie/AB/FAV-1655-1/2022|EPI_ISL_19154703|2022-11-14"/>
+		<taxon spec="Taxon" id="A/chicken/Arkansas/24-038151-001/2024|EPI_ISL_19711096|2024-12-18"/>
+		<taxon spec="Taxon" id="A/duck/Minnesota/24-038159-001/2024|EPI_ISL_19711098|2024-12-17"/>
+		<taxon spec="Taxon" id="A/cackling_goose/Colorado/002314-001/2025|EPI_ISL_19743141|2025-01-18"/>
+		<taxon spec="Taxon" id="A/goose/Oregon/24-031478-002/2024|EPI_ISL_19548477|2024-10-22"/>
+		<taxon spec="Taxon" id="A/dairy_cow/USA/003385-001/2025|EPI_ISL_19777053|2025-01-27"/>
+		<taxon spec="Taxon" id="A/dairy_cow/USA/002645-005/2025|EPI_ISL_19716907|2025-01-21"/>
+		<taxon spec="Taxon" id="A/Red_Tailed_Hawk/BC/AIVPHL-2870/2024|EPI_ISL_19787956|2024-11-18"/>
+		<taxon spec="Taxon" id="A/Bald_Eagle/BC/AIVPHL-2986/2025|EPI_ISL_19788011|2025-01-09"/>
+		<taxon spec="Taxon" id="A/American_Crow/BC/AIVPHL-2850/2024|EPI_ISL_19787992|2024-12-04"/>
+		<taxon spec="Taxon" id="A/turkey/Minnesota/24-036792-003/2024|EPI_ISL_19705385|2024-11-26"/>
+		<taxon spec="Taxon" id="A/muscovy_duck/Florida/002418-001/2025|EPI_ISL_19743214|2025-01-11"/>
+		<taxon spec="Taxon" id="A/chicken/Florida/003206-001/2025|EPI_ISL_19777109|2025-01-28"/>
+		<taxon spec="Taxon" id="A/goose/Nebraska/24-037518-002/2024|EPI_ISL_19711028|2024-12-13"/>
+		<taxon spec="Taxon" id="A/snow_goose/Arkansas/AR24-104/2024|EPI_ISL_19777436|2024-12-06"/>
+		<taxon spec="Taxon" id="A/chicken/Washington/032192-001/2024|EPI_ISL_19593954|2024-10-28"/>
+		<taxon spec="Taxon" id="A/chicken/Indiana/002875-001/2025|EPI_ISL_19777119|2025-01-25"/>
+		<taxon spec="Taxon" id="A/duck/Pennsylvania/004292-003/2025|EPI_ISL_19743260|2025-02-04"/>
+		<taxon spec="Taxon" id="A/chicken/Michigan/001518-001/2024|EPI_ISL_19737301|2024-12-31"/>
+		<taxon spec="Taxon" id="A/duck/California/24-035913-009-R2/2024|EPI_ISL_19744922|2024-11-29"/>
+		<taxon spec="Taxon" id="A/turkey/Ohio/001057-004/2024|EPI_ISL_19737315|2024-12-31"/>
+		<taxon spec="Taxon" id="A/chicken/USA/004986-001/2025|EPI_ISL_19756163|2025-02-09"/>
+		<taxon spec="Taxon" id="A/turkey/Indiana/000295-001/2025|EPI_ISL_19737088|2025-01-03"/>
+		<taxon spec="Taxon" id="A/turkey/Ohio/003598-003/2025|EPI_ISL_19743349|2025-01-29"/>
+		<taxon spec="Taxon" id="A/turkey/Ohio/003048-002/2025|EPI_ISL_19777212|2025-01-24"/>
+		<taxon spec="Taxon" id="A/chicken/Ohio/003106-001/2025|EPI_ISL_19777110|2025-01-27"/>
+		<taxon spec="Taxon" id="A/duck/Hawaii/24-034987-002/2024|EPI_ISL_19678905|2024-11-15"/>
+		<taxon spec="Taxon" id="A/trumpeter_swan/BC/AIVPHL-364/2023|EPI_ISL_17051483|2023-01-16"/>
+		<taxon spec="Taxon" id="A/cormorant/California/23-011452-003/2023|EPI_ISL_17964937|2023-04-07"/>
+		<taxon spec="Taxon" id="A/turkey_vulture/California/22-035760-001/2022|EPI_ISL_19605120|2022-10-28"/>
+		<taxon spec="Taxon" id="A/mallard/Colorado/23-028217-001-original/2023|EPI_ISL_19260807|2023-09-14"/>
+		<taxon spec="Taxon" id="A/Mallard/Alberta/36/2024|EPI_ISL_19713495|2024-08-14"/>
+		<taxon spec="Taxon" id="A/northern_shoveler/California/23-032991-014-original/2023|EPI_ISL_19371776|2023-10-22"/>
+		<taxon spec="Taxon" id="A/mallard/Alaska/23-027273-011/2023|EPI_ISL_19131427|2023-09-03"/>
+		<taxon spec="Taxon" id="A/mallard/Idaho/23-028152-014/2023|EPI_ISL_19194227|2023-09-13"/>
+		<taxon spec="Taxon" id="A/ring-necked_duck/Idaho/23-028146-027/2023|EPI_ISL_19186534|2023-09-08"/>
+		<taxon spec="Taxon" id="A/Sanderling/Delaware/518/2021|EPI_ISL_14777716|2021-06-01"/>
+		<taxon spec="Taxon" id="A/mallard/Wisconsin/24-022377-046-original/2024|EPI_ISL_19660957|2024-07-30"/>
+		<taxon spec="Taxon" id="A/mallard/New_Hampshire/23-027732-083/2023|EPI_ISL_19159874|2023-09-07"/>
+		<taxon spec="Taxon" id="A/mallard/Vermont/23-027105-078/2023|EPI_ISL_19131422|2023-09-01"/>
+		<taxon spec="Taxon" id="A/Gallus_gallus/Durango/CPA-00806-22/2022|EPI_ISL_19873931|2022-03-02"/>
+		<taxon spec="Taxon" id="A/Gallus_gallus/Puebla/CPA-05168-24/2024|EPI_ISL_19214219|2024-04-29"/>
+		<taxon spec="Taxon" id="A/Ruddy_Turnstone/Delaware/452/2021|EPI_ISL_14777727|2021-06-01"/>
+		<taxon spec="Taxon" id="A/gull/MA/22MK00329/2022|EPI_ISL_16641795|2022-02-11"/>
+		<taxon spec="Taxon" id="A/mallard/Massachusetts/24-004240-006-original/2024|EPI_ISL_19660935|2024-02-04"/>
+		<taxon spec="Taxon" id="A/mallard/North_Dakota/23-035009-004-original/2023|EPI_ISL_19490408|2023-11-08"/>
+		<taxon spec="Taxon" id="A/mallard/Iowa/23-038166-007-original/2023|EPI_ISL_19560358|2023-11-18"/>
+		<taxon spec="Taxon" id="A/Mallard/Alberta/567/2021|EPI_ISL_16215525|2021-08-26"/>
+		<taxon spec="Taxon" id="A/mallard/Michigan/23-038497-009-original/2023|EPI_ISL_19560363|2023-11-29"/>
+		<taxon spec="Taxon" id="A/short_billed_dowitcher/Delaware/CEIRS-412/2023|EPI_ISL_18869382|2023-05-19"/>
+		<taxon spec="Taxon" id="A/American_Herring_Gull/Delaware/407/2024|EPI_ISL_19678691|2024-05-18"/>
+		<taxon spec="Taxon" id="A/sanderling/Delaware/CEIRS-416/2023|EPI_ISL_18869350|2023-05-19"/>
+		<taxon spec="Taxon" id="A/cinnamon_teal/Utah/24-022468-020-original/2024|EPI_ISL_19660961|2024-07-23"/>
+		<taxon spec="Taxon" id="A/mallard/Wyoming/23-031580-001-original/2023|EPI_ISL_19341003|2023-09-30"/>
+		<taxon spec="Taxon" id="A/blue-winged_teal/Indiana/23-028134-009/2023|EPI_ISL_19159877|2023-09-09"/>
+		<taxon spec="Taxon" id="A/Mallard/Alberta/238/2024|EPI_ISL_19713503|2024-08-17"/>
+		<taxon spec="Taxon" id="A/Mallard/Alberta/533/2024|EPI_ISL_19716132|2024-08-22"/>
+		<taxon spec="Taxon" id="A/Mallard/Alberta/301/2023|EPI_ISL_19070558|2023-08-17"/>
+		<taxon spec="Taxon" id="A/mallard/Maine/23-033198-002-original/2023|EPI_ISL_19429938|2023-10-10"/>
+		<taxon spec="Taxon" id="A/American_black_duck/New_Hampshire/23-031358-002-original/2023|EPI_ISL_19340997|2023-10-05"/>
+		<taxon spec="Taxon" id="A/teal/Colorado/23-028216-004/2023|EPI_ISL_19175581|2023-09-13"/>
+		<taxon spec="Taxon" id="A/blue-winged_teal/Kansas/23-034084-002-original/2023|EPI_ISL_19429964|2023-10-27"/>
+		<taxon spec="Taxon" id="A/mallard/Minnesota/23-028684-035-original/2023|EPI_ISL_19224059|2023-09-14"/>
+		<taxon spec="Taxon" id="A/mallard/Ohio/24-022862-029-original/2024|EPI_ISL_19660985|2024-08-01"/>
+		<taxon spec="Taxon" id="A/blue-winged_teal/Minnesota/23-029706-017-original/2023|EPI_ISL_19288877|2023-09-23"/>
+		<taxon spec="Taxon" id="A/blue-winged_teal/Kansas/23-030993-006-original/2023|EPI_ISL_19340994|2023-10-07"/>
+		<taxon spec="Taxon" id="A/Mallard/BC/AIVPHL-2380/2024|EPI_ISL_19533301|2024-08-22"/>
+		<taxon spec="Taxon" id="A/Mallard/Alberta/77/2023|EPI_ISL_19281426|2023-08-15"/>
+		<taxon spec="Taxon" id="A/Mallard/Alberta/19/2024|EPI_ISL_19713509|2024-08-14"/>
+		<taxon spec="Taxon" id="A/blue-winged_teal/Mississippi/23-028162-001/2023|EPI_ISL_19175580|2023-09-13"/>
+		<taxon spec="Taxon" id="A/Northern_pintail/Alberta/146/2023|EPI_ISL_19070477|2023-08-16"/>
+		<taxon spec="Taxon" id="A/Mallard/Alberta/335/2024|EPI_ISL_19716110|2024-08-19"/>
+		<taxon spec="Taxon" id="A/Sanderling/Delaware/155/2021|EPI_ISL_14777714|2021-06-01"/>
+		<taxon spec="Taxon" id="A/mallard/Montana/23-038707-001-original/2023|EPI_ISL_19559144|2023-11-30"/>
+		<taxon spec="Taxon" id="A/environment/Iowa/Dickinson-A/2022|EPI_ISL_17673034|2022-04-13"/>
+		<taxon spec="Taxon" id="A/ruddy_turnstone/Delaware/CEIRS-302/2023|EPI_ISL_18869334|2023-05-18"/>
+	</taxonSet>
+
+    <traitSet spec="TraitSet" traitname="date-forward" id="traitSet" dateFormat="yyyy-M-dd">
+		A/Ruddy_Turnstone/Delaware/754/2024|EPI_ISL_19692256|2024-05-21=2024-05-21,A/laughing_gull/Delaware/CEIRS-217/2023|EPI_ISL_18869341|2023-05-18=2023-05-18,A/mallard/Maine/23-033202-003-original/2023|EPI_ISL_19429941|2023-10-12=2023-10-12,A/green-winged_teal/Mississippi/24-004129-007-original/2024|EPI_ISL_19660933|2024-01-29=2024-01-29,A/mallard/Maine/23-029690-001-original/2023|EPI_ISL_19288870|2023-09-15=2023-09-15,A/green-winged_teal/Texas/23-039199-012-original/2023|EPI_ISL_19559060|2023-11-18=2023-11-18,A/Ruddy_turnstone/Delaware/1029/2022|EPI_ISL_16919089|2022-05-31=2022-05-31,A/American_wigeon/Ohio/23-032269-008-original/2023|EPI_ISL_19387803|2023-10-14=2023-10-14,A/mallard/Michigan/23-031864-006-original/2023|EPI_ISL_19371764|2023-10-14=2023-10-14,A/Mallard/Alberta/516/2023|EPI_ISL_19281424|2023-08-20=2023-08-20,A/pintail/South_Carolina/24-003721-006-original/2024|EPI_ISL_19660929|2024-01-29=2024-01-29,A/Mallard/Alberta/312/2024|EPI_ISL_19715852|2024-08-18=2024-08-18,A/green-winged_teal/South_Carolina/23-037737-004-original/2023|EPI_ISL_19560333|2023-11-22=2023-11-22,A/Mallard/Alberta/40/2023|EPI_ISL_19279599|2023-08-15=2023-08-15,A/mallard/Wisconsin/23-030308-013-original/2022|EPI_ISL_19325217|2022-08-04=2022-08-04,A/ruddy_turnstone/Delaware/CEIRS-383/2023|EPI_ISL_18869330|2023-05-19=2023-05-19,A/ruddy_turnstone/Delaware/CEIRS-734/2023|EPI_ISL_18869358|2023-05-23=2023-05-23,A/mallard/Idaho/23-028149-042/2023|EPI_ISL_19186538|2023-09-12=2023-09-12,A/blue-winged_teal/Illinois/23-033983-021-original/2023|EPI_ISL_19429962|2023-10-28=2023-10-28,A/green-winged_teal/Indiana/23-034642-001-original/2023|EPI_ISL_19490403|2023-11-04=2023-11-04,A/mallard_duck/Ohio/23OS0194/2023|EPI_ISL_19847397|2023-11-06=2023-11-06,A/mallard/New_Hampshire/23-027730-032/2023|EPI_ISL_19131346|2023-09-08=2023-09-08,A/mallard/New_Hampshire/23-028617-024-original/2023|EPI_ISL_19260809|2023-09-14=2023-09-14,A/mallard/Maine/23-033196-002-original/2023|EPI_ISL_19387819|2023-10-04=2023-10-04,A/mallard/Maine/23-033194-001-original/2023|EPI_ISL_19387818|2023-10-03=2023-10-03,A/mallard/Idaho/23-027297-008/2023|EPI_ISL_19131428|2023-09-07=2023-09-07,A/Laughing_Gull/Delaware/156/2024|EPI_ISL_19678956|2024-05-14=2024-05-14,A/northern_shoveler/Nevada/23-034295-004-original/2023|EPI_ISL_19429966|2023-10-14=2023-10-14,A/green-winged_teal/Wisconsin/23-030169-001-original/2023|EPI_ISL_19325216|2023-09-30=2023-09-30,A/mallard/Minnesota/23-029702-001-original/2023|EPI_ISL_19288872|2023-09-23=2023-09-23,A/mallard/Michigan/23-028554-046-original/2023|EPI_ISL_19210866|2023-09-14=2023-09-14,A/Ruddy_turnstone/Delaware/150/2022|EPI_ISL_16919115|2022-05-31=2022-05-31,A/mallard/Minnesota/23-028687-020-original/2023|EPI_ISL_19224061|2023-09-13=2023-09-13,A/Mallard/Alberta/352/2023|EPI_ISL_19070543|2023-08-18=2023-08-18,A/Ruddy_Turnstone/Delaware/729/2024|EPI_ISL_19692261|2024-05-21=2024-05-21,A/Mallard/Alberta/520/2024|EPI_ISL_19716111|2024-08-22=2024-08-22,A/pintail/Utah/23-040304-002-original/n/a|EPI_ISL_19559080|2023-12-14=2023-12-14,A/Northern_Pintail/Alberta/404/2023|EPI_ISL_19070476|2023-08-18=2023-08-18,A/guinea_fowl/New_York/USDA-015240001/2023|EPI_ISL_18898049|2023-05-10=2023-05-10,A/guinea_fowl/New_York/USDA-042021001/2022|EPI_ISL_18898046|2022-12-19=2022-12-19,A/muscovy_duck/New_York/USDA-042022007/2022|EPI_ISL_18898291|2022-12-19=2022-12-19,A/chicken/New_York/USDA-001022001/2023|EPI_ISL_18898068|2023-01-04=2023-01-04,A/muscovy_duck/New_York/USDA-041140001/2022|EPI_ISL_18898287|2022-12-15=2022-12-15,A/muscovy_duck/New_York/USDA-018220004/2021|EPI_ISL_18898300|2021-06-14=2021-06-14,A/turkey/New_York/USDA-008939004/2021|EPI_ISL_18898348|2021-03-22=2021-03-22,A/environment/New_York/USDA-021736001/2021|EPI_ISL_18898054|2021-07-14=2021-07-14,A/guinea_fowl/New_York/USDA-003260001/2022|EPI_ISL_18898037|2022-01-28=2022-01-28,A/chicken/New_York/USDA-006284003/2022|EPI_ISL_18898056|2022-02-23=2022-02-23,A/chicken/New_York/USDA-012806002/2022|EPI_ISL_18898058|2022-04-20=2022-04-20,A/muscovy_duck/New_York/USDA-007692004/2022|EPI_ISL_18898245|2022-03-10=2022-03-10,A/guinea_fowl/New_York/USDA-003806004/2022|EPI_ISL_18898038|2022-01-31=2022-01-31,A/muscovy_duck/New_York/USDA-013818006/2022|EPI_ISL_18898255|2022-05-02=2022-05-02,A/guinea_fowl/New_York/USDA-019319003/2022|EPI_ISL_18898043|2022-06-17=2022-06-17,A/Herring_Gull/NS/FAV-0264-14/2023|EPI_ISL_18702980|2023-04-30=2023-04-30,A/Great_Black-Backed_Gull/NS/FAV-0380-2/2024|EPI_ISL_19750589|2024-10-13=2024-10-13,A/Great_Black-Backed_Gull/NS/FAV-0393-1/2024|EPI_ISL_19750591|2024-11-08=2024-11-08,A/Ringed_Seal/NU/FAV-0410-2/2024|EPI_ISL_19750593|2024-10-09=2024-10-09,A/Ring-billed_Gull/NL/FAV-0430-9/2023|EPI_ISL_19260108|2023-10-23=2023-10-23,A/Snow_Goose/AB/FAV-0044-3/2024|EPI_ISL_19776141|2023-12-08=2023-12-08,A/crow/Iowa/24-006634-001-R/2024|EPI_ISL_19650129|2024-03-01=2024-03-01,A/chicken/California/035979-005/2024|EPI_ISL_19672093|2024-12-01=2024-12-01,A/turkey/California/031284-021/2024|EPI_ISL_19548665|2024-10-17=2024-10-17,A/turkey/California/031284-008/2024|EPI_ISL_19548634|2024-10-17=2024-10-17,A/dairy_cow/California/037049-001/2024|EPI_ISL_19635180|2024-12-09=2024-12-09,A/cat/California/037985-002/2024|EPI_ISL_19645038|2024-12-12=2024-12-12,A/cat/California/037809-001/2024|EPI_ISL_19645059|2024-12-14=2024-12-14,A/chicken/California/037217-032/2024|EPI_ISL_19636605|2024-12-10=2024-12-10,A/chicken/California/037217-014/2024|EPI_ISL_19636626|2024-12-10=2024-12-10,A/dairy_cow/California/24_034837-003-R2/2024|EPI_ISL_19822130|2024-11-19=2024-11-19,A/Canada_goose/Maryland/23-034924-001/2023|EPI_ISL_18749458|2023-11-09=2023-11-09,A/Canada_goose/Michigan/23-035045-002-original/2023|EPI_ISL_19325220|2023-11-08=2023-11-08,A/chicken/Colorado/24-018507-002/2024|EPI_ISL_19260342|2024-06-21=2024-06-21,A/dairy_cow/Minnesota/24_016523-011/2024|EPI_ISL_19228505|2024-06-04=2024-06-04,A/chicken/Colorado/24-020285-012/2024|EPI_ISL_19307290|2024-07-11=2024-07-11,A/chicken/Colorado/24-020796-009/2024|EPI_ISL_19326263|2024-07-15=2024-07-15,A/dairy_cow/Wyoming/24_016134-078/2024|EPI_ISL_19228659|2024-04-29=2024-04-29,A/dairy_cow/Texas/026360-004/2024|EPI_ISL_19444907|2024-05-21=2024-05-21,A/cat/New_Mexico/24-012046-004/2024|EPI_ISL_19227431|2024-04-17=2024-04-17,A/turkey/Michigan/24-011230-002/2024|EPI_ISL_19227527|2024-04-15=2024-04-15,A/cat/Michigan/24-015043-001/2024|EPI_ISL_19227366|2024-05-20=2024-05-20,A/dairy_cow/Minnesota/24_016288-012/2024|EPI_ISL_19228619|2024-06-03=2024-06-03,A/Michigan/90/2024|EPI_ISL_19162802|2024-05-14=2024-05-14,A/dairy_cow/Texas/063200-24-5/2024|EPI_ISL_19155858|2024-03-13=2024-03-13,A/dairy_cow/Texas/24_009310-007/2024|EPI_ISL_19094454|2024-03-21=2024-03-21,A/chicken/Idaho/24-013706-001/2024|EPI_ISL_19227407|2024-05-07=2024-05-07,A/chicken/Idaho/24-012234-002/2024|EPI_ISL_19227504|2024-04-10=2024-04-10,A/chicken/Idaho/24-016669-001/2024|EPI_ISL_19228482|2024-06-04=2024-06-04,A/dairy_cow/Idaho/W241290019-18-P/2024|EPI_ISL_19822014|2024-05-07=2024-05-07,A/dairy_cow/Minnesota/24_020731-004/2024|EPI_ISL_19307269|2024-07-16=2024-07-16,A/chicken/Minnesota/24-018153-004/2024|EPI_ISL_19260314|2024-06-20=2024-06-20,A/turkey/South_Dakota/007379-002/2024|EPI_ISL_19094440|2024-03-08=2024-03-08,A/turkey/South_Dakota/007379-001/2024|EPI_ISL_19094513|2024-03-08=2024-03-08,A/trumpeter_swan/Minnesota/24-000301-001-original/2023|EPI_ISL_19559098|2023-12-28=2023-12-28,A/sanderling/Virginia/W24-190A/2024|EPI_ISL_19178095|2024-03-10=2024-03-10,A/chicken/Iowa/23-037208-002/2023|EPI_ISL_19131447|2023-11-22=2023-11-22,A/Chicken/BC/FAV-0388-2/2023|EPI_ISL_19710918|2023-11-18=2023-11-18,A/Canada_Goose/AB/FAV-0408-6/2023|EPI_ISL_19775981|2023-11-07=2023-11-07,A/peregrine_falcon/Iowa/23-034846-001/2023|EPI_ISL_18749469|2023-11-08=2023-11-08,A/Cackling_Goose/BC/AIVPHL-1412/2023|EPI_ISL_18665602|2023-11-14=2023-11-14,A/green-winged_teal/Kansas/23-035000-007-original/2023|EPI_ISL_19288880|2023-11-05=2023-11-05,A/chicken/Kansas/23-039959-001-original/2023|EPI_ISL_19273326|2023-12-17=2023-12-17,A/Great_Horned_Owl/AB/FAV-0045-2/2024|EPI_ISL_19776160|2024-01-05=2024-01-05,A/turkey/South_Dakota/23-038978-001-original/2023|EPI_ISL_19210890|2023-12-08=2023-12-08,A/mallard/Oregon/23-032795-043/2023|EPI_ISL_19175584|2023-10-21=2023-10-21,A/goat/Minnesota/007234-030/2024|EPI_ISL_19094666|2024-03-08=2024-03-08,A/Chicken/AB/FAV-0417-2/2023|EPI_ISL_19776091|2023-11-24=2023-11-24,A/Chicken/AB/FAV-0417-1/2023|EPI_ISL_19776090|2023-11-24=2023-11-24,A/chicken/Montana/23-034345-002/2023|EPI_ISL_18698990|2023-11-06=2023-11-06,A/Rosss_goose/Kansas/W23-968B/2023|EPI_ISL_19134617|2023-12-12=2023-12-12,A/blue-winged_teal/Louisiana/UGAI23-893/2023|EPI_ISL_19070499|2023-09-01=2023-09-01,A/Great_Horned_Owl/AB/FAV-0446-1/2023|EPI_ISL_19776076|2023-11-21=2023-11-21,A/Canada_Goose/BC/AIVPHL-1343/2023|EPI_ISL_18665631|2023-10-11=2023-10-11,A/chicken/California/24-000135-001/2023|EPI_ISL_18914516|2023-12-29=2023-12-29,A/domestic_duck/California/23-038546-001-original/2023|EPI_ISL_19210882|2023-12-04=2023-12-04,A/green-winged_teal/Illinois/23-033978-005-original/2023|EPI_ISL_19371779|2023-10-29=2023-10-29,A/Chicken/BC/FAV-0369-1/2023|EPI_ISL_19710903|2023-11-12=2023-11-12,A/Black-Billed_Magpie/AB/FAV-0042-4/2024|EPI_ISL_19776109|2023-12-01=2023-12-01,A/turkey/Minnesota/23-031477-001/2023|EPI_ISL_18695161|2023-10-16=2023-10-16,A/Chicken/SK/FAV-0379-1/2023|EPI_ISL_19776015|2023-11-10=2023-11-10,A/Chicken/AB/FAV-0030-1/2024|EPI_ISL_19776024|2023-11-12=2023-11-12,A/black_vulture/South_Carolina/23-036529-004-original/2023|EPI_ISL_19325227|2023-11-13=2023-11-13,A/mallard/Maine/22-041145-003/2022|EPI_ISL_19604164|2022-12-14=2022-12-14,A/Snow_Goose/QC/FAV-1628-15/2022|EPI_ISL_19154776|2022-11-22=2022-11-22,A/Chicken/QC/FAV-0187-SP1/2023|EPI_ISL_19775644|2023-05-07=2023-05-07,A/Chicken/QC/FAV-0191-1/2023|EPI_ISL_19775646|2023-05-12=2023-05-12,A/American_Crow/QC/FAV-1627-5/2022|EPI_ISL_19154702|2022-11-14=2022-11-14,A/canada_goose/Massachusetts/015884-006/2023|EPI_ISL_19736845|2023-02-18=2023-02-18,A/Snow_Goose/QC/FAV-0033-5/2023|EPI_ISL_19775527|2022-12-02=2022-12-02,A/Red-Tailed_Hawk/ON/FAV-0160-2/2023|EPI_ISL_19155270|2023-04-12=2023-04-12,A/Canada_goose/Ohio/23-007195-003/2023|EPI_ISL_17964885|2023-02-24=2023-02-24,A/Turkey_Vulture/ON/FAV-0195-1/2023|EPI_ISL_19775635|2023-05-02=2023-05-02,A/Canada_Goose/ON/FAV-0104-3/2023|EPI_ISL_19155201|2023-03-08=2023-03-08,A/Canada_Goose/ON/FAV-0120-3/2023|EPI_ISL_19155221|2023-03-21=2023-03-21,A/Turkey/BC/FAV-1538-1/2022|EPI_ISL_19154894|2022-11-28=2022-11-28,A/chicken/South_Dakota/22-037701-001/2022|EPI_ISL_16271839|2022-11-19=2022-11-19,A/mallard/Nevada/22-027081-001/2022|EPI_ISL_19604010|2022-08-16=2022-08-16,A/blue_winged_teal/Oklahoma/22-029332-033/2022|EPI_ISL_19606370|2022-09-10=2022-09-10,A/Turkey/QC/FAV-1422-3/2022|EPI_ISL_19154697|2022-11-09=2022-11-09,A/american_green_winged_teal/New_York/22-033592-012-R/2022|EPI_ISL_19606721|2022-10-15=2022-10-15,A/red-tailed_hawk/Massachusetts/014126-065/2024|EPI_ISL_19736788|2024-04-15=2024-04-15,A/american_green_winged_teal/Georgia/22-038443-007/2022|EPI_ISL_19606706|2022-11-19=2022-11-19,A/white-winged_scoter/Massachusetts/007609-002/2024|EPI_ISL_19736818|2024-02-23=2024-02-23,A/wood_duck/New_York/22-027736-001/2022|EPI_ISL_19605167|2022-08-31=2022-08-31,A/chicken/Pennsylvania/USDA-012578-004/2022|EPI_ISL_18132608|2022-04-25=2022-04-25,A/chicken/Pennsylvania/USDA-012092-003/2022|EPI_ISL_18132548|2022-04-19=2022-04-19,A/chicken/Pennsylvania/USDA-011531-001/2022|EPI_ISL_18132626|2022-04-14=2022-04-14,A/chicken/Pennsylvania/22-012742-001/2022|EPI_ISL_16171417|2022-04-26=2022-04-26,A/duck/Pennsylvania/22-016645-002-original/2022|EPI_ISL_19559137|2022-05-21=2022-05-21,A/Canada_Goose/QC/FAV-0239/2024|EPI_ISL_19776209|2024-02-04=2024-02-04,A/Canada_Goose/ON/FAV-0117-3/2024|EPI_ISL_19776215|2024-02-07=2024-02-07,A/chicken/Massachusetts/24-003817-001-original/2024|EPI_ISL_19372817|2024-02-02=2024-02-02,A/bald_eagle/Massachusetts/007606-009/2024|EPI_ISL_19736830|2024-02-20=2024-02-20,A/Turkey/BC/FAV-1656-1/2022|EPI_ISL_19155101|2022-12-14=2022-12-14,A/Northern_Gannet/QC/FAV-0617-7/2022|EPI_ISL_19152518|2022-05-27=2022-05-27,A/Canada_goose/Massachusetts/24-007313-001-original/2024|EPI_ISL_19430006|2024-02-08=2024-02-08,A/red_tailed_hawk/Massachusetts/22-020416-013/2022|EPI_ISL_19605712|2022-06-10=2022-06-10,A/common_eider/Maine/22-036180-008/2022|EPI_ISL_19608137|2022-06-24=2022-06-24,A/chicken/Maine/22-020042-002-original/2022|EPI_ISL_19546783|2022-06-27=2022-06-27,A/common_tern/Maine/22-022526-010/2022|EPI_ISL_16632512|2022-07-07=2022-07-07,A/chicken/Maine/22-008366-001/2022|EPI_ISL_11971470|2022-03-18=2022-03-18,A/American_Black_Duck/Connecticut/USDA-005313-007/2022|EPI_ISL_18133085|2022-02-16=2022-02-16,A/American_Crow/NB/FAV-0131-1/2022|EPI_ISL_19145168|2022-02-15=2022-02-15,A/Sanderling/Massachusetts/USDA-007696-004/2022|EPI_ISL_18132439|2022-03-03=2022-03-03,A/sanderling/MA/22HP00192/2022|EPI_ISL_16641777|2022-03-03=2022-03-03,A/Sanderling/Massachusetts/USDA-007696-005/2022|EPI_ISL_18132443|2022-03-04=2022-03-04,A/chicken/Maine/22-008540-001/2022|EPI_ISL_11971483|2022-03-22=2022-03-22,A/great_horned_owl/MA/22MM00199/2022|EPI_ISL_16641778|2022-03-03=2022-03-03,A/Ring-billed_gull/Minnesota/22-017940-004/2022|EPI_ISL_19605585|2022-06-06=2022-06-06,A/pelican/Iowa/22-011101-006/2022|EPI_ISL_19604333|2022-04-12=2022-04-12,A/Great_Horned_Owl/Minnesota/USDA-011586-004/2022|EPI_ISL_18133500|2022-04-11=2022-04-11,A/Canada_Goose/AB/FAV-1446-2/2022|EPI_ISL_19775476|2022-10-07=2022-10-07,A/Mallard/BC/FAV-0934-74/2022|EPI_ISL_19154162|2022-08-29=2022-08-29,A/great_black_backed_gull/Massachusetts/23-004612-025/2023|EPI_ISL_19607352|2023-01-14=2023-01-14,A/Common_Eider/NL/FAV-0886-6/2022|EPI_ISL_19152918|2022-07-06=2022-07-06,A/snowy_owl/Massachusetts/22-016611-012/2022|EPI_ISL_19605059|2022-04-01=2022-04-01,A/Backyard_bird/Maine/USDA-005158-001/2022|EPI_ISL_18133095|2022-02-17=2022-02-17,A/guineafowl/Pennsylvania/23-008103-001/2023|EPI_ISL_19766133|2023-03-11=2023-03-11,A/Khaki_Campbell_duck/Pennsylvania/23-007063-001-original/2023|EPI_ISL_19490419|2023-02-28=2023-02-28,A/Turkey/ON/FAV-1469-4/2022|EPI_ISL_19154749|2022-11-21=2022-11-21,A/peregrine_falcon/Washington/22-037174-001/2022|EPI_ISL_19604197|2022-10-01=2022-10-01,A/turkey_vulture/Oregon/22-032043-001/2022|EPI_ISL_19604807|2022-10-05=2022-10-05,A/Northern_Gannet/PE/FAV-0652-1/2022|EPI_ISL_19152679|2022-05-31=2022-05-31,A/Great_Black-Backed_Gull/NL/OTH-0114|EPI_ISL_16190849|2021-11-04=2021-11-04,A/Mixed/NL/FAV-0004-16/2022|EPI_ISL_19145144|2021-12-31=2021-12-31,A/emu/NL/FAV-0035-12/2021|EPI_ISL_12968817|2021-12-17=2021-12-17,A/Mixed/NL/FAV-0035-5/2021|EPI_ISL_19145131|2021-12-16=2021-12-16,A/Mallard/Colorado/USDA-009476-001/2022|EPI_ISL_18133149|2022-03-22=2022-03-22,A/Snow_Goose/North_Dakota/USDA-011034-004/2022|EPI_ISL_18132194|2022-04-04=2022-04-04,A/raccoon/Washington/22-018406-002/2022|EPI_ISL_15078252|2022-06-08=2022-06-08,A/wood_duck/Wisconsin/22-016279-001/2022|EPI_ISL_19605197|2022-05-02=2022-05-02,A/chicken/Kansas/22-008259-002/2022|EPI_ISL_11971469|2022-03-16=2022-03-16,A/hawk/Montana/22-015563-001/2022|EPI_ISL_19607575|2022-05-16=2022-05-16,A/canada_goose/Utah/22-025129-001/2022|EPI_ISL_19607697|2022-08-11=2022-08-11,A/chicken/Montana/22-013053-002/2022|EPI_ISL_16171463|2022-04-28=2022-04-28,A/turkey/North_Carolina/22-010448-001/2022|EPI_ISL_13434430|2022-04-06=2022-04-06,A/Great_Horned_Owl/AB/FAV-0505-52/2022|EPI_ISL_16189983|2022-05-02=2022-05-02,A/Great_Horned_Owl/AB/FAV-0505-57/2022|EPI_ISL_16190395|2022-05-06=2022-05-06,A/american_white_pelican/Iowa/22-022114-001/2022|EPI_ISL_19606691|2022-07-01=2022-07-01,A/mallard/Illinois/22-035404-002/2022|EPI_ISL_19604166|2022-10-30=2022-10-30,A/red_tailed_hawk/New_York/22-042014-001/2022|EPI_ISL_19605819|2022-12-19=2022-12-19,A/turkey/Minnesota/22-012034-001/2022|EPI_ISL_16102283|2022-04-17=2022-04-17,A/turkey/Minnesota/22-012036-002/2022|EPI_ISL_16102927|2022-04-18=2022-04-18,A/turkey/BC/AIVPHL-138/2022|EPI_ISL_17051135|2022-05-18=2022-05-18,A/bald_eagle/Washington/22-018403-001/2022|EPI_ISL_19607204|2022-06-07=2022-06-07,A/Snow_Goose/North_Dakota/USDA-011569-002/2022|EPI_ISL_18132312|2022-04-07=2022-04-07,A/Bald_Eagle/Florida/USDA-007915-002/2022|EPI_ISL_18132930|2022-02-28=2022-02-28,A/poultry/Kansas/22-007391-001/2022|EPI_ISL_11897684|2022-03-09=2022-03-09,A/turkey/Missouri/22-007087-002/2022|EPI_ISL_11897678|2022-03-08=2022-03-08,A/Snow_Goose/SK/FAV-0184-1/2022|EPI_ISL_19145214|2022-03-27=2022-03-27,A/Rosss_Goose/SK/FAV-0268-14/2022|EPI_ISL_19145224|2022-03-30=2022-03-30,A/red_tailed_hawk/Minnesota/22-016228-001/2022|EPI_ISL_19605846|2022-05-23=2022-05-23,A/Red-tailed_Hawk/North_Dakota/USDA-011565-002/2022|EPI_ISL_18132400|2022-04-08=2022-04-08,A/Wood_Duck/Minnesota/USDA-012773-003/2022|EPI_ISL_18132489|2022-04-15=2022-04-15,A/great_horned_owl/Oregon/22-018475-001/2022|EPI_ISL_19607221|2022-05-26=2022-05-26,A/Great_Horned_Owl/Minnesota/USDA-011871-006/2022|EPI_ISL_18133494|2022-04-15=2022-04-15,A/hawk/Michigan/22-013957-003/2022|EPI_ISL_19607571|2022-05-02=2022-05-02,A/Swainsons_Hawk/SK/FAV-0802-36/2022|EPI_ISL_19152337|2022-05-19=2022-05-19,A/Great_Horned_Owl/BC/FAV-0795-6/2022|EPI_ISL_19152773|2022-06-08=2022-06-08,A/Canada_Goose/BC/OTH-0134-9/2022|EPI_ISL_19154102|2022-08-15=2022-08-15,A/Chicken/BC/FAV-0027-1/2023|EPI_ISL_19157563|2023-01-19=2023-01-19,A/guinea_fowl/Michigan/22-005440-003/2022|EPI_ISL_11628231|2022-02-22=2022-02-22,A/American_wigeon/South_Carolina/AH0195145/2021|EPI_ISL_9869760|2021-12-30=2021-12-30,A/Snow_Goose/New_York/USDA-008835-004/2022|EPI_ISL_18132226|2022-03-01=2022-03-01,A/Gadwall/South_Carolina/USDA-001743-004/2022|EPI_ISL_18133425|2022-01-06=2022-01-06,A/chicken/Missouri/22-007677-001/2022|EPI_ISL_11897693|2022-03-14=2022-03-14,A/mallard/Oregon/22-026112-046/2022|EPI_ISL_19604088|2022-08-15=2022-08-15,A/red-breasted_merganser/BC/AIVPHL-219/2022|EPI_ISL_17051389|2022-08-02=2022-08-02,A/Backyard_bird/Alaska/USDA-013107-001/2022|EPI_ISL_18133020|2022-04-28=2022-04-28,A/Snow_Goose/AB/FAV-0918-4/2022|EPI_ISL_19151724|2022-04-20=2022-04-20,A/Canada_Goose/BC/FAV-0014-8/2023|EPI_ISL_19775480|2022-10-17=2022-10-17,A/Turkey/BC/FAV-1192-1/2022|EPI_ISL_19154619|2022-10-17=2022-10-17,A/Chicken/BC/FAV-1618-3/2022|EPI_ISL_19155053|2022-12-05=2022-12-05,A/Canada_Goose/BC/OTH-0097-7/2022|EPI_ISL_19157544|2022-04-29=2022-04-29,A/Sandhill_crane/Washington/22-014024-001/2022|EPI_ISL_19605620|2022-05-03=2022-05-03,A/Canada_Goose/AB/FAV-0833-46/2022|EPI_ISL_19152781|2022-06-09=2022-06-09,A/Snow_Goose/AB/FAV-0505-33/2022|EPI_ISL_19157549|2022-04-29=2022-04-29,A/american_crow/North_Dakota/22-015577-002/2022|EPI_ISL_19606637|2022-05-12=2022-05-12,A/Common_Raven/MB/FAV-0364-2/2022|EPI_ISL_19151774|2022-04-24=2022-04-24,A/Black-Billed_Magpie/SK/FAV-0268-34/2022|EPI_ISL_19151559|2022-04-10=2022-04-10,A/chicken/Utah/22-020377-006-original/2022|EPI_ISL_19546788|2022-06-27=2022-06-27,A/goose/Minnesota/22-014294-007/2022|EPI_ISL_16240239|2022-05-08=2022-05-08,A/turkey/Minnesota/22-010126-002/2022|EPI_ISL_13431314|2022-04-04=2022-04-04,A/red_tailed_hawk/Minnesota/22-013667-001/2022|EPI_ISL_19605834|2022-04-29=2022-04-29,A/domestic_duck/Wisconsin/22-013183-004/2022|EPI_ISL_16171478|2022-04-26=2022-04-26,A/waterfowl/Nebraska/22-007805-002/2022|EPI_ISL_11897696|2022-03-14=2022-03-14,A/Snow_Goose/North_Dakota/USDA-011036-003/2022|EPI_ISL_18132263|2022-04-04=2022-04-04,A/Snow_Goose/North_Dakota/USDA-009399-002/2022|EPI_ISL_18132211|2022-03-29=2022-03-29,A/Backyard_bird/Wyoming/USDA-009599-006/2022|EPI_ISL_18132844|2022-03-26=2022-03-26,A/canada_goose/Oregon/22-015734-001/2022|EPI_ISL_19607720|2022-05-16=2022-05-16,A/turkey/Indiana/USDA-004688-006/2022|EPI_ISL_18132242|2022-02-14=2022-02-14,A/turkey/Indiana/USDA-005696-003/2022|EPI_ISL_18132225|2022-02-21=2022-02-21,A/Snow_Goose/North_Dakota/USDA-012770-002/2022|EPI_ISL_18132309|2022-04-21=2022-04-21,A/Snow_Goose/North_Dakota/USDA-009481-016/2022|EPI_ISL_18132164|2022-03-23=2022-03-23,A/bald_eagle/Minnesota/22-013663-007/2022|EPI_ISL_19607154|2022-05-03=2022-05-03,A/chicken/Indiana/USDA-012933-001/2022|EPI_ISL_18132557|2022-04-23=2022-04-23,A/Red-tailed_Hawk/North_Dakota/USDA-011565-001/2022|EPI_ISL_18132396|2022-04-08=2022-04-08,A/Lesser_Snow_Goose_White/Iowa/USDA-007679-001/2022|EPI_ISL_18133265|2022-03-14=2022-03-14,A/American_White_Pelican/Missouri/USDA-010666-001/2022|EPI_ISL_18133152|2022-03-29=2022-03-29,A/canada_goose/New_York/23-001640-001/2023|EPI_ISL_19607712|2023-01-13=2023-01-13,A/Canada_Goose/ON/FAV-0118-9/2023|EPI_ISL_19775581|2023-03-17=2023-03-17,A/black_vulture/Mississippi/23-002621-007/2023|EPI_ISL_19606122|2023-01-17=2023-01-17,A/black_vulture/Pennsylvania/22-039971-001/2022|EPI_ISL_19606235|2022-11-14=2022-11-14,A/vulture/North_Carolina/22-035819-002/2022|EPI_ISL_19604885|2022-11-02=2022-11-02,A/mallard/California/22-026616-001/2022|EPI_ISL_19604181|2022-08-23=2022-08-23,A/goose/California/22-028072-001/2022|EPI_ISL_19605279|2022-08-30=2022-08-30,A/black_vulture/Alaska/22-036371-002/2022|EPI_ISL_19606756|2022-11-07=2022-11-07,A/Laridae/NB/FAV-1619-1/2022|EPI_ISL_19154720|2022-11-16=2022-11-16,A/black_vulture/Georgia/22-034017-001/2022|EPI_ISL_19606255|2022-10-13=2022-10-13,A/black_vulture/Georgia/22-027995-006/2022|EPI_ISL_19608605|2022-08-23=2022-08-23,A/black_vulture/Georgia/W22-736A/2022|EPI_ISL_17185813|2022-09-06=2022-09-06,A/bald_eagle/Alaska/22-040776-001/2022|EPI_ISL_19606617|2022-12-08=2022-12-08,A/bald_eagle/Michigan/22-026960-001/2022|EPI_ISL_19607143|2022-08-10=2022-08-10,A/lesser_scaup/Florida/23-002762-007/2022|EPI_ISL_19605265|2022-12-22=2022-12-22,A/blue_winged_teal/Louisiana/23-013080-008/2022|EPI_ISL_19606452|2022-09-23=2022-09-23,A/chicken/Iowa/22-035700-001/2022|EPI_ISL_16297082|2022-11-03=2022-11-03,A/black_vulture/Virginia/22-032614-001/2022|EPI_ISL_19606466|2022-09-29=2022-09-29,A/black_vulture/Pennsylvania/22-014967-001/2022|EPI_ISL_19606215|2022-05-05=2022-05-05,A/black_vulture/Pennsylvania/22-039984-003/2022|EPI_ISL_19606178|2022-10-10=2022-10-10,A/black_vulture/Pennsylvania/22-039984-002/2022|EPI_ISL_19606173|2022-10-10=2022-10-10,A/Turkey_Vulture/QC/FAV-0957-1/2022|EPI_ISL_19152087|2022-05-09=2022-05-09,A/Mixed/ON/FAV-0179-12/2022|EPI_ISL_19145235|2022-04-01=2022-04-01,A/Turkey_Vulture/QC/FAV-0838-6/2022|EPI_ISL_19151906|2022-05-02=2022-05-02,A/Bald_Eagle/Vermont/USDA-009551-002/2022|EPI_ISL_18132994|2022-03-28=2022-03-28,A/Ring-Billed_Gull/QC/FAV-0891-2/2022|EPI_ISL_19152778|2022-06-08=2022-06-08,A/Great_Black-Backed_Gull/QC/FAV-0870-5/2022|EPI_ISL_19152704|2022-06-01=2022-06-01,A/Mixed/ON/FAV-1033-9/2022|EPI_ISL_19154521|2022-09-29=2022-09-29,A/Mixed/ON/FAV-1124-2/2022|EPI_ISL_19154583|2022-10-08=2022-10-08,A/Turkey_Vulture/ON/FAV-0360-7/2022|EPI_ISL_19151784|2022-04-24=2022-04-24,A/Great_Horned_Owl/ON/FAV-0378-5/2022|EPI_ISL_19151880|2022-04-30=2022-04-30,A/Bald_Eagle/Ohio/USDA-011250-001/2022|EPI_ISL_18132939|2022-03-25=2022-03-25,A/Great_Horned_Owl/Florida/USDA-007915-007/2022|EPI_ISL_18133525|2022-02-24=2022-02-24,A/black_vulture/Mississippi/23-001343-012/2023|EPI_ISL_19606305|2023-01-09=2023-01-09,A/black_vulture/Mississippi/23-001343-008/2023|EPI_ISL_19606301|2023-01-09=2023-01-09,A/black_vulture/Florida/22-012331-001/2022|EPI_ISL_15077376|2022-04-15=2022-04-15,A/black_vulture/Florida/22-020388-002/2022|EPI_ISL_19606743|2022-06-26=2022-06-26,A/wood_duck/Pennsylvania/22-021657-001/2022|EPI_ISL_19605169|2022-05-10=2022-05-10,A/Backyard_bird/New_York/USDA-010200-003/2022|EPI_ISL_18133056|2022-04-04=2022-04-04,A/Chicken/ON/FAV-0261-8/2022|EPI_ISL_19151713|2022-04-20=2022-04-20,A/black_vulture/Florida/22-021012-003/2022|EPI_ISL_19606749|2022-07-02=2022-07-02,A/black_vulture/Florida/22-020386-001/2022|EPI_ISL_19606741|2022-06-28=2022-06-28,A/Duck/ON/FAV-0237-2/2022|EPI_ISL_19151665|2022-04-13=2022-04-13,A/Red_Fox/ON/FAV-0873/2022|EPI_ISL_16013993|2022-04-03=2022-04-03,A/Black_Vulture/Florida/USDA-012628-001/2022|EPI_ISL_18132919|2022-04-20=2022-04-20,A/Black_Vulture/Florida/USDA-008152-001/2022|EPI_ISL_18133070|2022-03-14=2022-03-14,A/red_tailed_hawk/Indiana/22-016541-001/2022|EPI_ISL_19605707|2022-05-25=2022-05-25,A/american_blue_winged_teal/Minnesota/22-032511-077/2022|EPI_ISL_19606653|2022-09-24=2022-09-24,A/turkey/Pennsylvania/22-035743-002/2022|EPI_ISL_19765889|2022-11-06=2022-11-06,A/mallard/Minnesota/23-005533-025/2022|EPI_ISL_19604043|2022-09-15=2022-09-15,A/wild_turkey/New_York/22-034864-002/202|EPI_ISL_16297086|2022-10-28=2022-10-28,A/canada_goose/Minnesota/22-027922-006/2022|EPI_ISL_19607667|2022-09-02=2022-09-02,A/Turkey_Vulture/ON/FAV-1131-7/2022|EPI_ISL_19154466|2022-09-25=2022-09-25,A/Mixed/MB/FAV-0976-1/2022|EPI_ISL_19154480|2022-09-27=2022-09-27,A/caspian_tern/Washington/23-025001-004/2023|EPI_ISL_18737472|2023-08-11=2023-08-11,A/harbor_seal/Washington/23-025744-002/2023|EPI_ISL_18737559|2023-08-19=2023-08-19,A/Western_screech_owl/Washington/23-010027-001/2023|EPI_ISL_17964920|2023-03-23=2023-03-23,A/Great_Blue_Heron/BC/AIVPHL-835/2022|EPI_ISL_18665537|2022-12-14=2022-12-14,A/great_horned_owl/Montana/23-011850-001/2023|EPI_ISL_17964939|2023-04-12=2023-04-12,A/canada_goose/California/22-041399-002/2022|EPI_ISL_19607748|2022-12-01=2022-12-01,A/raven/Alaska/22-042128-001/2022|EPI_ISL_19604276|2022-12-18=2022-12-18,A/mallard/Alaska/22-036139-048/2022|EPI_ISL_19158319|2022-11-02=2022-11-02,A/blue_winged_teal/Louisiana/22-033477-020/2022|EPI_ISL_19606445|2022-09-23=2022-09-23,A/great_horned_owl/Wyoming/22-039597-001/2022|EPI_ISL_19607274|2022-12-06=2022-12-06,A/sanderling/Oregon/23-011964-001/2023|EPI_ISL_17964941|2023-04-13=2023-04-13,A/peregrine_falcon/Indiana/22-032710-001/2022|EPI_ISL_19604222|2022-10-07=2022-10-07,A/Cackling_Goose/BC/FAV-0014-67/2023|EPI_ISL_19775487|2022-10-25=2022-10-25,A/Turkey/BC/FAV-1613-1/2022|EPI_ISL_19155056|2022-12-05=2022-12-05,A/blue_winged_teal/Oklahoma/22-029332-001/2022|EPI_ISL_19606502|2022-09-10=2022-09-10,A/canada_goose/Montana/22-033859-002/2022|EPI_ISL_19607642|2022-10-20=2022-10-20,A/great_horned_owl/California/23-000277-003/2022|EPI_ISL_19607321|2022-12-14=2022-12-14,A/Canada_goose/Iowa/23-030290-001/2022|EPI_ISL_19131437|2022-12-07=2022-12-07,A/mallard/Indiana/22-034829-007-R2/2022|EPI_ISL_19604156|2022-10-28=2022-10-28,A/pheasant/Nebraska/22-032910-001/2022|EPI_ISL_16297351|2022-10-15=2022-10-15,A/pelican/Nebraska/22-032908-001/2022|EPI_ISL_19604213|2022-10-13=2022-10-13,A/snow_goose/Kansas/22-041130-003/2022|EPI_ISL_19605948|2022-12-06=2022-12-06,A/Cooper_s_Hawk/BC/AIVPHL-924/2023|EPI_ISL_18665500|2023-01-30=2023-01-30,A/Turkey/BC/FAV-1458-1/2022|EPI_ISL_19154733|2022-11-18=2022-11-18,A/american_green_winged_teal/Oregon/22-037268-011/2022|EPI_ISL_19606699|2022-11-12=2022-11-12,A/Mixed/AB/FAV-0989-2/2022|EPI_ISL_19154505|2022-09-28=2022-09-28,A/cackling_goose/Alaska/23-002693-023/2022|EPI_ISL_19606411|2022-09-30=2022-09-30,A/american_crow/Colorado/22-042172-002/2022|EPI_ISL_19606664|2022-12-19=2022-12-19,A/Barred_Owl/BC/AIVPHL-1238/2023|EPI_ISL_18665611|2023-07-24=2023-07-24,A/great_horned_owl/Oregon/22-033001-001/2022|EPI_ISL_19607225|2022-10-11=2022-10-11,A/american_green_winged_teal/Alaska/22-031399-019-R/2022|EPI_ISL_19606701|2022-09-02=2022-09-02,A/canada_goose/North_Dakota/23-002238-004/2022|EPI_ISL_19607637|2022-11-29=2022-11-29,A/glaucous_gull/Alaska/22-017953-009/2022|EPI_ISL_19158207|2022-06-06=2022-06-06,A/pelican/BC/AIVPHL-230/2022|EPI_ISL_17051394|2022-08-12=2022-08-12,A/northern_pintail/Alaska/IZ22_0270/2022|EPI_ISL_19158252|2022-09-12=2022-09-12,A/duck/Idaho/22-015275-001/2022|EPI_ISL_16243915|2022-05-16=2022-05-16,A/chicken/Idaho/22-015409-001/2022|EPI_ISL_16244006|2022-05-16=2022-05-16,A/peregrine_falcon/Florida/22-035514-002/2022|EPI_ISL_19604221|2022-10-29=2022-10-29,A/Turkey/AB/FAV-0987-1/2022|EPI_ISL_19154514|2022-09-28=2022-09-28,A/gull/California/23-000936-003/2022|EPI_ISL_19607556|2022-12-16=2022-12-16,A/blue_winged_teal/Texas/22-033479-014/2022|EPI_ISL_19606365|2022-09-22=2022-09-22,A/red-tailed_hawk/Colorado/23-006671-001/2023|EPI_ISL_17964882|2023-02-18=2023-02-18,A/duck/Utah/22-031728-004-R/2022|EPI_ISL_19607914|2022-10-04=2022-10-04,A/Long-Eared_Owl/BC/OTH-0021-5/2023|EPI_ISL_19775539|2022-12-14=2022-12-14,A/herring_gull/California/23-001053-006/2022|EPI_ISL_19607538|2022-12-17=2022-12-17,A/Lesser_Snow_Goose/BC/AIVPHL-709/2022|EPI_ISL_18665509|2022-11-20=2022-11-20,A/sanderling/California/23-006644-001/2023|EPI_ISL_17964876|2023-02-14=2023-02-14,A/trumpeter_swan/Iowa/23-002039-001/2023|EPI_ISL_19605154|2023-01-12=2023-01-12,A/American_Black_Duck/NL/FAV-0111-7/2023|EPI_ISL_19775574|2023-03-06=2023-03-06,A/emu/USA/005938-006/2025|EPI_ISL_19777075|2025-02-17=2025-02-17,A/Bald_Eagle/BC/AIVPHL-2638/2024|EPI_ISL_19751770|2024-11-03=2024-11-03,A/merganser/New_York/002310-001/2025|EPI_ISL_19743215|2025-01-15=2025-01-15,A/goose/New_York/003591-008/2025|EPI_ISL_19743094|2025-01-29=2025-01-29,A/guineafowl/Colorado/004397-002/2025|EPI_ISL_19743223|2025-02-06=2025-02-06,A/Canada_Goose/BC/FAV-0015-15/2024|EPI_ISL_19775984|2023-11-07=2023-11-07,A/chicken/Arkansas/24-037005-001/2024|EPI_ISL_19705380|2024-12-10=2024-12-10,A/red-tailed_hawk/Wyoming/002204-001/2025|EPI_ISL_19743080|2025-01-15=2025-01-15,A/snowy_owl/Michigan/002363-005/2025|EPI_ISL_19743158|2025-01-16=2025-01-16,A/turkey/Minnesota/24-037988-003/2024|EPI_ISL_19711094|2024-12-17=2024-12-17,A/chicken/Iowa/24-036502-002/2024|EPI_ISL_19711054|2024-12-08=2024-12-08,A/red_tailed_hawk/Oregon/23-002977-001/2023|EPI_ISL_19605595|2023-01-10=2023-01-10,A/canada_goose/Illinois/000616-011/2024|EPI_ISL_19705477|2024-12-31=2024-12-31,A/Black-billed_Magpie/AB/FAV-1655-1/2022|EPI_ISL_19154703|2022-11-14=2022-11-14,A/chicken/Arkansas/24-038151-001/2024|EPI_ISL_19711096|2024-12-18=2024-12-18,A/duck/Minnesota/24-038159-001/2024|EPI_ISL_19711098|2024-12-17=2024-12-17,A/cackling_goose/Colorado/002314-001/2025|EPI_ISL_19743141|2025-01-18=2025-01-18,A/goose/Oregon/24-031478-002/2024|EPI_ISL_19548477|2024-10-22=2024-10-22,A/dairy_cow/USA/003385-001/2025|EPI_ISL_19777053|2025-01-27=2025-01-27,A/dairy_cow/USA/002645-005/2025|EPI_ISL_19716907|2025-01-21=2025-01-21,A/Red_Tailed_Hawk/BC/AIVPHL-2870/2024|EPI_ISL_19787956|2024-11-18=2024-11-18,A/Bald_Eagle/BC/AIVPHL-2986/2025|EPI_ISL_19788011|2025-01-09=2025-01-09,A/American_Crow/BC/AIVPHL-2850/2024|EPI_ISL_19787992|2024-12-04=2024-12-04,A/turkey/Minnesota/24-036792-003/2024|EPI_ISL_19705385|2024-11-26=2024-11-26,A/muscovy_duck/Florida/002418-001/2025|EPI_ISL_19743214|2025-01-11=2025-01-11,A/chicken/Florida/003206-001/2025|EPI_ISL_19777109|2025-01-28=2025-01-28,A/goose/Nebraska/24-037518-002/2024|EPI_ISL_19711028|2024-12-13=2024-12-13,A/snow_goose/Arkansas/AR24-104/2024|EPI_ISL_19777436|2024-12-06=2024-12-06,A/chicken/Washington/032192-001/2024|EPI_ISL_19593954|2024-10-28=2024-10-28,A/chicken/Indiana/002875-001/2025|EPI_ISL_19777119|2025-01-25=2025-01-25,A/duck/Pennsylvania/004292-003/2025|EPI_ISL_19743260|2025-02-04=2025-02-04,A/chicken/Michigan/001518-001/2024|EPI_ISL_19737301|2024-12-31=2024-12-31,A/duck/California/24-035913-009-R2/2024|EPI_ISL_19744922|2024-11-29=2024-11-29,A/turkey/Ohio/001057-004/2024|EPI_ISL_19737315|2024-12-31=2024-12-31,A/chicken/USA/004986-001/2025|EPI_ISL_19756163|2025-02-09=2025-02-09,A/turkey/Indiana/000295-001/2025|EPI_ISL_19737088|2025-01-03=2025-01-03,A/turkey/Ohio/003598-003/2025|EPI_ISL_19743349|2025-01-29=2025-01-29,A/turkey/Ohio/003048-002/2025|EPI_ISL_19777212|2025-01-24=2025-01-24,A/chicken/Ohio/003106-001/2025|EPI_ISL_19777110|2025-01-27=2025-01-27,A/duck/Hawaii/24-034987-002/2024|EPI_ISL_19678905|2024-11-15=2024-11-15,A/trumpeter_swan/BC/AIVPHL-364/2023|EPI_ISL_17051483|2023-01-16=2023-01-16,A/cormorant/California/23-011452-003/2023|EPI_ISL_17964937|2023-04-07=2023-04-07,A/turkey_vulture/California/22-035760-001/2022|EPI_ISL_19605120|2022-10-28=2022-10-28,A/mallard/Colorado/23-028217-001-original/2023|EPI_ISL_19260807|2023-09-14=2023-09-14,A/Mallard/Alberta/36/2024|EPI_ISL_19713495|2024-08-14=2024-08-14,A/northern_shoveler/California/23-032991-014-original/2023|EPI_ISL_19371776|2023-10-22=2023-10-22,A/mallard/Alaska/23-027273-011/2023|EPI_ISL_19131427|2023-09-03=2023-09-03,A/mallard/Idaho/23-028152-014/2023|EPI_ISL_19194227|2023-09-13=2023-09-13,A/ring-necked_duck/Idaho/23-028146-027/2023|EPI_ISL_19186534|2023-09-08=2023-09-08,A/Sanderling/Delaware/518/2021|EPI_ISL_14777716|2021-06-01=2021-06-01,A/mallard/Wisconsin/24-022377-046-original/2024|EPI_ISL_19660957|2024-07-30=2024-07-30,A/mallard/New_Hampshire/23-027732-083/2023|EPI_ISL_19159874|2023-09-07=2023-09-07,A/mallard/Vermont/23-027105-078/2023|EPI_ISL_19131422|2023-09-01=2023-09-01,A/Gallus_gallus/Durango/CPA-00806-22/2022|EPI_ISL_19873931|2022-03-02=2022-03-02,A/Gallus_gallus/Puebla/CPA-05168-24/2024|EPI_ISL_19214219|2024-04-29=2024-04-29,A/Ruddy_Turnstone/Delaware/452/2021|EPI_ISL_14777727|2021-06-01=2021-06-01,A/gull/MA/22MK00329/2022|EPI_ISL_16641795|2022-02-11=2022-02-11,A/mallard/Massachusetts/24-004240-006-original/2024|EPI_ISL_19660935|2024-02-04=2024-02-04,A/mallard/North_Dakota/23-035009-004-original/2023|EPI_ISL_19490408|2023-11-08=2023-11-08,A/mallard/Iowa/23-038166-007-original/2023|EPI_ISL_19560358|2023-11-18=2023-11-18,A/Mallard/Alberta/567/2021|EPI_ISL_16215525|2021-08-26=2021-08-26,A/mallard/Michigan/23-038497-009-original/2023|EPI_ISL_19560363|2023-11-29=2023-11-29,A/short_billed_dowitcher/Delaware/CEIRS-412/2023|EPI_ISL_18869382|2023-05-19=2023-05-19,A/American_Herring_Gull/Delaware/407/2024|EPI_ISL_19678691|2024-05-18=2024-05-18,A/sanderling/Delaware/CEIRS-416/2023|EPI_ISL_18869350|2023-05-19=2023-05-19,A/cinnamon_teal/Utah/24-022468-020-original/2024|EPI_ISL_19660961|2024-07-23=2024-07-23,A/mallard/Wyoming/23-031580-001-original/2023|EPI_ISL_19341003|2023-09-30=2023-09-30,A/blue-winged_teal/Indiana/23-028134-009/2023|EPI_ISL_19159877|2023-09-09=2023-09-09,A/Mallard/Alberta/238/2024|EPI_ISL_19713503|2024-08-17=2024-08-17,A/Mallard/Alberta/533/2024|EPI_ISL_19716132|2024-08-22=2024-08-22,A/Mallard/Alberta/301/2023|EPI_ISL_19070558|2023-08-17=2023-08-17,A/mallard/Maine/23-033198-002-original/2023|EPI_ISL_19429938|2023-10-10=2023-10-10,A/American_black_duck/New_Hampshire/23-031358-002-original/2023|EPI_ISL_19340997|2023-10-05=2023-10-05,A/teal/Colorado/23-028216-004/2023|EPI_ISL_19175581|2023-09-13=2023-09-13,A/blue-winged_teal/Kansas/23-034084-002-original/2023|EPI_ISL_19429964|2023-10-27=2023-10-27,A/mallard/Minnesota/23-028684-035-original/2023|EPI_ISL_19224059|2023-09-14=2023-09-14,A/mallard/Ohio/24-022862-029-original/2024|EPI_ISL_19660985|2024-08-01=2024-08-01,A/blue-winged_teal/Minnesota/23-029706-017-original/2023|EPI_ISL_19288877|2023-09-23=2023-09-23,A/blue-winged_teal/Kansas/23-030993-006-original/2023|EPI_ISL_19340994|2023-10-07=2023-10-07,A/Mallard/BC/AIVPHL-2380/2024|EPI_ISL_19533301|2024-08-22=2024-08-22,A/Mallard/Alberta/77/2023|EPI_ISL_19281426|2023-08-15=2023-08-15,A/Mallard/Alberta/19/2024|EPI_ISL_19713509|2024-08-14=2024-08-14,A/blue-winged_teal/Mississippi/23-028162-001/2023|EPI_ISL_19175580|2023-09-13=2023-09-13,A/Northern_pintail/Alberta/146/2023|EPI_ISL_19070477|2023-08-16=2023-08-16,A/Mallard/Alberta/335/2024|EPI_ISL_19716110|2024-08-19=2024-08-19,A/Sanderling/Delaware/155/2021|EPI_ISL_14777714|2021-06-01=2021-06-01,A/mallard/Montana/23-038707-001-original/2023|EPI_ISL_19559144|2023-11-30=2023-11-30,A/environment/Iowa/Dickinson-A/2022|EPI_ISL_17673034|2022-04-13=2022-04-13,A/ruddy_turnstone/Delaware/CEIRS-302/2023|EPI_ISL_18869334|2023-05-18=2023-05-18
+      <taxa idref="taxonSet"/>
+    </traitSet>
+
+
+    <run spec="MCMC" chainLength="25000000">
+        <state  storeEvery="100000">
+            <stateNode id="seg1tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
+            <stateNode id="seg2tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
+            <stateNode id="seg3tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
+            <stateNode id="seg4tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
+            <stateNode id="seg5tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
+            <stateNode id="seg6tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
+            <stateNode id="seg7tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
+            <stateNode id="seg8tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
+
+            <stateNode id="sigma" spec="RealParameter" lower="0.25" value="1"/>
+            <stateNode id="sigma2" spec="RealParameter" lower="0.25" value="0.5"/>
+            <stateNode id="popSize" spec="RealParameter" value="1.0293"/>
+            <stateNode id="reassortmentRate" spec="RealParameter" lower="-10" value="0.1211"/>
+
+            <stateNode id="logNe" spec="RealParameter" value="1 1.01"/>
+            <stateNode id="rateShifts" spec="RealParameter" value="0 1.25 2.5 3.75 5 6 50"/>
+            <stateNode id="recoveryRate" spec="RealParameter" value="1.0"/>
+            <stateNode id="InfectedToRho" spec="RealParameter" value="-8 -7"/>
+
+            <parameter id="clockRate.c" spec="parameter.RealParameter" lower="0.0" name="stateNode">0.0035</parameter>
+            
+            <parameter id="mutationRate.s:seg1" spec="parameter.RealParameter" lower="0.0" name="stateNode">1.0</parameter>
+            <parameter id="gammaShape.s:seg1" spec="parameter.RealParameter" lower="0.1" name="stateNode">1.0</parameter>
+            <parameter id="freqParameter.s:seg1" spec="parameter.RealParameter" dimension="4" lower="0.0" name="stateNode" upper="1.0">0.25</parameter>
+            <parameter id="kappa.s:seg1" spec="parameter.RealParameter" lower="0.0" name="stateNode">2.0</parameter>
+
+            <parameter id="mutationRate.s:seg2" spec="parameter.RealParameter" lower="0.0" name="stateNode">1.0</parameter>
+            <parameter id="gammaShape.s:seg2" spec="parameter.RealParameter" lower="0.1" name="stateNode">1.0</parameter>
+            <parameter id="freqParameter.s:seg2" spec="parameter.RealParameter" dimension="4" lower="0.0" name="stateNode" upper="1.0">0.25</parameter>
+            <parameter id="kappa.s:seg2" spec="parameter.RealParameter" lower="0.0" name="stateNode">2.0</parameter>
+
+            <parameter id="mutationRate.s:seg3" spec="parameter.RealParameter" lower="0.0" name="stateNode">1.0</parameter>
+            <parameter id="gammaShape.s:seg3" spec="parameter.RealParameter" lower="0.1" name="stateNode">1.0</parameter>
+            <parameter id="freqParameter.s:seg3" spec="parameter.RealParameter" dimension="4" lower="0.0" name="stateNode" upper="1.0">0.25</parameter>
+            <parameter id="kappa.s:seg3" spec="parameter.RealParameter" lower="0.0" name="stateNode">2.0</parameter>
+
+            <parameter id="mutationRate.s:seg4" spec="parameter.RealParameter" lower="0.0" name="stateNode">1.0</parameter>
+            <parameter id="gammaShape.s:seg4" spec="parameter.RealParameter" lower="0.1" name="stateNode">1.0</parameter>
+            <parameter id="freqParameter.s:seg4" spec="parameter.RealParameter" dimension="4" lower="0.0" name="stateNode" upper="1.0">0.25</parameter>
+            <parameter id="kappa.s:seg4" spec="parameter.RealParameter" lower="0.0" name="stateNode">2.0</parameter>
+
+            <parameter id="mutationRate.s:seg5" spec="parameter.RealParameter" lower="0.0" name="stateNode">1.0</parameter>
+            <parameter id="gammaShape.s:seg5" spec="parameter.RealParameter" lower="0.1" name="stateNode">1.0</parameter>
+            <parameter id="freqParameter.s:seg5" spec="parameter.RealParameter" dimension="4" lower="0.0" name="stateNode" upper="1.0">0.25</parameter>
+            <parameter id="kappa.s:seg5" spec="parameter.RealParameter" lower="0.0" name="stateNode">2.0</parameter>
+
+            <parameter id="mutationRate.s:seg6" spec="parameter.RealParameter" lower="0.0" name="stateNode">1.0</parameter>
+            <parameter id="gammaShape.s:seg6" spec="parameter.RealParameter" lower="0.1" name="stateNode">1.0</parameter>
+            <parameter id="freqParameter.s:seg6" spec="parameter.RealParameter" dimension="4" lower="0.0" name="stateNode" upper="1.0">0.25</parameter>
+            <parameter id="kappa.s:seg6" spec="parameter.RealParameter" lower="0.0" name="stateNode">2.0</parameter>
+
+            <parameter id="mutationRate.s:seg7" spec="parameter.RealParameter" lower="0.0" name="stateNode">1.0</parameter>
+            <parameter id="gammaShape.s:seg7" spec="parameter.RealParameter" lower="0.1" name="stateNode">1.0</parameter>
+            <parameter id="freqParameter.s:seg7" spec="parameter.RealParameter" dimension="4" lower="0.0" name="stateNode" upper="1.0">0.25</parameter>
+            <parameter id="kappa.s:seg7" spec="parameter.RealParameter" lower="0.0" name="stateNode">2.0</parameter>
+
+            <parameter id="mutationRate.s:seg8" spec="parameter.RealParameter" lower="0.0" name="stateNode">1.0</parameter>
+            <parameter id="gammaShape.s:seg8" spec="parameter.RealParameter" lower="0.1" name="stateNode">1.0</parameter>
+            <parameter id="freqParameter.s:seg8" spec="parameter.RealParameter" dimension="4" lower="0.0" name="stateNode" upper="1.0">0.25</parameter>
+            <parameter id="kappa.s:seg8" spec="parameter.RealParameter" lower="0.0" name="stateNode">2.0</parameter>
+
+            <stateNode id="network" spec="SimulatedCoalescentNetwork"
+                       nSegments="8" enableSegmentTreeUpdate="false">
+
+                <traitSet idref="traitSet"/>
+
+                <populationModel spec="ConstantPopulation">
+                    <popSize spec="RealParameter" value="1"/>
+                </populationModel>
+
+                <reassortmentRate spec="RealParameter" value="0.1"/>
+            </stateNode>
+        </state>
+
+        <!-- <init spec='beast.base.evolution.tree.ClusterTree' id='UPGMATree.t:XYZ26'
+          initial="@seg1tree" clusterType='upgma' taxa='@seg1align'/>
+
+        <init spec='coalre.util.InitFromTree' id='initnetwork'
+          tree="@seg1tree" network='@network'>
+        </init> -->
+
+
+        <init spec="SegmentTreeInitializer" network="@network">
+            <segmentTree idref="seg1tree"/>
+            <segmentTree idref="seg2tree"/>
+            <segmentTree idref="seg3tree"/>
+            <segmentTree idref="seg4tree"/>
+            <segmentTree idref="seg5tree"/>
+            <segmentTree idref="seg6tree"/>
+            <segmentTree idref="seg7tree"/>
+            <segmentTree idref="seg8tree"/>
+
+        </init>
+
+        <distribution id="posterior" spec="CompoundDistribution">
+
+            <distribution id="likelihood" spec="CompoundDistribution">
+                <distribution id="treeLikelihood.seg1" spec="TreeLikelihood">
+                    <data idref="seg1align"/>
+                    <tree idref="seg1tree"/>
+                    <siteModel spec="SiteModel" mutationRate="@mutationRate.s:seg1" gammaCategoryCount="4" shape="@gammaShape.s:seg1">
+                        <substModel id="hky.s:seg1" spec="HKY" kappa="@kappa.s:seg1">
+                            <frequencies id="estimatedFreqs.s:seg1" spec="Frequencies" frequencies="@freqParameter.s:seg1"/>
+                        </substModel>
+                    </siteModel>
+                    <branchRateModel id="StrictClock.c" spec="beast.base.evolution.branchratemodel.StrictClockModel" clock.rate="@clockRate.c"/>
+                </distribution>
+
+                <distribution id="treeLikelihood.seg2" spec="TreeLikelihood">
+                    <data idref="seg2align"/>
+                    <tree idref="seg2tree"/>
+                    <siteModel spec="SiteModel" mutationRate="@mutationRate.s:seg2" gammaCategoryCount="4" shape="@gammaShape.s:seg2">
+                        <substModel id="hky.s:seg2" spec="HKY" kappa="@kappa.s:seg2">
+                            <frequencies id="estimatedFreqs.s:seg2" spec="Frequencies" frequencies="@freqParameter.s:seg2"/>
+                        </substModel>
+                    </siteModel>
+                    <branchRateModel idref="StrictClock.c"/>
+                </distribution>
+
+                <distribution id="treeLikelihood.seg3" spec="TreeLikelihood">
+                    <data idref="seg3align"/>
+                    <tree idref="seg3tree"/>
+                    <siteModel spec="SiteModel" mutationRate="@mutationRate.s:seg3" gammaCategoryCount="4" shape="@gammaShape.s:seg3">
+                        <substModel id="hky.s:seg3" spec="HKY" kappa="@kappa.s:seg3">
+                            <frequencies id="estimatedFreqs.s:seg3" spec="Frequencies" frequencies="@freqParameter.s:seg3"/>
+                        </substModel>
+                    </siteModel>
+                    <branchRateModel idref="StrictClock.c"/>
+                </distribution>
+
+                <distribution id="treeLikelihood.seg4" spec="TreeLikelihood">
+                    <data idref="seg4align"/>
+                    <tree idref="seg4tree"/>
+                    <siteModel spec="SiteModel" mutationRate="@mutationRate.s:seg4" gammaCategoryCount="4" shape="@gammaShape.s:seg4">
+                        <substModel id="hky.s:seg4" spec="HKY" kappa="@kappa.s:seg4">
+                            <frequencies id="estimatedFreqs.s:seg4" spec="Frequencies" frequencies="@freqParameter.s:seg4"/>
+                        </substModel>
+                    </siteModel>
+                    <branchRateModel idref="StrictClock.c"/>
+                </distribution>
+
+                <distribution id="treeLikelihood.seg5" spec="TreeLikelihood">
+                    <data idref="seg5align"/>
+                    <tree idref="seg5tree"/>
+                    <siteModel spec="SiteModel" mutationRate="@mutationRate.s:seg5" gammaCategoryCount="4" shape="@gammaShape.s:seg5">
+                        <substModel id="hky.s:seg5" spec="HKY" kappa="@kappa.s:seg5">
+                            <frequencies id="estimatedFreqs.s:seg5" spec="Frequencies" frequencies="@freqParameter.s:seg5"/>
+                        </substModel>
+                    </siteModel>
+                    <branchRateModel idref="StrictClock.c"/>
+                </distribution>
+
+                <distribution id="treeLikelihood.seg6" spec="TreeLikelihood">
+                    <data idref="seg6align"/>
+                    <tree idref="seg6tree"/>
+                    <siteModel spec="SiteModel" mutationRate="@mutationRate.s:seg6" gammaCategoryCount="4" shape="@gammaShape.s:seg6">
+                        <substModel id="hky.s:seg6" spec="HKY" kappa="@kappa.s:seg6">
+                            <frequencies id="estimatedFreqs.s:seg6" spec="Frequencies" frequencies="@freqParameter.s:seg6"/>
+                        </substModel>
+                    </siteModel>
+                    <branchRateModel idref="StrictClock.c"/>
+                </distribution>
+
+                <distribution id="treeLikelihood.seg7" spec="TreeLikelihood">
+                    <data idref="seg7align"/>
+                    <tree idref="seg7tree"/>
+                    <siteModel spec="SiteModel" mutationRate="@mutationRate.s:seg7" gammaCategoryCount="4" shape="@gammaShape.s:seg7">
+                        <substModel id="hky.s:seg7" spec="HKY" kappa="@kappa.s:seg7">
+                            <frequencies id="estimatedFreqs.s:seg7" spec="Frequencies" frequencies="@freqParameter.s:seg7"/>
+                        </substModel>
+                    </siteModel>
+                    <branchRateModel idref="StrictClock.c"/>
+                </distribution>
+
+                <distribution id="treeLikelihood.seg8" spec="TreeLikelihood">
+                    <data idref="seg8align"/>
+                    <tree idref="seg8tree"/>
+                    <siteModel spec="SiteModel" mutationRate="@mutationRate.s:seg8" gammaCategoryCount="4" shape="@gammaShape.s:seg8">
+                        <substModel id="hky.s:seg8" spec="HKY" kappa="@kappa.s:seg8">
+                            <frequencies id="estimatedFreqs.s:seg8" spec="Frequencies" frequencies="@freqParameter.s:seg8"/>
+                        </substModel>
+                    </siteModel>
+                    <branchRateModel idref="StrictClock.c"/>
+                </distribution>
+
+
+            </distribution>
+
+            <distribution id="prior" spec="CompoundDistribution">
+                <distribution id="networkPrior" spec="CoalescentWithReassortment" maxHeightRatio="1.0" redFactor="0.0">
+                    <networkIntervals spec="NetworkIntervals" network="@network"/>
+
+                    <!-- 
+                    <populationModel id="splinePop" spec="ConstantPopulation" popSize="@popSize"/>
+                    <reassortmentRate idref="reassortmentRate"/>
+                     -->
+                    
+                    <!-- isISkyline-->
+                    <populationModel id="splinePop" spec="coalre.dynamics.SkygrowthNeDynamics" logNe="@logNe" rateShifts="@rateShifts"/>
+                    <timeVaryingReassortmentRates id="splinePop2" spec="coalre.dynamics.SkygrowthReassortmentRatesFromSkygrowthNe" neToReassortment="@InfectedToRho" rateShifts="@rateShifts"/>
+                    <!--isISkyline -->
+
+                    <!-- 
+                    <populationModel id="splinePop" spec="coalre.dynamics.SkygrowthNeDynamics" logNe="@logNe" rateShifts="@rateShifts"/>
+                    <timeVaryingReassortmentRates id="splinePop2" spec="coalre.dynamics.SkygrowthReassortmentRatesFromSkygrowthNe" logNe="@logNe" neToReassortment="@InfectedToRho" rateShifts="@rateShifts"/>
+                     -->
+
+
+
+
+
+                </distribution>
+
+                <distribution id="parametersPrior" spec="CompoundDistribution">
+                    <distribution spec="Prior" x="@popSize">
+                        <distr spec="beast.base.inference.distribution.OneOnX"/>
+                    </distribution>
+                    <distribution spec="Prior" x="@reassortmentRate">
+                        <distr spec="beast.base.inference.distribution.LogNormalDistributionModel" M="-1.7344" S="0.5"/>
+                    </distribution>
+                    <distribution spec="Prior">
+                        <x spec="coalre.dynamics.Difference" arg="@logNe"/>
+                        <distr spec="beast.base.inference.distribution.Normal" mean="0" sigma="@sigma"/>
+                    </distribution>
+
+                    <distribution spec="Prior" x="@sigma2">
+                        <distr spec="beast.base.inference.distribution.LogNormalDistributionModel" meanInRealSpace="true" M="1" S="0.5"/>
+                    </distribution>
+                    <!--insert_from_to_prior -->
+
+                    <!-- isinfectedSkyline-->
+                    <distribution spec="Prior">
+                        <x spec="coalre.dynamics.Difference" arg="@InfectedToRho" />
+                        <distr spec="beast.base.inference.distribution.Normal" mean="0" sigma="@sigma2"/>
+                    </distribution>
+
+                    <distribution spec="Prior">
+                        <x spec="mascot.util.Final" arg="@InfectedToRho"/>
+                        <distr spec="beast.base.inference.distribution.Normal" mean="-3" sigma="0.5"/>
+                    </distribution>
+
+
+
+
+
+
+                    <distribution spec="Prior" x="@sigma2">
+                        <distr spec="beast.base.inference.distribution.LogNormalDistributionModel" meanInRealSpace="true" M="1" S="0.5"/>
+                    </distribution>
+                    <!--isinfectedSkyline -->
+
+                    <!-- isISkyline-->
+
+                    <!--isISkyline -->
+                    <!-- <distribution spec="Prior" >
+                        <x spec="mascot.util.Mean" arg="@InfectedToRho"/>
+                        <distr spec="beast.base.inference.distribution.Normal" mean="-5" sigma="1"/>
+                    </distribution> -->
+
+                    <!-- <distribution spec="Prior">
+                        <x spec="mascot.util.Final" arg="@InfectedToRho"/>
+                        <distr spec="beast.base.inference.distribution.Normal" mean="-15" sigma="0.5"/>
+                    </distribution> -->
+
+
+                </distribution>
+            </distribution>
+        </distribution>
+
+        
+        <!-- 
+        <operator id="migrationRatesScaler.s" spec="AdaptableOperatorSampler" weight="5.0">
+            <parameter idref="popSize"/>
+            <operator id="AVMNOperator.Mascot" spec="kernel.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
+                <transformations id="AVMNSumTransform.Mascot" spec="operator.kernel.Transform$LogConstrainedSumTransform"/>
+                <transformations id="AVMNLogTransform.Mascot" spec="operator.kernel.Transform$LogTransform">
+                    <f idref="popSize"/>
+                    <f idref="reassortmentRate"/>
+                </transformations>
+                <transformations id="AVMNNoTransform.Mascot" spec="operator.kernel.Transform$NoTransform">
+                </transformations>
+            </operator>
+            <operator id="SkylineNe.camel.ScalerX.t" spec="beast.base.evolution.operator.kernel.BactrianScaleOperator" parameter="@popSize" scaleFactor="0.5" weight="1.0"/>
+        </operator>
+        <operator id="InfectedToRhoScaler.s:" spec="AdaptableOperatorSampler" weight="10.0">
+            <parameter idref="reassortmentRate"/>
+            <operator idref="AVMNOperator.Mascot"/>
+            <operator id="InfectedToRho.ScalerX.t" spec="beast.base.evolution.operator.kernel.BactrianScaleOperator" parameter="@reassortmentRate" scaleFactor="0.5" weight="1.0"/>
+        </operator>
+         -->
+
+
+        <!-- isinfectedSkyline-->
+        <operator id="migrationRatesScaler.s" spec="AdaptableOperatorSampler" weight="5.0">
+            <parameter idref="logNe"/>
+            <operator id="AVMNOperator.Mascot" spec="kernel.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
+                <transformations id="AVMNSumTransform.Mascot" spec="operator.kernel.Transform$LogConstrainedSumTransform"/>
+                <transformations id="AVMNLogTransform.Mascot" spec="operator.kernel.Transform$LogTransform">
+                </transformations>
+                <transformations id="AVMNNoTransform.Mascot" spec="operator.kernel.Transform$NoTransform">
+                    <f idref="InfectedToRho"/>
+                    <f idref="logNe"/>
+                </transformations>
+            </operator>
+            <operator id="SkylineNe.camel.ScalerX.t" spec="beast.base.inference.operator.kernel.BactrianRandomWalkOperator" parameter="@logNe" scaleFactor="0.5" weight="1.0"/>
+        </operator>
+        <operator id="InfectedToRhoScaler.s:" spec="AdaptableOperatorSampler" weight="10.0">
+            <parameter idref="InfectedToRho"/>
+            <operator idref="AVMNOperator.Mascot"/>
+            <operator id="InfectedToRho.ScalerX.t" spec="beast.base.inference.operator.kernel.BactrianRandomWalkOperator" parameter="@InfectedToRho" scaleFactor="0.5" weight="1.0"/>
+        </operator>
+
+
+        <operator id="InfectedToRho.ScalerX.t2" spec="beast.base.inference.operator.kernel.BactrianRandomWalkOperator" parameter="@InfectedToRho" scaleFactor="0.5" weight="5.0"/>
+        <operator id="SkylineNe.camel.ScalerX.t2" spec="beast.base.inference.operator.kernel.BactrianRandomWalkOperator" parameter="@logNe" scaleFactor="0.5" weight="5.0"/>
+
+        <!--isinfectedSkyline -->
+
+
+
+        <operator id="gammaShapeScaler.s:seg1" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="gammaShape.s:seg1"/>
+            <operator id="AVMNOperator.seg1" spec="kernel.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
+                <transformations spec="operator.kernel.Transform$LogConstrainedSumTransform">
+                    <f idref="freqParameter.s:seg1"/>
+                </transformations>
+                <transformations spec="operator.kernel.Transform$LogTransform">
+                    <f idref="gammaShape.s:seg1"/>
+                    <f idref="kappa.s:seg1"/>
+                </transformations>
+            </operator>
+            <operator id="gammaShapeScalerX.s:seg1" spec="kernel.BactrianScaleOperator" parameter="@gammaShape.s:seg1" scaleFactor="0.5" upper="10.0" weight="0.1"/>
+        </operator>
+
+        <operator id="FrequenciesExchanger.s:seg1" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="freqParameter.s:seg1"/>
+            <operator idref="AVMNOperator.seg1"/>
+            <operator id="FrequenciesExchangerX.s:seg1" spec="operator.kernel.BactrianDeltaExchangeOperator" delta="0.01" weight="0.1">
+                <parameter idref="freqParameter.s:seg1"/>
+            </operator>
+        </operator>
+        <operator id="KappaScaler.s:seg1" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="kappa.s:seg1"/>
+            <operator idref="AVMNOperator.seg1"/>
+            <operator id="KappaScalerX.s:seg1" spec="kernel.BactrianScaleOperator" parameter="@kappa.s:seg1" scaleFactor="0.1" upper="10.0" weight="0.1"/>
+        </operator>
+
+
+
+        <operator id="gammaShapeScaler.s:seg2" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="gammaShape.s:seg2"/>
+            <operator id="AVMNOperator.seg2" spec="kernel.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
+                <transformations spec="operator.kernel.Transform$LogConstrainedSumTransform">
+                    <f idref="freqParameter.s:seg2"/>
+                </transformations>
+                <transformations spec="operator.kernel.Transform$LogTransform">
+                    <f idref="gammaShape.s:seg2"/>
+                    <f idref="kappa.s:seg2"/>
+                </transformations>
+            </operator>
+            <operator id="gammaShapeScalerX.s:seg2" spec="kernel.BactrianScaleOperator" parameter="@gammaShape.s:seg2" scaleFactor="0.5" upper="10.0" weight="0.1"/>
+        </operator>
+        <operator id="FrequenciesExchanger.s:seg2" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="freqParameter.s:seg2"/>
+            <operator idref="AVMNOperator.seg2"/>
+            <operator id="FrequenciesExchangerX.s:seg2" spec="operator.kernel.BactrianDeltaExchangeOperator" delta="0.01" weight="0.1">
+                <parameter idref="freqParameter.s:seg2"/>
+            </operator>
+        </operator>
+        <operator id="KappaScaler.s:seg2" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="kappa.s:seg2"/>
+            <operator idref="AVMNOperator.seg2"/>
+            <operator id="KappaScalerX.s:seg2" spec="kernel.BactrianScaleOperator" parameter="@kappa.s:seg2" scaleFactor="0.1" upper="10.0" weight="0.1"/>
+        </operator>
+
+        <operator id="gammaShapeScaler.s:seg3" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="gammaShape.s:seg3"/>
+            <operator id="AVMNOperator.seg3" spec="kernel.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
+                <transformations spec="operator.kernel.Transform$LogConstrainedSumTransform">
+                    <f idref="freqParameter.s:seg3"/>
+                </transformations>
+                <transformations spec="operator.kernel.Transform$LogTransform">
+                    <f idref="gammaShape.s:seg3"/>
+                    <f idref="kappa.s:seg3"/>
+                </transformations>
+            </operator>
+            <operator id="gammaShapeScalerX.s:seg3" spec="kernel.BactrianScaleOperator" parameter="@gammaShape.s:seg3" scaleFactor="0.5" upper="10.0" weight="0.1"/>
+        </operator>
+        <operator id="FrequenciesExchanger.s:seg3" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="freqParameter.s:seg3"/>
+            <operator idref="AVMNOperator.seg3"/>
+            <operator id="FrequenciesExchangerX.s:seg3" spec="operator.kernel.BactrianDeltaExchangeOperator" delta="0.01" weight="0.1">
+                <parameter idref="freqParameter.s:seg3"/>
+            </operator>
+        </operator>
+        <operator id="KappaScaler.s:seg3" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="kappa.s:seg3"/>
+            <operator idref="AVMNOperator.seg3"/>
+            <operator id="KappaScalerX.s:seg3" spec="kernel.BactrianScaleOperator" parameter="@kappa.s:seg3" scaleFactor="0.1" upper="10.0" weight="0.1"/>
+        </operator>
+
+        <operator id="gammaShapeScaler.s:seg4" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="gammaShape.s:seg4"/>
+            <operator id="AVMNOperator.seg4" spec="kernel.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
+                <transformations spec="operator.kernel.Transform$LogConstrainedSumTransform">
+                    <f idref="freqParameter.s:seg4"/>
+                </transformations>
+                <transformations spec="operator.kernel.Transform$LogTransform">
+                    <f idref="gammaShape.s:seg4"/>
+                    <f idref="kappa.s:seg4"/>
+                </transformations>
+            </operator>
+            <operator id="gammaShapeScalerX.s:seg4" spec="kernel.BactrianScaleOperator" parameter="@gammaShape.s:seg4" scaleFactor="0.5" upper="10.0" weight="0.1"/>
+        </operator>
+        <operator id="FrequenciesExchanger.s:seg4" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="freqParameter.s:seg4"/>
+            <operator idref="AVMNOperator.seg4"/>
+            <operator id="FrequenciesExchangerX.s:seg4" spec="operator.kernel.BactrianDeltaExchangeOperator" delta="0.01" weight="0.1">
+                <parameter idref="freqParameter.s:seg4"/>
+            </operator>
+        </operator>
+        <operator id="KappaScaler.s:seg4" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="kappa.s:seg4"/>
+            <operator idref="AVMNOperator.seg4"/>
+            <operator id="KappaScalerX.s:seg4" spec="kernel.BactrianScaleOperator" parameter="@kappa.s:seg4" scaleFactor="0.1" upper="10.0" weight="0.1"/>
+        </operator>
+
+        <operator id="gammaShapeScaler.s:seg5" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="gammaShape.s:seg5"/>
+            <operator id="AVMNOperator.seg5" spec="kernel.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
+                <transformations spec="operator.kernel.Transform$LogConstrainedSumTransform">
+                    <f idref="freqParameter.s:seg5"/>
+                </transformations>
+                <transformations spec="operator.kernel.Transform$LogTransform">
+                    <f idref="gammaShape.s:seg5"/>
+                    <f idref="kappa.s:seg5"/>
+                </transformations>
+            </operator>
+            <operator id="gammaShapeScalerX.s:seg5" spec="kernel.BactrianScaleOperator" parameter="@gammaShape.s:seg5" scaleFactor="0.5" upper="10.0" weight="0.1"/>
+        </operator>
+        <operator id="FrequenciesExchanger.s:seg5" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="freqParameter.s:seg5"/>
+            <operator idref="AVMNOperator.seg5"/>
+            <operator id="FrequenciesExchangerX.s:seg5" spec="operator.kernel.BactrianDeltaExchangeOperator" delta="0.01" weight="0.1">
+                <parameter idref="freqParameter.s:seg5"/>
+            </operator>
+        </operator>
+        <operator id="KappaScaler.s:seg5" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="kappa.s:seg5"/>
+            <operator idref="AVMNOperator.seg5"/>
+            <operator id="KappaScalerX.s:seg5" spec="kernel.BactrianScaleOperator" parameter="@kappa.s:seg5" scaleFactor="0.1" upper="10.0" weight="0.1"/>
+        </operator>
+
+        <operator id="gammaShapeScaler.s:seg6" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="gammaShape.s:seg6"/>
+            <operator id="AVMNOperator.seg6" spec="kernel.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
+                <transformations spec="operator.kernel.Transform$LogConstrainedSumTransform">
+                    <f idref="freqParameter.s:seg6"/>
+                </transformations>
+                <transformations spec="operator.kernel.Transform$LogTransform">
+                    <f idref="gammaShape.s:seg6"/>
+                    <f idref="kappa.s:seg6"/>
+                </transformations>
+            </operator>
+            <operator id="gammaShapeScalerX.s:seg6" spec="kernel.BactrianScaleOperator" parameter="@gammaShape.s:seg6" scaleFactor="0.5" upper="10.0" weight="0.1"/>
+        </operator>
+        <operator id="FrequenciesExchanger.s:seg6" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="freqParameter.s:seg6"/>
+            <operator idref="AVMNOperator.seg6"/>
+            <operator id="FrequenciesExchangerX.s:seg6" spec="operator.kernel.BactrianDeltaExchangeOperator" delta="0.01" weight="0.1">
+                <parameter idref="freqParameter.s:seg6"/>
+            </operator>
+        </operator>
+        <operator id="KappaScaler.s:seg6" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="kappa.s:seg6"/>
+            <operator idref="AVMNOperator.seg6"/>
+            <operator id="KappaScalerX.s:seg6" spec="kernel.BactrianScaleOperator" parameter="@kappa.s:seg6" scaleFactor="0.1" upper="10.0" weight="0.1"/>
+        </operator>
+
+        <operator id="gammaShapeScaler.s:seg7" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="gammaShape.s:seg7"/>
+            <operator id="AVMNOperator.seg7" spec="kernel.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
+                <transformations spec="operator.kernel.Transform$LogConstrainedSumTransform">
+                    <f idref="freqParameter.s:seg7"/>
+                </transformations>
+                <transformations spec="operator.kernel.Transform$LogTransform">
+                    <f idref="gammaShape.s:seg7"/>
+                    <f idref="kappa.s:seg7"/>
+                </transformations>
+            </operator>
+            <operator id="gammaShapeScalerX.s:seg7" spec="kernel.BactrianScaleOperator" parameter="@gammaShape.s:seg7" scaleFactor="0.5" upper="10.0" weight="0.1"/>
+        </operator>
+        <operator id="FrequenciesExchanger.s:seg7" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="freqParameter.s:seg7"/>
+            <operator idref="AVMNOperator.seg7"/>
+            <operator id="FrequenciesExchangerX.s:seg7" spec="operator.kernel.BactrianDeltaExchangeOperator" delta="0.01" weight="0.1">
+                <parameter idref="freqParameter.s:seg7"/>
+            </operator>
+        </operator>
+        <operator id="KappaScaler.s:seg7" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="kappa.s:seg7"/>
+            <operator idref="AVMNOperator.seg7"/>
+            <operator id="KappaScalerX.s:seg7" spec="kernel.BactrianScaleOperator" parameter="@kappa.s:seg7" scaleFactor="0.1" upper="10.0" weight="0.1"/>
+        </operator>
+
+        <operator id="gammaShapeScaler.s:seg8" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="gammaShape.s:seg8"/>
+            <operator id="AVMNOperator.seg8" spec="kernel.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
+                <transformations spec="operator.kernel.Transform$LogConstrainedSumTransform">
+                    <f idref="freqParameter.s:seg8"/>
+                </transformations>
+                <transformations spec="operator.kernel.Transform$LogTransform">
+                    <f idref="gammaShape.s:seg8"/>
+                    <f idref="kappa.s:seg8"/>
+                </transformations>
+            </operator>
+            <operator id="gammaShapeScalerX.s:seg8" spec="kernel.BactrianScaleOperator" parameter="@gammaShape.s:seg8" scaleFactor="0.5" upper="10.0" weight="0.1"/>
+        </operator>
+        <operator id="FrequenciesExchanger.s:seg8" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="freqParameter.s:seg8"/>
+            <operator idref="AVMNOperator.seg8"/>
+            <operator id="FrequenciesExchangerX.s:seg8" spec="operator.kernel.BactrianDeltaExchangeOperator" delta="0.01" weight="0.1">
+                <parameter idref="freqParameter.s:seg8"/>
+            </operator>
+        </operator>
+        <operator id="KappaScaler.s:seg8" spec="AdaptableOperatorSampler" weight="0.25">
+            <parameter idref="kappa.s:seg8"/>
+            <operator idref="AVMNOperator.seg8"/>
+            <operator id="KappaScalerX.s:seg8" spec="kernel.BactrianScaleOperator" parameter="@kappa.s:seg8" scaleFactor="0.1" upper="10.0" weight="0.1"/>
+        </operator>
+
+        <operator id="FixMeanMutationRatesOperator" spec="operator.kernel.BactrianDeltaExchangeOperator" delta="0.01" weight="5">
+            <parameter idref="mutationRate.s:seg1"/>
+            <parameter idref="mutationRate.s:seg2"/>
+            <parameter idref="mutationRate.s:seg3"/>
+            <parameter idref="mutationRate.s:seg4"/>
+            <parameter idref="mutationRate.s:seg5"/>
+            <parameter idref="mutationRate.s:seg6"/>
+            <parameter idref="mutationRate.s:seg7"/>
+            <parameter idref="mutationRate.s:seg8"/>
+            <weightvector id="weightparameter" spec="parameter.IntegerParameter" dimension="2" estimate="false" lower="0" upper="0">1850 1874 982 839 1497 2274 2280 2151</weightvector>
+        </operator>
+
+
+        <operator id="ClockRateScaler.t1" spec="beast.base.evolution.operator.kernel.BactrianScaleOperator" parameter="@clockRate.c" scaleFactor="0.5" weight="2.0"/>
+
+        <!-- <operator id="ClockRateScaler.t2" spec="beast.base.evolution.operator.kernel.BactrianScaleOperator" parameter="@mutationRate.s:seg2" scaleFactor="0.5" weight="1.0"/>
+        <operator id="ClockRateScaler.t3" spec="beast.base.evolution.operator.kernel.BactrianScaleOperator" parameter="@mutationRate.s:seg3" scaleFactor="0.5" weight="1.0"/>
+        <operator id="ClockRateScaler.t4" spec="beast.base.evolution.operator.kernel.BactrianScaleOperator" parameter="@mutationRate.s:seg4" scaleFactor="0.5" weight="1.0"/>
+        <operator id="ClockRateScaler.t5" spec="beast.base.evolution.operator.kernel.BactrianScaleOperator" parameter="@mutationRate.s:seg5" scaleFactor="0.5" weight="1.0"/>
+        <operator id="ClockRateScaler.t6" spec="beast.base.evolution.operator.kernel.BactrianScaleOperator" parameter="@mutationRate.s:seg6" scaleFactor="0.5" weight="1.0"/>
+        <operator id="ClockRateScaler.t7" spec="beast.base.evolution.operator.kernel.BactrianScaleOperator" parameter="@mutationRate.s:seg7" scaleFactor="0.5" weight="1.0"/>
+        <operator id="ClockRateScaler.t8" spec="beast.base.evolution.operator.kernel.BactrianScaleOperator" parameter="@mutationRate.s:seg8" scaleFactor="0.5" weight="1.0"/> -->
+        
+        <operator id="AR_regular" spec="AddRemoveAndResimulate" coalescentWithReassortment="@networkPrior" network="@network" weight="10.0" alpha="30" divertOneSegment="true">
+            <segmentTree idref="seg1tree"/>
+            <segmentTree idref="seg2tree"/>
+            <segmentTree idref="seg3tree"/>
+            <segmentTree idref="seg4tree"/>
+            <segmentTree idref="seg5tree"/>
+            <segmentTree idref="seg6tree"/>
+            <segmentTree idref="seg7tree"/>
+            <segmentTree idref="seg8tree"/>
+        </operator>
+
+
+        <operator id="AR_shortone" spec="AddRemoveAndResimulate" coalescentWithReassortment="@networkPrior" network="@network" localMove="true" weight="10.0" edgeDistance="3" alpha="30" divertOneSegment="false">
+            <segmentTree idref="seg1tree"/>
+            <segmentTree idref="seg2tree"/>
+            <segmentTree idref="seg3tree"/>
+            <segmentTree idref="seg4tree"/>
+            <segmentTree idref="seg5tree"/>
+            <segmentTree idref="seg6tree"/>
+            <segmentTree idref="seg7tree"/>
+            <segmentTree idref="seg8tree"/>
+        </operator>
+
+        <operator id="AR_medium_one" spec="AddRemoveAndResimulate" coalescentWithReassortment="@networkPrior" network="@network" localMove="true" weight="10.0" edgeDistance="6" alpha="30" divertOneSegment="false">
+            <segmentTree idref="seg1tree"/>
+            <segmentTree idref="seg2tree"/>
+            <segmentTree idref="seg3tree"/>
+            <segmentTree idref="seg4tree"/>
+            <segmentTree idref="seg5tree"/>
+            <segmentTree idref="seg6tree"/>
+            <segmentTree idref="seg7tree"/>
+            <segmentTree idref="seg8tree"/>
+        </operator>
+
+        <operator id="AR_medium_allseg" spec="AddRemoveAndResimulate" coalescentWithReassortment="@networkPrior" network="@network" localMove="true" weight="10.0" edgeDistance="9" alpha="30" divertOneSegment="true">
+            <segmentTree idref="seg1tree"/>
+            <segmentTree idref="seg2tree"/>
+            <segmentTree idref="seg3tree"/>
+            <segmentTree idref="seg4tree"/>
+            <segmentTree idref="seg5tree"/>
+            <segmentTree idref="seg6tree"/>
+            <segmentTree idref="seg7tree"/>
+            <segmentTree idref="seg8tree"/>
+        </operator>
+
+        <operator id="AR2onerand" spec="AddRemoveAndResimulate" coalescentWithReassortment="@networkPrior" network="@network" weight="150.0" divertOneSegment="true">
+            <segmentTree idref="seg1tree"/>
+            <segmentTree idref="seg2tree"/>
+            <segmentTree idref="seg3tree"/>
+            <segmentTree idref="seg4tree"/>
+            <segmentTree idref="seg5tree"/>
+            <segmentTree idref="seg6tree"/>
+            <segmentTree idref="seg7tree"/>
+            <segmentTree idref="seg8tree"/>
+        </operator>
+        <operator id="AR2allrand" spec="AddRemoveAndResimulate" coalescentWithReassortment="@networkPrior" network="@network" weight="150.0" divertOneSegment="false">
+            <segmentTree idref="seg1tree"/>
+            <segmentTree idref="seg2tree"/>
+            <segmentTree idref="seg3tree"/>
+            <segmentTree idref="seg4tree"/>
+            <segmentTree idref="seg5tree"/>
+            <segmentTree idref="seg6tree"/>
+            <segmentTree idref="seg7tree"/>
+            <segmentTree idref="seg8tree"/>
+        </operator>
+
+
+
+        <operator spec="DivertSegmentAndResimulate" coalescentWithReassortment="@networkPrior" network="@network" weight="200.0" divertOneSegment="true">
+            <segmentTree idref="seg1tree"/>
+            <segmentTree idref="seg2tree"/>
+            <segmentTree idref="seg3tree"/>
+            <segmentTree idref="seg4tree"/>
+            <segmentTree idref="seg5tree"/>
+            <segmentTree idref="seg6tree"/>
+            <segmentTree idref="seg7tree"/>
+            <segmentTree idref="seg8tree"/>
+        </operator>
+
+
+
+
+
+        <operator id="NetworkScale" spec="NetworkScaleOperator" network="@network" weight="2" scaleFactor="0.9" doubleDiscount="false">
+            <segmentTree idref="seg1tree"/>
+            <segmentTree idref="seg2tree"/>
+            <segmentTree idref="seg3tree"/>
+            <segmentTree idref="seg4tree"/>
+            <segmentTree idref="seg5tree"/>
+            <segmentTree idref="seg6tree"/>
+            <segmentTree idref="seg7tree"/>
+            <segmentTree idref="seg8tree"/>
+            <downParameter idref="clockRate.c"/>
+            <!-- isinfectedSkyline-->
+            <upLogScaledParameter idref="logNe"/>
+            <downLogScaledParameter idref="InfectedToRho"/>
+            <!--isinfectedSkyline -->
+            <!-- 
+            <upParameter idref="popSize"/>
+            <downParameter idref="reassortmentRate"/>
+             -->
+
+        </operator>
+
+
+        <operator id="NetworkScale2" spec="NetworkScaleOperator" network="@network" weight="2" scaleFactor="0.9" doubleDiscount="false">
+            <segmentTree idref="seg1tree"/>
+            <segmentTree idref="seg2tree"/>
+            <segmentTree idref="seg3tree"/>
+            <segmentTree idref="seg4tree"/>
+            <segmentTree idref="seg5tree"/>
+            <segmentTree idref="seg6tree"/>
+            <segmentTree idref="seg7tree"/>
+            <segmentTree idref="seg8tree"/>
+        </operator>
+        
+        <operator id="NetworkScaleIndependently" scaleIntervalsIndependently="true" scaleFactor="0.95"  spec="NetworkScaleOperator" network="@network" weight="2">
+            <segmentTree idref="seg1tree"/>
+            <segmentTree idref="seg2tree"/>
+            <segmentTree idref="seg3tree"/>
+            <segmentTree idref="seg4tree"/>
+            <segmentTree idref="seg5tree"/>
+            <segmentTree idref="seg6tree"/>
+            <segmentTree idref="seg7tree"/>
+            <segmentTree idref="seg8tree"/>
+        </operator>
+
+        <operator id="Narrow" spec="NetworkExchangeAndResimulate" coalescentWithReassortment="@networkPrior" isNarrow="true" network="@network" weight="30.0">
+            <segmentTree idref="seg1tree"/>
+            <segmentTree idref="seg2tree"/>
+            <segmentTree idref="seg3tree"/>
+            <segmentTree idref="seg4tree"/>
+            <segmentTree idref="seg5tree"/>
+            <segmentTree idref="seg6tree"/>
+            <segmentTree idref="seg7tree"/>
+            <segmentTree idref="seg8tree"/>
+        </operator>
+        <operator id="Wide" spec="NetworkExchangeAndResimulate" coalescentWithReassortment="@networkPrior" isNarrow="false" network="@network" weight="30.0">
+            <segmentTree idref="seg1tree"/>
+            <segmentTree idref="seg2tree"/>
+            <segmentTree idref="seg3tree"/>
+            <segmentTree idref="seg4tree"/>
+            <segmentTree idref="seg5tree"/>
+            <segmentTree idref="seg6tree"/>
+            <segmentTree idref="seg7tree"/>
+            <segmentTree idref="seg8tree"/>
+        </operator>
+
+        <operator id="NetworkScaleRootOnly" spec="NetworkScaleOperator" network="@network" scaleRootOnly="true" weight="1" scaleFactor="0.2">
+            <segmentTree idref="seg1tree"/>
+            <segmentTree idref="seg2tree"/>
+            <segmentTree idref="seg3tree"/>
+            <segmentTree idref="seg4tree"/>
+            <segmentTree idref="seg5tree"/>
+            <segmentTree idref="seg6tree"/>
+            <segmentTree idref="seg7tree"/>
+            <segmentTree idref="seg8tree"/>
+        </operator>
+
+        <operator id="uniform" spec="UniformNetworkNodeHeightOperator"  network="@network" weight="5.0">
+            <segmentTree idref="seg1tree"/>
+            <segmentTree idref="seg2tree"/>
+            <segmentTree idref="seg3tree"/>
+            <segmentTree idref="seg4tree"/>
+            <segmentTree idref="seg5tree"/>
+            <segmentTree idref="seg6tree"/>
+            <segmentTree idref="seg7tree"/>
+            <segmentTree idref="seg8tree"/>
+        </operator>
+
+
+        <operator id="slide" spec="SubNetworkSlide" useEdgeLength="false"  network="@network" weight="15.0">
+            <segmentTree idref="seg1tree"/>
+            <segmentTree idref="seg2tree"/>
+            <segmentTree idref="seg3tree"/>
+            <segmentTree idref="seg4tree"/>
+            <segmentTree idref="seg5tree"/>
+            <segmentTree idref="seg6tree"/>
+            <segmentTree idref="seg7tree"/>
+            <segmentTree idref="seg8tree"/>
+        </operator>
+
+        <operator id="Leap" spec="SubNetworkLeapAndResimulate" coalescentWithReassortment="@networkPrior" useEdgeLength="true" network="@network" weight="50.0">
+            <segmentTree idref="seg1tree"/>
+            <segmentTree idref="seg2tree"/>
+            <segmentTree idref="seg3tree"/>
+            <segmentTree idref="seg4tree"/>
+            <segmentTree idref="seg5tree"/>
+            <segmentTree idref="seg6tree"/>
+            <segmentTree idref="seg7tree"/>
+            <segmentTree idref="seg8tree"/>
+        </operator>
+
+        <operator id="weighted" spec="SubNetworkLeapAndResimulate" coalescentWithReassortment="@networkPrior" randomlySampleAttachmentEdge="false"  useEdgeLength="true" network="@network" weight="50.0">
+            <segmentTree idref="seg1tree"/>
+            <segmentTree idref="seg2tree"/>
+            <segmentTree idref="seg3tree"/>
+            <segmentTree idref="seg4tree"/>
+            <segmentTree idref="seg5tree"/>
+            <segmentTree idref="seg6tree"/>
+            <segmentTree idref="seg7tree"/>
+            <segmentTree idref="seg8tree"/>
+        </operator>
+
+
+
+
+        <logger spec="Logger" logEvery="100000" mode="tree" fileName="$(filebase).trees">
+            <log idref="network"/>
+        </logger>
+
+        <!-- <logger spec="Logger" logEvery="10000" mode="tree" fileName="$(filebase).seg1.trees">
+            <log idref="seg1tree"/>
+        </logger>
+        <logger spec="Logger" logEvery="10000" mode="tree" fileName="$(filebase).seg2.trees">
+            <log idref="seg2tree"/>
+        </logger>
+        <logger spec="Logger" logEvery="10000" mode="tree" fileName="$(filebase).seg3.trees">
+            <log idref="seg3tree"/>
+        </logger>
+        <logger spec="Logger" logEvery="10000" mode="tree" fileName="$(filebase).seg4.trees">
+            <log idref="seg4tree"/>
+        </logger>
+        <logger spec="Logger" logEvery="10000" mode="tree" fileName="$(filebase).seg5.trees">
+            <log idref="seg5tree"/>
+        </logger>
+        <logger spec="Logger" logEvery="10000" mode="tree" fileName="$(filebase).seg6.trees">
+            <log idref="seg6tree"/>
+        </logger>
+        <logger spec="Logger" logEvery="10000" mode="tree" fileName="$(filebase).seg7.trees">
+            <log idref="seg7tree"/>
+        </logger>
+        <logger spec="Logger" logEvery="10000" mode="tree" fileName="$(filebase).seg8.trees">
+            <log idref="seg8tree"/>
+        </logger> -->
+
+
+        <logger spec="Logger" logEvery="100000" fileName="$(filebase).log">
+            <log idref="posterior"/>
+            <log idref="likelihood"/>
+            <log idref="networkPrior"/>
+            <log idref="parametersPrior"/>
+            <log spec="NetworkStatsLogger" network="@network"/>
+            <log spec="TreeStatLogger" tree="@seg1tree"/>
+            <log spec="TreeStatLogger" tree="@seg2tree"/>
+            <log spec="TreeStatLogger" tree="@seg3tree"/>
+            <log spec="TreeStatLogger" tree="@seg4tree"/>
+            <log spec="TreeStatLogger" tree="@seg5tree"/>
+            <log spec="TreeStatLogger" tree="@seg6tree"/>
+            <log spec="TreeStatLogger" tree="@seg7tree"/>
+            <log spec="TreeStatLogger" tree="@seg8tree"/>
+            <log idref="treeLikelihood.seg1"/>
+            <log idref="treeLikelihood.seg2"/>
+            <log idref="treeLikelihood.seg3"/>
+            <log idref="treeLikelihood.seg4"/>
+            <log idref="treeLikelihood.seg5"/>
+            <log idref="treeLikelihood.seg6"/>
+            <log idref="treeLikelihood.seg7"/>  
+            <log idref="treeLikelihood.seg8"/>
+            <!-- 
+            <log idref="popSize"/>
+            <log idref="reassortmentRate"/>
+             -->
+            <log idref="reassortmentRate"/>
+            <log idref="logNe"/>
+            <log idref="InfectedToRho"/>
+            <log idref="sigma"/>
+            <log idref="sigma2"/>
+            <log idref="clockRate.c"/>
+            <log idref="mutationRate.s:seg1"/>
+            <log idref="gammaShape.s:seg1"/>
+            <log idref="freqParameter.s:seg1"/>
+            <log idref="kappa.s:seg1"/>
+            <log idref="mutationRate.s:seg2"/>
+            <log idref="gammaShape.s:seg2"/>
+            <log idref="freqParameter.s:seg2"/>
+            <log idref="kappa.s:seg2"/>
+            <log idref="mutationRate.s:seg3"/>
+            <log idref="gammaShape.s:seg3"/>
+            <log idref="freqParameter.s:seg3"/>
+            <log idref="kappa.s:seg3"/>
+            <log idref="mutationRate.s:seg4"/>
+            <log idref="gammaShape.s:seg4"/>
+            <log idref="freqParameter.s:seg4"/>
+            <log idref="kappa.s:seg4"/>
+            <log idref="mutationRate.s:seg5"/>
+            <log idref="gammaShape.s:seg5"/>
+            <log idref="freqParameter.s:seg5"/>
+            <log idref="kappa.s:seg5"/>
+            <log idref="mutationRate.s:seg6"/>
+            <log idref="gammaShape.s:seg6"/>
+            <log idref="freqParameter.s:seg6"/>
+            <log idref="kappa.s:seg6"/>
+            <log idref="mutationRate.s:seg7"/>
+            <log idref="gammaShape.s:seg7"/>
+            <log idref="freqParameter.s:seg7"/>
+            <log idref="kappa.s:seg7"/>
+            <log idref="mutationRate.s:seg8"/>
+            <log idref="gammaShape.s:seg8"/>
+            <log idref="freqParameter.s:seg8"/>
+            <log idref="kappa.s:seg8"/>
+        </logger>
+        
+        <logger spec="Logger" logEvery="10000">
+            <log idref="posterior"/>
+            <log idref="likelihood"/>
+            <log spec="beast.base.inference.util.ESS" arg="@posterior"/>
+        </logger>
+
+
+    </run>
+</beast>

@@ -19,6 +19,9 @@ public class SkygrowthReassortmentRatesFromSkygrowthNe extends PopulationFunctio
 			"the value that maps the number of infected or the Ne to the reassortment rate ");
 	final public Input<RealParameter> rateShiftsInput = new Input<>("rateShifts",
 			"When to switch between elements of Ne", Input.Validate.REQUIRED);
+	final public Input<Double> finalGrowthRateInput = new Input<>("finalGrowthRate",
+			"Growth rate to be used after the last rate shift. Default 0.", 0.0);
+	
 
 	RealParameter Ne;
 	RealParameter NeToReassortment;
@@ -144,6 +147,7 @@ public class SkygrowthReassortmentRatesFromSkygrowthNe extends PopulationFunctio
 		do
 		{
 			double next_time = getNextTime(i);
+//			System.out.println(curr_time + "\t" + next_time + "\t" + integral + "\t" + x);
 			double r = growth[i];
 	
 //			double timediff1 = curr_time-rateShifts.getArrayValue(i);
@@ -160,12 +164,17 @@ public class SkygrowthReassortmentRatesFromSkygrowthNe extends PopulationFunctio
 	
 			double diff = x - integral;
 	
-			if (diff < 0 || i == rateShifts.getDimension()) {
+			if (diff < 0 || i == rateShifts.getDimension() || timediff2 ==  Double.POSITIVE_INFINITY) {
 				
 				if (r == 0.0) {
 					return old_diff/Math.exp(rates[i]) + curr_time;
 				} else {
-					return Math.log((old_diff * -r)/ Math.exp(rates[i]) +1.0)/-r  + curr_time;
+					double val = Math.log((old_diff * -r)/ Math.exp(rates[i]) +1.0)/-r  + curr_time;
+					if (Double.isNaN(val))
+						return Double.POSITIVE_INFINITY;
+					else
+                        return val;
+								
 				}
 			
 			}
@@ -236,6 +245,9 @@ public class SkygrowthReassortmentRatesFromSkygrowthNe extends PopulationFunctio
 			
 			invRatio[i] = Math.exp(rates[i]) / -growth[i];
 		}
+		growth[growth.length-1] = -finalGrowthRateInput.get();
+		invRatio[growth.length-1] = Math.exp(rates[rates.length-1]) / -growth[growth.length-1];
+		
 		NesKnown = true;
 	}
 }

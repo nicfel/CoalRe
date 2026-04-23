@@ -1,0 +1,129 @@
+<beast version="2.0"
+       namespace="beast.pkgmgmt:beast.base.core:beast.base.inference
+                 :beast.core.util
+                 :beast.core.parameter
+                 :beast.base.evolution.alignment
+                 :beast.evolution.likelihood
+                 :beast.evolution.tree
+                 :beast.base.evolution.tree.coalescent
+                 :beast.evolution.sitemodel
+                 :beast.evolution.substitutionmodel
+                 :beast.evolution.operators
+                 :beast.math.distributions
+                 :feast.simulation
+                 :coalre.network
+                 :coalre.statistics
+                 :coalre.simulator
+                 :coalre.operators
+                 :coalre.distribution">
+
+    <run spec="MCMC" chainLength="100000000">
+
+        <state>
+            <stateNode id="network" spec="SimulatedCoalescentNetwork" nSegments="8" enableSegmentTreeUpdate="false">
+                <populationModel spec="beast.base.evolution.tree.coalescent.ConstantPopulation">
+                    <popSize spec="beast.base.inference.parameter.RealParameter" value="1.0"/>
+                </populationModel>
+
+                <reassortmentRate spec="beast.base.inference.parameter.RealParameter" value="0"/>
+
+                <traitSet spec="beast.base.evolution.tree.TraitSet" traitname="date-backward" id="traitSet">
+                    <taxa spec="beast.base.evolution.alignment.TaxonSet" id="taxonSet">
+                        <taxon spec="Taxon" id="t1"/>
+                        <taxon spec="Taxon" id="t2"/>
+                        <taxon spec="Taxon" id="t3"/>
+                        <taxon spec="Taxon" id="t4"/>
+                        <taxon spec="Taxon" id="t5"/>
+                    </taxa>
+
+                    t1=0, t2=0.1, t3=0.2, t4=0.3, t5=0.4
+                </traitSet>
+            </stateNode>
+            <stateNode id="logInfected" spec="beast.base.inference.parameter.RealParameter" value="5 1 2 -1 1 -5"/>
+            <stateNode id="reassortmentRate" spec="beast.base.inference.parameter.RealParameter" value="-2 1 -2 0 -1 -5"/>
+
+        </state>
+
+        <distribution id="prior" spec="CompoundDistribution">
+                <distribution id="coalDensity" spec="CoalescentWithReassortment" maxHeightRatio="1.5" redFactor="0.">
+                <networkIntervals spec="NetworkIntervals" network="@network"/>
+
+                    <populationModel id="splinePop" spec="coalre.dynamics.SkygrowthNeDynamics">
+                        <logNe idref="logInfected"/>
+                        <rateShifts id="rateShifts" spec="beast.base.inference.parameter.RealParameter" value="0 1 2 3 4 5"/>
+                    </populationModel>
+                    <timeVaryingReassortmentRates id="splinePop2" spec="coalre.dynamics.SkygrowthReassortmentRatesFromSkygrowthNe" logNe="@logInfected">
+                        <neToReassortment idref="reassortmentRate"/>
+                        <rateShifts id="rateShifts2" spec="beast.base.inference.parameter.RealParameter" value="0 1 2 3 4 5"/>
+                    </timeVaryingReassortmentRates>
+                </distribution>
+
+                    <distribution spec="beast.base.inference.distribution.Prior">
+                        <x spec="coalre.dynamics.Difference" arg="@reassortmentRate"/>
+                        <distr spec="beast.base.inference.distribution.Normal" mean="0" sigma="0.5"/>
+                    </distribution>
+
+                    <distribution spec="beast.base.inference.distribution.Prior">
+                        <x spec="coalre.dynamics.Difference" arg="@logInfected"/>
+                        <distr spec="beast.base.inference.distribution.Normal" mean="0" sigma="0.5"/>
+                    </distribution>
+
+                    <distribution spec="beast.base.inference.distribution.Prior">
+                        <x spec="mascot.util.Final" arg="@reassortmentRate"/>
+                        <distr spec="beast.base.inference.distribution.Normal" mean="-1" sigma="0.5"/>
+                    </distribution>
+                    <distribution spec="beast.base.inference.distribution.Prior">
+                        <x spec="mascot.util.Final" arg="@logInfected"/>
+                        <distr spec="beast.base.inference.distribution.Normal" mean="0" sigma="0.5"/>
+                    </distribution>
+
+        </distribution>
+        <operator spec="AddRemoveReassortmentCoalescent" network="@network" coalescentWithReassortment="@coalDensity" weight="1.0" lambda="15"/>
+        <operator spec="AddRemoveReassortment" network="@network" weight="1.0" alpha="1.0"/>
+
+        <operator spec="DivertSegmentOperator" network="@network" weight="1.0" divertOneSegment="true"/>
+
+        <operator id="networkGibbsCwR.alltrees" spec="coalre.operators.GibbsOperatorAboveSegmentRoots" network="@network"  coalescentWithReassortment="@coalDensity" weight="1"/>
+
+      <operator id="NetworkScale" spec="NetworkScaleOperator"
+                network="@network" weight="1.0" scaleFactor="0.9">
+                </operator>
+
+      <operator id="NetworkScaleRootOnly" spec="NetworkScaleOperator"
+                network="@network" scaleRootOnly="true" weight="1.0" scaleFactor="0.9">
+                </operator>
+
+        <operator id="IntervalsScaler" spec="NetworkScaleOperator"
+                    network="@network" scaleIntervalsIndependently="true" weight="1.0" scaleFactor="0.9">
+                    </operator>
+
+        <operator id="NetworkScale2" spec="NetworkScaleOperator" network="@network" weight="5" scaleFactor="0.8" doubleDiscount="true">
+            <!-- <downParameter idref="clockRate.c"/> -->
+            <upLogScaledParameter idref="logInfected"/>
+            <downLogScaledParameter idref="reassortmentRate"/>
+        </operator>
+
+        <operator id="InfectedToRho.ScalerX.t2" spec="beast.base.inference.operator.kernel.BactrianRandomWalkOperator" parameter="@reassortmentRate" scaleFactor="0.5" weight="3.0"/>
+        <operator id="SkylineNe.camel.ScalerX.t2" spec="beast.base.inference.operator.kernel.BactrianRandomWalkOperator" parameter="@logInfected" scaleFactor="0.5" weight="3.0"/>
+
+
+
+
+        <logger spec="Logger" logEvery="1000" mode="tree" fileName="$(filebase).trees">
+            <log idref="network"/>
+        </logger>
+
+        <logger spec="Logger" logEvery="10000" fileName="$(filebase).log">
+            <log spec="NetworkStatsLogger" network="@network"/>
+            <log idref="reassortmentRate"/>
+            <log idref="logInfected"/>
+        </logger>
+
+        <logger spec="Logger" logEvery="10000">
+            <log spec="NetworkStatsLogger" network="@network"/>
+            <log idref="coalDensity"/>
+
+        </logger>
+    </run>
+
+</beast>

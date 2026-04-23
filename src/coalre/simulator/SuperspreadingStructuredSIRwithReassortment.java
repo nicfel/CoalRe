@@ -236,7 +236,7 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                     System.out.println(transmissionRate + " " + recoveryRate + " " + waningRate);
                     System.out.println(I);
 //                    System.out.println((S + I) );
-                    System.exit(0);
+//                    System.exit(0);
                     // waning immunity event
                     // update the population counts
 //                    R--;
