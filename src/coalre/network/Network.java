@@ -967,7 +967,7 @@ public class Network extends StateNode {
                 parentSegments = node.getParentEdges().get(0).hasSegments;
                 childSegments = BitSetFun.or(c0.hasSegments, c1.hasSegments);
             } else {
-                return false;
+                throw new AssertionError("Node with invalid number of children " + node.getChildCount());
             }
             // Same segments on child nodes as on parent node
             assert childSegments.equals(parentSegments);
@@ -994,5 +994,44 @@ public class Network extends StateNode {
      */
     public boolean notCloneable() {
         return true;
+    }
+
+    /**
+     * DEBUG CHECKS
+     */
+
+    Integer[] _hashValues = new Integer[6];
+
+    @Override
+    public int getChecksum() {
+        // If the ARG is the same, the following properties need to match:
+
+        // 1. Number of nodes should be the same
+        _hashValues[0] = getNodes().size();
+
+        // 2. Number of edges should be the same
+        _hashValues[1] = getEdges().size();
+
+        // 3. The root height should be the same
+        double rootHeight = rootEdge.childNode.getHeight();
+        _hashValues[2] = Double.hashCode(rootHeight);
+
+        // 4. The mean node height should be the same
+        double meanNodeHeight = getNodes().stream().mapToDouble(NetworkNode::getHeight).average().orElse(0.0);
+        _hashValues[3] = (int) Math.round(10000 * meanNodeHeight);
+        // _hashValues[3] = Double.hashCode(meanNodeHeight);
+
+        // 5. The maximum node degree should stay the same
+        int maxDegree = getNodes().stream()
+                .mapToInt(node -> node.getChildEdges().size() + node.getParentEdges().size())
+                .max().orElse(0);
+        _hashValues[4] = maxDegree;
+
+        // 6. The number of segments should be the same
+        _hashValues[5] = getSegmentCount();
+
+        // Combine array of checksums into a single value and return
+        int checksum = Arrays.deepHashCode(_hashValues);
+        return checksum;
     }
 }
