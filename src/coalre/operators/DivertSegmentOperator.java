@@ -1,8 +1,10 @@
 package coalre.operators;
 
 import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.BitSet;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.List;
 import beast.base.core.Input;
 import beast.base.evolution.tree.Node;
@@ -333,72 +335,83 @@ public class DivertSegmentOperator extends EmptyEdgesNetworkOperator {
 
         return treeNodeList;
     }
+    
+	private static final class TraversalFrame {
+		final NetworkEdge edge;
+		final BitSet segsToRemove;
+
+		TraversalFrame(NetworkEdge edge, BitSet segsToRemove) {
+			this.edge = edge;
+			this.segsToRemove = segsToRemove;
+		}
+	}
 
     /**
      * Find the correspoding segment tree nodes above `edge` for all segments in `segsToRemove`
-     * @param edge
-     * @param segsToRemove
-     * @param targetNodeIndices
-     * @param treeNodeList
-     * @param nodeHeightList
-     * @param treeChildNodeList
+		* @param edge edge from which to start searching upward
+		* @param segsToRemove segments being diverted
+		* @param targetNodeIndices network nodes corresponding to the target tree nodes
+		* @param treeNodeList target segment tree node indices
+		* @param nodeHeightList heights at which the diverted segments reconnect
+		* @param treeChildNodeList segment tree child node indices below the source edge
      */
 	void getTreeNodes(NetworkEdge edge, BitSet segsToRemove, List<NetworkNode> targetNodeIndices,
 			Integer[] treeNodeList, Double[] nodeHeightList, Integer[] treeChildNodeList) {
-		segsToRemove = (BitSet) segsToRemove.clone();
-		segsToRemove.and(edge.hasSegments);
+		final Deque<TraversalFrame> stack = new ArrayDeque<>();
+		stack.push(new TraversalFrame(edge, segsToRemove));
 
-		if (segsToRemove.isEmpty())
-			return;
+		while (!stack.isEmpty()) {
+			TraversalFrame frame = stack.pop();
+			NetworkEdge currentEdge = frame.edge;
 
-		if (edge.isRootEdge())
-			return;
+			BitSet activeSegs = (BitSet) frame.segsToRemove.clone();
+			activeSegs.and(currentEdge.hasSegments);
 
-		if (edge.parentNode.isReassortment()) {
+			if (activeSegs.isEmpty())
+				continue;
 
-			getTreeNodes(edge.parentNode.getParentEdges().get(0), segsToRemove, targetNodeIndices, treeNodeList,
-					nodeHeightList, treeChildNodeList);
-			getTreeNodes(edge.parentNode.getParentEdges().get(1), segsToRemove, targetNodeIndices, treeNodeList,
-					nodeHeightList, treeChildNodeList);
+			if (currentEdge.isRootEdge())
+				continue;
 
-		} else {
-			if (segmentTrees.size() > 0) {
-				BitSet sibSegs = getSisterEdge(edge).hasSegments;
+			if (currentEdge.parentNode.isReassortment()) {
+				NetworkEdge p0 = currentEdge.parentNode.getParentEdges().get(0);
+				NetworkEdge p1 = currentEdge.parentNode.getParentEdges().get(1);
 
+				stack.push(new TraversalFrame(p1, activeSegs));
+				stack.push(new TraversalFrame(p0, activeSegs));
+			} else {
 				if (segmentTrees.size() > 0) {
-					for (int segIdx = 0; segIdx < segsToRemove.length(); segIdx++) {						
-						if (segsToRemove.get(segIdx) && sibSegs.get(segIdx)) {
-							nodeHeightList[segIdx] = edge.parentNode.getHeight();
-							treeNodeList[segIdx] = getTreeNodeIndex(getSisterEdge(edge), segIdx);
-							targetNodeIndices.set(segIdx, edge.parentNode);
-							
-							if (edge.parentNode.segmentIndices == null)
-								edge.parentNode.segmentIndices = new int[network.getSegmentCount()];
+					BitSet sibSegs = getSisterEdge(currentEdge).hasSegments;
+
+					for (int segIdx = 0; segIdx < activeSegs.length(); segIdx++) {
+						if (activeSegs.get(segIdx) && sibSegs.get(segIdx)) {
+							nodeHeightList[segIdx] = currentEdge.parentNode.getHeight();
+							treeNodeList[segIdx] = getTreeNodeIndex(getSisterEdge(currentEdge), segIdx);
+							targetNodeIndices.set(segIdx, currentEdge.parentNode);
+
+							if (currentEdge.parentNode.segmentIndices == null)
+								currentEdge.parentNode.segmentIndices = new int[network.getSegmentCount()];
 							try {
-							edge.parentNode.segmentIndices[segIdx] = segmentTrees.get(segIdx)
-									.getNode(treeChildNodeList[segIdx]).getParent().getNr();
-							}catch (Exception e) {
-								System.out.println(segmentTrees.get(segIdx)
-									.getNode(treeChildNodeList[segIdx]).getHeight());
+								currentEdge.parentNode.segmentIndices[segIdx] = segmentTrees.get(segIdx)
+										.getNode(treeChildNodeList[segIdx]).getParent().getNr();
+							} catch (Exception e) {
+								System.out.println(segmentTrees.get(segIdx).getNode(treeChildNodeList[segIdx]).getHeight());
 								System.out.println(treeChildNodeList[segIdx]);
-								System.out.println("Error in segment tree " + segIdx + " " + edge.parentNode.getHeight());
+								System.out.println(
+										"Error in segment tree " + segIdx + " " + currentEdge.parentNode.getHeight());
 								System.out.println(network.getExtendedNewick(segIdx));
 								System.out.println(segmentTrees.get(segIdx) + ";");
 								System.exit(0);
 							}
-							segsToRemove.set(segIdx, false);
+							activeSegs.set(segIdx, false);
 						}
 					}
 				}
 
+				NetworkEdge parentEdge = currentEdge.parentNode.getParentEdges().get(0);
+				stack.push(new TraversalFrame(parentEdge, activeSegs));
 			}
-
-			getTreeNodes(edge.parentNode.getParentEdges().get(0), segsToRemove, targetNodeIndices, treeNodeList,
-					nodeHeightList, treeChildNodeList);
-
 		}
-
-		return;
 	}
 
 	private Integer getTreeNodeIndex(NetworkEdge edge, int segIdx) {
