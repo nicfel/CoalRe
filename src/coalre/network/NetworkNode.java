@@ -66,6 +66,7 @@ public class NetworkNode {
     }
 
     public NetworkNode addParentEdge(NetworkEdge newParentEdge) {
+        assert !parents.contains(newParentEdge);
         parents.add(newParentEdge);
         newParentEdge.childNode = this;
         return this;

@@ -10,11 +10,20 @@ public class NetworkEdge {
     public NetworkEdge() { }
 
     public NetworkEdge(NetworkNode parentNode, NetworkNode childNode, BitSet hasSegments) {
-        if (childNode != null)
-            childNode.addParentEdge(this);
-        if (parentNode != null)
-            parentNode.addChildEdge(this);
+        this.parentNode = parentNode;
+        this.childNode = childNode;
+
         this.hasSegments = hasSegments;
+    }
+
+    static public NetworkEdge createAndAttachEdge(NetworkNode parentNode, NetworkNode childNode, BitSet hasSegments) {
+        NetworkEdge edge = new NetworkEdge();
+        if (parentNode != null)
+            parentNode.addChildEdge(edge);
+        if (childNode != null)
+            childNode.addParentEdge(edge);
+        edge.hasSegments = hasSegments;
+        return edge;
     }
 
     public double getReassortmentObsProb(double p) {

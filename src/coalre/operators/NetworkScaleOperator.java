@@ -2,12 +2,8 @@ package coalre.operators;
 
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
-import beast.base.evolution.tree.Node;
-import beast.base.evolution.tree.Tree;
-import beast.base.inference.operator.kernel.KernelDistribution;
 import beast.base.inference.parameter.RealParameter;
 import beast.base.util.Randomizer;
-import cern.colt.Arrays;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
 import coalre.statistics.NetworkStatsLogger;
