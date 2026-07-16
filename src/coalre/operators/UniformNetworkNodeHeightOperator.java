@@ -1,8 +1,6 @@
 package coalre.operators;
 
-import beast.base.inference.parameter.RealParameter;
 import beast.base.util.Randomizer;
-import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
 
@@ -15,7 +13,6 @@ public class UniformNetworkNodeHeightOperator extends NetworkOperator {
     public double networkProposal() {
         List<NetworkNode> networkNodes = network.getNodes().stream()
                 .filter(n -> !n.getParentEdges().get(0).isRootEdge())
-                
                 .collect(Collectors.toList());
 
         if (networkNodes.isEmpty())
@@ -34,19 +31,10 @@ public class UniformNetworkNodeHeightOperator extends NetworkOperator {
                 minHeight = childEdge.childNode.getHeight();
 
         network.startEditing(this);
-        node.setHeight(minHeight + Randomizer.nextDouble()*(maxHeight-minHeight));
-        
-        if (node.isCoalescence()) {
-	        if (node.segmentIndices!=null && segmentTreesInput.get().size()>0) {
-	        	for (int i =0; i < node.segmentIndices.length; i++) {
-	        		if (node.getChildEdges().get(0).hasSegments.get(i) && node.getChildEdges().get(1).hasSegments.get(i))
-	        			segmentTreesInput.get().get(i).getNode(node.segmentIndices[i]).setHeight(node.getHeight());
-				}
-	        }
-        }
+        final double newHeight = minHeight + Randomizer.nextDouble()*(maxHeight-minHeight); 
+        setNodeHeight(node, newHeight);
         segmentsChanged.set(0, network.getSegmentCount(), false);
 
-        
         return 0.0;
     }
 

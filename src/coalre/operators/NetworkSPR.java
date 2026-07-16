@@ -7,11 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import beast.base.core.Input;
-import beast.base.evolution.tree.Node;
-import beast.base.evolution.tree.Tree;
 import beast.base.util.Randomizer;
-import cern.colt.Arrays;
-import coalre.distribution.NetworkEvent;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;

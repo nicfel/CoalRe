@@ -137,6 +137,15 @@ public class NetworkNode {
         return children.size() > 1;
     }
 
+    /**
+     * @return true iff current node is a node in the segment tree of segment `segmentIdx`.
+     */
+    public boolean isCoalescence(int segmentIdx) {
+        return (isCoalescence() &&
+            children.get(0).hasSegments.get(segmentIdx) &&
+            children.get(1).hasSegments.get(segmentIdx));
+    }
+
     public int getChildCount() {
         return children.size();
     }

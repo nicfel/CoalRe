@@ -2,6 +2,7 @@ package coalre.operators;
 
 import beast.base.core.Input;
 import beast.base.core.Log;
+import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.Tree;
 import beast.base.inference.Operator;
 import beast.base.util.Randomizer;
@@ -29,7 +30,26 @@ public abstract class NetworkOperator extends Operator {
     
 	protected BitSet segmentsChanged = new BitSet();
 	
-	
+	protected Tree getSegmentTree(int seg) {
+        return segmentTrees.get(segmentTreeMap[seg]);
+    }
+
+    protected Node getSegmentTreeNode(final NetworkNode node, final int seg) {
+        return getSegmentTree(seg).getNode(node.segmentIndices[seg]);
+    }
+
+    protected void setNodeHeight(NetworkNode node, double height) {
+        // Set height of the network node
+		node.setHeight(height);
+
+        // Set height of corresponding segmentTree nodes
+        if (node.isCoalescence()) {
+            for (int seg = 0; seg < network.segmentCount; seg++) {
+                if (node.isCoalescence(seg))
+                    getSegmentTreeNode(node, seg).setHeight(height);
+            }
+        }
+    }
 
 
     @Override
@@ -75,6 +95,7 @@ public abstract class NetworkOperator extends Operator {
 //    static int count = 0;
 
     public double proposal() {
+        assert network != null;
 		if (network.segmentTreesNeedInit) {			
 			System.out.println("restore segment trees in first move");
 			// update all segment trees			
