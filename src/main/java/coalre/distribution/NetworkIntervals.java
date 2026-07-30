@@ -3,10 +3,10 @@ package coalre.distribution;
 
 
 import beast.base.inference.CalculationNode;
-import beast.base.core.Function;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.UnitInterval;
+import beast.base.spec.type.RealScalar;
 import coalre.network.Network;
 
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ public class NetworkIntervals extends CalculationNode {
     public Input<Network> networkInput = new Input<>("network",
             "network for which to calculate the intervals", Validate.REQUIRED);
 
-    public Input<RealParameter> binomialProbInput = new Input<>("binomialProb",
+    public Input<RealScalar<UnitInterval>> binomialProbInput = new Input<>("binomialProb",
             "Probability of a given segment choosing a particular parent.");
 
     private Network network;
@@ -57,7 +57,7 @@ public class NetworkIntervals extends CalculationNode {
 
     public double getBinomialProb() {
         return binomialProbInput.get() != null
-                ? binomialProbInput.get().getArrayValue()
+                ? binomialProbInput.get().get()
                 : 0.5;
     }
 

@@ -1,6 +1,8 @@
 package coalre.operators;
 
-import beast.base.core.Function;
+import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.domain.UnitInterval;
+import beast.base.spec.type.RealScalar;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
@@ -25,11 +27,11 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
 
     
     private PopulationFunction populationFunction;
-    private Function reassortmentRate;
+    private RealScalar<PositiveReal> reassortmentRate;
     public PopulationFunction timeVaryingReassortmentRates;
     
     private boolean isTimeVarying = false;
-    private Function binomialProb;
+    private RealScalar<UnitInterval> binomialProb;
     private double redFactor;
     private double maxHeightRatio;
     private double maxHeight;
@@ -110,7 +112,7 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
             	}
             	
             }else {
-            	timeToNextReassortment = Randomizer.nextExponential(k*reassortmentRate.getArrayValue() * redFactor);
+            	timeToNextReassortment = Randomizer.nextExponential(k*reassortmentRate.get() * redFactor);
             }
 
             // next event time
@@ -185,7 +187,7 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
 	                hasSegs_right.set(segIdx);
 	            }
         	}else {
-	            if (Randomizer.nextDouble()>binomialProb.getArrayValue()) {
+	            if (Randomizer.nextDouble()>binomialProb.get()) {
 	                hasSegs_left.set(segIdx);
 	            } else {
 	                hasSegs_right.set(segIdx);

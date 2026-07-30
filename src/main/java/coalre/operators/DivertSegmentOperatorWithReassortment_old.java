@@ -527,7 +527,7 @@ public class DivertSegmentOperatorWithReassortment_old extends EmptyEdgesNetwork
 	            	timeToNextReassortment = coalescentDistr.timeVaryingReassortmentRates.getInverseIntensity(
 	            			transformedTimeToNextRea + currentTransformedReaTime) - currentTime;
 	            }else {
-	            	timeToNextReassortment = Randomizer.nextExponential(totalReassortmentProb*coalescentDistr.reassortmentRateInput.get().getArrayValue());
+	            	timeToNextReassortment = Randomizer.nextExponential(totalReassortmentProb*coalescentDistr.reassortmentRateInput.get().get());
 	            }
 			}			
 				
@@ -652,8 +652,8 @@ public class DivertSegmentOperatorWithReassortment_old extends EmptyEdgesNetwork
 					logHR -= reassortSurvFwd;
 					logHR += reassortSurvRev;
 				} else {
-					reassortSurvFwd = -totalReassortmentProb * coalescentDistr.reassortmentRateInput.get().getArrayValue() * timeUntilNextEvent;
-					reassortSurvRev = -totalReverseReassortmentProb * coalescentDistr.reassortmentRateInput.get().getArrayValue() * timeUntilNextEvent;
+					reassortSurvFwd = -totalReassortmentProb * coalescentDistr.reassortmentRateInput.get().get() * timeUntilNextEvent;
+					reassortSurvRev = -totalReverseReassortmentProb * coalescentDistr.reassortmentRateInput.get().get() * timeUntilNextEvent;
 					logHR -= reassortSurvFwd;
 					logHR += reassortSurvRev;
 				}
@@ -681,7 +681,7 @@ public class DivertSegmentOperatorWithReassortment_old extends EmptyEdgesNetwork
 				if (coalescentDistr.timeVaryingReassortmentRates != null) {
 					reassortDens = Math.log(totalReassortmentProb*coalescentDistr.timeVaryingReassortmentRates.getPopSize(currentTime));
 				}else {
-					reassortDens = Math.log(totalReassortmentProb*coalescentDistr.reassortmentRateInput.get().getArrayValue());
+					reassortDens = Math.log(totalReassortmentProb*coalescentDistr.reassortmentRateInput.get().get());
 				}
 				logHR -= reassortDens;
 //				logHR_reassortDensity -= reassortDens;
@@ -1149,7 +1149,7 @@ public class DivertSegmentOperatorWithReassortment_old extends EmptyEdgesNetwork
 					double popSize = coalescentDistr.timeVaryingReassortmentRates.getPopSize(edge.parentNode.getHeight());
 					logHR += Math.log(totalReverseReassortmentProb * popSize);
 				} else {
-					logHR += Math.log(totalReverseReassortmentProb * coalescentDistr.reassortmentRateInput.get().getArrayValue());
+					logHR += Math.log(totalReverseReassortmentProb * coalescentDistr.reassortmentRateInput.get().get());
 				}
 			}else {
 				logHR += Math.log(0.5) * segsCard;

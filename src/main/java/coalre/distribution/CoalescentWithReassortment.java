@@ -2,9 +2,10 @@ package coalre.distribution;
 
 import beast.base.inference.CalculationNode;
 import beast.base.core.Description;
-import beast.base.core.Function;
 import beast.base.core.Input;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
+import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.type.RealScalar;
 import coalre.network.NetworkNode;
 import coalre.statistics.NetworkStatsLogger;
 
@@ -20,7 +21,7 @@ import java.util.List;
         " the framework of Mueller (2018).")
 public class CoalescentWithReassortment extends NetworkDistribution {
 	
-	public Input<Function> reassortmentRateInput = new Input<>(
+	public Input<RealScalar<PositiveReal>> reassortmentRateInput = new Input<>(
 	        "reassortmentRate",
             "reassortment rate (per lineage per unit time)");
 
@@ -49,7 +50,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
 
 	public PopulationFunction populationFunction;
-    private Function reassortmentRate;
+    private RealScalar<PositiveReal> reassortmentRate;
     public PopulationFunction timeVaryingReassortmentRates;
 
     public NetworkIntervals intervals;
@@ -159,14 +160,14 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 						+ logBinomval;
 				
 			}else
-				return Math.log(reassortmentRate.getArrayValue())
+				return Math.log(reassortmentRate.get())
 						+ logBinomval;
 		}else{
 			if (isTimeVarying)
 				return Math.log(redFactor*timeVaryingReassortmentRates.getPopSize(event.time))
 						+ logBinomval;
 			else
-				return Math.log(redFactor*reassortmentRate.getArrayValue())
+				return Math.log(redFactor*reassortmentRate.get())
 						+ logBinomval;
 		}	
 	}
@@ -185,7 +186,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 				result += -prevEvent.totalReassortmentObsProb
 						* timeVaryingReassortmentRates.getIntegral(prevEvent.time, nextEvent.time);
 			}else {
-				result += -reassortmentRate.getArrayValue() * prevEvent.totalReassortmentObsProb
+				result += -reassortmentRate.get() * prevEvent.totalReassortmentObsProb
 						* (nextEvent.time - prevEvent.time);
 
 			}
@@ -194,7 +195,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 				result += -prevEvent.totalReassortmentObsProb
 						* timeVaryingReassortmentRates.getIntegral(prevEvent.time, maxHeight);
 			}else {
-				result += -reassortmentRate.getArrayValue() * prevEvent.totalReassortmentObsProb
+				result += -reassortmentRate.get() * prevEvent.totalReassortmentObsProb
 						* (maxHeight - prevEvent.time);
 			}
 
@@ -202,7 +203,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 				result += -redFactor*prevEvent.totalReassortmentObsProb
 						* timeVaryingReassortmentRates.getIntegral(maxHeight, nextEvent.time);
 			}else {
-				result += -redFactor*reassortmentRate.getArrayValue() * prevEvent.totalReassortmentObsProb
+				result += -redFactor*reassortmentRate.get() * prevEvent.totalReassortmentObsProb
 						* (nextEvent.time - prevEvent.time-maxHeight);
 			}
 		}else{
@@ -210,7 +211,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 				result += -prevEvent.totalReassortmentObsProb
 						* redFactor* timeVaryingReassortmentRates.getIntegral(prevEvent.time, nextEvent.time);
 			else
-				result += -redFactor * reassortmentRate.getArrayValue() * prevEvent.totalReassortmentObsProb
+				result += -redFactor * reassortmentRate.get() * prevEvent.totalReassortmentObsProb
 						* (nextEvent.time - prevEvent.time);
 		}
 
@@ -232,7 +233,9 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 	    	if (((CalculationNode) timeVaryingReassortmentRates).isDirtyCalculation())
 	    		return true;
     	}else{
-	    	if (((CalculationNode) reassortmentRate).isDirtyCalculation())
+    		// BEAST3: spec types implement Tensor, not CalculationNode, so the
+    		// unconditional cast is no longer safe — check before casting.
+	    	if (reassortmentRate instanceof CalculationNode cn && cn.isDirtyCalculation())
 	    		return true;
     	}
     	if (((CalculationNode) populationFunction).isDirtyCalculation())

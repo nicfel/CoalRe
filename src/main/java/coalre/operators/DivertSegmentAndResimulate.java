@@ -631,7 +631,7 @@ public class DivertSegmentAndResimulate extends NetworkOperator {
 	            	timeToNextReassortment = coalescentDistr.timeVaryingReassortmentRates.getInverseIntensity(
 	            			transformedTimeToNextRea + currentTransformedReaTime) - currentTime;
 	            }else {
-	            	timeToNextReassortment = Randomizer.nextExponential(reassortmentObsProb.length*coalescentDistr.reassortmentRateInput.get().getArrayValue());
+	            	timeToNextReassortment = Randomizer.nextExponential(reassortmentObsProb.length*coalescentDistr.reassortmentRateInput.get().get());
 	            }
 			}	
 
@@ -792,8 +792,8 @@ public class DivertSegmentAndResimulate extends NetworkOperator {
 //					logReaHRInterval -= reassortSurvFwd;
 //					logReaHRInterval += reassortSurvRev;
 				} else {
-					reassortSurvFwd = -totalReassortmentProb * coalescentDistr.reassortmentRateInput.get().getArrayValue() * timeUntilNextEvent;
-					reassortSurvRev = -totalReverseReassortmentProb * coalescentDistr.reassortmentRateInput.get().getArrayValue() * timeUntilNextEvent;
+					reassortSurvFwd = -totalReassortmentProb * coalescentDistr.reassortmentRateInput.get().get() * timeUntilNextEvent;
+					reassortSurvRev = -totalReverseReassortmentProb * coalescentDistr.reassortmentRateInput.get().get() * timeUntilNextEvent;
 					logHR -= reassortSurvFwd;
 					logHR += reassortSurvRev;
 				}
@@ -1184,7 +1184,7 @@ public class DivertSegmentAndResimulate extends NetworkOperator {
 			if (coalescentDistr.timeVaryingReassortmentRates != null) {
 				reassortDens = Math.log(1*coalescentDistr.timeVaryingReassortmentRates.getPopSize(currentTime));
 			}else {
-				reassortDens = Math.log(1*coalescentDistr.reassortmentRateInput.get().getArrayValue());
+				reassortDens = Math.log(1*coalescentDistr.reassortmentRateInput.get().get());
 			}
 		}// else, the event would not actually be observed, and we ignore its contribution to the HR
 		
@@ -1316,7 +1316,7 @@ public class DivertSegmentAndResimulate extends NetworkOperator {
 						double popSize = coalescentDistr.timeVaryingReassortmentRates.getPopSize(edge.parentNode.getHeight());
 						logHR += Math.log(popSize);
 					} else {
-						logHR += Math.log(coalescentDistr.reassortmentRateInput.get().getArrayValue());
+						logHR += Math.log(coalescentDistr.reassortmentRateInput.get().get());
 					}			
 				}else {
 					logHR += Math.log(0.5) * segsCard;
@@ -1677,7 +1677,7 @@ public class DivertSegmentAndResimulate extends NetworkOperator {
 //				System.out.println("Integral reassortment contribution removed: " + integral);
 				logHR -= integral;
 			}else {
-				double integral = (to - from) * coalescentDistr.reassortmentRateInput.get().getArrayValue();
+				double integral = (to - from) * coalescentDistr.reassortmentRateInput.get().get();
 				integral *= 1 - 2.0*Math.pow(0.5, edgeToRemoveSpouseCardinality);
 				logReaHRInterval -= integral;
 				logHR -= integral;
@@ -1841,7 +1841,7 @@ public class DivertSegmentAndResimulate extends NetworkOperator {
 				logHR += -totalObsProb * coalescentDistr.timeVaryingReassortmentRates.getIntegral(currentTime, nextEvent);
 //				logReaHRInterval += -totalObsProb * coalescentDistr.timeVaryingReassortmentRates.getIntegral(currentTime, nextEvent);
 			} else {
-				logHR += -totalObsProb * coalescentDistr.reassortmentRateInput.get().getArrayValue()
+				logHR += -totalObsProb * coalescentDistr.reassortmentRateInput.get().get()
 						* (nextEvent - currentTime);
 			}
 			currentTime = nextEvent;
@@ -1874,8 +1874,8 @@ public class DivertSegmentAndResimulate extends NetworkOperator {
 					logHR += Math.log(1.0*coalescentDistr.timeVaryingReassortmentRates.getPopSize(currentTime))+binomval;
 //					logReaHR += Math.log(1.0*coalescentDistr.timeVaryingReassortmentRates.getPopSize(currentTime))+binomval;
 				}else {
-					logHR += Math.log(1.0 * coalescentDistr.reassortmentRateInput.get().getArrayValue()) + binomval;
-//					logReaHR += Math.log(1.0 * coalescentDistr.reassortmentRateInput.get().getArrayValue()) + binomval;
+					logHR += Math.log(1.0 * coalescentDistr.reassortmentRateInput.get().get()) + binomval;
+//					logReaHR += Math.log(1.0 * coalescentDistr.reassortmentRateInput.get().get()) + binomval;
 				}
 
 				networkEdges.add(edge1.parentNode.getParentEdges().get(0));

@@ -228,7 +228,7 @@ public class RemoveSegmentAndResimulate extends DivertSegmentAndResimulate {
 	            	timeToNextReassortment = coalescentDistr.timeVaryingReassortmentRates.getInverseIntensity(
 	            			transformedTimeToNextRea + currentTransformedReaTime) - currentTime;
 	            }else {
-	            	timeToNextReassortment = Randomizer.nextExponential(totalReassortmentProb*coalescentDistr.reassortmentRateInput.get().getArrayValue());
+	            	timeToNextReassortment = Randomizer.nextExponential(totalReassortmentProb*coalescentDistr.reassortmentRateInput.get().get());
 	            }
 			}	
 
@@ -389,8 +389,8 @@ public class RemoveSegmentAndResimulate extends DivertSegmentAndResimulate {
 					logReaHRInterval -= reassortSurvFwd;
 					logReaHRInterval += reassortSurvRev;
 				} else {
-					reassortSurvFwd = -totalReassortmentProb * coalescentDistr.reassortmentRateInput.get().getArrayValue() * timeUntilNextEvent;
-					reassortSurvRev = -totalReverseReassortmentProb * coalescentDistr.reassortmentRateInput.get().getArrayValue() * timeUntilNextEvent;
+					reassortSurvFwd = -totalReassortmentProb * coalescentDistr.reassortmentRateInput.get().get() * timeUntilNextEvent;
+					reassortSurvRev = -totalReverseReassortmentProb * coalescentDistr.reassortmentRateInput.get().get() * timeUntilNextEvent;
 					logHR -= reassortSurvFwd;
 					logHR += reassortSurvRev;
 				}
@@ -783,7 +783,7 @@ public class RemoveSegmentAndResimulate extends DivertSegmentAndResimulate {
 			if (coalescentDistr.timeVaryingReassortmentRates != null) {
 				reassortDens = Math.log(1*coalescentDistr.timeVaryingReassortmentRates.getPopSize(currentTime));
 			}else {
-				reassortDens = Math.log(1*coalescentDistr.reassortmentRateInput.get().getArrayValue());
+				reassortDens = Math.log(1*coalescentDistr.reassortmentRateInput.get().get());
 			}
 		}// else, the event would not actually be observed, and we ignore its contribution to the HR
 		
@@ -919,7 +919,7 @@ public class RemoveSegmentAndResimulate extends DivertSegmentAndResimulate {
 						double popSize = coalescentDistr.timeVaryingReassortmentRates.getPopSize(edge.parentNode.getHeight());
 						logHR += Math.log(popSize);
 					} else {
-						logHR += Math.log(coalescentDistr.reassortmentRateInput.get().getArrayValue());
+						logHR += Math.log(coalescentDistr.reassortmentRateInput.get().get());
 					}			
 				}else {
 					logHR += Math.log(0.5) * segsCard;
