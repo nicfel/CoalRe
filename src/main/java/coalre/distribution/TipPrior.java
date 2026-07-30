@@ -8,7 +8,8 @@ import beast.base.evolution.alignment.TaxonSet;
 import beast.base.inference.Distribution;
 import beast.base.inference.State;
 import beast.base.inference.distribution.ParametricDistribution;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.Real;
+import beast.base.spec.type.RealScalar;
 import coalre.network.Network;
 import coalre.network.NetworkNode;
 
@@ -27,7 +28,7 @@ public class TipPrior extends Distribution {
     public final Input<List<ParametricDistribution>> distInput = new Input<>("distr",
             "distribution used to calculate prior over MRCA time, "
                     + "e.g. normal, beta, gamma. If not specified, monophyletic must be true", new ArrayList<>());
-    public Input<RealParameter> dateOffsetInput = new Input<>("dateOffset", 
+    public Input<RealScalar<Real>> dateOffsetInput = new Input<>("dateOffset", 
     		"keeps track of how much the dates have change", Validate.REQUIRED);
 
 
@@ -50,7 +51,7 @@ public class TipPrior extends Distribution {
     boolean initialised = false;
     
     NetworkNode operatingNode;
-    RealParameter dateOffset;
+    RealScalar<Real> dateOffset;
     
     List<String> leafNames;
 
@@ -103,7 +104,7 @@ public class TipPrior extends Distribution {
         	
         	if (leafNames.contains(taxonName)){
         		operatingNode = taxon;
-                double MRCATime = dateOffsetInput.get().getValue() - operatingNode.getHeight();
+                double MRCATime = dateOffsetInput.get().get() - operatingNode.getHeight();
 
                 int index = leafNames.indexOf(taxonName);
                 logP += dist.get(index).logDensity(MRCATime);

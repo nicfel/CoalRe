@@ -5,7 +5,8 @@ import beast.base.core.Input;
 import beast.base.inference.StateNode;
 import beast.base.inference.StateNodeInitialiser;
 import beast.base.core.Input.Validate;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.Real;
+import beast.base.spec.inference.parameter.RealScalarParam;
 import beast.base.evolution.tree.Tree;
 
 import java.util.ArrayList;
@@ -13,7 +14,7 @@ import java.util.List;
 
 public class DateOffsetInitializer extends BEASTObject implements StateNodeInitialiser {
 
-    public Input<RealParameter> dateOffsetInput = new Input<>("dateOffset", 
+    public Input<RealScalarParam<Real>> dateOffsetInput = new Input<>("dateOffset", 
     		"keeps track of how much the dates have change", Validate.REQUIRED);
 
     public Input<List<Tree>> segmentTreesInput = new Input<>("segmentTree",
@@ -34,7 +35,7 @@ public class DateOffsetInitializer extends BEASTObject implements StateNodeIniti
             time = Math.max(time, segmentTreesInput.get().get(segIdx).getDate(0.0));
         }
 
-        dateOffsetInput.get().setValue(time);
+        dateOffsetInput.get().set(time);
 
     }
 

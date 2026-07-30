@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import beast.base.core.Description;
-import beast.base.core.Function;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.type.RealVector;
 import beast.base.inference.distribution.ParametricDistribution;
 import beast.base.util.Randomizer;
 
@@ -20,9 +20,9 @@ public class WeightedSumDistribution extends ParametricDistribution {
             "distribution used to calculate prior over MRCA time, "
                     + "e.g. normal, beta, gamma. If not specified, monophyletic must be true", new ArrayList<>());
 	
-    final public Input<RealParameter> weightsInput = new Input<>("weights", "weighting of the individual distrbutions ", Validate.REQUIRED);
+    final public Input<RealVector<PositiveReal>> weightsInput = new Input<>("weights", "weighting of the individual distrbutions ", Validate.REQUIRED);
 
-    RealParameter weights;
+    RealVector<PositiveReal> weights;
     
     List<ParametricDistribution> distributions;
     
@@ -31,7 +31,7 @@ public class WeightedSumDistribution extends ParametricDistribution {
     	weights = weightsInput.get();
     	distributions = distInput.get();
     	
-    	if (weights.getDimension()!=distributions.size())
+    	if (weights.size()!=distributions.size())
     		throw new IllegalArgumentException("the number of weights given differs from the number of distribution");
     	    	
     }
@@ -43,15 +43,17 @@ public class WeightedSumDistribution extends ParametricDistribution {
         return null;
     }
 
+    // BEAST3: override the spec RealVector overload — with typed inputs the
+    // legacy calcLogP(Function) overload is never called.
     @Override
-    public double calcLogP(Function pX) {
+    public double calcLogP(RealVector<?> pX) {
         double logP = 0;
-        for (int i = 0; i < pX.getDimension(); i++) {
-            double x = pX.getArrayValue(i);
+        for (int i = 0; i < pX.size(); i++) {
+            double x = pX.get(i);
             double prob = 0;
-            for (int j = 0; j < weights.getDimension(); j++){
+            for (int j = 0; j < weights.size(); j++){
                 // BEAST3: cumulativeProbability no longer throws MathException.
-                prob += weights.getArrayValue(j)*distributions.get(j).cumulativeProbability(x);
+                prob += weights.get(j)*distributions.get(j).cumulativeProbability(x);
             }
             logP += Math.log(prob);
         }
@@ -63,8 +65,8 @@ public class WeightedSumDistribution extends ParametricDistribution {
         double logP = 0;
         double x = val;
         double prob = 0;
-        for (int j = 0; j < weights.getDimension(); j++){
-			prob += weights.getArrayValue(j)*distributions.get(j).density(x);
+        for (int j = 0; j < weights.size(); j++){
+			prob += weights.get(j)*distributions.get(j).density(x);
         }
         logP += Math.log(prob);
         return logP;
