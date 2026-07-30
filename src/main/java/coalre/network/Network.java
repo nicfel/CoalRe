@@ -455,7 +455,8 @@ public class Network extends StateNode {
         fromExtendedNewick(node.getTextContent().replaceAll("&amp;", "&"));
     }
 
-    @Override
+    // BEAST3: StateNode no longer implements Function, so scale/getDimension/
+    // getArrayValue are no longer inherited — @Override removed, methods kept.
     public int scale(double scale) {
         return 0;
     }
@@ -473,17 +474,14 @@ public class Network extends StateNode {
         hasStartedEditing = false;
     }
 
-    @Override
     public int getDimension() {
         return 0;
     }
 
-    @Override
     public double getArrayValue() {
         return 0;
     }
 
-    @Override
     public double getArrayValue(int dim) {
         return 0;
     }

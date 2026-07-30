@@ -182,13 +182,13 @@ public class NetworkScaleOperator extends NetworkOperator {
 
 			for (RealParameter param : upParameters) {
 				param.startEditing(this);
-				int count = param.scale(f);
+				double count = param.scale(f);
 				logHR += Math.log(f) * count;
 			}
 
 			for (RealParameter param : downParameters) {
 				param.startEditing(this);
-				int count = param.scale(1.0 / f);
+				double count = param.scale(1.0 / f);
 				logHR -= Math.log(f) * count;
 			}
 

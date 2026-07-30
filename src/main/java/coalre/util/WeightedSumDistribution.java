@@ -3,10 +3,6 @@ package coalre.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.math.MathException;
-import org.apache.commons.math.distribution.ContinuousDistribution;
-import org.apache.commons.math.distribution.Distribution;
-
 import beast.base.core.Description;
 import beast.base.core.Function;
 import beast.base.core.Input;
@@ -40,8 +36,10 @@ public class WeightedSumDistribution extends ParametricDistribution {
     	    	
     }
 
+    // BEAST3: ParametricDistribution.getDistribution() returns Object
+    // (commons-math2 Distribution was replaced by commons-statistics).
     @Override
-    public Distribution getDistribution() {
+    public Object getDistribution() {
         return null;
     }
 
@@ -52,11 +50,8 @@ public class WeightedSumDistribution extends ParametricDistribution {
             double x = pX.getArrayValue(i);
             double prob = 0;
             for (int j = 0; j < weights.getDimension(); j++){
-            	try {
-					prob += weights.getArrayValue(j)*distributions.get(j).cumulativeProbability(x);
-				} catch (MathException e) {
-					System.out.println(e);
-				}
+                // BEAST3: cumulativeProbability no longer throws MathException.
+                prob += weights.getArrayValue(j)*distributions.get(j).cumulativeProbability(x);
             }
             logP += Math.log(prob);
         }
