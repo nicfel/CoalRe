@@ -1,5 +1,6 @@
 package coalre.network;
 
+import beast.base.inference.Scalable;
 import beast.base.inference.StateNode;
 import beast.base.evolution.alignment.TaxonSet;
 import beast.base.evolution.tree.Node;
@@ -19,7 +20,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
-public class Network extends StateNode {
+public class Network extends StateNode implements Scalable {
 
     protected NetworkEdge rootEdge;
 
@@ -455,10 +456,69 @@ public class Network extends StateNode {
         fromExtendedNewick(node.getTextContent().replaceAll("&amp;", "&"));
     }
 
-    // BEAST3: StateNode no longer implements Function, so scale/getDimension/
-    // getArrayValue are no longer inherited — @Override removed, methods kept.
-    public int scale(double scale) {
-        return 0;
+    /**
+     * Interval ("margin") of an internal node: how far it sits above its tallest
+     * child. This is the quantity multiplied by {@code s} under {@link #scale},
+     * mirroring the interval scaling that {@code Tree} uses in BEAST 3.
+     */
+    private static double getMargin(NetworkNode n) {
+        if (n.isReassortment())
+            return n.getChildEdges().get(0).getLength();
+        return n.getHeight() - Math.max(n.getChildEdges().get(0).childNode.getHeight(),
+                                        n.getChildEdges().get(1).childNode.getHeight());
+    }
+
+    /** Internal (non-leaf) nodes, ordered so every child precedes its parents. */
+    private List<NetworkNode> internalNodesBottomUp() {
+        return getInternalNodes().stream()
+                .filter(n -> !n.isLeaf())
+                .sorted(Comparator.comparingDouble(NetworkNode::getHeight))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Dilation axis for the Scalable contract: the sum of all internal-node
+     * margins, which {@link #scale} multiplies by exactly {@code s}.
+     */
+    @Override
+    public double getScalableValue() {
+        double sum = 0.0;
+        for (NetworkNode n : internalNodesBottomUp())
+            sum += getMargin(n);
+        return sum;
+    }
+
+    /**
+     * Interval-scale the network: multiply every internal node's margin by
+     * {@code s}, leaving sampled (leaf) heights untouched. Valid for any
+     * positive {@code s} — it never produces a parent below its child, so it
+     * never throws.
+     *
+     * @return log Jacobian determinant of the move (BEAST 3 Scalable contract;
+     *         this is NOT a degrees-of-freedom count)
+     */
+    @Override
+    public double scale(double s) {
+        startEditing(null);
+
+        final List<NetworkNode> internal = internalNodesBottomUp();
+
+        // Snapshot every margin before moving anything — heights shift as we go.
+        final Map<NetworkNode, Double> margins = new HashMap<>();
+        for (NetworkNode n : internal)
+            margins.put(n, getMargin(n));
+
+        // Ascending height order guarantees each node's children are already placed.
+        for (NetworkNode n : internal) {
+            double newMargin = margins.get(n) * s;
+            if (n.isReassortment())
+                n.setHeight(newMargin + n.getChildEdges().get(0).childNode.getHeight());
+            else
+                n.setHeight(newMargin + Math.max(n.getChildEdges().get(0).childNode.getHeight(),
+                                                 n.getChildEdges().get(1).childNode.getHeight()));
+        }
+
+        return internal.size() * Math.log(s);
     }
 
     @Override

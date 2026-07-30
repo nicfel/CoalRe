@@ -2,6 +2,8 @@ package coalre.distribution;
 
 import beast.base.inference.parameter.RealParameter;
 import beast.base.evolution.tree.coalescent.ConstantPopulation;
+import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.inference.parameter.RealScalarParam;
 import coalre.CoalReTestClass;
 import coalre.network.Network;
 
@@ -26,7 +28,8 @@ public class CoalescentWithReassortmentTest extends CoalReTestClass {
 
         CoalescentWithReassortment coalWR = new CoalescentWithReassortment();
         coalWR.initByName("networkIntervals", networkIntervals,
-                "reassortmentRate", new RealParameter("1.0"),
+                // BEAST3: reassortmentRate is now a typed spec param, not a Function
+                "reassortmentRate", new RealScalarParam<>(1.0, PositiveReal.INSTANCE),
                 "populationModel", populationFunction);
 
         Assert.assertEquals(-16.258280263919616, coalWR.calculateLogP(), 1e-10);

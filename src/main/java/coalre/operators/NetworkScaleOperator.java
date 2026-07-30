@@ -180,16 +180,17 @@ public class NetworkScaleOperator extends NetworkOperator {
 
 		{
 
+			// BEAST3 Scalable contract: scale(s) already returns the log Jacobian
+			// determinant (dof * log s), not a dof count — add it directly. The sign
+			// for down-scaled parameters is carried inside scale(1/f).
 			for (RealParameter param : upParameters) {
 				param.startEditing(this);
-				double count = param.scale(f);
-				logHR += Math.log(f) * count;
+				logHR += param.scale(f);
 			}
 
 			for (RealParameter param : downParameters) {
 				param.startEditing(this);
-				double count = param.scale(1.0 / f);
-				logHR -= Math.log(f) * count;
+				logHR += param.scale(1.0 / f);
 			}
 
 			for (RealParameter param : upLogScaledParametersInput.get()) {

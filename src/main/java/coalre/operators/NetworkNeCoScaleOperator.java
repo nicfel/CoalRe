@@ -211,26 +211,30 @@ public class NetworkNeCoScaleOperator extends NetworkOperator {
 //            }            
         }
 
-	// Scale parameters
+	// Scale parameters.
+	// BEAST3 Scalable contract: scale(s) returns the log Jacobian determinant,
+	// not a dof count. Accumulate it separately from the node count `count` —
+	// adding it into an int silently truncates the Jacobian to zero.
+	double logJacobian = 0.0;
 	try
 
 	{
 
 		for (RealParameter param : upParameters) {
 			param.startEditing(this);
-			count += param.scale(f);
+			logJacobian += param.scale(f);
 		}
 
 		for (RealParameter param : downParameters) {
 			param.startEditing(this);
-			count -= param.scale(1.0 / f);
+			logJacobian += param.scale(1.0 / f);
 		}
 
 	}catch(
 	IllegalArgumentException ex)
 	{
 		return Double.NEGATIVE_INFINITY;
-	}return Math.log(f)*(count-2);
+	}return Math.log(f)*(count-2) + logJacobian;
 	}
 
 	private int scaleNodes(NetworkNode n, double scaler) {
