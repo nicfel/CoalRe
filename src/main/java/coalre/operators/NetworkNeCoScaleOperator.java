@@ -4,7 +4,7 @@ import beast.base.core.Input;
 import beast.base.core.Input.Validate;
 import beast.base.evolution.tree.Node;
 import beast.base.inference.operator.kernel.KernelDistribution;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.inference.Scalable;
 import beast.base.util.Randomizer;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
@@ -22,10 +22,10 @@ public class NetworkNeCoScaleOperator extends NetworkOperator {
 
 	public Input<Boolean> scaleRootOnlyInput = new Input<>("scaleRootOnly", "Scale only the root node.", false);
 
-	public Input<List<RealParameter>> upParametersInput = new Input<>("upParameter",
+	public Input<List<Scalable>> upParametersInput = new Input<>("upParameter",
 			"Parameters to scale in the SAME direction as the network.", new ArrayList<>());
 
-	public Input<List<RealParameter>> downParametersInput = new Input<>("downParameter",
+	public Input<List<Scalable>> downParametersInput = new Input<>("downParameter",
 			"Parameters to scale in the OPPOSITE direction as the network.", new ArrayList<>());
 
 	final public Input<Boolean> optimiseInput = new Input<>("optimise",
@@ -46,7 +46,7 @@ public class NetworkNeCoScaleOperator extends NetworkOperator {
 
 	double scaleFactor;
 	boolean scaleRootOnly;
-	List<RealParameter> upParameters, downParameters;
+	List<Scalable> upParameters, downParameters;
 	double upper, lower;
 
 	Map<NetworkNode, Double> oldLengths;
@@ -220,13 +220,11 @@ public class NetworkNeCoScaleOperator extends NetworkOperator {
 
 	{
 
-		for (RealParameter param : upParameters) {
-			param.startEditing(this);
+		for (Scalable param : upParameters) {
 			logJacobian += param.scale(f);
 		}
 
-		for (RealParameter param : downParameters) {
-			param.startEditing(this);
+		for (Scalable param : downParameters) {
 			logJacobian += param.scale(1.0 / f);
 		}
 

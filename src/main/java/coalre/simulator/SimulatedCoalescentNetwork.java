@@ -1,9 +1,10 @@
 package coalre.simulator;
 
-import beast.base.core.Function;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.domain.UnitInterval;
+import beast.base.spec.type.RealScalar;
 import beast.base.evolution.alignment.TaxonSet;
 import beast.base.evolution.tree.TraitSet;
 import beast.base.evolution.tree.Tree;
@@ -24,7 +25,7 @@ import java.util.List;
 
 public class SimulatedCoalescentNetwork extends Network {
 
-    public Input<RealParameter> reassortmentRateInput = new Input<>("reassortmentRate",
+    public Input<RealScalar<PositiveReal>> reassortmentRateInput = new Input<>("reassortmentRate",
             "Rate of reassortment (per lineage per unit time)");
     
 	public Input<PopulationFunction> timeVaryingReassortmentRatesInput = new Input<>(
@@ -33,7 +34,7 @@ public class SimulatedCoalescentNetwork extends Network {
             Input.Validate.XOR, reassortmentRateInput);
 
 
-    public Input<Function> binomialProbInput = new Input<>("binomialProb",
+    public Input<RealScalar<UnitInterval>> binomialProbInput = new Input<>("binomialProb",
             "Probability parameter in binomial reassortment distribution.");
 
     public Input<PopulationFunction> populationFunctionInput = new Input<>("populationModel",
@@ -59,8 +60,8 @@ public class SimulatedCoalescentNetwork extends Network {
             "Name of file to write simulated network to.");
 
     private PopulationFunction populationFunction;
-    private RealParameter reassortmentRate;
-    private Function binomialProb;
+    private RealScalar<PositiveReal> reassortmentRate;
+    private RealScalar<UnitInterval> binomialProb;
     
     public PopulationFunction timeVaryingReassortmentRates;
     
@@ -177,7 +178,7 @@ public class SimulatedCoalescentNetwork extends Network {
 
     private double getBinomialProb() {
         return binomialProb != null
-                ? binomialProb.getArrayValue()
+                ? binomialProb.get()
                 : 0.5;
     }
 
@@ -217,7 +218,7 @@ public class SimulatedCoalescentNetwork extends Network {
             	timeToNextReassortment = timeVaryingReassortmentRates.getInverseIntensity(
             			transformedTimeToNextRea + currentTransformedReaTime) - currentTime;            	
             }else {
-            	timeToNextReassortment = k>0 ? Randomizer.nextExponential(k*reassortmentRate.getArrayValue()) : Double.POSITIVE_INFINITY;
+            	timeToNextReassortment = k>0 ? Randomizer.nextExponential(k*reassortmentRate.get()) : Double.POSITIVE_INFINITY;
             }
 
             // next event time

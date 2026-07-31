@@ -2,7 +2,8 @@ package coalre.operators;
 
 import beast.base.core.Input;
 import beast.base.evolution.tree.Node;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.inference.parameter.RealScalarParam;
 import beast.base.util.Randomizer;
 import cern.colt.Arrays;
 import coalre.distribution.CoalescentWithReassortment;
@@ -25,7 +26,7 @@ public class DivertSegmentAndResimulate extends NetworkOperator {
 			"Coalescent distribution for sampling reassortment events.",
 			Input.Validate.REQUIRED);
 	
-	public Input<List<RealParameter>> segmentRatesInput = new Input<>("segmentRates", "Rates for each segment.",
+	public Input<List<RealScalarParam<PositiveReal>>> segmentRatesInput = new Input<>("segmentRates", "Rates for each segment.",
 			new ArrayList<>());
 
 	protected CoalescentWithReassortment coalescentDistr;
@@ -123,9 +124,9 @@ public class DivertSegmentAndResimulate extends NetworkOperator {
 				double scaler = treeLenghts[i]/treeAfter[i];
 				if (Math.abs(scaler-1.0)>1e-6) {
 					// scale the rate
-					double currentRate = segmentRatesInput.get().get(i).getValue();
+					double currentRate = segmentRatesInput.get().get(i).get();
 					
-					segmentRatesInput.get().get(i).setValue(currentRate * scaler);
+					segmentRatesInput.get().get(i).set(currentRate * scaler);
 				}
 			}				
 		}

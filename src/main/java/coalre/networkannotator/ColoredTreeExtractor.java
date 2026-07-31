@@ -18,9 +18,7 @@
 package coalre.networkannotator;
 
 import beast.base.core.BEASTObject;
-import beast.base.core.Function;
 import beast.base.inference.parameter.Parameter;
-import beast.base.inference.parameter.RealParameter;
 import beast.base.core.Log;
 import beast.base.evolution.branchratemodel.BranchRateModel;
 import beast.base.evolution.tree.Node;

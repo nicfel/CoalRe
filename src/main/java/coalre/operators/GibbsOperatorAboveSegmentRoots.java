@@ -6,7 +6,6 @@ import beast.base.spec.type.RealScalar;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
-import beast.base.inference.parameter.RealParameter;
 import beast.base.util.Randomizer;
 import coalre.distribution.CoalescentWithReassortment;
 import coalre.network.NetworkEdge;

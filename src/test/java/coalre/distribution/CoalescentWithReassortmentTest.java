@@ -1,7 +1,6 @@
 package coalre.distribution;
 
-import beast.base.inference.parameter.RealParameter;
-import beast.base.evolution.tree.coalescent.ConstantPopulation;
+import beast.base.spec.evolution.tree.coalescent.ConstantPopulation;
 import beast.base.spec.domain.PositiveReal;
 import beast.base.spec.inference.parameter.RealScalarParam;
 import coalre.CoalReTestClass;
@@ -24,7 +23,7 @@ public class CoalescentWithReassortmentTest extends CoalReTestClass {
         networkIntervals.initByName("network", network);
 
         ConstantPopulation populationFunction = new ConstantPopulation();
-        populationFunction.initByName("popSize", new RealParameter("1.0"));
+        populationFunction.initByName("popSize", new RealScalarParam<>(1.0, PositiveReal.INSTANCE));
 
         CoalescentWithReassortment coalWR = new CoalescentWithReassortment();
         coalWR.initByName("networkIntervals", networkIntervals,

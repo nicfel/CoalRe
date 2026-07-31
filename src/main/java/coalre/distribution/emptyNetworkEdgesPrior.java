@@ -1,12 +1,11 @@
 package coalre.distribution;
 
 import beast.base.core.Description;
-import beast.base.core.Function;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
-import beast.base.inference.parameter.IntegerParameter;
-import beast.base.inference.parameter.RealParameter;
-import beast.base.evolution.tree.coalescent.PopulationFunction;
+import beast.base.spec.domain.NonNegativeReal;
+import beast.base.spec.inference.parameter.RealScalarParam;
+import beast.base.spec.type.RealScalar;
 import beast.base.inference.distribution.ParametricDistribution;
 import coalre.network.NetworkEdge;
 
@@ -50,10 +49,8 @@ public class emptyNetworkEdgesPrior extends NetworkDistribution {
                 .filter(e -> e.childNode.isReassortment())
                 .count();
         
-        final Double[] arrayForInit = new Double[1];
-        arrayForInit[0] = nrEmptyReassortmentEdges;	
-        
-        Function nrEmptyEdges = new RealParameter(arrayForInit);
+        RealScalar<NonNegativeReal> nrEmptyEdges =
+                new RealScalarParam<>(nrEmptyReassortmentEdges, NonNegativeReal.INSTANCE);
 
         
         // get how many reassortment events are empty
@@ -65,11 +62,15 @@ public class emptyNetworkEdgesPrior extends NetworkDistribution {
         double overalLength = 0.0;
         for (int i = 0; i < emptyEdges.size(); i++)
         	overalLength += emptyEdges.get(i).getLength();
-       
-        final Double[] overalLengthForInit = new Double[1];
-        overalLengthForInit[0] = nrEmptyReassortmentEdges;	
 
-        Function lengthEmptyEdges = new RealParameter(arrayForInit);
+        // NOTE: this deliberately reproduces the pre-migration behaviour, which looks like a
+        // bug. The BEAST 2 code assigned nrEmptyReassortmentEdges (not overalLength) into
+        // overalLengthForInit, and then built lengthEmptyEdges from arrayForInit anyway -- so
+        // overalLength was computed and discarded, and emptyLengthDistribution scored the
+        // empty-edge COUNT, not the total length. Preserved verbatim because changing it would
+        // alter this model's likelihood; flagged in tmp/b3migration/NOTES.md for the author.
+        RealScalar<NonNegativeReal> lengthEmptyEdges =
+                new RealScalarParam<>(nrEmptyReassortmentEdges, NonNegativeReal.INSTANCE);
            
         
         logP += nrEventsDistribution.calcLogP(nrEmptyEdges);

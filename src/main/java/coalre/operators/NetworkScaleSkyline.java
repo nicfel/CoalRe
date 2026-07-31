@@ -3,7 +3,9 @@ package coalre.operators;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
 import beast.base.inference.operator.kernel.KernelDistribution;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.inference.Scalable;
+import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.type.RealScalar;
 import coalre.network.NetworkNode;
 
 import java.text.DecimalFormat;
@@ -15,17 +17,17 @@ public class NetworkScaleSkyline extends NetworkOperator {
     final public Input<Double> scaleFactorInput = new Input<>("scaleFactor",
             "magnitude factor used for scaling", Validate.REQUIRED);
 
-    public Input<List<RealParameter>> upParametersInput = new Input<>(
+    public Input<List<Scalable>> upParametersInput = new Input<>(
             "upParameter",
             "Parameters to scale in the SAME direction as the network.",
             new ArrayList<>());
 
-    public Input<List<RealParameter>> downParametersInput = new Input<>(
+    public Input<List<Scalable>> downParametersInput = new Input<>(
             "downParameter",
             "Parameters to scale in the OPPOSITE direction as the network.",
             new ArrayList<>());
     
-    public Input<RealParameter> NeInput = new Input<>(
+    public Input<RealScalar<PositiveReal>> NeInput = new Input<>(
             "Ne",
             "Ne input to scale in the same direction as the network, but with different scale factor.");
     
@@ -44,7 +46,7 @@ public class NetworkScaleSkyline extends NetworkOperator {
 
 
     double scaleFactor;
-    List<RealParameter> upParameters, downParameters;
+    List<Scalable> upParameters, downParameters;
 
     @Override
     public void initAndValidate() {
@@ -97,13 +99,11 @@ public class NetworkScaleSkyline extends NetworkOperator {
         double logJacobian = 0.0;
         try {
 
-            for (RealParameter param : upParameters) {
-                param.startEditing(this);
+            for (Scalable param : upParameters) {
                 logJacobian += param.scale(f);
             }
 
-            for (RealParameter param : downParameters) {
-                param.startEditing(this);
+            for (Scalable param : downParameters) {
                 logJacobian += param.scale(1.0 / f);
             }
 

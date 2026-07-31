@@ -6,8 +6,12 @@ import beast.base.evolution.alignment.Taxon;
 import beast.base.evolution.alignment.TaxonSet;
 import beast.base.evolution.tree.TraitSet;
 import beast.base.evolution.tree.Tree;
-import beast.base.inference.parameter.IntegerParameter;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.NonNegativeReal;
+import beast.base.spec.domain.PositiveInt;
+import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.domain.UnitInterval;
+import beast.base.spec.type.IntVector;
+import beast.base.spec.type.RealVector;
 import beast.base.util.Randomizer;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;
@@ -21,17 +25,17 @@ import java.util.List;
 
 public class SuperspreadingStructuredSIRwithReassortment extends Network implements Loggable {
 
-    public Input<RealParameter> transmissionRateInput = new Input<>("transmissionRate", "transmission rate", Input.Validate.REQUIRED);
+    public Input<RealVector<PositiveReal>> transmissionRateInput = new Input<>("transmissionRate", "transmission rate", Input.Validate.REQUIRED);
 
-    public Input<RealParameter> recoveryRateInput  = new Input<>("recoveryRate", "recovery rate", Input.Validate.REQUIRED);
+    public Input<RealVector<PositiveReal>> recoveryRateInput  = new Input<>("recoveryRate", "recovery rate", Input.Validate.REQUIRED);
 
-    public Input<RealParameter> waningImmunityRateInput  = new Input<>("waningImmunityRate", "waning immunity rate", Input.Validate.REQUIRED);
+    public Input<RealVector<NonNegativeReal>> waningImmunityRateInput  = new Input<>("waningImmunityRate", "waning immunity rate", Input.Validate.REQUIRED);
 
-    public Input<RealParameter> reassortmenProbabilityInput = new Input<>("reassortmenProbability", "reassortment probability", Input.Validate.REQUIRED);
+    public Input<RealVector<UnitInterval>> reassortmenProbabilityInput = new Input<>("reassortmenProbability", "reassortment probability", Input.Validate.REQUIRED);
 
-    public Input<RealParameter> samplingProbabilityInput = new Input<>("samplingProbability", "sampling probability", Input.Validate.REQUIRED);
+    public Input<RealVector<UnitInterval>> samplingProbabilityInput = new Input<>("samplingProbability", "sampling probability", Input.Validate.REQUIRED);
 
-    public Input<IntegerParameter> populationSizeInput = new Input<>("populationSize", "population size", Input.Validate.REQUIRED);
+    public Input<IntVector<PositiveInt>> populationSizeInput = new Input<>("populationSize", "population size", Input.Validate.REQUIRED);
 
     public Input<Integer> nSegmentsInput = new Input<>("nSegments","Number of segments. Used if no segment trees are supplied.");
 
@@ -52,7 +56,7 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
     public Input<Double> kInput = new Input<>("k",
             "k-value for the negative binomial distribution", Input.Validate.REQUIRED);
 
-    public Input<RealParameter> migrationRatesInput = new Input<>("migrationRates",
+    public Input<RealVector<NonNegativeReal>> migrationRatesInput = new Input<>("migrationRates",
             "Migration rates between segments", Input.Validate.REQUIRED);
 
     int nSegments;
@@ -84,7 +88,7 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
 
     @Override
     public void initAndValidate(){
-        states = transmissionRateInput.get().getDimension();
+        states = transmissionRateInput.get().size();
 
         List<String> IDs = new ArrayList<>();
         if (segmentTreesInput.get().isEmpty()) {
@@ -175,11 +179,11 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
             R = new int[states];
             for (int i = 0; i < states; i++) {
                 if (i == initLoc) {
-                    S[i] = populationSizeInput.get().getValue(i) - 1;
+                    S[i] = populationSizeInput.get().get(i) - 1;
                     I[i] = 1;
                     R[i] = 0;
                 } else {
-                    S[i] = populationSizeInput.get().getValue(i);
+                    S[i] = populationSizeInput.get().get(i);
                     I[i] = 0;
                     R[i] = 0;
                 }
@@ -199,16 +203,16 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                 double recoveryRate = 0;
                 double waningRate = 0;
                 for (int i = 0; i < states; i++) {
-                    transmissionRate += I[i] * recoveryRateInput.get().getValue(i); // This should be recovery rate, as we model the Reff through the avg number of secondary infections below
-                    recoveryRate += I[i] * recoveryRateInput.get().getValue(i);
-                    waningRate += R[i] * waningImmunityRateInput.get().getValue(i);
+                    transmissionRate += I[i] * recoveryRateInput.get().get(i); // This should be recovery rate, as we model the Reff through the avg number of secondary infections below
+                    recoveryRate += I[i] * recoveryRateInput.get().get(i);
+                    waningRate += R[i] * waningImmunityRateInput.get().get(i);
                 }
                 double migrationRate = 0;
                 int c = 0;
                 for (int i = 0; i < states; i++) {
                     for (int j = 0; j < states; j++) {
                         if (i!=j){
-                            migrationRate += I[i] * migrationRatesInput.get().getValue(c);
+                            migrationRate += I[i] * migrationRatesInput.get().get(c);
                             c++;
                         }
                     }
@@ -270,11 +274,11 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
         double randomT = Randomizer.nextDouble();
         double cummulative = 0;
         for (int i = 0; i < states; i++){
-            cummulative += I[i] * recoveryRateInput.get().getValue(i)/transmissionRate;
+            cummulative += I[i] * recoveryRateInput.get().get(i)/transmissionRate;
             if (randomT<=cummulative){
                 // pick the number of offsprings from a negative binomial distribution with R and k
                 // from a gamma and a poisson distribution
-                double secondary_infections = transmissionRateInput.get().getArrayValue(i)/recoveryRateInput.get().getArrayValue(i);
+                double secondary_infections = transmissionRateInput.get().get(i)/recoveryRateInput.get().get(i);
                 double gamma = Randomizer.nextGamma(kInput.get(), kInput.get() / (double) secondary_infections);
                 int nOffspring = (int) Randomizer.nextPoisson(gamma);
                 int isR = 0;
@@ -407,7 +411,7 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
         for (int i = 0; i<states; i++){
             for (int j = 0; j < states; j++){
                 if (i!=j){
-                    cummulative+= (I[i] * migrationRatesInput.get().getValue(c))/migrationRate;
+                    cummulative+= (I[i] * migrationRatesInput.get().get(c))/migrationRate;
                     if (randomMig<cummulative){
                         StructuredIndividual individual = activeIndividuals.get(Randomizer.nextInt(activeIndividuals.size()));
                         while (individual.type!=i){
@@ -442,7 +446,7 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
         double randomRec = Randomizer.nextDouble();
         double cummulative = 0;
         for (int i = 0; i<states; i++){
-            cummulative+= (I[i] * recoveryRateInput.get().getValue(i))/recoveryRate;
+            cummulative+= (I[i] * recoveryRateInput.get().get(i))/recoveryRate;
             if (randomRec<=cummulative){
                 StructuredIndividual individual = activeIndividuals.get(Randomizer.nextInt(activeIndividuals.size()));
 //                System.out.println(i + " " + activeIndividuals + " " + Arrays.toString(I));
@@ -451,7 +455,7 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
                 }
                 individual.setTime(time + nextEventTime);
                 // choose if that individual will be sampled
-                if (Randomizer.nextDouble() < samplingProbabilityInput.get().getArrayValue(i)) {
+                if (Randomizer.nextDouble() < samplingProbabilityInput.get().get(i)) {
                     // sample the individual
                     sampledIndividuals.add(individual);
                 }

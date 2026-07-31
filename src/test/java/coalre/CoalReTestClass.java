@@ -1,11 +1,12 @@
 package coalre;
 
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.inference.parameter.RealScalarParam;
 import beast.base.evolution.alignment.Taxon;
 import beast.base.evolution.alignment.TaxonSet;
 import beast.base.evolution.tree.TraitSet;
 import beast.base.evolution.tree.Tree;
-import beast.base.evolution.tree.coalescent.ConstantPopulation;
+import beast.base.spec.evolution.tree.coalescent.ConstantPopulation;
 import beast.base.util.Randomizer;
 import coalre.network.Network;
 import coalre.simulator.SimulatedCoalescentNetwork;
@@ -77,14 +78,14 @@ public abstract class CoalReTestClass {
 
     protected Network getContempNetwork(List<Tree> segmentTrees, double reassortmentRate, TraitSet traitSet) {
         ConstantPopulation popFunc = new ConstantPopulation();
-        popFunc.initByName("popSize", new RealParameter("1.0"));
+        popFunc.initByName("popSize", new RealScalarParam<>(1.0, PositiveReal.INSTANCE));
 
         SimulatedCoalescentNetwork network = new SimulatedCoalescentNetwork();
         network.initByName(
                 "segmentTree", segmentTrees,
                 "traitSet", traitSet,
                 "populationModel", popFunc,
-                "reassortmentRate", new RealParameter(String.valueOf(reassortmentRate)),
+                "reassortmentRate", new RealScalarParam<>(reassortmentRate, PositiveReal.INSTANCE),
                 "enableSegmentTreeUpdate", false);
 
         return network;

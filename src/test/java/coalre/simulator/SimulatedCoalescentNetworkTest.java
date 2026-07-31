@@ -1,9 +1,10 @@
 package coalre.simulator;
 
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.inference.parameter.RealScalarParam;
 import beast.base.evolution.tree.TraitSet;
 import beast.base.evolution.tree.Tree;
-import beast.base.evolution.tree.coalescent.ConstantPopulation;
+import beast.base.spec.evolution.tree.coalescent.ConstantPopulation;
 import beast.base.util.Randomizer;
 import coalre.CoalReTestClass;
 import coalre.statistics.NetworkStatsLogger;
@@ -24,7 +25,7 @@ public class SimulatedCoalescentNetworkTest extends CoalReTestClass {
         List<Tree> segmentTrees = getSegmentTreeObjects(8, dateTrait);
 
         ConstantPopulation populationFunction = new ConstantPopulation();
-        populationFunction.initByName("popSize", new RealParameter("1.0"));
+        populationFunction.initByName("popSize", new RealScalarParam<>(1.0, PositiveReal.INSTANCE));
 
         int N = 10000;
         double[] reassortmentNodeCounts = new double[N];
@@ -35,7 +36,7 @@ public class SimulatedCoalescentNetworkTest extends CoalReTestClass {
 
             SimulatedCoalescentNetwork network = new SimulatedCoalescentNetwork();
             network.initByName(
-                    "reassortmentRate", new RealParameter("1.0"),
+                    "reassortmentRate", new RealScalarParam<>(1.0, PositiveReal.INSTANCE),
                     "populationModel", populationFunction,
                     "traitSet", dateTrait,
                     "segmentTree", segmentTrees.get(0),
