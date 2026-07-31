@@ -4,7 +4,11 @@ import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.core.Loggable;
 import beast.base.inference.CalculationNode;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.NonNegativeReal;
+import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.domain.Real;
+import beast.base.spec.inference.parameter.RealVectorParam;
+import beast.base.spec.type.RealScalar;
 import org.apache.commons.math3.linear.*;
 
 import java.io.PrintStream;
@@ -15,20 +19,21 @@ import java.io.PrintStream;
  */
 @Description("Populaiton function with values at certain time points that are interpolated in between. Parameter has to be in log space")
 public class Spline extends CalculationNode implements Loggable {
-    final public Input<RealParameter> InfectedInput = new Input<>("logInfected",
+    // written to (setDimension) in initAndValidate: needs the concrete param type
+    final public Input<RealVectorParam<Real>> InfectedInput = new Input<>("logInfected",
             "Nes over time in log space", Input.Validate.REQUIRED);
-    final public Input<RealParameter> rateShiftsInput = new Input<>("rateShifts",
+    final public Input<beast.base.spec.type.RealVector<NonNegativeReal>> rateShiftsInput = new Input<>("rateShifts",
             "When to switch between elements of Ne", Input.Validate.REQUIRED);
-    final public Input<RealParameter> uninfectiousRateInput = new Input<>("uninfectiousRate",
+    final public Input<RealScalar<PositiveReal>> uninfectiousRateInput = new Input<>("uninfectiousRate",
             "Rate at which individuals become uninfectious");
     final public Input<Integer> gridPointsInput = new Input<>("gridPoints",
             "Number of grid points to use for the spline calculation", 1000);
     final public Input<Boolean> infectedIsNeInput = new Input<>("infectedIsNe",
             "Whether the infected parameter is actually the number of infected or the logNe", false);
 
-    RealParameter infected;
-    RealParameter rateShifts;
-    RealParameter uninfectiousRate;
+    RealVectorParam<Real> infected;
+    beast.base.spec.type.RealVector<NonNegativeReal> rateShifts;
+    RealScalar<PositiveReal> uninfectiousRate;
     int gridPoints;
 
     double[] transmissionRate;
@@ -50,7 +55,7 @@ public class Spline extends CalculationNode implements Loggable {
     public void initAndValidate() {
         infected = InfectedInput.get();
         rateShifts = rateShiftsInput.get();
-        infected.setDimension(rateShifts.getDimension());
+        infected.setDimension(rateShifts.size());
         uninfectiousRate = uninfectiousRateInput.get();
         gridPoints = gridPointsInput.get();
         infectedIsNe = infectedIsNeInput.get();
@@ -63,11 +68,11 @@ public class Spline extends CalculationNode implements Loggable {
         computeAkimaSplineCoefficients();
 
 //        clampedCubicSpline();
-        // make the time grid from 0 to rateShifts.getArrayValue(rateShifts.getDimension()-1) using gridPoints
+        // make the time grid from 0 to rateShifts.get(rateShifts.size()-1) using gridPoints
         time = new double[gridPoints+1];
         I = new double[gridPoints+1];
         transmissionRate = new double[gridPoints+1];
-        double dt = rateShifts.getArrayValue(rateShifts.getDimension()-1) / (time.length-1);
+        double dt = rateShifts.get(rateShifts.size()-1) / (time.length-1);
         int j = 0;
         int k = j-1;
         isValid = true;
@@ -75,15 +80,15 @@ public class Spline extends CalculationNode implements Loggable {
             // update the time for this grid point
             time[i] = i*dt;
             // find the interval in which this grid point lies
-            if (time[i] >= rateShifts.getArrayValue(j)) {
+            if (time[i] >= rateShifts.get(j)) {
                 j++;
                 k++;
-                if (k==rateShifts.getDimension()-1) {
+                if (k==rateShifts.size()-1) {
                     k--;
                 }
             }
             // get the time diff from the last point where logI was estimated
-            double timeDiff = time[i]-rateShifts.getArrayValue(k);
+            double timeDiff = time[i]-rateShifts.get(k);
             double timeDiff2 = timeDiff*timeDiff;
             double timeDiff3 = timeDiff2*timeDiff;
             // compute the number of infected individuals at the grid points
@@ -93,7 +98,7 @@ public class Spline extends CalculationNode implements Loggable {
             if (infectedIsNe) {
                 transmissionRate[i] = 1;
             }else {
-                transmissionRate[i] = uninfectiousRate.getValue() -
+                transmissionRate[i] = uninfectiousRate.get() -
                         (3 * splineCoeffs[k][0] * timeDiff2 + 2 * splineCoeffs[k][1] * timeDiff + splineCoeffs[k][2]);
             }
             if (transmissionRate[i] < 0) {
@@ -144,18 +149,18 @@ public class Spline extends CalculationNode implements Loggable {
      *  de Boor, Carl. A Practical Guide to Splines. Springer-Verlag, New York: 1978
      */
     public void notAKnotCubicSpline() {
-        int n = rateShifts.getDimension();
+        int n = rateShifts.size();
 
         // Calculate h values (difference between x values)
         double[] h = new double[n - 1];
         for (int i = 0; i < n - 1; i++) {
-            h[i] = rateShifts.getArrayValue(i + 1) - rateShifts.getArrayValue(i);
+            h[i] = rateShifts.get(i + 1) - rateShifts.get(i);
         }
 
         // Calculate the difference in y values
         double[] delta = new double[n - 1];
         for (int i = 0; i < n - 1; i++) {
-            delta[i] = (infected.getArrayValue(i + 1) - infected.getArrayValue(i)) / h[i];
+            delta[i] = (infected.get(i + 1) - infected.get(i)) / h[i];
         }
 
         // Create the tridiagonal system
@@ -187,7 +192,7 @@ public class Spline extends CalculationNode implements Loggable {
             splineCoeffs[i][0] = (mu.getEntry(i + 1) - mu.getEntry(i)) / (6 * h[i]);
             splineCoeffs[i][1] = mu.getEntry(i) / 2;
             splineCoeffs[i][2] = delta[i] - h[i] * (2 * mu.getEntry(i) + mu.getEntry(i + 1)) / 6;
-            splineCoeffs[i][3] = infected.getArrayValue(i);
+            splineCoeffs[i][3] = infected.get(i);
         }
     }
 
@@ -195,18 +200,18 @@ public class Spline extends CalculationNode implements Loggable {
      * Clamped cubic spline interpolation with specified first derivatives at the end points.
      */
     public void clampedCubicSpline() {
-        int n = rateShifts.getDimension();
+        int n = rateShifts.size();
 
         // Calculate h values (difference between x values)
         double[] h = new double[n - 1];
         for (int i = 0; i < n - 1; i++) {
-            h[i] = rateShifts.getArrayValue(i + 1) - rateShifts.getArrayValue(i);
+            h[i] = rateShifts.get(i + 1) - rateShifts.get(i);
         }
 
         // Calculate the difference in y values
         double[] delta = new double[n - 1];
         for (int i = 0; i < n - 1; i++) {
-            delta[i] = (infected.getArrayValue(i + 1) - infected.getArrayValue(i)) / h[i];
+            delta[i] = (infected.get(i + 1) - infected.get(i)) / h[i];
         }
 
         // Create the tridiagonal system
@@ -214,9 +219,9 @@ public class Spline extends CalculationNode implements Loggable {
         RealVector r = new ArrayRealVector(n);
 
         // get the derivate of the first intervals
-        double ddtstart = (infected.getArrayValue(1)-infected.getArrayValue(0))/(rateShifts.getArrayValue(1)-rateShifts.getArrayValue(0));
+        double ddtstart = (infected.get(1)-infected.get(0))/(rateShifts.get(1)-rateShifts.get(0));
         // get the derivate of the last intervals
-        double ddtend = (infected.getArrayValue(n-1)-infected.getArrayValue(n-2))/(rateShifts.getArrayValue(n-1)-rateShifts.getArrayValue(n-2));
+        double ddtend = (infected.get(n-1)-infected.get(n-2))/(rateShifts.get(n-1)-rateShifts.get(n-2));
 
         // Clamped condition at the start
         A.setEntry(0, 0, 2 * h[0]);
@@ -246,18 +251,18 @@ public class Spline extends CalculationNode implements Loggable {
             splineCoeffs[i][0] = (mu.getEntry(i + 1) - mu.getEntry(i)) / (6 * h[i]);
             splineCoeffs[i][1] = mu.getEntry(i) / 2;
             splineCoeffs[i][2] = delta[i] - h[i] * (2 * mu.getEntry(i) + mu.getEntry(i + 1)) / 6;
-            splineCoeffs[i][3] = infected.getArrayValue(i);
+            splineCoeffs[i][3] = infected.get(i);
         }
     }
 
 
     private void computeAkimaSplineCoefficients() {
-        int n = rateShifts.getDimension();
+        int n = rateShifts.size();
         double[] slopes = new double[n-1];
 
         // Compute central differences for slopes
         for (int i = 0; i < (n-1); i++) {
-            slopes[i] = (infected.getArrayValue(i + 1) - infected.getArrayValue(i )) / (rateShifts.getArrayValue(i + 1) - rateShifts.getArrayValue(i));
+            slopes[i] = (infected.get(i + 1) - infected.get(i )) / (rateShifts.get(i + 1) - rateShifts.get(i));
         }
 
         // Calculate the Akima weights and the weighted slopes
@@ -281,8 +286,8 @@ public class Spline extends CalculationNode implements Loggable {
         // Calculate coefficients for Akima spline segments
         splineCoeffs = new double[n - 1][4];
         for (int i = 0; i < n - 1; i++) {
-            splineCoeffs[i] = computeAkimaCoefficients(rateShifts.getArrayValue(i), rateShifts.getArrayValue(i + 1),
-                    infected.getArrayValue(i), infected.getArrayValue(i + 1),
+            splineCoeffs[i] = computeAkimaCoefficients(rateShifts.get(i), rateShifts.get(i + 1),
+                    infected.get(i), infected.get(i + 1),
                     weightedSlopes[i], weightedSlopes[i + 1]);
         }
     }

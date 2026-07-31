@@ -1,23 +1,22 @@
 package coalre.dynamics;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import beast.base.core.Description;
-import beast.base.core.Function;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
 import beast.base.inference.CalculationNode;
-import beast.base.inference.parameter.IntegerParameter;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.NonNegativeReal;
+import beast.base.spec.domain.Real;
+import beast.base.spec.type.RealVector;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Description("calculates the differences between the entries of a vector")
-public class LogDifference extends CalculationNode implements Function {
-    final public Input<Function> functionInput = new Input<>("arg", "argument for which the differences for entries is calculated", Validate.REQUIRED);
-    final public Input<RealParameter> rateShiftInput = new Input<>("rateShift", "rate shift parameter");
-    
+public class LogDifference extends CalculationNode implements RealVector<Real> {
+    final public Input<RealVector<Real>> functionInput = new Input<>("arg", "argument for which the differences for entries is calculated", Validate.REQUIRED);
+    final public Input<RealVector<NonNegativeReal>> rateShiftInput = new Input<>("rateShift", "rate shift parameter");
+
     final public Input<Integer> fromInput = new Input<>("from", "start point for diff calculation", 0);
     final public Input<Integer> toInput = new Input<>("to" , "end point for diff calculation",-1);
 
@@ -27,32 +26,39 @@ public class LogDifference extends CalculationNode implements Function {
     double[] storedDifference;
     int from;
     int to;
-    
+
 
     @Override
     public void initAndValidate() {
     	from = fromInput.get();
     	to = toInput.get();
 		if (to < 0) {
-			to = functionInput.get().getDimension() - 1;
+			to = functionInput.get().size() - 1;
 		}
-    	
-    	
+
+
     	difference = new double[to-from+1];
     	storedDifference = new double[to-from+1];
     }
 
     @Override
-    public int getDimension() {
+    public Real getDomain() {
+        return Real.INSTANCE;
+    }
+
+    @Override
+    public int size() {
         return difference.length;
     }
 
     @Override
-    public double getArrayValue() {
+    public List<Double> getElements() {
         if (needsRecompute) {
             compute();
         }
-        return difference[0];
+        List<Double> elements = new ArrayList<>(difference.length);
+        for (double v : difference) elements.add(v);
+        return elements;
     }
 
     /**
@@ -61,9 +67,9 @@ public class LogDifference extends CalculationNode implements Function {
     void compute() {
     	double mean = 0;
         for (int i = from; i <= to; i++) {
-        	difference[i-from] = functionInput.get().getArrayValue(i);
+        	difference[i-from] = functionInput.get().get(i);
         	mean += difference[i-from];
-        }    	  		
+        }
         mean /= (double) difference.length;
 		for (int i = 0; i < difference.length; i++) {
 			difference[i] -= mean;
@@ -74,7 +80,7 @@ public class LogDifference extends CalculationNode implements Function {
     }
 
     @Override
-    public double getArrayValue(int dim) {
+    public double get(int dim) {
         if (needsRecompute) {
             compute();
         }

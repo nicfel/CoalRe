@@ -3,7 +3,9 @@ package coalre.dynamics;
 import org.junit.Assert;
 import org.junit.Test;
 
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.NonNegativeReal;
+import beast.base.spec.domain.Real;
+import beast.base.spec.inference.parameter.RealVectorParam;
 
 public class PiecewiseConstantReassortmentRateFromSkygrowthTest {
 
@@ -16,9 +18,9 @@ public class PiecewiseConstantReassortmentRateFromSkygrowthTest {
         //   logNe = 0, neToReassortment = 0 => rate = 0
         //   Because growth depends on differences between consecutive rates,
         //   growth = 0 in each interval, giving a piecewise-constant function of exp(0) = 1.
-        RealParameter logNe = new RealParameter("1 -1 2");
-        RealParameter neToReassortment = new RealParameter("5 -2 3");
-        RealParameter rateShifts = new RealParameter("0 1 2"); // Two breakpoints => three intervals
+        RealVectorParam<Real> logNe = new RealVectorParam<>(new double[]{1, -1, 2}, Real.INSTANCE);
+        RealVectorParam<Real> neToReassortment = new RealVectorParam<>(new double[]{5, -2, 3}, Real.INSTANCE);
+        RealVectorParam<NonNegativeReal> rateShifts = new RealVectorParam<>(new double[]{0, 1, 2}, NonNegativeReal.INSTANCE); // Two breakpoints => three intervals
 
         // Initialize the sky object
         sky.initByName(

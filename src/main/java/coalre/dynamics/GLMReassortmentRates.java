@@ -4,8 +4,12 @@ import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.core.Loggable;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
-import beast.base.inference.parameter.IntegerParameter;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.NonNegativeInt;
+import beast.base.spec.domain.NonNegativeReal;
+import beast.base.spec.domain.Real;
+import beast.base.spec.inference.parameter.IntScalarParam;
+import beast.base.spec.inference.parameter.RealVectorParam;
+import beast.base.spec.type.RealVector;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -18,23 +22,26 @@ import java.util.List;
 @Description("Population function with defines Ne's at points in time and interpolated between them. Parameter has to be in log space. The Ne's are used to compute the transmission rates, which are used for the coalescent process. ")
 public class GLMReassortmentRates extends PopulationFunction.Abstract implements Loggable {
 
-	final public Input<List<RealParameter>> predictorInput = new Input<>("predictor", "predictor parameters that are used to calculate the Ne", new ArrayList<>());
-	final public Input<RealParameter> NeToReassortmentInput = new Input<>("neToReassortment",
+	final public Input<List<RealVector<Real>>> predictorInput = new Input<>("predictor", "predictor parameters that are used to calculate the Ne", new ArrayList<>());
+	// written to (setDimension) in initAndValidate: needs the concrete param type
+	final public Input<RealVectorParam<Real>> NeToReassortmentInput = new Input<>("neToReassortment",
 			"the value that maps the number of infected or the Ne to the reassortment rate ");
-	final public Input<RealParameter> rateShiftsInput = new Input<>("rateShifts",
+	final public Input<RealVector<NonNegativeReal>> rateShiftsInput = new Input<>("rateShifts",
 			"When to switch between elements of Ne", Input.Validate.REQUIRED);
-	final public Input<IntegerParameter> predictorIsActiveInput = new Input<>("predictorIsActive",
+	// written to (setValue) in initAndValidate: needs the concrete param type
+	final public Input<IntScalarParam<NonNegativeInt>> predictorIsActiveInput = new Input<>("predictorIsActive",
 			"indicates which predictors are active at which time point");
 	final public Input<Integer> independentAfterInput = new Input<>("independentAfter",
 			"ignore differences after that index");
-	final public Input<RealParameter> effectSizeInput = new Input<>("effectSize",
+	// written to (setDimension) in initAndValidate: needs the concrete param type
+	final public Input<RealVectorParam<Real>> effectSizeInput = new Input<>("effectSize",
 			"the effect size of the predictors on the reassortment rates", Input.Validate.REQUIRED);
 
-	List<RealParameter> predictors;
-	RealParameter NeToReassortment;
-	RealParameter rateShifts;
-	RealParameter effectSize;
-	IntegerParameter predictorIsActive;
+	List<RealVector<Real>> predictors;
+	RealVectorParam<Real> NeToReassortment;
+	RealVector<NonNegativeReal> rateShifts;
+	RealVectorParam<Real> effectSize;
+	IntScalarParam<NonNegativeInt> predictorIsActive;
 
 	boolean NesKnown = false;
 	double[] growth;
@@ -53,19 +60,30 @@ public class GLMReassortmentRates extends PopulationFunction.Abstract implements
 		rateShifts = rateShiftsInput.get();
 		predictors = predictorInput.get();
 		predictorIsActive = predictorIsActiveInput.get();
-		predictorIsActive.setUpper(predictors.size());
-		predictorIsActive.setValue(0, 0);
+		// Valid range is [0, predictors.size()], where predictors.size() is the "no predictor
+		// active" state (see the guards in recalculateNe/getStandardPredictor).
+		//
+		// BEAST 2 pinned this with IntegerParameter.setUpper(predictors.size()), which also
+		// bounded MCMC proposals. BEAST 3 derives bounds from the Domain (plus any attached
+		// distribution) rather than a settable per-instance field, so there is no equivalent
+		// call. The check below catches a bad starting value, but it CANNOT constrain what
+		// operators propose during the run -- that must now come from the XML, by giving
+		// predictorIsActive a domain or prior that caps it at predictors.size().
+		if (predictorIsActive.get() < 0 || predictorIsActive.get() > predictors.size())
+			throw new IllegalArgumentException("predictorIsActive must be in [0, "
+					+ predictors.size() + "] but was " + predictorIsActive.get());
+		predictorIsActive.set(0);
 		effectSize = effectSizeInput.get();
 		effectSize.setDimension(predictors.size());
 
-		NeToReassortment.setDimension(rateShifts.getDimension());
-		growth = new double[rateShifts.getDimension()];
-		
-		rates = new double[rateShifts.getDimension()];
-		stored_rates = new double[rateShifts.getDimension()];
-		
-		invRatio = new double[rateShifts.getDimension()];
-		invRatio_stored = new double[rateShifts.getDimension()];
+		NeToReassortment.setDimension(rateShifts.size());
+		growth = new double[rateShifts.size()];
+
+		rates = new double[rateShifts.size()];
+		stored_rates = new double[rateShifts.size()];
+
+		invRatio = new double[rateShifts.size()];
+		invRatio_stored = new double[rateShifts.size()];
 		
 		recalculateNe();
 	}
@@ -79,26 +97,26 @@ public class GLMReassortmentRates extends PopulationFunction.Abstract implements
 	public double getPopSize(double t) {
 		int i = getIntervalNr(t);
 		double timediff = t;
-		timediff -= rateShifts.getValue(i);
+		timediff -= rateShifts.get(i);
 		return Math.exp(rates[i] - growth[i] * timediff);
 	}
 
 	private int getIntervalNr(double t) {
 		// check which interval t + offset is in
-		for (int i = 0; i < rateShifts.getDimension()-1; i++)
-			if (t < rateShifts.getValue(i+1))
+		for (int i = 0; i < rateShifts.size()-1; i++)
+			if (t < rateShifts.get(i+1))
 				return i;
 		// after the last interval, just keep using the last element
-		return rateShifts.getDimension()-1;
+		return rateShifts.size()-1;
 	}
 	
 	private int getLaterIntervalNr(double t, int startPoint) {
 		// check which interval t + offset is in
-		for (int i = startPoint; i < rateShifts.getDimension()-1; i++)
-			if (t < rateShifts.getValue(i+1))
+		for (int i = startPoint; i < rateShifts.size()-1; i++)
+			if (t < rateShifts.get(i+1))
 				return i;
 		// after the last interval, just keep using the last element
-		return rateShifts.getDimension()-1;
+		return rateShifts.size()-1;
 	}
 
 
@@ -115,14 +133,14 @@ public class GLMReassortmentRates extends PopulationFunction.Abstract implements
 		double curr_time = start;	
 
 		for (int i = first_int; i <= last_int; i++) {
-			if (i > rateShifts.getDimension()) {
+			if (i > rateShifts.size()) {
 				throw new IllegalArgumentException("rate shifts out of bounds");
 			}
 
 			double next_time = Math.min(getNextTime(i), finish);
 			double r = growth[i];
 
-			double rateShift = rateShifts.getArrayValue(i);
+			double rateShift = rateShifts.get(i);
 			double timediff1 = curr_time - rateShift;
 			double timediff2 = next_time - rateShift;
 
@@ -161,8 +179,8 @@ public class GLMReassortmentRates extends PopulationFunction.Abstract implements
 			double next_time = getNextTime(i);
 			double r = growth[i];
 	
-//			double timediff1 = curr_time-rateShifts.getArrayValue(i);
-			double timediff2 = next_time-rateShifts.getArrayValue(i);
+//			double timediff1 = curr_time-rateShifts.get(i);
+			double timediff2 = next_time-rateShifts.get(i);
 	
 			double old_diff = x - integral;
 	
@@ -175,7 +193,7 @@ public class GLMReassortmentRates extends PopulationFunction.Abstract implements
 	
 			double diff = x - integral;
 	
-			if (diff < 0 || i == rateShifts.getDimension()) {
+			if (diff < 0 || i == rateShifts.size()) {
 				
 				if (r == 0.0) {
 					return old_diff/Math.exp(rates[i]) + curr_time;
@@ -188,7 +206,7 @@ public class GLMReassortmentRates extends PopulationFunction.Abstract implements
 			curr_time = next_time;
 			i++;
 			
-		}while(i<=rateShifts.getDimension());
+		}while(i<=rateShifts.size());
 		
 		
 	
@@ -198,8 +216,8 @@ public class GLMReassortmentRates extends PopulationFunction.Abstract implements
 
 
 	private double getNextTime(int i) {
-		if (i < rateShifts.getDimension()-1)
-			return rateShifts.getArrayValue(i+1);
+		if (i < rateShifts.size()-1)
+			return rateShifts.get(i+1);
 		else
 			return Double.POSITIVE_INFINITY;
 	}
@@ -233,17 +251,17 @@ public class GLMReassortmentRates extends PopulationFunction.Abstract implements
 	// computes the Ne's at the break points
 	private void recalculateNe() {
 		// logstandardize the active Predictor
-		double[] logStandardPredictor = new double[rateShifts.getDimension()];
-		if (predictorIsActive.getValue()<predictors.size())  {	
+		double[] logStandardPredictor = new double[rateShifts.size()];
+		if (predictorIsActive.get()<predictors.size())  {	
 			double mean = 0.0;
 			for (int i = 0; i < predictors.size(); i++) {
 			}
 			for (int i = 0; i < independentAfterInput.get()+1; i++) {
-				mean += predictors.get(predictorIsActive.getValue()).getArrayValue(i);
+				mean += predictors.get(predictorIsActive.get()).get(i);
 			}
 			mean /= (independentAfterInput.get()+1);
 			for (int i = 0; i < independentAfterInput.get() + 1; i++) {
-				logStandardPredictor[i] = predictors.get(predictorIsActive.getValue()).getArrayValue(i) - mean;
+				logStandardPredictor[i] = predictors.get(predictorIsActive.get()).get(i) - mean;
 			}
 			double sd = 0.0;
 			for (int i = 0; i < independentAfterInput.get() + 1; i++) {
@@ -257,27 +275,27 @@ public class GLMReassortmentRates extends PopulationFunction.Abstract implements
 		
 
 		
-		growth = new double[rateShifts.getDimension()];
-		rates = new double[rateShifts.getDimension()];
+		growth = new double[rateShifts.size()];
+		rates = new double[rateShifts.size()];
 		double curr_time = 0.0;
-		if (predictorIsActive.getValue()<predictors.size())  {			
+		if (predictorIsActive.get()<predictors.size())  {			
 			for (int i = 0; i < independentAfterInput.get()+1; i++) {
-				rates[i] = effectSize.getArrayValue(predictorIsActive.getValue())*
-						logStandardPredictor[i] + NeToReassortment.getArrayValue(i);
+				rates[i] = effectSize.get(predictorIsActive.get())*
+						logStandardPredictor[i] + NeToReassortment.get(i);
 			}
-			for (int i = independentAfterInput.get()+1; i < NeToReassortment.getDimension(); i++) {
-				rates[i] = NeToReassortment.getArrayValue(i);
+			for (int i = independentAfterInput.get()+1; i < NeToReassortment.size(); i++) {
+				rates[i] = NeToReassortment.get(i);
 			}
 			
 		}else {
-			for (int i = 0; i < NeToReassortment.getDimension(); i++) {
-				rates[i] = NeToReassortment.getArrayValue(i);
+			for (int i = 0; i < NeToReassortment.size(); i++) {
+				rates[i] = NeToReassortment.get(i);
 			}
 		}
-		for (int i = 0; i < NeToReassortment.getDimension()-1; i++) {
+		for (int i = 0; i < NeToReassortment.size()-1; i++) {
 			growth[i] = (rates[i] - rates[i+1])
-					/(rateShifts.getValue(i+1)-curr_time);
-			curr_time = rateShifts.getValue(i+1);
+					/(rateShifts.get(i+1)-curr_time);
+			curr_time = rateShifts.get(i+1);
 			
 			invRatio[i] = Math.exp(rates[i]) / -growth[i];
 		}

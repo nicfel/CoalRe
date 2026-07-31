@@ -3,7 +3,11 @@ package coalre.dynamics;
 import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.inference.CalculationNode;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.NonNegativeReal;
+import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.domain.Real;
+import beast.base.spec.inference.parameter.RealVectorParam;
+import beast.base.spec.type.RealScalar;
 import org.apache.commons.math3.linear.*;
 
 
@@ -13,20 +17,21 @@ import org.apache.commons.math3.linear.*;
 @Description("Populaiton function with values at certain time points that are interpolated in between. Parameter has to be in log space")
 public class NotAKnotSpline extends CalculationNode {
 
-    final public Input<RealParameter> InfectedInput = new Input<>("logInfected",
+    // written to (setDimension) in initAndValidate: needs the concrete param type
+    final public Input<RealVectorParam<Real>> InfectedInput = new Input<>("logInfected",
             "Nes over time in log space", Input.Validate.REQUIRED);
-    final public Input<RealParameter> rateShiftsInput = new Input<>("rateShifts",
+    final public Input<beast.base.spec.type.RealVector<NonNegativeReal>> rateShiftsInput = new Input<>("rateShifts",
             "When to switch between elements of Ne", Input.Validate.REQUIRED);
-    final public Input<RealParameter> uninfectiousRateInput = new Input<>("uninfectiousRate",
+    final public Input<RealScalar<PositiveReal>> uninfectiousRateInput = new Input<>("uninfectiousRate",
             "Rate at which individuals become uninfectious", Input.Validate.REQUIRED);
     final public Input<Integer> gridPointsInput = new Input<>("gridPoints",
             "Number of grid points to use for the spline calculation", 1000);
     final public Input<Boolean> infectedIsNeInput = new Input<>("infectedIsNe",
             "Whether the infected parameter is actually the number of infected or the logNe", false);
 
-    RealParameter infected;
-    RealParameter rateShifts;
-    RealParameter uninfectiousRate;
+    RealVectorParam<Real> infected;
+    beast.base.spec.type.RealVector<NonNegativeReal> rateShifts;
+    RealScalar<PositiveReal> uninfectiousRate;
     int gridPoints;
 
     double[] transmissionRate;
@@ -48,7 +53,7 @@ public class NotAKnotSpline extends CalculationNode {
     public void initAndValidate() {
         infected = InfectedInput.get();
         rateShifts = rateShiftsInput.get();
-        infected.setDimension(rateShifts.getDimension());
+        infected.setDimension(rateShifts.size());
         uninfectiousRate = uninfectiousRateInput.get();
         gridPoints = gridPointsInput.get();
         infectedIsNe = infectedIsNeInput.get();
@@ -58,11 +63,11 @@ public class NotAKnotSpline extends CalculationNode {
     // computes the Ne's at the break points from the growth rates and the transmission rates
     private void recalculateRates() {
         notAKnotCubicSpline();
-        // make the time grid from 0 to rateShifts.getArrayValue(rateShifts.getDimension()-1) using gridPoints
+        // make the time grid from 0 to rateShifts.get(rateShifts.size()-1) using gridPoints
         time = new double[gridPoints+1];
         I = new double[gridPoints+1];
         transmissionRate = new double[gridPoints+1];
-        double dt = rateShifts.getArrayValue(rateShifts.getDimension()-1) / (time.length-1);
+        double dt = rateShifts.get(rateShifts.size()-1) / (time.length-1);
         int j = 0;
         int k = j-1;
         isValid = true;
@@ -70,15 +75,15 @@ public class NotAKnotSpline extends CalculationNode {
             // update the time for this grid point
             time[i] = i*dt;
             // find the interval in which this grid point lies
-            if (time[i] >= rateShifts.getArrayValue(j)) {
+            if (time[i] >= rateShifts.get(j)) {
                 j++;
                 k++;
-                if (k==rateShifts.getDimension()-1) {
+                if (k==rateShifts.size()-1) {
                     k--;
                 }
             }
             // get the time diff from the last point where logI was estimated
-            double timeDiff = time[i]-rateShifts.getArrayValue(k);
+            double timeDiff = time[i]-rateShifts.get(k);
             double timeDiff2 = timeDiff*timeDiff;
             double timeDiff3 = timeDiff2*timeDiff;
             // compute the number of infected individuals at the grid points
@@ -88,7 +93,7 @@ public class NotAKnotSpline extends CalculationNode {
             if (infectedIsNe) {
                 transmissionRate[i] = 1;
             }else {
-                transmissionRate[i] = uninfectiousRate.getValue() -
+                transmissionRate[i] = uninfectiousRate.get() -
                         I[i] * (3 * splineCoeffs[k][0] * timeDiff2 + 2 * splineCoeffs[k][1] * timeDiff + splineCoeffs[k][2]);
             }
             if (transmissionRate[i] < 0) {
@@ -138,18 +143,18 @@ public class NotAKnotSpline extends CalculationNode {
      *  de Boor, Carl. A Practical Guide to Splines. Springer-Verlag, New York: 1978
      */
     public void notAKnotCubicSpline() {
-        int n = rateShifts.getDimension();
+        int n = rateShifts.size();
 
         // Calculate h values (difference between x values)
         double[] h = new double[n - 1];
         for (int i = 0; i < n - 1; i++) {
-            h[i] = rateShifts.getArrayValue(i + 1) - rateShifts.getArrayValue(i);
+            h[i] = rateShifts.get(i + 1) - rateShifts.get(i);
         }
 
         // Calculate the difference in y values
         double[] delta = new double[n - 1];
         for (int i = 0; i < n - 1; i++) {
-            delta[i] = (infected.getArrayValue(i + 1) - infected.getArrayValue(i)) / h[i];
+            delta[i] = (infected.get(i + 1) - infected.get(i)) / h[i];
         }
 
         // Create the tridiagonal system
@@ -181,7 +186,7 @@ public class NotAKnotSpline extends CalculationNode {
             splineCoeffs[i][0] = (mu.getEntry(i + 1) - mu.getEntry(i)) / (6 * h[i]);
             splineCoeffs[i][1] = mu.getEntry(i) / 2;
             splineCoeffs[i][2] = delta[i] - h[i] * (2 * mu.getEntry(i) + mu.getEntry(i + 1)) / 6;
-            splineCoeffs[i][3] = infected.getArrayValue(i);
+            splineCoeffs[i][3] = infected.get(i);
         }
     }
 }

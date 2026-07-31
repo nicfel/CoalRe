@@ -4,7 +4,9 @@ import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.core.Loggable;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.NonNegativeReal;
+import beast.base.spec.domain.Real;
+import beast.base.spec.inference.parameter.RealVectorParam;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -16,21 +18,22 @@ import java.util.List;
 @Description("Computes time varying recombination rates as a population"+
         " function from spline interpolation of the number of infected over time")
 public class PiecewiseConstantReassortmentRateScalers extends PopulationFunction.Abstract implements Loggable  {
-    final public Input<RealParameter> InfectedToRhoInput = new Input<>("InfectedToRho",
+    // written to (setDimension) in initAndValidate: needs the concrete param type
+    final public Input<RealVectorParam<Real>> InfectedToRhoInput = new Input<>("InfectedToRho",
             "the value that maps the number of infected or the Ne to the reassortment rate ");
-    final public Input<RealParameter> rateShiftsInput = new Input<>("rateShifts",
+    final public Input<beast.base.spec.type.RealVector<NonNegativeReal>> rateShiftsInput = new Input<>("rateShifts",
             "When to switch between elements of Ne", Input.Validate.REQUIRED);
 
-    
+
     final public Input<Spline> splineInput = new Input<>("spline",
             "Spline to use for the population function", Input.Validate.REQUIRED);
 
     boolean NesKnown = false;
 
     Spline spline;
-    RealParameter InfectedToRho;
-    RealParameter rateShifts;
-    
+    RealVectorParam<Real> InfectedToRho;
+    beast.base.spec.type.RealVector<NonNegativeReal> rateShifts;
+
 
     double rateRatio;
     
@@ -41,8 +44,8 @@ public class PiecewiseConstantReassortmentRateScalers extends PopulationFunction
         rateShifts = rateShiftsInput.get();
         InfectedToRho = InfectedToRhoInput.get();
         // ensure that the reassortment rates is of dimension rateShifts
-		if (InfectedToRho.getDimension() != rateShifts.getDimension()) {
-			InfectedToRho.setDimension(rateShifts.getDimension());
+		if (InfectedToRho.size() != rateShifts.size()) {
+			InfectedToRho.setDimension(rateShifts.size());
 		}
 
         spline = splineInput.get();
@@ -65,13 +68,13 @@ public class PiecewiseConstantReassortmentRateScalers extends PopulationFunction
             }
         }
         
-        for (int i = 1; i < rateShifts.getDimension(); i++) {
-			if (t >= rateShifts.getValue(i-1) && t < rateShifts.getValue(i)) {
-				return spline.I[interval] * Math.exp(InfectedToRho.getValue(i-1));
+        for (int i = 1; i < rateShifts.size(); i++) {
+			if (t >= rateShifts.get(i-1) && t < rateShifts.get(i)) {
+				return spline.I[interval] * Math.exp(InfectedToRho.get(i-1));
             }
         }
         
-        return spline.I[interval] * Math.exp(InfectedToRho.getValue(rateShifts.getDimension() - 1));
+        return spline.I[interval] * Math.exp(InfectedToRho.get(rateShifts.size() - 1));
         
 			
 
@@ -91,14 +94,14 @@ public class PiecewiseConstantReassortmentRateScalers extends PopulationFunction
         for (int i = intervalFrom; i < spline.gridPoints; i++) {
         	double rateRatio=0.0;    
         	boolean found = false;
-            for (int j = 1; j < rateShifts.getDimension(); j++) {
-    			if (spline.time[i] >= rateShifts.getValue(j-1) && spline.time[i] < rateShifts.getValue(j)) {
-    				rateRatio = Math.exp(InfectedToRho.getValue(j-1));
+            for (int j = 1; j < rateShifts.size(); j++) {
+    			if (spline.time[i] >= rateShifts.get(j-1) && spline.time[i] < rateShifts.get(j)) {
+    				rateRatio = Math.exp(InfectedToRho.get(j-1));
     				found = true;
                 }
             }
 			if (!found)
-				rateRatio = Math.exp(InfectedToRho.getValue(rateShifts.getDimension() - 1));            
+				rateRatio = Math.exp(InfectedToRho.get(rateShifts.size() - 1));            
         	
         	
             double rate = spline.I[i] * rateRatio;

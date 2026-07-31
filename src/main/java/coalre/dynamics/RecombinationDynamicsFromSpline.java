@@ -4,7 +4,8 @@ import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.core.Loggable;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.Real;
+import beast.base.spec.type.RealScalar;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -16,20 +17,20 @@ import java.util.List;
 @Description("Computes time varying recombination rates as a population"+
         " function from spline interpolation of the number of infected over time")
 public class RecombinationDynamicsFromSpline extends PopulationFunction.Abstract implements Loggable {
-    final public Input<RealParameter> InfectedToRhoInput = new Input<>("InfectedToRho",
+    final public Input<RealScalar<Real>> InfectedToRhoInput = new Input<>("InfectedToRho",
             "the value that maps the number of infected or the Ne to the reassortment rate ");
     final public Input<Spline> InfectedToRhoSplineInput = new Input<>("infectedToRhoSpline",
             "the value that maps the number of infected or the Ne to the reassortment rate ", Input.Validate.XOR, InfectedToRhoInput);
-       
-    
+
+
     final public Input<Spline> splineInput = new Input<>("spline",
             "Spline to use for the population function");
 
     boolean NesKnown = false;
 
     Spline spline;
-    Spline infectedToRhoSpline;    
-    RealParameter InfectedToRho;
+    Spline infectedToRhoSpline;
+    RealScalar<Real> InfectedToRho;
     boolean hasNeSpline = false;
     
 
@@ -76,7 +77,7 @@ public class RecombinationDynamicsFromSpline extends PopulationFunction.Abstract
 			if (ratioIsSpline)
 				return spline.I[interval] * infectedToRhoSpline.I[interval];			
 			else
-				return spline.I[interval] * InfectedToRho.getValue();
+				return spline.I[interval] * InfectedToRho.get();
 	    }else {
 	    	if (!infectedToRhoSpline.update())
 				return Double.NaN;
@@ -122,7 +123,7 @@ public class RecombinationDynamicsFromSpline extends PopulationFunction.Abstract
 				if (ratioIsSpline)
 					rate *= infectedToRhoSpline.I[i];
 				else
-					rate *= InfectedToRho.getValue();
+					rate *= InfectedToRho.get();
 				
 	            // if i==intervalFrom, we have to start compute the diff from there
 	            if (spline.time[i+1] > to) {
@@ -188,7 +189,7 @@ public class RecombinationDynamicsFromSpline extends PopulationFunction.Abstract
             if (ratioIsSpline)
                 rate *= infectedToRhoSpline.I[i];
             else
-                rate *= InfectedToRho.getValue();
+                rate *= InfectedToRho.get();
             
             v -= rate * (spline.time[i + 1] - spline.time[i]);
             if (v<0){
@@ -200,7 +201,7 @@ public class RecombinationDynamicsFromSpline extends PopulationFunction.Abstract
 		if (ratioIsSpline)
 			return spline.time[spline.gridPoints - 1] + v / (spline.I[spline.gridPoints - 1] * infectedToRhoSpline.I[spline.gridPoints - 1]);
 		else
-	        return spline.time[spline.gridPoints-1] + v/(spline.I[spline.gridPoints-1]*InfectedToRho.getValue());
+	        return spline.time[spline.gridPoints-1] + v/(spline.I[spline.gridPoints-1]*InfectedToRho.get());
     }
 
     @Override
@@ -237,7 +238,7 @@ public class RecombinationDynamicsFromSpline extends PopulationFunction.Abstract
 	        	if (ratioIsSpline)
 	        		printStream.print(spline.I[i]*infectedToRhoSpline.I[i] + "\t");
 	        	else        		
-	        		printStream.print(spline.I[i]*InfectedToRho.getValue() + "\t");
+	        		printStream.print(spline.I[i]*InfectedToRho.get() + "\t");
 	        }
     	else
             for (int i = 0; i < infectedToRhoSpline.gridPoints; i+=1) {

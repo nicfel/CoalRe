@@ -1,27 +1,34 @@
 package coalre.util;
 
 import beast.base.core.BEASTObject;
-import beast.base.core.Function;
 import beast.base.core.Input;
-import beast.base.inference.parameter.BooleanParameter;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.Real;
+import beast.base.spec.type.BoolVector;
+import beast.base.spec.type.RealVector;
 
-public class SpikeSlabParameter extends BEASTObject implements Function {
+import java.util.AbstractList;
+import java.util.List;
 
-    public Input<BooleanParameter> indicatorInput = new Input<>("indicator",
+/**
+ * A derived real vector whose ith element is taken from either the spike or the
+ * slab vector, selected by the ith indicator.
+ */
+public class SpikeSlabParameter extends BEASTObject implements RealVector<Real> {
+
+    public Input<BoolVector> indicatorInput = new Input<>("indicator",
             "Boolean parameter indicating which elements are spike and which are slab.",
             Input.Validate.REQUIRED);
 
-    public Input<Function> spikeValuesInput = new Input<>("spikeValues",
+    public Input<RealVector<Real>> spikeValuesInput = new Input<>("spikeValues",
             "Value of each element when in spike mode.",
             Input.Validate.REQUIRED);
 
-    public Input<Function> slabValuesInput = new Input<>("slabValues",
+    public Input<RealVector<Real>> slabValuesInput = new Input<>("slabValues",
             "Value of each element when in slab mode.",
             Input.Validate.REQUIRED);
 
-    Function spikeValues, slabValues;
-    BooleanParameter indicators;
+    RealVector<Real> spikeValues, slabValues;
+    BoolVector indicators;
 
     SpikeSlabParameter() { }
 
@@ -32,8 +39,8 @@ public class SpikeSlabParameter extends BEASTObject implements Function {
         spikeValues = spikeValuesInput.get();
         slabValues = slabValuesInput.get();
 
-        if (indicators.getDimension() != spikeValues.getDimension()
-                || indicators.getDimension() != slabValues.getDimension()) {
+        if (indicators.size() != spikeValues.size()
+                || indicators.size() != slabValues.size()) {
             throw new IllegalArgumentException("Dimensions of all inputs to " +
                     "SpikeSlabParameter must match.");
         }
@@ -41,19 +48,33 @@ public class SpikeSlabParameter extends BEASTObject implements Function {
     }
 
     @Override
-    public int getDimension() {
-        return indicators.getDimension();
+    public Real getDomain() {
+        return Real.INSTANCE;
     }
 
     @Override
-    public double getArrayValue(int i) {
-        return indicators.getValue(i)
-                ? spikeValues.getArrayValue(i)
-                : slabValues.getArrayValue(i);
+    public double get(int i) {
+        return indicators.get(i)
+                ? spikeValues.get(i)
+                : slabValues.get(i);
     }
 
+    /**
+     * Elements are derived on demand rather than stored, so this is a live view
+     * over the spike/slab inputs instead of a copied list.
+     */
     @Override
-    public double getArrayValue() {
-        return getArrayValue(0);
+    public List<Double> getElements() {
+        return new AbstractList<>() {
+            @Override
+            public Double get(int i) {
+                return SpikeSlabParameter.this.get(i);
+            }
+
+            @Override
+            public int size() {
+                return indicators.size();
+            }
+        };
     }
 }

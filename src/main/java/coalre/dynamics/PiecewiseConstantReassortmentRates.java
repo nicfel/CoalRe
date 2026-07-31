@@ -4,7 +4,9 @@ import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.core.Loggable;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.NonNegativeReal;
+import beast.base.spec.domain.Real;
+import beast.base.spec.inference.parameter.RealVectorParam;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -16,14 +18,15 @@ import java.util.List;
 @Description("Computes time varying recombination rates as a population"+
         " function from spline interpolation of the number of infected over time")
 public class PiecewiseConstantReassortmentRates extends PopulationFunction.Abstract {
-    final public Input<RealParameter> reassortmentRateInput = new Input<>("reassortmentRate",
+    // written to (setDimension) in initAndValidate: needs the concrete param type
+    final public Input<RealVectorParam<Real>> reassortmentRateInput = new Input<>("reassortmentRate",
             "the value of the reassortmentRate");
-    final public Input<RealParameter> rateShiftsInput = new Input<>("rateShifts",
+    final public Input<beast.base.spec.type.RealVector<NonNegativeReal>> rateShiftsInput = new Input<>("rateShifts",
             "When to switch between elements of Ne", Input.Validate.REQUIRED);
 
 
-    RealParameter reassortmentRate;
-    RealParameter rateShifts;
+    RealVectorParam<Real> reassortmentRate;
+    beast.base.spec.type.RealVector<NonNegativeReal> rateShifts;
 
 
     double rateRatio;
@@ -35,8 +38,8 @@ public class PiecewiseConstantReassortmentRates extends PopulationFunction.Abstr
         rateShifts = rateShiftsInput.get();
         reassortmentRate = reassortmentRateInput.get();
         // ensure that the reassortment rates is of dimension rateShifts
-		if (reassortmentRate.getDimension() != rateShifts.getDimension()) {
-			reassortmentRate.setDimension(rateShifts.getDimension());
+		if (reassortmentRate.size() != rateShifts.size()) {
+			reassortmentRate.setDimension(rateShifts.size());
 		}
     }
 
@@ -49,12 +52,12 @@ public class PiecewiseConstantReassortmentRates extends PopulationFunction.Abstr
     @Override
     public double getPopSize(double t) {
     	// check which time t is, if it is larger than the last time, return the last Ne
-        for (int i = 1; i < rateShifts.getDimension(); i++) {
-			if (t >= rateShifts.getValue(i-1) && t < rateShifts.getValue(i)) {
-				return Math.exp(reassortmentRate.getValue(i-1));
+        for (int i = 1; i < rateShifts.size(); i++) {
+			if (t >= rateShifts.get(i-1) && t < rateShifts.get(i)) {
+				return Math.exp(reassortmentRate.get(i-1));
             }
         }
-        return Math.exp(reassortmentRate.getValue(rateShifts.getDimension() - 1));
+        return Math.exp(reassortmentRate.get(rateShifts.size() - 1));
         
     }
 
@@ -63,34 +66,34 @@ public class PiecewiseConstantReassortmentRates extends PopulationFunction.Abstr
         // compute the integral of Ne's between from an to
         double NeIntegral = 0;
         double fromTime = 0, toTime=0;
-		for (int i = 1; i < rateShifts.getDimension(); i++) {
+		for (int i = 1; i < rateShifts.size(); i++) {
 			// check if from is in this interval
-			if (from >= rateShifts.getValue(i - 1) && from < rateShifts.getValue(i)) {
+			if (from >= rateShifts.get(i - 1) && from < rateShifts.get(i)) {
 				fromTime = from;
-			}else if (from < rateShifts.getValue(i - 1)) {
-				fromTime = rateShifts.getValue(i - 1);
+			}else if (from < rateShifts.get(i - 1)) {
+				fromTime = rateShifts.get(i - 1);
             }else{
-            	fromTime = rateShifts.getValue(i);
+            	fromTime = rateShifts.get(i);
             }
 			
 			// check if to in in this interval
-			if (to >= rateShifts.getValue(i - 1) && to < rateShifts.getValue(i)) {
+			if (to >= rateShifts.get(i - 1) && to < rateShifts.get(i)) {
 				toTime = to;
-			} else if (to < rateShifts.getValue(i - 1)) {
+			} else if (to < rateShifts.get(i - 1)) {
 				break;
 			} else {
-				toTime = rateShifts.getValue(i);
+				toTime = rateShifts.get(i);
 			}
-			NeIntegral += (toTime - fromTime) * Math.exp(reassortmentRate.getValue(i - 1));
+			NeIntegral += (toTime - fromTime) * Math.exp(reassortmentRate.get(i - 1));
 		}       
 
 		// add the scenario where to or to and from are larger than the last time
-		if (to >= rateShifts.getValue(rateShifts.getDimension() - 1)) {
-			if (from >= rateShifts.getValue(rateShifts.getDimension() - 1)) {
-				NeIntegral += (to - from) * Math.exp(reassortmentRate.getValue(rateShifts.getDimension() - 1));
+		if (to >= rateShifts.get(rateShifts.size() - 1)) {
+			if (from >= rateShifts.get(rateShifts.size() - 1)) {
+				NeIntegral += (to - from) * Math.exp(reassortmentRate.get(rateShifts.size() - 1));
 			} else {
-				NeIntegral += (to - rateShifts.getValue(rateShifts.getDimension() - 1))
-						* Math.exp(reassortmentRate.getValue(rateShifts.getDimension() - 1));
+				NeIntegral += (to - rateShifts.get(rateShifts.size() - 1))
+						* Math.exp(reassortmentRate.get(rateShifts.size() - 1));
 			}
 		}
 		
@@ -106,17 +109,17 @@ public class PiecewiseConstantReassortmentRates extends PopulationFunction.Abstr
     public double getInverseIntensity(double v) {
     	
         // compute the integral of Ne's between from an to
-		for (int i = 1; i < rateShifts.getDimension(); i++) {
-			v -= (rateShifts.getValue(i) - rateShifts.getValue(i - 1)) * Math.exp(reassortmentRate.getValue(i - 1));
+		for (int i = 1; i < rateShifts.size(); i++) {
+			v -= (rateShifts.get(i) - rateShifts.get(i - 1)) * Math.exp(reassortmentRate.get(i - 1));
 			if (v < 0) {
-				v += (rateShifts.getValue(i) - rateShifts.getValue(i - 1)) * Math.exp(reassortmentRate.getValue(i - 1));
+				v += (rateShifts.get(i) - rateShifts.get(i - 1)) * Math.exp(reassortmentRate.get(i - 1));
 				// solve for the final time
-				return rateShifts.getValue(i - 1) + v / Math.exp(reassortmentRate.getValue(i - 1));
+				return rateShifts.get(i - 1) + v / Math.exp(reassortmentRate.get(i - 1));
 			}			
 		}    		
 
-		return rateShifts.getValue(rateShifts.getDimension() - 1)
-				+ v / Math.exp(reassortmentRate.getValue(rateShifts.getDimension() - 1));
+		return rateShifts.get(rateShifts.size() - 1)
+				+ v / Math.exp(reassortmentRate.get(rateShifts.size() - 1));
     }
 
     @Override
