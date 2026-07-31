@@ -1,7 +1,7 @@
 package coalre.util;
 
 import beastfx.app.inputeditor.BeautiDoc;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.inference.Scalable;
 import beast.base.core.BEASTInterface;
 import beast.base.core.BEASTObject;
 import beast.base.evolution.likelihood.GenericTreeLikelihood;
@@ -36,8 +36,8 @@ public class BEAUtiConnector {
 
         MCMC mcmc = (MCMC) doc.mcmc.get();
 
-        Set<RealParameter> parametersToScaleUp = new HashSet<>();
-        Set<RealParameter> parametersToScaleDown = new HashSet<>();
+        Set<Scalable> parametersToScaleUp = new HashSet<>();
+        Set<Scalable> parametersToScaleDown = new HashSet<>();
         Set<Tree> segmentTrees = new HashSet<>();
 
         for (BEASTInterface p : doc.getPartitions("tree")) {
@@ -113,17 +113,13 @@ public class BEAUtiConnector {
 		                // Note: built-in up/down operators scale trees _down_ while
 		                // ours scales trees _up_, hence the up/down reversal.
 		                for (BEASTObject o : upDown.upInput.get()) {
-		                    if (o instanceof RealParameter) {
-		                        if (o.getID().contains("clock"))
-		                            parametersToScaleDown.add((RealParameter)o);
-		                    }
+		                    if (o instanceof Scalable s && o.getID().contains("clock"))
+		                        parametersToScaleDown.add(s);
 		                }
-		
+
 		                for (BEASTObject o : upDown.downInput.get()) {
-		                    if (o instanceof RealParameter) {
-		                        if (o.getID().contains("clock"))
-		                            parametersToScaleUp.add((RealParameter)o);
-		                    }
+		                    if (o instanceof Scalable s && o.getID().contains("clock"))
+		                        parametersToScaleUp.add(s);
 		                }
                     }
                     if (((AdaptableOperatorSampler) aos).treeInput.get().size()!=0)
@@ -144,19 +140,10 @@ public class BEAUtiConnector {
 
         NetworkScaleOperator networkUpDown = (NetworkScaleOperator)doc.pluginmap.get("networkUpDownCwR.alltrees");
         if (networkUpDown != null) {
-            List<RealParameter> paramsCurrent;
-
-            paramsCurrent = networkUpDown.upParametersInput.get();
-            for (RealParameter param : paramsCurrent) {
-                if (param.getID().toLowerCase().contains("clock"))
-                    networkUpDown.upParametersInput.get().remove(param);
-            }
-
-            paramsCurrent = networkUpDown.downParametersInput.get();
-            for (RealParameter param : paramsCurrent) {
-                if (param.getID().toLowerCase().contains("clock"))
-                    networkUpDown.downParametersInput.get().remove(param);
-            }
+            // removeIf, not a for-each with remove(): the list being iterated is the very
+            // list the Input holds, so removing during iteration threw ConcurrentModificationException.
+            networkUpDown.upParametersInput.get().removeIf(BEAUtiConnector::isClockParameter);
+            networkUpDown.downParametersInput.get().removeIf(BEAUtiConnector::isClockParameter);
 
             networkUpDown.upParametersInput.get().addAll(parametersToScaleUp);
             networkUpDown.downParametersInput.get().addAll(parametersToScaleDown);
@@ -180,5 +167,14 @@ public class BEAUtiConnector {
         }
         
         return false;
+    }
+
+    /**
+     * Scalable is not a BEASTInterface, so the ID has to be read off the underlying object.
+     */
+    private static boolean isClockParameter(Scalable s) {
+        return s instanceof BEASTInterface b
+                && b.getID() != null
+                && b.getID().toLowerCase().contains("clock");
     }
 }

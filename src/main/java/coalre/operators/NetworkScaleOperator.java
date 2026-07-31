@@ -2,7 +2,8 @@ package coalre.operators;
 
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.inference.Scalable;
+import beast.base.spec.inference.parameter.RealVectorParam;
 import beast.base.util.Randomizer;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
@@ -21,17 +22,17 @@ public class NetworkScaleOperator extends NetworkOperator {
 
 	public Input<Boolean> scaleRootOnlyInput = new Input<>("scaleRootOnly", "Scale only the root node.", false);
 
-	public Input<List<RealParameter>> upParametersInput = new Input<>("upParameter",
+	public Input<List<Scalable>> upParametersInput = new Input<>("upParameter",
 			"Parameters to scale in the SAME direction as the network.", new ArrayList<>());
 
-	public Input<List<RealParameter>> upLogScaledParametersInput = new Input<>("upLogScaledParameter",
+	public Input<List<RealVectorParam<?>>> upLogScaledParametersInput = new Input<>("upLogScaledParameter",
 			"Parameters to scale in the SAME direction as the network, but with a log-scaled proposal distribution.",
 			new ArrayList<>());
 
-	public Input<List<RealParameter>> downParametersInput = new Input<>("downParameter",
+	public Input<List<Scalable>> downParametersInput = new Input<>("downParameter",
 			"Parameters to scale in the OPPOSITE direction as the network.", new ArrayList<>());
 
-	public Input<List<RealParameter>> downLogScaledParametersInput = new Input<>("downLogScaledParameter",
+	public Input<List<RealVectorParam<?>>> downLogScaledParametersInput = new Input<>("downLogScaledParameter",
 			"Parameters to scale in the OPPOSITE direction as the network, but with a log-scaled proposal distribution.",
 			new ArrayList<>());
 
@@ -60,7 +61,7 @@ public class NetworkScaleOperator extends NetworkOperator {
 
 	double scaleFactor;
 	boolean scaleRootOnly;
-	List<RealParameter> upParameters, downParameters;
+	List<Scalable> upParameters, downParameters;
 	double upper, lower;
 
 	Map<NetworkNode, Double> oldLengths;
@@ -146,21 +147,21 @@ public class NetworkScaleOperator extends NetworkOperator {
 //				int count = resampleNodeHeightLastInterval(network.getRootEdge().childNode, lastIntervalInput.get(), f);
 //				logHR += Math.log(f) * (count - 2);
 
-				for (RealParameter param : upLogScaledParametersInput.get()) {
+				for (RealVectorParam<?> param : upLogScaledParametersInput.get()) {
 					param.startEditing(this);
 					double logScaler = Math.log(f);
 					// scale only the last interval, written to generalize in the gfuture
-					for (int i = param.getDimension() - 1; i < param.getDimension(); i++) {
-						param.setValue(i, param.getValue(i) + logScaler);
+					for (int i = param.size() - 1; i < param.size(); i++) {
+						param.set(i, param.get(i) + logScaler);
 						logHR += logScaler;
 					}
 				}
-				for (RealParameter param : downLogScaledParametersInput.get()) {
+				for (RealVectorParam<?> param : downLogScaledParametersInput.get()) {
 					param.startEditing(this);
 					// convert scaler to log space
 					double logScaler = doubleDiscountInput.get() ? 2 * Math.log(f) : Math.log(f);
-					for (int i = param.getDimension() - 1; i < param.getDimension(); i++) {
-						param.setValue(i, param.getValue(i) - logScaler);
+					for (int i = param.size() - 1; i < param.size(); i++) {
+						param.set(i, param.get(i) - logScaler);
 						logHR -= doubleDiscountInput.get() ? logScaler/2 : logScaler;
 					}
 				}
@@ -183,33 +184,31 @@ public class NetworkScaleOperator extends NetworkOperator {
 			// BEAST3 Scalable contract: scale(s) already returns the log Jacobian
 			// determinant (dof * log s), not a dof count — add it directly. The sign
 			// for down-scaled parameters is carried inside scale(1/f).
-			for (RealParameter param : upParameters) {
-				param.startEditing(this);
+			for (Scalable param : upParameters) {
 				logHR += param.scale(f);
 			}
 
-			for (RealParameter param : downParameters) {
-				param.startEditing(this);
+			for (Scalable param : downParameters) {
 				logHR += param.scale(1.0 / f);
 			}
 
-			for (RealParameter param : upLogScaledParametersInput.get()) {
+			for (RealVectorParam<?> param : upLogScaledParametersInput.get()) {
 				param.startEditing(this);
 				// convert scaler to log space
 				double logScaler = Math.log(f);
 
-				for (int i = 0; i < param.getDimension(); i++) {
-					param.setValue(i, param.getValue(i) + logScaler);
+				for (int i = 0; i < param.size(); i++) {
+					param.set(i, param.get(i) + logScaler);
 					logHR += logScaler;
 				}
 
 			}
-			for (RealParameter param : downLogScaledParametersInput.get()) {
+			for (RealVectorParam<?> param : downLogScaledParametersInput.get()) {
 				param.startEditing(this);
 				// convert scaler to log space
 				double logScaler = doubleDiscountInput.get() ? 2 * Math.log(f) : Math.log(f);
-				for (int i = 0; i < param.getDimension(); i++) {
-					param.setValue(i, param.getValue(i) - logScaler);
+				for (int i = 0; i < param.size(); i++) {
+					param.set(i, param.get(i) - logScaler);
 					logHR -= doubleDiscountInput.get() ? logScaler/2 : logScaler;
 				}
 
