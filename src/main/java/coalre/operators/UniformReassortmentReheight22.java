@@ -2,8 +2,8 @@ package coalre.operators;
 
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
+import beast.base.inference.Scalable;
 import beast.base.inference.operator.kernel.KernelDistribution;
-import beast.base.inference.parameter.RealParameter;
 import beast.base.util.Randomizer;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
@@ -30,7 +30,7 @@ public class UniformReassortmentReheight22 extends NetworkOperator {
 
     double scaleFactor;
     boolean scaleRootOnly;
-    List<RealParameter> upParameters, downParameters;
+    List<Scalable> upParameters, downParameters;
     double upper, lower;
    
 

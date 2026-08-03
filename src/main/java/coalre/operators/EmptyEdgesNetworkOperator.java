@@ -12,7 +12,8 @@ import beast.base.core.Log;
 import beast.base.evolution.tree.Node;
 import beast.base.evolution.tree.Tree;
 import beast.base.inference.Operator;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.inference.parameter.RealScalarParam;
 import beast.base.util.Randomizer;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
@@ -33,7 +34,7 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 			"Offset for the removed edges. This is used to avoid the operator to remove edges that were added in the same proposal.",
 			0);
 	
-	public Input<List<RealParameter>> segmentRatesInput = new Input<>("segmentRates", "Rates for each segment.",
+	public Input<List<RealScalarParam<PositiveReal>>> segmentRatesInput = new Input<>("segmentRates", "Rates for each segment.",
 			new ArrayList<>());
 
 		
@@ -138,8 +139,8 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 				double scaler = treeLenghts[i]/treeAfter[i];
 				if (Math.abs(scaler-1.0)>1e-6) {
 					// scale the rate
-					double currentRate = segmentRatesInput.get().get(i).getValue();
-					segmentRatesInput.get().get(i).setValue(currentRate * scaler);
+					double currentRate = segmentRatesInput.get().get(i).get();
+					segmentRatesInput.get().get(i).set(currentRate * scaler);
 					
 				}
 			}				

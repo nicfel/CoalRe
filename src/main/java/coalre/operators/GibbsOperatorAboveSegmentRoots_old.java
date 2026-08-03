@@ -3,7 +3,9 @@ package coalre.operators;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
-import beast.base.inference.parameter.RealParameter;
+import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.domain.UnitInterval;
+import beast.base.spec.type.RealScalar;
 import beast.base.util.Randomizer;
 import coalre.network.NetworkEdge;
 import coalre.network.NetworkNode;
@@ -16,13 +18,13 @@ import java.util.stream.Collectors;
 
 public class GibbsOperatorAboveSegmentRoots_old extends NetworkOperator {
 
-    public Input<RealParameter> reassortmentRateInput = new Input<>("reassortmentRate",
+    public Input<RealScalar<PositiveReal>> reassortmentRateInput = new Input<>("reassortmentRate",
             "Rate of reassortment (per lineage per unit time)", Validate.REQUIRED);
 
     public Input<PopulationFunction> populationFunctionInput = new Input<>("populationModel",
             "Population model to use.", Validate.REQUIRED);
-    
-    public Input<RealParameter> binomialProbInput = new Input<>("binomialProb",
+
+    public Input<RealScalar<UnitInterval>> binomialProbInput = new Input<>("binomialProb",
             "Probability of a given segment choosing a particular parent.");
 
     public Input<Double> maxHeightRatioInput = new Input<>(
@@ -38,7 +40,7 @@ public class GibbsOperatorAboveSegmentRoots_old extends NetworkOperator {
     private int nSegments;
     
     private PopulationFunction populationFunction;
-    private RealParameter reassortmentRate;
+    private RealScalar<PositiveReal> reassortmentRate;
 
     @Override
     public void initAndValidate() {
@@ -92,7 +94,7 @@ public class GibbsOperatorAboveSegmentRoots_old extends NetworkOperator {
                     transformedTimeToNextCoal + currentTransformedTime) - currentTime;
 
             
-            double timeToNextReass = k>=1 ? Randomizer.nextExponential(k*reassortmentRate.getValue() * redFactor) : Double.POSITIVE_INFINITY;
+            double timeToNextReass = k>=1 ? Randomizer.nextExponential(k*reassortmentRate.get() * redFactor) : Double.POSITIVE_INFINITY;
 
             // next event time
             double timeUntilNextEvent = Math.min(timeToNextCoal, timeToNextReass);
@@ -183,7 +185,7 @@ public class GibbsOperatorAboveSegmentRoots_old extends NetworkOperator {
 	                hasSegs_right.set(segIdx);
 	            }
         	}else {
-	            if (Randomizer.nextDouble()>binomialProbInput.get().getArrayValue()) {
+	            if (Randomizer.nextDouble()>binomialProbInput.get().get()) {
 	                hasSegs_left.set(segIdx);
 	            } else {
 	                hasSegs_right.set(segIdx);

@@ -3,7 +3,6 @@ package coalre.operators;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
 import beast.base.inference.operator.kernel.KernelDistribution;
-import beast.base.inference.parameter.RealParameter;
 import beast.base.util.Randomizer;
 import coalre.network.Network;
 import coalre.network.NetworkEdge;

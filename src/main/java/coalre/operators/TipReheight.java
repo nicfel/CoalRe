@@ -3,10 +3,11 @@ package coalre.operators;
 import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
-import beast.base.inference.parameter.RealParameter;
 import beast.base.evolution.alignment.TaxonSet;
 import beast.base.evolution.tree.Node;
 import beast.base.inference.distribution.ParametricDistribution;
+import beast.base.spec.domain.Real;
+import beast.base.spec.inference.parameter.RealScalarParam;
 import beast.base.util.Randomizer;
 import coalre.network.NetworkNode;
 
@@ -39,7 +40,7 @@ public class TipReheight extends NetworkOperator {
     public final Input<ParametricDistribution> distInput = new Input<>("distr",
             "distribution used to calculate prior over MRCA time, "
                     + "e.g. normal, beta, gamma. If not specified, monophyletic must be true");
-    public Input<RealParameter> dateOffset = new Input<>("dateOffset", "keeps track of how much the dates have change", Validate.REQUIRED);
+    public Input<RealScalarParam<Real>> dateOffset = new Input<>("dateOffset", "keeps track of how much the dates have change", Validate.REQUIRED);
 
     // shadows size
     double size;
@@ -101,8 +102,8 @@ public class TipReheight extends NetworkOperator {
                 	}
                 	
                 	dateOffset.get().startEditing(this);
-                	dateOffset.get().setValue(dateOffset.get().getValue()+diff);
-                	
+                	dateOffset.get().set(dateOffset.get().get()+diff);
+
                 }else if (oldHeight==0){
                 	// get the second lowest height    
                 	double minHeight = Double.POSITIVE_INFINITY;
@@ -127,7 +128,7 @@ public class TipReheight extends NetworkOperator {
                 	}
                 	
                 	dateOffset.get().startEditing(this);
-                	dateOffset.get().setValue(dateOffset.get().getValue()+minHeight);
+                	dateOffset.get().set(dateOffset.get().get()+minHeight);
                 }
 
         		break;

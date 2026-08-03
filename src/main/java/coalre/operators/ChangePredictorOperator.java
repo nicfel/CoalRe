@@ -8,28 +8,31 @@ import beast.base.core.Input;
 import beast.base.core.Log;
 import beast.base.core.Input.Validate;
 import beast.base.inference.Operator;
-import beast.base.inference.parameter.IntegerParameter;
-import beast.base.inference.parameter.RealParameter;
 import beast.base.inference.util.InputUtil;
+import beast.base.spec.domain.NonNegativeInt;
+import beast.base.spec.domain.Real;
+import beast.base.spec.inference.parameter.IntVectorParam;
+import beast.base.spec.inference.parameter.RealVectorParam;
+import beast.base.spec.type.RealVector;
 import beast.base.util.Randomizer;
 
 
 @Description("joint operator to keep the total reassortment the same")
 public class ChangePredictorOperator extends Operator {
-	final public Input<List<RealParameter>> predictorInput = new Input<>("predictor", "predictor parameters that are used to calculate the Ne", new ArrayList<>());
-	final public Input<RealParameter> NeToReassortmentInput = new Input<>("neToReassortment",
+	final public Input<List<RealVector<Real>>> predictorInput = new Input<>("predictor", "predictor parameters that are used to calculate the Ne", new ArrayList<>());
+	final public Input<RealVectorParam<Real>> NeToReassortmentInput = new Input<>("neToReassortment",
 			"the value that maps the number of infected or the Ne to the reassortment rate ");
-	final public Input<IntegerParameter> predictorIsActiveInput = new Input<>("predictorIsActive",
+	final public Input<IntVectorParam<NonNegativeInt>> predictorIsActiveInput = new Input<>("predictorIsActive",
 			"indicates which predictors are active at which time point");
 	final public Input<Integer> independentAfterInput = new Input<>("independentAfter",
 			"ignore differences after that index");
-	final public Input<RealParameter> effectSizeInput = new Input<>("effectSize",
+	final public Input<RealVector<Real>> effectSizeInput = new Input<>("effectSize",
 			"the effect size of the predictors on the reassortment rates", Input.Validate.REQUIRED);
-	
-	RealParameter NeToReassortment;
-	RealParameter effectSize;
 
-	List<RealParameter> predictors;
+	RealVectorParam<Real> NeToReassortment;
+	RealVector<Real> effectSize;
+
+	List<RealVector<Real>> predictors;
 
     @Override
 	public void initAndValidate() {
@@ -46,20 +49,28 @@ public class ChangePredictorOperator extends Operator {
     @Override
     public double proposal() {
 
-        IntegerParameter param = (IntegerParameter) InputUtil.get(predictorIsActiveInput, this);
+        IntVectorParam<NonNegativeInt> param = (IntVectorParam<NonNegativeInt>) InputUtil.get(predictorIsActiveInput, this);
 
-        int oldValue = param.getValue(0);
-        int i = Randomizer.nextInt(param.getDimension());
-        int newValue = Randomizer.nextInt(param.getUpper() - param.getLower() + 1) + param.getLower();
+        int oldValue = param.get(0);
+        int i = Randomizer.nextInt(param.size());
+        // Valid states are the predictor indices 0..predictors.size()-1 plus predictors.size(),
+        // which means "no predictor active" (see the guards in GLMReassortmentRates).
+        //
+        // BEAST 2 read this range off the parameter itself, which carried lower/upper set in the
+        // XML (upper="4" for 4 predictors). BEAST 3 derives bounds from the Domain instead, and
+        // NonNegativeInt inherits getUpper() == Integer.MAX_VALUE from Int -- so the old
+        // expression became nextInt(Integer.MAX_VALUE - 0 + 1), which overflows to
+        // Integer.MIN_VALUE. The range is therefore taken from the predictor list directly.
+        int newValue = Randomizer.nextInt(predictors.size() + 1);
 
-        param.setValue(i, newValue);
-        
+        param.set(i, newValue);
+
         double[] currentRates = calculateRates(oldValue);
-        
+
         // set the new values of NeToReassortment, such that the total reassortment rate remains the same
         double[] newRates = calculateRates(newValue);
-        for (int j = 0; j < NeToReassortment.getDimension()-1; j++) {
-			NeToReassortment.setValue(j, NeToReassortment.getArrayValue(j) + currentRates[j] - newRates[j]);
+        for (int j = 0; j < NeToReassortment.size()-1; j++) {
+			NeToReassortment.set(j, NeToReassortment.get(j) + currentRates[j] - newRates[j]);
 		}
         return 0.0;
     }
@@ -72,11 +83,11 @@ public class ChangePredictorOperator extends Operator {
 			for (int i = 0; i < predictors.size(); i++) {
 			}
 			for (int i = 0; i < independentAfterInput.get()+1; i++) {
-				mean += predictors.get(predictorIndex).getArrayValue(i);
+				mean += predictors.get(predictorIndex).get(i);
 			}
 			mean /= (independentAfterInput.get()+1);
 			for (int i = 0; i < independentAfterInput.get() + 1; i++) {
-				logStandardPredictor[i] = predictors.get(predictorIndex).getArrayValue(i) - mean;
+				logStandardPredictor[i] = predictors.get(predictorIndex).get(i) - mean;
 			}
 			double sd = 0.0;
 			for (int i = 0; i < independentAfterInput.get() + 1; i++) {
@@ -89,18 +100,18 @@ public class ChangePredictorOperator extends Operator {
 		}
 		
 		
-		double[] rates = new double[NeToReassortment.getDimension()];
-		if (predictorIndex<predictors.size())  {			
+		double[] rates = new double[NeToReassortment.size()];
+		if (predictorIndex<predictors.size())  {
 			for (int i = 0; i < independentAfterInput.get()+1; i++) {
-				rates[i] = effectSize.getArrayValue(predictorIndex)*
-						logStandardPredictor[i] + NeToReassortment.getArrayValue(i);
+				rates[i] = effectSize.get(predictorIndex)*
+						logStandardPredictor[i] + NeToReassortment.get(i);
 			}
-			for (int i = independentAfterInput.get()+1; i < NeToReassortment.getDimension(); i++) {
-				rates[i] = NeToReassortment.getArrayValue(i);
+			for (int i = independentAfterInput.get()+1; i < NeToReassortment.size(); i++) {
+				rates[i] = NeToReassortment.get(i);
 			}
 		}else {
-			for (int i = 0; i < NeToReassortment.getDimension(); i++) {
-				rates[i] = NeToReassortment.getArrayValue(i);
+			for (int i = 0; i < NeToReassortment.size(); i++) {
+				rates[i] = NeToReassortment.get(i);
 			}
 		}
 		return rates;
