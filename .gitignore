@@ -11,6 +11,7 @@
 .ipynb_checkpoints
 
 # Build/test files
+/target
 /bin
 /build
 /build-lib
