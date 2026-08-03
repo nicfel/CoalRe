@@ -3,7 +3,7 @@ package coalre.operators;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
-import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.domain.NonNegativeReal;
 import beast.base.spec.domain.UnitInterval;
 import beast.base.spec.type.RealScalar;
 import beast.base.util.Randomizer;
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 public class GibbsOperatorAboveSegmentRoots_old extends NetworkOperator {
 
-    public Input<RealScalar<PositiveReal>> reassortmentRateInput = new Input<>("reassortmentRate",
+    public Input<RealScalar<? extends NonNegativeReal>> reassortmentRateInput = new Input<>("reassortmentRate",
             "Rate of reassortment (per lineage per unit time)", Validate.REQUIRED);
 
     public Input<PopulationFunction> populationFunctionInput = new Input<>("populationModel",
@@ -40,7 +40,7 @@ public class GibbsOperatorAboveSegmentRoots_old extends NetworkOperator {
     private int nSegments;
     
     private PopulationFunction populationFunction;
-    private RealScalar<PositiveReal> reassortmentRate;
+    private RealScalar<? extends NonNegativeReal> reassortmentRate;
 
     @Override
     public void initAndValidate() {

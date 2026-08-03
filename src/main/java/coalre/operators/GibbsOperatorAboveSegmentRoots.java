@@ -1,6 +1,6 @@
 package coalre.operators;
 
-import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.domain.NonNegativeReal;
 import beast.base.spec.domain.UnitInterval;
 import beast.base.spec.type.RealScalar;
 import beast.base.core.Input;
@@ -26,7 +26,7 @@ public class GibbsOperatorAboveSegmentRoots extends NetworkOperator {
 
     
     private PopulationFunction populationFunction;
-    private RealScalar<PositiveReal> reassortmentRate;
+    private RealScalar<? extends NonNegativeReal> reassortmentRate;
     public PopulationFunction timeVaryingReassortmentRates;
     
     private boolean isTimeVarying = false;

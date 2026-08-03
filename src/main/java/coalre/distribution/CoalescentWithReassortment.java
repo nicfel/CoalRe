@@ -4,7 +4,7 @@ import beast.base.inference.CalculationNode;
 import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
-import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.domain.NonNegativeReal;
 import beast.base.spec.type.RealScalar;
 import coalre.network.NetworkNode;
 import coalre.statistics.NetworkStatsLogger;
@@ -21,7 +21,10 @@ import java.util.List;
         " the framework of Mueller (2018).")
 public class CoalescentWithReassortment extends NetworkDistribution {
 	
-	public Input<RealScalar<PositiveReal>> reassortmentRateInput = new Input<>(
+	// NonNegativeReal, not PositiveReal: a rate of 0 is a legitimate model, namely the
+	// tree (no-reassortment) special case of the network model. The wildcard lets this
+	// input also accept a producer with the narrower PositiveReal domain.
+	public Input<RealScalar<? extends NonNegativeReal>> reassortmentRateInput = new Input<>(
 	        "reassortmentRate",
             "reassortment rate (per lineage per unit time)");
 
@@ -50,7 +53,7 @@ public class CoalescentWithReassortment extends NetworkDistribution {
 
 
 	public PopulationFunction populationFunction;
-    private RealScalar<PositiveReal> reassortmentRate;
+    private RealScalar<? extends NonNegativeReal> reassortmentRate;
     public PopulationFunction timeVaryingReassortmentRates;
 
     public NetworkIntervals intervals;

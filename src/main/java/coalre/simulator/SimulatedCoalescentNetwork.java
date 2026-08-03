@@ -2,7 +2,7 @@ package coalre.simulator;
 
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
-import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.domain.NonNegativeReal;
 import beast.base.spec.domain.UnitInterval;
 import beast.base.spec.type.RealScalar;
 import beast.base.evolution.alignment.TaxonSet;
@@ -25,7 +25,8 @@ import java.util.List;
 
 public class SimulatedCoalescentNetwork extends Network {
 
-    public Input<RealScalar<PositiveReal>> reassortmentRateInput = new Input<>("reassortmentRate",
+    // NonNegativeReal: rate 0 simulates the no-reassortment (tree) special case.
+    public Input<RealScalar<? extends NonNegativeReal>> reassortmentRateInput = new Input<>("reassortmentRate",
             "Rate of reassortment (per lineage per unit time)");
     
 	public Input<PopulationFunction> timeVaryingReassortmentRatesInput = new Input<>(
@@ -60,7 +61,7 @@ public class SimulatedCoalescentNetwork extends Network {
             "Name of file to write simulated network to.");
 
     private PopulationFunction populationFunction;
-    private RealScalar<PositiveReal> reassortmentRate;
+    private RealScalar<? extends NonNegativeReal> reassortmentRate;
     private RealScalar<UnitInterval> binomialProb;
     
     public PopulationFunction timeVaryingReassortmentRates;
