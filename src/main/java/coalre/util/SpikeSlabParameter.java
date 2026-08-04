@@ -30,7 +30,9 @@ public class SpikeSlabParameter extends BEASTObject implements RealVector<Real> 
     RealVector<Real> spikeValues, slabValues;
     BoolVector indicators;
 
-    SpikeSlabParameter() { }
+    // Must be public: registered as a BEASTInterface service provider in
+    // module-info, and JPMS requires a public no-arg constructor for those.
+    public SpikeSlabParameter() { }
 
     @Override
     public void initAndValidate() {
