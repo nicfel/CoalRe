@@ -13,7 +13,7 @@ import beast.base.inference.util.InputUtil;
 import beast.base.spec.domain.NonNegativeInt;
 import beast.base.spec.domain.Real;
 import beast.base.spec.inference.parameter.RealVectorParam;
-import beast.base.spec.type.IntVector;
+import beast.base.spec.type.IntScalar;
 import beast.base.spec.type.RealVector;
 import beast.base.util.Randomizer;
 import cern.colt.Arrays;
@@ -25,8 +25,8 @@ public class EffectSizePredictorOperator extends Operator {
 	final public Input<List<RealVector<Real>>> predictorInput = new Input<>("predictor", "predictor parameters that are used to calculate the Ne", new ArrayList<>());
 	final public Input<RealVectorParam<Real>> NeToReassortmentInput = new Input<>("neToReassortment",
 			"the value that maps the number of infected or the Ne to the reassortment rate ");
-	final public Input<IntVector<NonNegativeInt>> predictorIsActiveInput = new Input<>("predictorIsActive",
-			"indicates which predictors are active at which time point");
+	final public Input<IntScalar<NonNegativeInt>> predictorIsActiveInput = new Input<>("predictorIsActive",
+			"index of the active predictor, or the number of predictors for none");
 	final public Input<Integer> independentAfterInput = new Input<>("independentAfter",
 			"ignore differences after that index");
 	final public Input<RealVectorParam<Real>> effectSizeInput = new Input<>("effectSize",
@@ -68,7 +68,7 @@ public class EffectSizePredictorOperator extends Operator {
     public double proposal() {
     	
     	
-    	int activePredictorIndex = predictorIsActiveInput.get().get(0);
+    	int activePredictorIndex = predictorIsActiveInput.get().get();
     	if (activePredictorIndex >= predictors.size()) {
     		return Double.NEGATIVE_INFINITY; // no active predictor, no proposal
     	}

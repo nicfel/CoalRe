@@ -7,7 +7,7 @@ import beast.base.evolution.tree.coalescent.PopulationFunction;
 import beast.base.spec.domain.NonNegativeInt;
 import beast.base.spec.domain.NonNegativeReal;
 import beast.base.spec.domain.Real;
-import beast.base.spec.inference.parameter.IntVectorParam;
+import beast.base.spec.inference.parameter.IntScalarParam;
 import beast.base.spec.inference.parameter.RealVectorParam;
 import beast.base.spec.type.RealVector;
 
@@ -29,8 +29,8 @@ public class GLMReassortmentRates extends PopulationFunction.Abstract implements
 	final public Input<RealVector<NonNegativeReal>> rateShiftsInput = new Input<>("rateShifts",
 			"When to switch between elements of Ne", Input.Validate.REQUIRED);
 	// written to (setValue) in initAndValidate: needs the concrete param type
-	final public Input<IntVectorParam<NonNegativeInt>> predictorIsActiveInput = new Input<>("predictorIsActive",
-			"indicates which predictors are active at which time point");
+	final public Input<IntScalarParam<NonNegativeInt>> predictorIsActiveInput = new Input<>("predictorIsActive",
+			"index of the active predictor, or the number of predictors for none");
 	final public Input<Integer> independentAfterInput = new Input<>("independentAfter",
 			"ignore differences after that index");
 	// written to (setDimension) in initAndValidate: needs the concrete param type
@@ -41,7 +41,7 @@ public class GLMReassortmentRates extends PopulationFunction.Abstract implements
 	RealVectorParam<Real> NeToReassortment;
 	RealVector<NonNegativeReal> rateShifts;
 	RealVectorParam<Real> effectSize;
-	IntVectorParam<NonNegativeInt> predictorIsActive;
+	IntScalarParam<NonNegativeInt> predictorIsActive;
 
 	boolean NesKnown = false;
 	double[] growth;
@@ -69,10 +69,10 @@ public class GLMReassortmentRates extends PopulationFunction.Abstract implements
 		// call. The check below catches a bad starting value, but it CANNOT constrain what
 		// operators propose during the run -- that must now come from the XML, by giving
 		// predictorIsActive a domain or prior that caps it at predictors.size().
-		if (predictorIsActive.get(0) < 0 || predictorIsActive.get(0) > predictors.size())
+		if (predictorIsActive.get() < 0 || predictorIsActive.get() > predictors.size())
 			throw new IllegalArgumentException("predictorIsActive must be in [0, "
-					+ predictors.size() + "] but was " + predictorIsActive.get(0));
-		predictorIsActive.set(0, 0);
+					+ predictors.size() + "] but was " + predictorIsActive.get());
+		predictorIsActive.set(0);
 		effectSize = effectSizeInput.get();
 		effectSize.setDimension(predictors.size());
 
@@ -252,16 +252,16 @@ public class GLMReassortmentRates extends PopulationFunction.Abstract implements
 	private void recalculateNe() {
 		// logstandardize the active Predictor
 		double[] logStandardPredictor = new double[rateShifts.size()];
-		if (predictorIsActive.get(0)<predictors.size())  {	
+		if (predictorIsActive.get()<predictors.size())  {	
 			double mean = 0.0;
 			for (int i = 0; i < predictors.size(); i++) {
 			}
 			for (int i = 0; i < independentAfterInput.get()+1; i++) {
-				mean += predictors.get(predictorIsActive.get(0)).get(i);
+				mean += predictors.get(predictorIsActive.get()).get(i);
 			}
 			mean /= (independentAfterInput.get()+1);
 			for (int i = 0; i < independentAfterInput.get() + 1; i++) {
-				logStandardPredictor[i] = predictors.get(predictorIsActive.get(0)).get(i) - mean;
+				logStandardPredictor[i] = predictors.get(predictorIsActive.get()).get(i) - mean;
 			}
 			double sd = 0.0;
 			for (int i = 0; i < independentAfterInput.get() + 1; i++) {
@@ -278,9 +278,9 @@ public class GLMReassortmentRates extends PopulationFunction.Abstract implements
 		growth = new double[rateShifts.size()];
 		rates = new double[rateShifts.size()];
 		double curr_time = 0.0;
-		if (predictorIsActive.get(0)<predictors.size())  {			
+		if (predictorIsActive.get()<predictors.size())  {			
 			for (int i = 0; i < independentAfterInput.get()+1; i++) {
-				rates[i] = effectSize.get(predictorIsActive.get(0))*
+				rates[i] = effectSize.get(predictorIsActive.get())*
 						logStandardPredictor[i] + NeToReassortment.get(i);
 			}
 			for (int i = independentAfterInput.get()+1; i < NeToReassortment.size(); i++) {

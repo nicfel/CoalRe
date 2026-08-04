@@ -11,7 +11,7 @@ import beast.base.inference.Operator;
 import beast.base.inference.util.InputUtil;
 import beast.base.spec.domain.NonNegativeInt;
 import beast.base.spec.domain.Real;
-import beast.base.spec.inference.parameter.IntVectorParam;
+import beast.base.spec.inference.parameter.IntScalarParam;
 import beast.base.spec.inference.parameter.RealVectorParam;
 import beast.base.spec.type.RealVector;
 import beast.base.util.Randomizer;
@@ -22,8 +22,8 @@ public class ChangePredictorOperator extends Operator {
 	final public Input<List<RealVector<Real>>> predictorInput = new Input<>("predictor", "predictor parameters that are used to calculate the Ne", new ArrayList<>());
 	final public Input<RealVectorParam<Real>> NeToReassortmentInput = new Input<>("neToReassortment",
 			"the value that maps the number of infected or the Ne to the reassortment rate ");
-	final public Input<IntVectorParam<NonNegativeInt>> predictorIsActiveInput = new Input<>("predictorIsActive",
-			"indicates which predictors are active at which time point");
+	final public Input<IntScalarParam<NonNegativeInt>> predictorIsActiveInput = new Input<>("predictorIsActive",
+			"index of the active predictor, or the number of predictors for none");
 	final public Input<Integer> independentAfterInput = new Input<>("independentAfter",
 			"ignore differences after that index");
 	final public Input<RealVector<Real>> effectSizeInput = new Input<>("effectSize",
@@ -49,10 +49,9 @@ public class ChangePredictorOperator extends Operator {
     @Override
     public double proposal() {
 
-        IntVectorParam<NonNegativeInt> param = (IntVectorParam<NonNegativeInt>) InputUtil.get(predictorIsActiveInput, this);
+        IntScalarParam<NonNegativeInt> param = (IntScalarParam<NonNegativeInt>) InputUtil.get(predictorIsActiveInput, this);
 
-        int oldValue = param.get(0);
-        int i = Randomizer.nextInt(param.size());
+        int oldValue = param.get();
         // Valid states are the predictor indices 0..predictors.size()-1 plus predictors.size(),
         // which means "no predictor active" (see the guards in GLMReassortmentRates).
         //
@@ -63,7 +62,7 @@ public class ChangePredictorOperator extends Operator {
         // Integer.MIN_VALUE. The range is therefore taken from the predictor list directly.
         int newValue = Randomizer.nextInt(predictors.size() + 1);
 
-        param.set(i, newValue);
+        param.set(newValue);
 
         double[] currentRates = calculateRates(oldValue);
 
