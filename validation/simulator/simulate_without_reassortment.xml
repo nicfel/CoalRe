@@ -1,26 +1,13 @@
-<beast version="2.0"
-       namespace="beast.pkgmgmt:beast.base.core:beast.base.inference
-                 :beast.core.util
-                 :beast.core.parameter
-                 :beast.evolution.alignment
-                 :beast.evolution.likelihood
-                 :beast.evolution.tree
-                 :beast.evolution.tree.coalescent
-                 :beast.evolution.sitemodel
-                 :beast.evolution.substitutionmodel
-                 :beast.evolution.operators
-                 :beast.math.distributions
-                 :feast.simulation
-                 :coalre.network
-                 :coalre.statistics
-                 :coalre.simulator">
+<?xml version='1.0' encoding='UTF-8'?>
+<beast version="2.8"
+       namespace="beast.core:beast.core.util:beast.evolution.alignment:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.tree.coalescent:beast.base.core:beast.base.evolution.alignment:beast.base.evolution.likelihood:beast.base.evolution.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.tree:beast.base.evolution.tree.coalescent:beast.base.inference:beast.base.inference.operator:beast.base.inference.util:beast.pkgmgmt:feast.simulation:coalre.network:coalre.statistics:coalre.simulator">
 
     <network id="simulated_network" spec="SimulatedCoalescentNetwork" enableSegmentTreeUpdate="false">
-        <populationModel id="popModel" spec="ConstantPopulation">
-            <popSize spec="RealParameter" value="1.0"/>
+        <populationModel id="popModel" spec="beast.base.spec.evolution.tree.coalescent.ConstantPopulation">
+            <popSize value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
         </populationModel>
 
-        <reassortmentRate spec="RealParameter" value="0.0"/>
+        <reassortmentRate value="0.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
 
         <traitSet spec="TraitSet" traitname="date-backward" id="traitSet">
             <taxa spec="TaxonSet" id="taxonSet">
@@ -50,7 +37,7 @@
         <segmentTree id="segment8" spec="Tree" trait="@traitSet"/>
     </network>
 
-    <tree id="simulated_tree" spec="RandomTree">
+    <tree id="simulated_tree" spec="beast.base.spec.evolution.tree.coalescent.RandomTree">
         <taxonset idref="taxonSet"/>
         <trait idref="traitSet"/>
         <populationModel idref="popModel"/>

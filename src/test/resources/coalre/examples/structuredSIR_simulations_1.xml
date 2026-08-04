@@ -1,34 +1,15 @@
-<beast version="2.0"
-       namespace="beast.core
-                 :beast.core.util
-                 :beast.base.inference.parameter
-                 :beast.evolution.alignment
-                 :beast.evolution.likelihood
-                 :beast.base.evolution.tree
-                 :beast.base.evolution.tree.coalescent
-                 :beast.base.evolution.sitemodel
-                 :beast.base.evolution.substitutionmodel
-                 :beast.evolution.operators
-                 :beast.math.distributions
-                 :feast.simulation
-                 :coalre.network
-                 :coalre.statistics
-                 :coalre.simulator
-                 :coalre.distribution
-                 :coalre.operators">
+<?xml version='1.0' encoding='UTF-8'?>
+<beast version="2.8"
+       namespace="beast.core:beast.core.util:beast.evolution.alignment:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.tree.coalescent:beast.base.core:beast.base.evolution.alignment:beast.base.evolution.likelihood:beast.base.evolution.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.tree:beast.base.evolution.tree.coalescent:beast.base.inference:beast.base.inference.operator:beast.base.inference.util:beast.pkgmgmt:feast.simulation:coalre.network:coalre.statistics:coalre.simulator:coalre.distribution:coalre.operators">
 
     <run spec="GPSimulator" nSims="1">
-        <simulationObject id="network_truth" spec="SuperspreadingStructuredSIRwithReassortment" 
-        fileName="$(filebase).trees" 
-        reassortmenProbability="0.1" 
-        simulationTime="1000" 
-        nSegments="4" minSamples="50"  k="1.62620072006638">
-          <transmissionRate spec="RealParameter" value="1.68557534612032 1.68557534612032"/>
-          <recoveryRate spec="RealParameter" value="1 1"/>
-          <waningImmunityRate spec="RealParameter" value="0.01 0.1"/>
-          <samplingProbability spec="RealParameter" value="0.0116270119109272 0.00871333045718752 "/>
-          <populationSize spec="IntegerParameter" value="10000 10000"/>
-          <migrationRates spec="RealParameter" value="0.01 0.01"/>
+        <simulationObject id="network_truth" spec="SuperspreadingStructuredSIRwithReassortment" fileName="$(filebase).trees" reassortmenProbability="0.1" simulationTime="1000" nSegments="4" minSamples="50" k="1.62620072006638">
+          <transmissionRate value="1.68557534612032 1.68557534612032" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
+          <recoveryRate value="1 1" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
+          <waningImmunityRate value="0.01 0.1" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
+          <samplingProbability value="0.0116270119109272 0.00871333045718752 " spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
+          <populationSize value="10000 10000" spec="beast.base.spec.inference.parameter.IntVectorParam" domain="NonNegativeInt"/>
+          <migrationRates value="0.01 0.01" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
             <segmentTree id="seg1tree_truth" spec="Tree"/>
             <segmentTree id="seg2tree_truth" spec="Tree"/>
             <!-- <segmentTree id="seg3tree_truth" spec="Tree"/>

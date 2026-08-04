@@ -1,46 +1,23 @@
-<beast version="2.0"
-       namespace="beast.base.inference
-                 :beast.core.util
-                 :beast.core.parameter
-                 :beast.base.evolution.alignment
-                 :beast.base.evolution.likelihood
-                 :beast.base.evolution.tree
-                 :beast.base.evolution.tree.coalescent
-				 :beast.base.evolution.alignment
-				 :beast.base.inference.parameter
-                 :beast.base.evolution.sitemodel
-                 :beast.base.evolution.substitutionmodel
-                 :beast.base.evolution.operators
-                 :beast.math.distributions
-				 :beast.base.inference.distribution
-                 :beast.base.evolution.operator
-                 :beast.base.inference.operator.kernel
-                 :feast.simulation
-                 :feast.fileio
-                 :coalre.network
-                 :coalre.statistics
-                 :coalre.simulator
-                 :coalre.distribution
-                 :coalre.operators">
+<?xml version='1.0' encoding='UTF-8'?>
+<beast version="2.8"
+       namespace="beast.core:beast.core.util:beast.evolution.alignment:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.tree.coalescent:beast.base.core:beast.base.evolution.alignment:beast.base.evolution.likelihood:beast.base.evolution.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.tree:beast.base.evolution.tree.coalescent:beast.base.inference:beast.base.inference.operator:beast.base.inference.util:beast.pkgmgmt:feast.simulation:feast.fileio:coalre.network:coalre.statistics:coalre.simulator:coalre.distribution:coalre.operators">
 
-    <network id="network" spec="SimulatedCoalescentNetwork"  nSegments="8"  enableSegmentTreeUpdate="false">
+    <network id="network" spec="SimulatedCoalescentNetwork" nSegments="8" enableSegmentTreeUpdate="false">
         <!-- <populationModel spec="ConstantPopulation">
             <popSize spec="RealParameter" value="1.0"/>
         </populationModel> -->
 
-
         <populationModel id="splinePop" spec="coalre.dynamics.NeDynamicsFromSpline">
             <spline id="spline" spec="coalre.dynamics.Spline" infectedIsNe="true" gridPoints="500">
-                    <logInfected id="logInfected" spec="beast.base.inference.parameter.RealParameter" value="1 1 2 1.5 1 0"/>
-                <rateShifts id="rateShifts" spec="RealParameter" value="0 1 2 3 4 5"/>
-                <uninfectiousRate id="recoveryRate" spec="RealParameter" value="1.0"/>
+                    <logInfected id="logInfected" value="1 1 2 1.5 1 0" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
+                <rateShifts id="rateShifts" value="0 1 2 3 4 5" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
+                <uninfectiousRate id="recoveryRate" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
             </spline>
         </populationModel>
 
-
         <timeVaryingReassortmentRates id="reassortmentDynamics" spec="coalre.dynamics.PiecewiseConstantReassortmentRates">
-            <reassortmentRate id="reassortmentRate" spec="RealParameter" value="2 -1 1 0 -10 0"/>
-            <rateShifts id="rateShifts2" spec="RealParameter" value="0 1 2 3 4 5"/>
+            <reassortmentRate id="reassortmentRate" value="2 -1 1 0 -10 0" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
+            <rateShifts id="rateShifts2" value="0 1 2 3 4 5" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
         </timeVaryingReassortmentRates>
 
         <traitSet spec="TraitSet" traitname="date-backward" id="traitSet">

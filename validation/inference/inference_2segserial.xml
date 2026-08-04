@@ -1,22 +1,6 @@
-<beast version="2.0"
-       namespace="beast.pkgmgmt:beast.base.core:beast.base.inference
-                 :beast.core.util
-                 :beast.core.parameter
-                 :beast.evolution.alignment
-                 :beast.evolution.likelihood
-                 :beast.evolution.tree
-                 :beast.evolution.tree.coalescent
-                 :beast.evolution.sitemodel
-                 :beast.evolution.substitutionmodel
-                 :beast.evolution.operators
-                 :beast.math.distributions
-                 :feast.simulation
-                 :feast.fileio
-                 :coalre.network
-                 :coalre.statistics
-                 :coalre.simulator
-                 :coalre.distribution
-                 :coalre.operators">
+<?xml version='1.0' encoding='UTF-8'?>
+<beast version="2.8"
+       namespace="beast.core:beast.core.util:beast.evolution.alignment:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.tree.coalescent:beast.base.core:beast.base.evolution.alignment:beast.base.evolution.likelihood:beast.base.evolution.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.tree:beast.base.evolution.tree.coalescent:beast.base.inference:beast.base.inference.operator:beast.base.inference.util:beast.pkgmgmt:feast.simulation:feast.fileio:coalre.network:coalre.statistics:coalre.simulator:coalre.distribution:coalre.operators">
 
     <alignment id="seg1align" spec="AlignmentFromNexus" fileName="simulate_2segserial.seg1.alignment.nexus"/>
     <alignment id="seg2align" spec="AlignmentFromNexus" fileName="simulate_2segserial.seg2.alignment.nexus"/>
@@ -55,20 +39,19 @@
         <state>
             <stateNode id="seg1tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
             <stateNode id="seg2tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
-            <stateNode id="reassortmentRate" spec="RealParameter" value="1.0"/>
-            <stateNode id="clockRate" spec="RealParameter" value="0.05"/>
-            <stateNode id="popSize" spec="RealParameter" value="1.0"/>
+            <stateNode id="reassortmentRate" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+            <stateNode id="clockRate" value="0.05" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+            <stateNode id="popSize" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
 
-            <stateNode id="network" spec="SimulatedCoalescentNetwork"
-                       nSegments="2" enableSegmentTreeUpdate="false">
+            <stateNode id="network" spec="SimulatedCoalescentNetwork" nSegments="2" enableSegmentTreeUpdate="false">
 
                 <traitSet idref="traitSet"/>
 
-                <populationModel spec="ConstantPopulation">
-                    <popSize spec="RealParameter" value="1.0"/>
+                <populationModel spec="beast.base.spec.evolution.tree.coalescent.ConstantPopulation">
+                    <popSize value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
                 </populationModel>
 
-                <reassortmentRate spec="RealParameter" value="1.0"/>
+                <reassortmentRate value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
             </stateNode>
         </state>
 
@@ -80,19 +63,19 @@
         <distribution id="posterior" spec="CompoundDistribution">
 
             <distribution id="likelihood" spec="CompoundDistribution">
-                <distribution spec="TreeLikelihood">
+                <distribution spec="beast.base.spec.evolution.likelihood.TreeLikelihood">
                     <data idref="seg1align"/>
                     <tree idref="seg1tree"/>
-                    <siteModel spec="SiteModel" mutationRate="@clockRate">
-                        <substModel spec="JukesCantor"/>
+                    <siteModel spec="beast.base.spec.evolution.sitemodel.SiteModel" mutationRate="@clockRate">
+                        <substModel spec="beast.base.spec.evolution.substitutionmodel.JukesCantor"/>
                     </siteModel>
                 </distribution>
 
-                <distribution spec="TreeLikelihood">
+                <distribution spec="beast.base.spec.evolution.likelihood.TreeLikelihood">
                     <data idref="seg2align"/>
                     <tree idref="seg2tree"/>
-                    <siteModel spec="SiteModel" mutationRate="@clockRate">
-                        <substModel spec="JukesCantor"/>
+                    <siteModel spec="beast.base.spec.evolution.sitemodel.SiteModel" mutationRate="@clockRate">
+                        <substModel spec="beast.base.spec.evolution.substitutionmodel.JukesCantor"/>
                     </siteModel>
                 </distribution>
             </distribution>
@@ -101,26 +84,17 @@
                 <distribution id="networkPrior" spec="CoalescentWithReassortment">
                     <networkIntervals spec="NetworkIntervals" network="@network"/>
 
-                    <populationModel spec="ConstantPopulation" popSize="@popSize"/>
+                    <populationModel spec="beast.base.spec.evolution.tree.coalescent.ConstantPopulation" popSize="@popSize"/>
 
                     <reassortmentRate idref="reassortmentRate"/>
                 </distribution>
 
                 <distribution id="parametersPrior" spec="CompoundDistribution">
-                    <distribution spec="Prior" x="@reassortmentRate">
-                        <!--distr spec="beast.base.inference.distribution.Uniform" lower="0.0" upper="10.0"/-->
-                        <distr spec="beast.base.inference.distribution.OneOnX"/>
-                    </distribution>
+                    <distribution spec="beast.base.spec.inference.distribution.LogUniform" param="@reassortmentRate"><lower spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="1.0E-12"/><upper spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="1.0E12"/></distribution>
 
-                    <distribution spec="Prior" x="@clockRate">
-                        <!--distr spec="beast.base.inference.distribution.Uniform" lower="0.0" upper="1.0"/-->
-                        <distr spec="beast.base.inference.distribution.OneOnX"/>
-                    </distribution>
+                    <distribution spec="beast.base.spec.inference.distribution.LogUniform" param="@clockRate"><lower spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="1.0E-12"/><upper spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="1.0E12"/></distribution>
 
-                    <distribution spec="Prior" x="@popSize">
-                        <!--distr spec="beast.base.inference.distribution.Uniform" lower="0.0" upper="10.0"/-->
-                        <distr spec="beast.base.inference.distribution.OneOnX"/>
-                    </distribution>
+                    <distribution spec="beast.base.spec.inference.distribution.LogNormal" param="@popSize"><M spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real" value="3.0"/><S spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="2.5"/></distribution>
                 </distribution>
             </distribution>
 
@@ -128,20 +102,17 @@
 
         <!-- Parameter Operators -->
 
-        <operator spec="ScaleOperator" parameter="@reassortmentRate" scaleFactor="0.5" weight="1.0"/>
-        <operator spec="ScaleOperator" parameter="@clockRate" scaleFactor="0.5" weight="1.0"/>
-        <operator spec="ScaleOperator" parameter="@popSize" scaleFactor="0.5" weight="1.0"/>
+        <operator parameter="@reassortmentRate" scaleFactor="0.5" weight="1.0" spec="beast.base.spec.inference.operator.ScaleOperator"/>
+        <operator parameter="@clockRate" scaleFactor="0.5" weight="1.0" spec="beast.base.spec.inference.operator.ScaleOperator"/>
+        <operator parameter="@popSize" scaleFactor="0.5" weight="1.0" spec="beast.base.spec.inference.operator.ScaleOperator"/>
 
-
-        <operator id="upDownOperator" spec="NetworkScaleOperator"
-                  network="@network" weight="1.0">
+        <operator id="upDownOperator" spec="NetworkScaleOperator" scaleFactor="0.9" network="@network" weight="1.0">
             <segmentTree idref="seg1tree"/>
             <segmentTree idref="seg2tree"/>
             <upParameter idref="popSize"/>
             <downParameter idref="clockRate"/>
             <downParameter idref="reassortmentRate"/>
         </operator>
-
 
         <!-- Network Operators -->
 
@@ -160,14 +131,12 @@
             <segmentTree idref="seg2tree"/>
         </operator>
 
-        <operator id="NetworkScale" spec="NetworkScaleOperator"
-                  network="@network" weight="1.0">
+        <operator id="NetworkScale" spec="NetworkScaleOperator" scaleFactor="0.9" network="@network" weight="1.0">
             <segmentTree idref="seg1tree"/>
             <segmentTree idref="seg2tree"/>
         </operator>
 
-        <operator id="NetworkScaleRootOnly" spec="NetworkScaleOperator"
-                  network="@network" scaleRootOnly="true" weight="1.0">
+        <operator id="NetworkScaleRootOnly" spec="NetworkScaleOperator" scaleFactor="0.9" network="@network" scaleRootOnly="true" weight="1.0">
             <segmentTree idref="seg1tree"/>
             <segmentTree idref="seg2tree"/>
         </operator>

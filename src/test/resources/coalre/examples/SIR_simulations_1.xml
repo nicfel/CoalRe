@@ -1,33 +1,9 @@
-<beast version="2.0"
-       namespace="beast.core
-                 :beast.core.util
-                 :beast.core.parameter
-                 :beast.evolution.alignment
-                 :beast.evolution.likelihood
-                 :beast.base.evolution.tree
-                 :beast.base.evolution.tree.coalescent
-                 :beast.base.evolution.sitemodel
-                 :beast.base.evolution.substitutionmodel
-                 :beast.evolution.operators
-                 :beast.math.distributions
-                 :feast.simulation
-                 :coalre.network
-                 :coalre.statistics
-                 :coalre.simulator
-                 :coalre.distribution
-                 :coalre.operators">
+<?xml version='1.0' encoding='UTF-8'?>
+<beast version="2.8"
+       namespace="beast.core:beast.core.util:beast.evolution.alignment:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.tree.coalescent:beast.base.core:beast.base.evolution.alignment:beast.base.evolution.likelihood:beast.base.evolution.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.tree:beast.base.evolution.tree.coalescent:beast.base.inference:beast.base.inference.operator:beast.base.inference.util:beast.pkgmgmt:feast.simulation:coalre.network:coalre.statistics:coalre.simulator:coalre.distribution:coalre.operators">
 
     <run spec="GPSimulator" nSims="3">
-        <simulationObject id="network_truth" spec="SIRwithReassortment" 
-        fileName="$(filebase).trees" 
-        transmissionRate="3" 
-        recoveryRate="1" 
-        waningImmunityRate="0.0" 
-        reassortmenProbability="1.0" 
-        samplingProbability="0.0107828622874111" 
-        populationSize="10000" 
-        simulationTime="10000" 
-        nSegments="4" minSamples="10">
+        <simulationObject id="network_truth" spec="SIRwithReassortment" fileName="$(filebase).trees" transmissionRate="3" recoveryRate="1" waningImmunityRate="0.0" reassortmenProbability="1.0" samplingProbability="0.0107828622874111" populationSize="10000" simulationTime="10000" nSegments="4" minSamples="10">
             <segmentTree id="seg1tree_truth" spec="Tree"/>
             <segmentTree id="seg2tree_truth" spec="Tree"/>
             <segmentTree id="seg3tree_truth" spec="Tree"/>

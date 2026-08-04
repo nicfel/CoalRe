@@ -1,27 +1,6 @@
-<beast version="2.0"
-       namespace="beast.base.inference
-                 :beast.core.util
-                 :beast.core.parameter
-                 :beast.base.evolution.alignment
-                 :beast.base.evolution.likelihood
-                 :beast.base.evolution.tree
-                 :beast.base.evolution.tree.coalescent
-				 :beast.base.evolution.alignment
-				 :beast.base.inference.parameter
-                 :beast.base.evolution.sitemodel
-                 :beast.base.evolution.substitutionmodel
-                 :beast.base.evolution.operators
-                 :beast.math.distributions
-				 :beast.base.inference.distribution
-                 :beast.base.evolution.operator
-                 :beast.base.inference.operator.kernel
-                 :feast.simulation
-                 :feast.fileio
-                 :coalre.network
-                 :coalre.statistics
-                 :coalre.simulator
-                 :coalre.distribution
-                 :coalre.operators">
+<?xml version='1.0' encoding='UTF-8'?>
+<beast version="2.8"
+       namespace="beast.core:beast.core.util:beast.evolution.alignment:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.tree.coalescent:beast.base.core:beast.base.evolution.alignment:beast.base.evolution.likelihood:beast.base.evolution.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.tree:beast.base.evolution.tree.coalescent:beast.base.inference:beast.base.inference.operator:beast.base.inference.util:beast.pkgmgmt:feast.simulation:feast.fileio:coalre.network:coalre.statistics:coalre.simulator:coalre.distribution:coalre.operators">
 
     <alignment id="seg1align" spec="AlignmentFromFasta" fileName="HPAI_HLHxNx_HA.fasta"/>
     <alignment id="seg2align" spec="AlignmentFromFasta" fileName="HPAI_HLHxNx_NA.fasta"/>
@@ -31,7 +10,6 @@
     <alignment id="seg6align" spec="AlignmentFromFasta" fileName="HPAI_HLHxNx_PB1.fasta"/>
     <alignment id="seg7align" spec="AlignmentFromFasta" fileName="HPAI_HLHxNx_PB2.fasta"/>
     <alignment id="seg8align" spec="AlignmentFromFasta" fileName="HPAI_HLHxNx_PA.fasta"/>
-	
 
     <taxonSet spec="TaxonSet" id="taxonSet">
 		<taxon spec="Taxon" id="A/canada_goose/Illinois/000616-011/2024|EPI_ISL_19705477|2024-12-31"/>
@@ -391,9 +369,8 @@
       <taxa idref="taxonSet"/>
     </traitSet>
 
-
     <run spec="MCMC" chainLength="25000000">
-        <state  storeEvery="100000">
+        <state storeEvery="100000">
             <stateNode id="seg1tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
             <stateNode id="seg2tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
             <stateNode id="seg3tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
@@ -403,78 +380,76 @@
             <stateNode id="seg7tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
             <stateNode id="seg8tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
 
-            <stateNode id="sigma" spec="RealParameter" lower="0.25" value="1"/>
-            <stateNode id="sigma2" spec="RealParameter" lower="0.25" value="0.5"/>
-            <stateNode id="popSize" spec="RealParameter" value="1.0293"/>
-            <stateNode id="reassortmentRate" spec="RealParameter" lower="-10" value="0.1211"/>
+            <stateNode id="sigma" value="1" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+            <stateNode id="sigma2" value="0.5" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+            <stateNode id="popSize" value="1.0293" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+            <stateNode id="reassortmentRate" value="0.1211" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
 
-            <stateNode id="logNe" spec="RealParameter" value="1 1.01"/>
-            <stateNode id="rateShifts" spec="RealParameter" value="0 0.084369511766772 0.168739023533544 0.253108535300316 0.337478047067088 0.42184755883386 0.506217070600632 0.590586582367404 0.674956094134176 0.759325605900948 0.84369511766772 0.928064629434493 1.01243414120126 1.09680365296804 1.18117316473481 1.26554267650158 1.34991218826835 1.43428170003512 1.5186512118019 1.60302072356867 1.68739023533544 1.77175974710221 1.85612925886899 1.94049877063576 2.02486828240253 2.1092377941693 2.19360730593607 2.27797681770285 2.36234632946962 2.44671584123639 2.53108535300316 2.61545486476993 2.69982437653671 2.78419388830348 2.86856340007025 2.95293291183702 3.03730242360379 3.12167193537057 3.20604144713734 3.29041095890411 4 10"/>
-            <stateNode id="recoveryRate" spec="RealParameter" value="1.0"/>
-            <stateNode id="InfectedToRho" spec="RealParameter" value="-8 -7"/>
+            <stateNode id="logNe" value="1 1.01" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
+            <stateNode id="rateShifts" value="0 0.084369511766772 0.168739023533544 0.253108535300316 0.337478047067088 0.42184755883386 0.506217070600632 0.590586582367404 0.674956094134176 0.759325605900948 0.84369511766772 0.928064629434493 1.01243414120126 1.09680365296804 1.18117316473481 1.26554267650158 1.34991218826835 1.43428170003512 1.5186512118019 1.60302072356867 1.68739023533544 1.77175974710221 1.85612925886899 1.94049877063576 2.02486828240253 2.1092377941693 2.19360730593607 2.27797681770285 2.36234632946962 2.44671584123639 2.53108535300316 2.61545486476993 2.69982437653671 2.78419388830348 2.86856340007025 2.95293291183702 3.03730242360379 3.12167193537057 3.20604144713734 3.29041095890411 4 10" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
+            <stateNode id="recoveryRate" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+            <stateNode id="InfectedToRho" value="-8 -7" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
 
-            <parameter id="clockRate.c" spec="parameter.RealParameter" lower="0.0" name="stateNode">0.0035</parameter>
-			<stateNode id="lpai" spec="parameter.RealParameter" value="-0.366500093421023 -0.366500093421023 0.0554254481876709 0.4591379963583 1.1092549347067 1.26584854765367 1.16549907488111 0.9969884639492 0.136593704342699 -1.92845218932815 -1.05235135459861 -0.371228251209274 0.126537823132821 0.56255843387092 0.72442534408537 0.931371872659358 1.25339691545338 1.2844747840569 1.14301345638375 0.853074126403672 -0.0979283679214012 -2.52615252048348 -1.88555030004494 -0.947718714879244 -0.340448311123591 0.0548200164117714 0.271583369062705 0.435896985465845 0.75420111085228 0.710244837915265 0.543189657430584 0.246174256997191 -1.00873632452451 -2.24351668441901 -1.57768364834996 -0.367443845927211 -0.140841198301705 -0.0393229431644507 0.0608570561967504 0.115806624659677 0 0"/>
+            <parameter id="clockRate.c" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">0.0035</parameter>
+			<stateNode id="lpai" value="-0.366500093421023 -0.366500093421023 0.0554254481876709 0.4591379963583 1.1092549347067 1.26584854765367 1.16549907488111 0.9969884639492 0.136593704342699 -1.92845218932815 -1.05235135459861 -0.371228251209274 0.126537823132821 0.56255843387092 0.72442534408537 0.931371872659358 1.25339691545338 1.2844747840569 1.14301345638375 0.853074126403672 -0.0979283679214012 -2.52615252048348 -1.88555030004494 -0.947718714879244 -0.340448311123591 0.0548200164117714 0.271583369062705 0.435896985465845 0.75420111085228 0.710244837915265 0.543189657430584 0.246174256997191 -1.00873632452451 -2.24351668441901 -1.57768364834996 -0.367443845927211 -0.140841198301705 -0.0393229431644507 0.0608570561967504 0.115806624659677 0 0" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
 
-			<stateNode id="hpai" spec="parameter.RealParameter" value="0.640064882069513 0.640064882069513 0.805187213672903 0.82632307037329 0.765533342838269 0.134189548346584 -0.8886776466471 -1.68870767343889 -2.16561111987162 -1.87809180477643 -1.38533231887688 0.0014528447312638 0.34370533954659 0.765533342838269 1.06805212718725 1.04195395075552 0.97530585111381 0.718423167737543 -0.153855551166434 -1.03151856558947 -1.93739420052683 -1.61354923822168 -1.14169382722567 -0.369072997128441 0.152797926688351 0.534484780676004 0.859006771200678 1.0211466957318 1.04226813004269 0.925397861265437 0.643264732520328 0.210725835361676 0.170810733593448 0.39059339460562 0.474924255052542 0.600865235859045 0.38959276824723 0.124649452527556 -0.0754189926564427 -1.93739420052683 0 0"/>
+			<stateNode id="hpai" value="0.640064882069513 0.640064882069513 0.805187213672903 0.82632307037329 0.765533342838269 0.134189548346584 -0.8886776466471 -1.68870767343889 -2.16561111987162 -1.87809180477643 -1.38533231887688 0.0014528447312638 0.34370533954659 0.765533342838269 1.06805212718725 1.04195395075552 0.97530585111381 0.718423167737543 -0.153855551166434 -1.03151856558947 -1.93739420052683 -1.61354923822168 -1.14169382722567 -0.369072997128441 0.152797926688351 0.534484780676004 0.859006771200678 1.0211466957318 1.04226813004269 0.925397861265437 0.643264732520328 0.210725835361676 0.170810733593448 0.39059339460562 0.474924255052542 0.600865235859045 0.38959276824723 0.124649452527556 -0.0754189926564427 -1.93739420052683 0 0" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
 
-			<stateNode id="total" spec="parameter.RealParameter" value="-0.0933722387315385 -0.0933722387315385 0.296346920061776 0.58315043120556 1.08099373012083 1.10083036796379 0.939175757855511 0.746933991404097 -0.189868557156267 -2.35558859733011 -1.42958101790155 -0.489103483557014 0.0716304463140888 0.62548029301435 0.927737282698262 1.06004805799999 1.28532080464841 1.22553851043454 0.946866508621495 0.599332452294283 -0.441258661506916 -2.87854511541039 -2.19466454431455 -1.12411961290657 -0.396987664989627 0.111120018864939 0.475633178390104 0.70376764429145 0.931223001713957 0.827103963163131 0.549123912839185 0.125439121794868 -0.862723804172818 -1.10943771711832 -0.815518547582474 -0.126816226151812 -0.118353810832059 -0.15669775806571 -0.126249916717685 -0.210536882517664 0 0"/>
+			<stateNode id="total" value="-0.0933722387315385 -0.0933722387315385 0.296346920061776 0.58315043120556 1.08099373012083 1.10083036796379 0.939175757855511 0.746933991404097 -0.189868557156267 -2.35558859733011 -1.42958101790155 -0.489103483557014 0.0716304463140888 0.62548029301435 0.927737282698262 1.06004805799999 1.28532080464841 1.22553851043454 0.946866508621495 0.599332452294283 -0.441258661506916 -2.87854511541039 -2.19466454431455 -1.12411961290657 -0.396987664989627 0.111120018864939 0.475633178390104 0.70376764429145 0.931223001713957 0.827103963163131 0.549123912839185 0.125439121794868 -0.862723804172818 -1.10943771711832 -0.815518547582474 -0.126816226151812 -0.118353810832059 -0.15669775806571 -0.126249916717685 -0.210536882517664 0 0" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
 
-			<parameter id="predictorActive" spec="parameter.IntegerParameter" name="stateNode" upper="4" lower="0">4</parameter>
+			<parameter id="predictorActive" name="stateNode" dimension="1" spec="beast.base.spec.inference.parameter.IntVectorParam" domain="NonNegativeInt">4</parameter>
 
-			<parameter id="effectSize" spec="parameter.RealParameter" name="stateNode" lower="0">1</parameter>
+			<parameter id="effectSize" name="stateNode" dimension="1" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="PositiveReal">1</parameter>
 
-            
-            <parameter id="mutationRate.s:seg1" spec="parameter.RealParameter" lower="0.0" name="stateNode">1.0</parameter>
-            <parameter id="gammaShape.s:seg1" spec="parameter.RealParameter" lower="0.1" name="stateNode">1.0</parameter>
-            <parameter id="freqParameter.s:seg1" spec="parameter.RealParameter" dimension="4" lower="0.0" name="stateNode" upper="1.0">0.25</parameter>
-            <parameter id="kappa.s:seg1" spec="parameter.RealParameter" lower="0.0" name="stateNode">2.0</parameter>
+            <parameter id="mutationRate.s:seg1" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
+            <parameter id="gammaShape.s:seg1" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
+            <parameter id="freqParameter.s:seg1" dimension="4" name="stateNode" spec="beast.base.spec.inference.parameter.SimplexParam">0.25</parameter>
+            <parameter id="kappa.s:seg1" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">2.0</parameter>
 
-            <parameter id="mutationRate.s:seg2" spec="parameter.RealParameter" lower="0.0" name="stateNode">1.0</parameter>
-            <parameter id="gammaShape.s:seg2" spec="parameter.RealParameter" lower="0.1" name="stateNode">1.0</parameter>
-            <parameter id="freqParameter.s:seg2" spec="parameter.RealParameter" dimension="4" lower="0.0" name="stateNode" upper="1.0">0.25</parameter>
-            <parameter id="kappa.s:seg2" spec="parameter.RealParameter" lower="0.0" name="stateNode">2.0</parameter>
+            <parameter id="mutationRate.s:seg2" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
+            <parameter id="gammaShape.s:seg2" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
+            <parameter id="freqParameter.s:seg2" dimension="4" name="stateNode" spec="beast.base.spec.inference.parameter.SimplexParam">0.25</parameter>
+            <parameter id="kappa.s:seg2" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">2.0</parameter>
 
-            <parameter id="mutationRate.s:seg3" spec="parameter.RealParameter" lower="0.0" name="stateNode">1.0</parameter>
-            <parameter id="gammaShape.s:seg3" spec="parameter.RealParameter" lower="0.1" name="stateNode">1.0</parameter>
-            <parameter id="freqParameter.s:seg3" spec="parameter.RealParameter" dimension="4" lower="0.0" name="stateNode" upper="1.0">0.25</parameter>
-            <parameter id="kappa.s:seg3" spec="parameter.RealParameter" lower="0.0" name="stateNode">2.0</parameter>
+            <parameter id="mutationRate.s:seg3" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
+            <parameter id="gammaShape.s:seg3" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
+            <parameter id="freqParameter.s:seg3" dimension="4" name="stateNode" spec="beast.base.spec.inference.parameter.SimplexParam">0.25</parameter>
+            <parameter id="kappa.s:seg3" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">2.0</parameter>
 
-            <parameter id="mutationRate.s:seg4" spec="parameter.RealParameter" lower="0.0" name="stateNode">1.0</parameter>
-            <parameter id="gammaShape.s:seg4" spec="parameter.RealParameter" lower="0.1" name="stateNode">1.0</parameter>
-            <parameter id="freqParameter.s:seg4" spec="parameter.RealParameter" dimension="4" lower="0.0" name="stateNode" upper="1.0">0.25</parameter>
-            <parameter id="kappa.s:seg4" spec="parameter.RealParameter" lower="0.0" name="stateNode">2.0</parameter>
+            <parameter id="mutationRate.s:seg4" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
+            <parameter id="gammaShape.s:seg4" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
+            <parameter id="freqParameter.s:seg4" dimension="4" name="stateNode" spec="beast.base.spec.inference.parameter.SimplexParam">0.25</parameter>
+            <parameter id="kappa.s:seg4" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">2.0</parameter>
 
-            <parameter id="mutationRate.s:seg5" spec="parameter.RealParameter" lower="0.0" name="stateNode">1.0</parameter>
-            <parameter id="gammaShape.s:seg5" spec="parameter.RealParameter" lower="0.1" name="stateNode">1.0</parameter>
-            <parameter id="freqParameter.s:seg5" spec="parameter.RealParameter" dimension="4" lower="0.0" name="stateNode" upper="1.0">0.25</parameter>
-            <parameter id="kappa.s:seg5" spec="parameter.RealParameter" lower="0.0" name="stateNode">2.0</parameter>
+            <parameter id="mutationRate.s:seg5" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
+            <parameter id="gammaShape.s:seg5" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
+            <parameter id="freqParameter.s:seg5" dimension="4" name="stateNode" spec="beast.base.spec.inference.parameter.SimplexParam">0.25</parameter>
+            <parameter id="kappa.s:seg5" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">2.0</parameter>
 
-            <parameter id="mutationRate.s:seg6" spec="parameter.RealParameter" lower="0.0" name="stateNode">1.0</parameter>
-            <parameter id="gammaShape.s:seg6" spec="parameter.RealParameter" lower="0.1" name="stateNode">1.0</parameter>
-            <parameter id="freqParameter.s:seg6" spec="parameter.RealParameter" dimension="4" lower="0.0" name="stateNode" upper="1.0">0.25</parameter>
-            <parameter id="kappa.s:seg6" spec="parameter.RealParameter" lower="0.0" name="stateNode">2.0</parameter>
+            <parameter id="mutationRate.s:seg6" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
+            <parameter id="gammaShape.s:seg6" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
+            <parameter id="freqParameter.s:seg6" dimension="4" name="stateNode" spec="beast.base.spec.inference.parameter.SimplexParam">0.25</parameter>
+            <parameter id="kappa.s:seg6" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">2.0</parameter>
 
-            <parameter id="mutationRate.s:seg7" spec="parameter.RealParameter" lower="0.0" name="stateNode">1.0</parameter>
-            <parameter id="gammaShape.s:seg7" spec="parameter.RealParameter" lower="0.1" name="stateNode">1.0</parameter>
-            <parameter id="freqParameter.s:seg7" spec="parameter.RealParameter" dimension="4" lower="0.0" name="stateNode" upper="1.0">0.25</parameter>
-            <parameter id="kappa.s:seg7" spec="parameter.RealParameter" lower="0.0" name="stateNode">2.0</parameter>
+            <parameter id="mutationRate.s:seg7" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
+            <parameter id="gammaShape.s:seg7" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
+            <parameter id="freqParameter.s:seg7" dimension="4" name="stateNode" spec="beast.base.spec.inference.parameter.SimplexParam">0.25</parameter>
+            <parameter id="kappa.s:seg7" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">2.0</parameter>
 
-            <parameter id="mutationRate.s:seg8" spec="parameter.RealParameter" lower="0.0" name="stateNode">1.0</parameter>
-            <parameter id="gammaShape.s:seg8" spec="parameter.RealParameter" lower="0.1" name="stateNode">1.0</parameter>
-            <parameter id="freqParameter.s:seg8" spec="parameter.RealParameter" dimension="4" lower="0.0" name="stateNode" upper="1.0">0.25</parameter>
-            <parameter id="kappa.s:seg8" spec="parameter.RealParameter" lower="0.0" name="stateNode">2.0</parameter>
+            <parameter id="mutationRate.s:seg8" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
+            <parameter id="gammaShape.s:seg8" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
+            <parameter id="freqParameter.s:seg8" dimension="4" name="stateNode" spec="beast.base.spec.inference.parameter.SimplexParam">0.25</parameter>
+            <parameter id="kappa.s:seg8" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">2.0</parameter>
 
-            <stateNode id="network" spec="SimulatedCoalescentNetwork"
-                       nSegments="8" enableSegmentTreeUpdate="false">
+            <stateNode id="network" spec="SimulatedCoalescentNetwork" nSegments="8" enableSegmentTreeUpdate="false">
 
                 <traitSet idref="traitSet"/>
 
-                <populationModel spec="ConstantPopulation">
-                    <popSize spec="RealParameter" value="1"/>
+                <populationModel spec="beast.base.spec.evolution.tree.coalescent.ConstantPopulation">
+                    <popSize value="1" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
                 </populationModel>
 
-                <reassortmentRate spec="RealParameter" value="0.1"/>
+                <reassortmentRate value="0.1" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
             </stateNode>
         </state>
 
@@ -484,7 +459,6 @@
         <init spec='coalre.util.InitFromTree' id='initnetwork'
           tree="@seg1tree" network='@network'>
         </init> -->
-
 
         <init spec="SegmentTreeInitializer" network="@network">
             <segmentTree idref="seg1tree"/>
@@ -501,94 +475,93 @@
         <distribution id="posterior" spec="CompoundDistribution">
 
             <distribution id="likelihood" spec="CompoundDistribution">
-                <distribution id="treeLikelihood.seg1" spec="TreeLikelihood">
+                <distribution id="treeLikelihood.seg1" spec="beast.base.spec.evolution.likelihood.TreeLikelihood">
                     <data idref="seg1align"/>
                     <tree idref="seg1tree"/>
-                    <siteModel spec="SiteModel" mutationRate="@mutationRate.s:seg1" gammaCategoryCount="4" shape="@gammaShape.s:seg1">
-                        <substModel id="hky.s:seg1" spec="HKY" kappa="@kappa.s:seg1">
-                            <frequencies id="estimatedFreqs.s:seg1" spec="Frequencies" frequencies="@freqParameter.s:seg1"/>
+                    <siteModel spec="beast.base.spec.evolution.sitemodel.SiteModel" mutationRate="@mutationRate.s:seg1" gammaCategoryCount="4" shape="@gammaShape.s:seg1">
+                        <substModel id="hky.s:seg1" spec="beast.base.spec.evolution.substitutionmodel.HKY" kappa="@kappa.s:seg1">
+                            <frequencies id="estimatedFreqs.s:seg1" spec="beast.base.spec.evolution.substitutionmodel.Frequencies" frequencies="@freqParameter.s:seg1"/>
                         </substModel>
                     </siteModel>
-                    <branchRateModel id="StrictClock.c" spec="beast.base.evolution.branchratemodel.StrictClockModel" clock.rate="@clockRate.c"/>
+                    <branchRateModel id="StrictClock.c" spec="beast.base.spec.evolution.branchratemodel.StrictClockModel" clock.rate="@clockRate.c"/>
                 </distribution>
 
-                <distribution id="treeLikelihood.seg2" spec="TreeLikelihood">
+                <distribution id="treeLikelihood.seg2" spec="beast.base.spec.evolution.likelihood.TreeLikelihood">
                     <data idref="seg2align"/>
                     <tree idref="seg2tree"/>
-                    <siteModel spec="SiteModel" mutationRate="@mutationRate.s:seg2" gammaCategoryCount="4" shape="@gammaShape.s:seg2">
-                        <substModel id="hky.s:seg2" spec="HKY" kappa="@kappa.s:seg2">
-                            <frequencies id="estimatedFreqs.s:seg2" spec="Frequencies" frequencies="@freqParameter.s:seg2"/>
+                    <siteModel spec="beast.base.spec.evolution.sitemodel.SiteModel" mutationRate="@mutationRate.s:seg2" gammaCategoryCount="4" shape="@gammaShape.s:seg2">
+                        <substModel id="hky.s:seg2" spec="beast.base.spec.evolution.substitutionmodel.HKY" kappa="@kappa.s:seg2">
+                            <frequencies id="estimatedFreqs.s:seg2" spec="beast.base.spec.evolution.substitutionmodel.Frequencies" frequencies="@freqParameter.s:seg2"/>
                         </substModel>
                     </siteModel>
                     <branchRateModel idref="StrictClock.c"/>
                 </distribution>
 
-                <distribution id="treeLikelihood.seg3" spec="TreeLikelihood">
+                <distribution id="treeLikelihood.seg3" spec="beast.base.spec.evolution.likelihood.TreeLikelihood">
                     <data idref="seg3align"/>
                     <tree idref="seg3tree"/>
-                    <siteModel spec="SiteModel" mutationRate="@mutationRate.s:seg3" gammaCategoryCount="4" shape="@gammaShape.s:seg3">
-                        <substModel id="hky.s:seg3" spec="HKY" kappa="@kappa.s:seg3">
-                            <frequencies id="estimatedFreqs.s:seg3" spec="Frequencies" frequencies="@freqParameter.s:seg3"/>
+                    <siteModel spec="beast.base.spec.evolution.sitemodel.SiteModel" mutationRate="@mutationRate.s:seg3" gammaCategoryCount="4" shape="@gammaShape.s:seg3">
+                        <substModel id="hky.s:seg3" spec="beast.base.spec.evolution.substitutionmodel.HKY" kappa="@kappa.s:seg3">
+                            <frequencies id="estimatedFreqs.s:seg3" spec="beast.base.spec.evolution.substitutionmodel.Frequencies" frequencies="@freqParameter.s:seg3"/>
                         </substModel>
                     </siteModel>
                     <branchRateModel idref="StrictClock.c"/>
                 </distribution>
 
-                <distribution id="treeLikelihood.seg4" spec="TreeLikelihood">
+                <distribution id="treeLikelihood.seg4" spec="beast.base.spec.evolution.likelihood.TreeLikelihood">
                     <data idref="seg4align"/>
                     <tree idref="seg4tree"/>
-                    <siteModel spec="SiteModel" mutationRate="@mutationRate.s:seg4" gammaCategoryCount="4" shape="@gammaShape.s:seg4">
-                        <substModel id="hky.s:seg4" spec="HKY" kappa="@kappa.s:seg4">
-                            <frequencies id="estimatedFreqs.s:seg4" spec="Frequencies" frequencies="@freqParameter.s:seg4"/>
+                    <siteModel spec="beast.base.spec.evolution.sitemodel.SiteModel" mutationRate="@mutationRate.s:seg4" gammaCategoryCount="4" shape="@gammaShape.s:seg4">
+                        <substModel id="hky.s:seg4" spec="beast.base.spec.evolution.substitutionmodel.HKY" kappa="@kappa.s:seg4">
+                            <frequencies id="estimatedFreqs.s:seg4" spec="beast.base.spec.evolution.substitutionmodel.Frequencies" frequencies="@freqParameter.s:seg4"/>
                         </substModel>
                     </siteModel>
                     <branchRateModel idref="StrictClock.c"/>
                 </distribution>
 
-                <distribution id="treeLikelihood.seg5" spec="TreeLikelihood">
+                <distribution id="treeLikelihood.seg5" spec="beast.base.spec.evolution.likelihood.TreeLikelihood">
                     <data idref="seg5align"/>
                     <tree idref="seg5tree"/>
-                    <siteModel spec="SiteModel" mutationRate="@mutationRate.s:seg5" gammaCategoryCount="4" shape="@gammaShape.s:seg5">
-                        <substModel id="hky.s:seg5" spec="HKY" kappa="@kappa.s:seg5">
-                            <frequencies id="estimatedFreqs.s:seg5" spec="Frequencies" frequencies="@freqParameter.s:seg5"/>
+                    <siteModel spec="beast.base.spec.evolution.sitemodel.SiteModel" mutationRate="@mutationRate.s:seg5" gammaCategoryCount="4" shape="@gammaShape.s:seg5">
+                        <substModel id="hky.s:seg5" spec="beast.base.spec.evolution.substitutionmodel.HKY" kappa="@kappa.s:seg5">
+                            <frequencies id="estimatedFreqs.s:seg5" spec="beast.base.spec.evolution.substitutionmodel.Frequencies" frequencies="@freqParameter.s:seg5"/>
                         </substModel>
                     </siteModel>
                     <branchRateModel idref="StrictClock.c"/>
                 </distribution>
 
-                <distribution id="treeLikelihood.seg6" spec="TreeLikelihood">
+                <distribution id="treeLikelihood.seg6" spec="beast.base.spec.evolution.likelihood.TreeLikelihood">
                     <data idref="seg6align"/>
                     <tree idref="seg6tree"/>
-                    <siteModel spec="SiteModel" mutationRate="@mutationRate.s:seg6" gammaCategoryCount="4" shape="@gammaShape.s:seg6">
-                        <substModel id="hky.s:seg6" spec="HKY" kappa="@kappa.s:seg6">
-                            <frequencies id="estimatedFreqs.s:seg6" spec="Frequencies" frequencies="@freqParameter.s:seg6"/>
+                    <siteModel spec="beast.base.spec.evolution.sitemodel.SiteModel" mutationRate="@mutationRate.s:seg6" gammaCategoryCount="4" shape="@gammaShape.s:seg6">
+                        <substModel id="hky.s:seg6" spec="beast.base.spec.evolution.substitutionmodel.HKY" kappa="@kappa.s:seg6">
+                            <frequencies id="estimatedFreqs.s:seg6" spec="beast.base.spec.evolution.substitutionmodel.Frequencies" frequencies="@freqParameter.s:seg6"/>
                         </substModel>
                     </siteModel>
                     <branchRateModel idref="StrictClock.c"/>
                 </distribution>
 
-                <distribution id="treeLikelihood.seg7" spec="TreeLikelihood">
+                <distribution id="treeLikelihood.seg7" spec="beast.base.spec.evolution.likelihood.TreeLikelihood">
                     <data idref="seg7align"/>
                     <tree idref="seg7tree"/>
-                    <siteModel spec="SiteModel" mutationRate="@mutationRate.s:seg7" gammaCategoryCount="4" shape="@gammaShape.s:seg7">
-                        <substModel id="hky.s:seg7" spec="HKY" kappa="@kappa.s:seg7">
-                            <frequencies id="estimatedFreqs.s:seg7" spec="Frequencies" frequencies="@freqParameter.s:seg7"/>
+                    <siteModel spec="beast.base.spec.evolution.sitemodel.SiteModel" mutationRate="@mutationRate.s:seg7" gammaCategoryCount="4" shape="@gammaShape.s:seg7">
+                        <substModel id="hky.s:seg7" spec="beast.base.spec.evolution.substitutionmodel.HKY" kappa="@kappa.s:seg7">
+                            <frequencies id="estimatedFreqs.s:seg7" spec="beast.base.spec.evolution.substitutionmodel.Frequencies" frequencies="@freqParameter.s:seg7"/>
                         </substModel>
                     </siteModel>
                     <branchRateModel idref="StrictClock.c"/>
                 </distribution>
 
-                <distribution id="treeLikelihood.seg8" spec="TreeLikelihood">
+                <distribution id="treeLikelihood.seg8" spec="beast.base.spec.evolution.likelihood.TreeLikelihood">
                     <data idref="seg8align"/>
                     <tree idref="seg8tree"/>
-                    <siteModel spec="SiteModel" mutationRate="@mutationRate.s:seg8" gammaCategoryCount="4" shape="@gammaShape.s:seg8">
-                        <substModel id="hky.s:seg8" spec="HKY" kappa="@kappa.s:seg8">
-                            <frequencies id="estimatedFreqs.s:seg8" spec="Frequencies" frequencies="@freqParameter.s:seg8"/>
+                    <siteModel spec="beast.base.spec.evolution.sitemodel.SiteModel" mutationRate="@mutationRate.s:seg8" gammaCategoryCount="4" shape="@gammaShape.s:seg8">
+                        <substModel id="hky.s:seg8" spec="beast.base.spec.evolution.substitutionmodel.HKY" kappa="@kappa.s:seg8">
+                            <frequencies id="estimatedFreqs.s:seg8" spec="beast.base.spec.evolution.substitutionmodel.Frequencies" frequencies="@freqParameter.s:seg8"/>
                         </substModel>
                     </siteModel>
                     <branchRateModel idref="StrictClock.c"/>
                 </distribution>
-
 
             </distribution>
 
@@ -608,7 +581,7 @@
 
                     <!-- isNeSkyline-->
                     <populationModel id="splinePop" spec="coalre.dynamics.SkygrowthNeDynamics" logNe="@logNe" rateShifts="@rateShifts"/>
-					<timeVaryingReassortmentRates id="splinePop2" spec="coalre.dynamics.GLMReassortmentRates" independentAfter="40" neToReassortment="@InfectedToRho"  rateShifts="@rateShifts" predictorIsActive="@predictorActive">
+					<timeVaryingReassortmentRates id="splinePop2" spec="coalre.dynamics.GLMReassortmentRates" independentAfter="40" neToReassortment="@InfectedToRho" rateShifts="@rateShifts" predictorIsActive="@predictorActive">
 
 						<predictor idref="lpai"/>
 
@@ -623,53 +596,22 @@
 					</timeVaryingReassortmentRates>
                     <!--isNeSkyline -->
 
-
-
-
-
                 </distribution>
 
                 <distribution id="parametersPrior" spec="CompoundDistribution">
-                    <distribution spec="Prior" x="@popSize">
-                        <distr spec="beast.base.inference.distribution.OneOnX"/>
-                    </distribution>
-                    <distribution spec="Prior" x="@reassortmentRate">
-                        <distr spec="beast.base.inference.distribution.LogNormalDistributionModel" M="-1.7344" S="0.5"/>
-                    </distribution>
-                    <distribution spec="Prior">
-                        <x spec="coalre.dynamics.Difference" arg="@logNe"/>
-                        <distr spec="beast.base.inference.distribution.Normal" mean="0" sigma="@sigma"/>
-                    </distribution>
+                    <distribution spec="beast.base.spec.inference.distribution.LogNormal" param="@popSize"><M spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real" value="3.0"/><S spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="2.5"/></distribution>
+                    <distribution spec="beast.base.spec.inference.distribution.LogNormal" param="@reassortmentRate" M="-1.7344" S="0.5"/>
+                    <distribution spec="beast.base.spec.inference.distribution.Normal" mean="0" sigma="@sigma"/>
 
-                    <distribution spec="Prior" x="@sigma2">
-                        <distr spec="beast.base.inference.distribution.LogNormalDistributionModel" meanInRealSpace="true" M="1" S="0.5"/>
-                    </distribution>
-					<distribution spec="Prior" x="@effectSize">
-
-						<distr spec="beast.base.inference.distribution.Normal" mean="1" sigma="1"/>
-
-					</distribution>
-
+                    <distribution spec="beast.base.spec.inference.distribution.LogNormal" param="@sigma2" meanInRealSpace="true" M="1" S="0.5"/>
+					<distribution spec="beast.base.spec.inference.distribution.Normal" param="@effectSize" mean="1" sigma="1"/>
 
                     <!-- isinfectedSkyline-->
-                    <distribution spec="Prior">
-                        <x spec="coalre.dynamics.Difference" arg="@InfectedToRho" independentAfter="40"/>
-                        <distr spec="beast.base.inference.distribution.Normal" mean="0" sigma="@sigma2"/>
-                    </distribution>
+                    <distribution spec="beast.base.spec.inference.distribution.Normal" mean="0" sigma="@sigma2"/>
 
-                    <distribution spec="Prior">
-                        <x spec="mascot.util.Final" arg="@InfectedToRho"/>
-                        <distr spec="beast.base.inference.distribution.Normal" mean="-3" sigma="0.5"/>
-                    </distribution>
+                    <distribution spec="beast.base.spec.inference.distribution.Normal" mean="-3" sigma="0.5"/>
 
-
-
-
-
-
-                    <distribution spec="Prior" x="@sigma2">
-                        <distr spec="beast.base.inference.distribution.LogNormalDistributionModel" meanInRealSpace="true" M="1" S="0.5"/>
-                    </distribution>
+                    <distribution spec="beast.base.spec.inference.distribution.LogNormal" param="@sigma2" meanInRealSpace="true" M="1" S="0.5"/>
                     <!--isinfectedSkyline -->
 
                     <!-- 
@@ -685,12 +627,10 @@
                         <distr spec="beast.base.inference.distribution.Normal" mean="-15" sigma="0.5"/>
                     </distribution> -->
 
-
                 </distribution>
             </distribution>
         </distribution>
 
-        
         <!-- 
         <operator id="migrationRatesScaler.s" spec="AdaptableOperatorSampler" weight="5.0">
             <parameter idref="popSize"/>
@@ -712,253 +652,248 @@
         </operator>
          -->
 
-
         <!-- isinfectedSkyline-->
-        <operator id="migrationRatesScaler.s" spec="AdaptableOperatorSampler" weight="5.0">
+        <operator id="migrationRatesScaler.s" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="5.0">
             <parameter idref="logNe"/>
-            <operator id="AVMNOperator.Mascot" spec="kernel.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
-                <transformations id="AVMNSumTransform.Mascot" spec="operator.kernel.Transform$LogConstrainedSumTransform"/>
-                <transformations id="AVMNLogTransform.Mascot" spec="operator.kernel.Transform$LogTransform">
+            <operator id="AVMNOperator.Mascot" spec="beast.base.spec.evolution.operator.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
+                <transformations id="AVMNSumTransform.Mascot" spec="beast.base.spec.inference.operator.Transform$LogConstrainedSumTransform"/>
+                <transformations id="AVMNLogTransform.Mascot" spec="beast.base.spec.inference.operator.Transform$LogTransform">
                     <f idref="sigma2"/>
                 </transformations>
-                <transformations id="AVMNNoTransform.Mascot" spec="operator.kernel.Transform$NoTransform">
+                <transformations id="AVMNNoTransform.Mascot" spec="beast.base.spec.inference.operator.Transform$NoTransform">
                     <f idref="InfectedToRho"/>
                     <f idref="logNe"/>
                 </transformations>
             </operator>
-            <operator id="SkylineNe.camel.ScalerX.t" spec="beast.base.inference.operator.kernel.BactrianRandomWalkOperator" parameter="@logNe" scaleFactor="0.5" weight="1.0"/>
+            <operator id="SkylineNe.camel.ScalerX.t" spec="beast.base.spec.inference.operator.RealRandomWalkOperator" parameter="@logNe" scaleFactor="0.5" weight="1.0"/>
         </operator>
-        <operator id="InfectedToRhoScaler.s:" spec="AdaptableOperatorSampler" weight="10.0">
+        <operator id="InfectedToRhoScaler.s:" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="10.0">
             <parameter idref="InfectedToRho"/>
             <operator idref="AVMNOperator.Mascot"/>
-            <operator id="InfectedToRho.ScalerX.t" spec="beast.base.inference.operator.kernel.BactrianRandomWalkOperator" parameter="@InfectedToRho" scaleFactor="0.5" weight="1.0"/>
+            <operator id="InfectedToRho.ScalerX.t" spec="beast.base.spec.inference.operator.RealRandomWalkOperator" parameter="@InfectedToRho" scaleFactor="0.5" weight="1.0"/>
         </operator>
 
-        <operator id="Sigma2Scaler.s:" spec="AdaptableOperatorSampler" weight="10.0">
+        <operator id="Sigma2Scaler.s:" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="10.0">
             <parameter idref="sigma2"/>
             <operator idref="AVMNOperator.Mascot"/>
-            <operator id="Sigma2.ScalerX.t" spec="beast.base.evolution.operator.kernel.BactrianScaleOperator" parameter="@sigma2" scaleFactor="0.5" weight="1.0"/>
+            <operator id="Sigma2.ScalerX.t" parameter="@sigma2" scaleFactor="0.5" weight="1.0" spec="beast.base.spec.inference.operator.ScaleOperator"/>
         </operator>
 
-        <operator id="InfectedToRho.ScalerX.t2" spec="beast.base.inference.operator.kernel.BactrianRandomWalkOperator" parameter="@InfectedToRho" scaleFactor="0.5" weight="5.0"/>
-        <operator id="SkylineNe.camel.ScalerX.t2" spec="beast.base.inference.operator.kernel.BactrianRandomWalkOperator" parameter="@logNe" scaleFactor="0.5" weight="5.0"/>
+        <operator id="InfectedToRho.ScalerX.t2" spec="beast.base.spec.inference.operator.RealRandomWalkOperator" parameter="@InfectedToRho" scaleFactor="0.5" weight="5.0"/>
+        <operator id="SkylineNe.camel.ScalerX.t2" spec="beast.base.spec.inference.operator.RealRandomWalkOperator" parameter="@logNe" scaleFactor="0.5" weight="5.0"/>
 
         <!--isinfectedSkyline -->
 
-
-
-        <operator id="gammaShapeScaler.s:seg1" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="gammaShapeScaler.s:seg1" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="gammaShape.s:seg1"/>
-            <operator id="AVMNOperator.seg1" spec="kernel.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
-                <transformations spec="operator.kernel.Transform$LogConstrainedSumTransform">
+            <operator id="AVMNOperator.seg1" spec="beast.base.spec.evolution.operator.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
+                <transformations spec="beast.base.spec.inference.operator.Transform$LogConstrainedSumTransform">
                     <f idref="freqParameter.s:seg1"/>
                 </transformations>
-                <transformations spec="operator.kernel.Transform$LogTransform">
+                <transformations spec="beast.base.spec.inference.operator.Transform$LogTransform">
                     <f idref="gammaShape.s:seg1"/>
                     <f idref="kappa.s:seg1"/>
                 </transformations>
             </operator>
-            <operator id="gammaShapeScalerX.s:seg1" spec="kernel.BactrianScaleOperator" parameter="@gammaShape.s:seg1" scaleFactor="0.5" upper="10.0" weight="0.1"/>
+            <operator id="gammaShapeScalerX.s:seg1" parameter="@gammaShape.s:seg1" scaleFactor="0.5" upper="10.0" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
         </operator>
 
-        <operator id="FrequenciesExchanger.s:seg1" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="FrequenciesExchanger.s:seg1" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="freqParameter.s:seg1"/>
             <operator idref="AVMNOperator.seg1"/>
-            <operator id="FrequenciesExchangerX.s:seg1" spec="operator.kernel.BactrianDeltaExchangeOperator" delta="0.01" weight="0.1">
+            <operator id="FrequenciesExchangerX.s:seg1" spec="beast.base.spec.inference.operator.DeltaExchangeOperator" delta="0.01" weight="0.1">
                 <parameter idref="freqParameter.s:seg1"/>
             </operator>
         </operator>
-        <operator id="KappaScaler.s:seg1" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="KappaScaler.s:seg1" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="kappa.s:seg1"/>
             <operator idref="AVMNOperator.seg1"/>
-            <operator id="KappaScalerX.s:seg1" spec="kernel.BactrianScaleOperator" parameter="@kappa.s:seg1" scaleFactor="0.1" upper="10.0" weight="0.1"/>
+            <operator id="KappaScalerX.s:seg1" parameter="@kappa.s:seg1" scaleFactor="0.1" upper="10.0" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
         </operator>
 
-
-
-        <operator id="gammaShapeScaler.s:seg2" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="gammaShapeScaler.s:seg2" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="gammaShape.s:seg2"/>
-            <operator id="AVMNOperator.seg2" spec="kernel.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
-                <transformations spec="operator.kernel.Transform$LogConstrainedSumTransform">
+            <operator id="AVMNOperator.seg2" spec="beast.base.spec.evolution.operator.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
+                <transformations spec="beast.base.spec.inference.operator.Transform$LogConstrainedSumTransform">
                     <f idref="freqParameter.s:seg2"/>
                 </transformations>
-                <transformations spec="operator.kernel.Transform$LogTransform">
+                <transformations spec="beast.base.spec.inference.operator.Transform$LogTransform">
                     <f idref="gammaShape.s:seg2"/>
                     <f idref="kappa.s:seg2"/>
                 </transformations>
             </operator>
-            <operator id="gammaShapeScalerX.s:seg2" spec="kernel.BactrianScaleOperator" parameter="@gammaShape.s:seg2" scaleFactor="0.5" upper="10.0" weight="0.1"/>
+            <operator id="gammaShapeScalerX.s:seg2" parameter="@gammaShape.s:seg2" scaleFactor="0.5" upper="10.0" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
         </operator>
-        <operator id="FrequenciesExchanger.s:seg2" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="FrequenciesExchanger.s:seg2" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="freqParameter.s:seg2"/>
             <operator idref="AVMNOperator.seg2"/>
-            <operator id="FrequenciesExchangerX.s:seg2" spec="operator.kernel.BactrianDeltaExchangeOperator" delta="0.01" weight="0.1">
+            <operator id="FrequenciesExchangerX.s:seg2" spec="beast.base.spec.inference.operator.DeltaExchangeOperator" delta="0.01" weight="0.1">
                 <parameter idref="freqParameter.s:seg2"/>
             </operator>
         </operator>
-        <operator id="KappaScaler.s:seg2" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="KappaScaler.s:seg2" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="kappa.s:seg2"/>
             <operator idref="AVMNOperator.seg2"/>
-            <operator id="KappaScalerX.s:seg2" spec="kernel.BactrianScaleOperator" parameter="@kappa.s:seg2" scaleFactor="0.1" upper="10.0" weight="0.1"/>
+            <operator id="KappaScalerX.s:seg2" parameter="@kappa.s:seg2" scaleFactor="0.1" upper="10.0" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
         </operator>
 
-        <operator id="gammaShapeScaler.s:seg3" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="gammaShapeScaler.s:seg3" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="gammaShape.s:seg3"/>
-            <operator id="AVMNOperator.seg3" spec="kernel.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
-                <transformations spec="operator.kernel.Transform$LogConstrainedSumTransform">
+            <operator id="AVMNOperator.seg3" spec="beast.base.spec.evolution.operator.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
+                <transformations spec="beast.base.spec.inference.operator.Transform$LogConstrainedSumTransform">
                     <f idref="freqParameter.s:seg3"/>
                 </transformations>
-                <transformations spec="operator.kernel.Transform$LogTransform">
+                <transformations spec="beast.base.spec.inference.operator.Transform$LogTransform">
                     <f idref="gammaShape.s:seg3"/>
                     <f idref="kappa.s:seg3"/>
                 </transformations>
             </operator>
-            <operator id="gammaShapeScalerX.s:seg3" spec="kernel.BactrianScaleOperator" parameter="@gammaShape.s:seg3" scaleFactor="0.5" upper="10.0" weight="0.1"/>
+            <operator id="gammaShapeScalerX.s:seg3" parameter="@gammaShape.s:seg3" scaleFactor="0.5" upper="10.0" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
         </operator>
-        <operator id="FrequenciesExchanger.s:seg3" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="FrequenciesExchanger.s:seg3" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="freqParameter.s:seg3"/>
             <operator idref="AVMNOperator.seg3"/>
-            <operator id="FrequenciesExchangerX.s:seg3" spec="operator.kernel.BactrianDeltaExchangeOperator" delta="0.01" weight="0.1">
+            <operator id="FrequenciesExchangerX.s:seg3" spec="beast.base.spec.inference.operator.DeltaExchangeOperator" delta="0.01" weight="0.1">
                 <parameter idref="freqParameter.s:seg3"/>
             </operator>
         </operator>
-        <operator id="KappaScaler.s:seg3" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="KappaScaler.s:seg3" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="kappa.s:seg3"/>
             <operator idref="AVMNOperator.seg3"/>
-            <operator id="KappaScalerX.s:seg3" spec="kernel.BactrianScaleOperator" parameter="@kappa.s:seg3" scaleFactor="0.1" upper="10.0" weight="0.1"/>
+            <operator id="KappaScalerX.s:seg3" parameter="@kappa.s:seg3" scaleFactor="0.1" upper="10.0" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
         </operator>
 
-        <operator id="gammaShapeScaler.s:seg4" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="gammaShapeScaler.s:seg4" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="gammaShape.s:seg4"/>
-            <operator id="AVMNOperator.seg4" spec="kernel.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
-                <transformations spec="operator.kernel.Transform$LogConstrainedSumTransform">
+            <operator id="AVMNOperator.seg4" spec="beast.base.spec.evolution.operator.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
+                <transformations spec="beast.base.spec.inference.operator.Transform$LogConstrainedSumTransform">
                     <f idref="freqParameter.s:seg4"/>
                 </transformations>
-                <transformations spec="operator.kernel.Transform$LogTransform">
+                <transformations spec="beast.base.spec.inference.operator.Transform$LogTransform">
                     <f idref="gammaShape.s:seg4"/>
                     <f idref="kappa.s:seg4"/>
                 </transformations>
             </operator>
-            <operator id="gammaShapeScalerX.s:seg4" spec="kernel.BactrianScaleOperator" parameter="@gammaShape.s:seg4" scaleFactor="0.5" upper="10.0" weight="0.1"/>
+            <operator id="gammaShapeScalerX.s:seg4" parameter="@gammaShape.s:seg4" scaleFactor="0.5" upper="10.0" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
         </operator>
-        <operator id="FrequenciesExchanger.s:seg4" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="FrequenciesExchanger.s:seg4" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="freqParameter.s:seg4"/>
             <operator idref="AVMNOperator.seg4"/>
-            <operator id="FrequenciesExchangerX.s:seg4" spec="operator.kernel.BactrianDeltaExchangeOperator" delta="0.01" weight="0.1">
+            <operator id="FrequenciesExchangerX.s:seg4" spec="beast.base.spec.inference.operator.DeltaExchangeOperator" delta="0.01" weight="0.1">
                 <parameter idref="freqParameter.s:seg4"/>
             </operator>
         </operator>
-        <operator id="KappaScaler.s:seg4" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="KappaScaler.s:seg4" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="kappa.s:seg4"/>
             <operator idref="AVMNOperator.seg4"/>
-            <operator id="KappaScalerX.s:seg4" spec="kernel.BactrianScaleOperator" parameter="@kappa.s:seg4" scaleFactor="0.1" upper="10.0" weight="0.1"/>
+            <operator id="KappaScalerX.s:seg4" parameter="@kappa.s:seg4" scaleFactor="0.1" upper="10.0" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
         </operator>
 
-        <operator id="gammaShapeScaler.s:seg5" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="gammaShapeScaler.s:seg5" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="gammaShape.s:seg5"/>
-            <operator id="AVMNOperator.seg5" spec="kernel.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
-                <transformations spec="operator.kernel.Transform$LogConstrainedSumTransform">
+            <operator id="AVMNOperator.seg5" spec="beast.base.spec.evolution.operator.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
+                <transformations spec="beast.base.spec.inference.operator.Transform$LogConstrainedSumTransform">
                     <f idref="freqParameter.s:seg5"/>
                 </transformations>
-                <transformations spec="operator.kernel.Transform$LogTransform">
+                <transformations spec="beast.base.spec.inference.operator.Transform$LogTransform">
                     <f idref="gammaShape.s:seg5"/>
                     <f idref="kappa.s:seg5"/>
                 </transformations>
             </operator>
-            <operator id="gammaShapeScalerX.s:seg5" spec="kernel.BactrianScaleOperator" parameter="@gammaShape.s:seg5" scaleFactor="0.5" upper="10.0" weight="0.1"/>
+            <operator id="gammaShapeScalerX.s:seg5" parameter="@gammaShape.s:seg5" scaleFactor="0.5" upper="10.0" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
         </operator>
-        <operator id="FrequenciesExchanger.s:seg5" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="FrequenciesExchanger.s:seg5" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="freqParameter.s:seg5"/>
             <operator idref="AVMNOperator.seg5"/>
-            <operator id="FrequenciesExchangerX.s:seg5" spec="operator.kernel.BactrianDeltaExchangeOperator" delta="0.01" weight="0.1">
+            <operator id="FrequenciesExchangerX.s:seg5" spec="beast.base.spec.inference.operator.DeltaExchangeOperator" delta="0.01" weight="0.1">
                 <parameter idref="freqParameter.s:seg5"/>
             </operator>
         </operator>
-        <operator id="KappaScaler.s:seg5" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="KappaScaler.s:seg5" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="kappa.s:seg5"/>
             <operator idref="AVMNOperator.seg5"/>
-            <operator id="KappaScalerX.s:seg5" spec="kernel.BactrianScaleOperator" parameter="@kappa.s:seg5" scaleFactor="0.1" upper="10.0" weight="0.1"/>
+            <operator id="KappaScalerX.s:seg5" parameter="@kappa.s:seg5" scaleFactor="0.1" upper="10.0" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
         </operator>
 
-        <operator id="gammaShapeScaler.s:seg6" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="gammaShapeScaler.s:seg6" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="gammaShape.s:seg6"/>
-            <operator id="AVMNOperator.seg6" spec="kernel.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
-                <transformations spec="operator.kernel.Transform$LogConstrainedSumTransform">
+            <operator id="AVMNOperator.seg6" spec="beast.base.spec.evolution.operator.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
+                <transformations spec="beast.base.spec.inference.operator.Transform$LogConstrainedSumTransform">
                     <f idref="freqParameter.s:seg6"/>
                 </transformations>
-                <transformations spec="operator.kernel.Transform$LogTransform">
+                <transformations spec="beast.base.spec.inference.operator.Transform$LogTransform">
                     <f idref="gammaShape.s:seg6"/>
                     <f idref="kappa.s:seg6"/>
                 </transformations>
             </operator>
-            <operator id="gammaShapeScalerX.s:seg6" spec="kernel.BactrianScaleOperator" parameter="@gammaShape.s:seg6" scaleFactor="0.5" upper="10.0" weight="0.1"/>
+            <operator id="gammaShapeScalerX.s:seg6" parameter="@gammaShape.s:seg6" scaleFactor="0.5" upper="10.0" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
         </operator>
-        <operator id="FrequenciesExchanger.s:seg6" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="FrequenciesExchanger.s:seg6" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="freqParameter.s:seg6"/>
             <operator idref="AVMNOperator.seg6"/>
-            <operator id="FrequenciesExchangerX.s:seg6" spec="operator.kernel.BactrianDeltaExchangeOperator" delta="0.01" weight="0.1">
+            <operator id="FrequenciesExchangerX.s:seg6" spec="beast.base.spec.inference.operator.DeltaExchangeOperator" delta="0.01" weight="0.1">
                 <parameter idref="freqParameter.s:seg6"/>
             </operator>
         </operator>
-        <operator id="KappaScaler.s:seg6" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="KappaScaler.s:seg6" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="kappa.s:seg6"/>
             <operator idref="AVMNOperator.seg6"/>
-            <operator id="KappaScalerX.s:seg6" spec="kernel.BactrianScaleOperator" parameter="@kappa.s:seg6" scaleFactor="0.1" upper="10.0" weight="0.1"/>
+            <operator id="KappaScalerX.s:seg6" parameter="@kappa.s:seg6" scaleFactor="0.1" upper="10.0" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
         </operator>
 
-        <operator id="gammaShapeScaler.s:seg7" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="gammaShapeScaler.s:seg7" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="gammaShape.s:seg7"/>
-            <operator id="AVMNOperator.seg7" spec="kernel.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
-                <transformations spec="operator.kernel.Transform$LogConstrainedSumTransform">
+            <operator id="AVMNOperator.seg7" spec="beast.base.spec.evolution.operator.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
+                <transformations spec="beast.base.spec.inference.operator.Transform$LogConstrainedSumTransform">
                     <f idref="freqParameter.s:seg7"/>
                 </transformations>
-                <transformations spec="operator.kernel.Transform$LogTransform">
+                <transformations spec="beast.base.spec.inference.operator.Transform$LogTransform">
                     <f idref="gammaShape.s:seg7"/>
                     <f idref="kappa.s:seg7"/>
                 </transformations>
             </operator>
-            <operator id="gammaShapeScalerX.s:seg7" spec="kernel.BactrianScaleOperator" parameter="@gammaShape.s:seg7" scaleFactor="0.5" upper="10.0" weight="0.1"/>
+            <operator id="gammaShapeScalerX.s:seg7" parameter="@gammaShape.s:seg7" scaleFactor="0.5" upper="10.0" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
         </operator>
-        <operator id="FrequenciesExchanger.s:seg7" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="FrequenciesExchanger.s:seg7" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="freqParameter.s:seg7"/>
             <operator idref="AVMNOperator.seg7"/>
-            <operator id="FrequenciesExchangerX.s:seg7" spec="operator.kernel.BactrianDeltaExchangeOperator" delta="0.01" weight="0.1">
+            <operator id="FrequenciesExchangerX.s:seg7" spec="beast.base.spec.inference.operator.DeltaExchangeOperator" delta="0.01" weight="0.1">
                 <parameter idref="freqParameter.s:seg7"/>
             </operator>
         </operator>
-        <operator id="KappaScaler.s:seg7" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="KappaScaler.s:seg7" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="kappa.s:seg7"/>
             <operator idref="AVMNOperator.seg7"/>
-            <operator id="KappaScalerX.s:seg7" spec="kernel.BactrianScaleOperator" parameter="@kappa.s:seg7" scaleFactor="0.1" upper="10.0" weight="0.1"/>
+            <operator id="KappaScalerX.s:seg7" parameter="@kappa.s:seg7" scaleFactor="0.1" upper="10.0" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
         </operator>
 
-        <operator id="gammaShapeScaler.s:seg8" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="gammaShapeScaler.s:seg8" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="gammaShape.s:seg8"/>
-            <operator id="AVMNOperator.seg8" spec="kernel.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
-                <transformations spec="operator.kernel.Transform$LogConstrainedSumTransform">
+            <operator id="AVMNOperator.seg8" spec="beast.base.spec.evolution.operator.AdaptableVarianceMultivariateNormalOperator" allowNonsense="true" beta="0.05" burnin="400" initial="800" weight="1.0">
+                <transformations spec="beast.base.spec.inference.operator.Transform$LogConstrainedSumTransform">
                     <f idref="freqParameter.s:seg8"/>
                 </transformations>
-                <transformations spec="operator.kernel.Transform$LogTransform">
+                <transformations spec="beast.base.spec.inference.operator.Transform$LogTransform">
                     <f idref="gammaShape.s:seg8"/>
                     <f idref="kappa.s:seg8"/>
                 </transformations>
             </operator>
-            <operator id="gammaShapeScalerX.s:seg8" spec="kernel.BactrianScaleOperator" parameter="@gammaShape.s:seg8" scaleFactor="0.5" upper="10.0" weight="0.1"/>
+            <operator id="gammaShapeScalerX.s:seg8" parameter="@gammaShape.s:seg8" scaleFactor="0.5" upper="10.0" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
         </operator>
-        <operator id="FrequenciesExchanger.s:seg8" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="FrequenciesExchanger.s:seg8" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="freqParameter.s:seg8"/>
             <operator idref="AVMNOperator.seg8"/>
-            <operator id="FrequenciesExchangerX.s:seg8" spec="operator.kernel.BactrianDeltaExchangeOperator" delta="0.01" weight="0.1">
+            <operator id="FrequenciesExchangerX.s:seg8" spec="beast.base.spec.inference.operator.DeltaExchangeOperator" delta="0.01" weight="0.1">
                 <parameter idref="freqParameter.s:seg8"/>
             </operator>
         </operator>
-        <operator id="KappaScaler.s:seg8" spec="AdaptableOperatorSampler" weight="0.25">
+        <operator id="KappaScaler.s:seg8" spec="beast.base.spec.evolution.operator.AdaptableOperatorSampler" weight="0.25">
             <parameter idref="kappa.s:seg8"/>
             <operator idref="AVMNOperator.seg8"/>
-            <operator id="KappaScalerX.s:seg8" spec="kernel.BactrianScaleOperator" parameter="@kappa.s:seg8" scaleFactor="0.1" upper="10.0" weight="0.1"/>
+            <operator id="KappaScalerX.s:seg8" parameter="@kappa.s:seg8" scaleFactor="0.1" upper="10.0" weight="0.1" spec="beast.base.spec.inference.operator.ScaleOperator"/>
         </operator>
 
-			<operator id="PredictorOperator" spec="ChangePredictorOperator" weight="5"  independentAfter="40" predictorIsActive="@predictorActive" neToReassortment="@InfectedToRho">
+			<operator id="PredictorOperator" spec="ChangePredictorOperator" weight="5" independentAfter="40" predictorIsActive="@predictorActive" neToReassortment="@InfectedToRho">
 				<predictor idref="lpai"/>
 				<predictor idref="hpai"/>
 				<predictor idref="total"/>
@@ -966,7 +901,7 @@
 				<effectSize idref="effectSize"/>
 			</operator>
 
-			<operator id="EffectSizeOperator" spec="EffectSizePredictorOperator" weight="1"  independentAfter="40" predictorIsActive="@predictorActive" neToReassortment="@InfectedToRho">
+			<operator id="EffectSizeOperator" spec="EffectSizePredictorOperator" weight="1" independentAfter="40" predictorIsActive="@predictorActive" neToReassortment="@InfectedToRho">
 				<predictor idref="lpai"/>
 				<predictor idref="hpai"/>
 				<predictor idref="total"/>
@@ -974,11 +909,11 @@
 				<effectSize idref="effectSize"/>
 			</operator>
 
-			<operator id="EffectiveSize.ScalerX.t" spec="beast.base.inference.operator.kernel.BactrianRandomWalkOperator" parameter="@effectSize" scaleFactor="0.5" weight="1.0"/>
+			<operator id="EffectiveSize.ScalerX.t" spec="beast.base.spec.inference.operator.RealRandomWalkOperator" parameter="@effectSize" scaleFactor="0.5" weight="1.0"/>
 
-			<operator id="Uni.ScalerX.t" spec="beast.base.inference.operator.UniformOperator" parameter="@predictorActive" weight="1.0"/>
+			<operator id="Uni.ScalerX.t" spec="beast.base.spec.inference.operator.uniform.IntUniformOperator" parameter="@predictorActive" weight="1.0"/>
 
-        <operator id="FixMeanMutationRatesOperator" spec="operator.kernel.BactrianDeltaExchangeOperator" delta="0.01" weight="5">
+        <operator id="FixMeanMutationRatesOperator" spec="beast.base.spec.inference.operator.DeltaExchangeOperator" delta="0.01" weight="5">
             <parameter idref="mutationRate.s:seg1"/>
             <parameter idref="mutationRate.s:seg2"/>
             <parameter idref="mutationRate.s:seg3"/>
@@ -987,11 +922,10 @@
             <parameter idref="mutationRate.s:seg6"/>
             <parameter idref="mutationRate.s:seg7"/>
             <parameter idref="mutationRate.s:seg8"/>
-            <weightvector id="weightparameter" spec="parameter.IntegerParameter" dimension="2" estimate="false" lower="0" upper="0">1850 1874 982 839 1497 2274 2280 2151</weightvector>
+            <weightvector id="weightparameter" dimension="2" estimate="false" spec="beast.base.spec.inference.parameter.IntVectorParam" domain="NonNegativeInt">1850 1874 982 839 1497 2274 2280 2151</weightvector>
         </operator>
 
-
-        <operator id="ClockRateScaler.t1" spec="beast.base.evolution.operator.kernel.BactrianScaleOperator" parameter="@clockRate.c" scaleFactor="0.5" weight="2.0"/>
+        <operator id="ClockRateScaler.t1" parameter="@clockRate.c" scaleFactor="0.5" weight="2.0" spec="beast.base.spec.inference.operator.ScaleOperator"/>
 
         <!-- <operator id="ClockRateScaler.t2" spec="beast.base.evolution.operator.kernel.BactrianScaleOperator" parameter="@mutationRate.s:seg2" scaleFactor="0.5" weight="1.0"/>
         <operator id="ClockRateScaler.t3" spec="beast.base.evolution.operator.kernel.BactrianScaleOperator" parameter="@mutationRate.s:seg3" scaleFactor="0.5" weight="1.0"/>
@@ -1011,7 +945,6 @@
             <segmentTree idref="seg7tree"/>
             <segmentTree idref="seg8tree"/>
         </operator>
-
 
         <operator id="AR_shortone" spec="AddRemoveAndResimulate" coalescentWithReassortment="@networkPrior" network="@network" localMove="true" weight="10.0" edgeDistance="3" alpha="30" divertOneSegment="false">
             <segmentTree idref="seg1tree"/>
@@ -1067,8 +1000,6 @@
             <segmentTree idref="seg8tree"/>
         </operator>
 
-
-
         <operator spec="DivertSegmentAndResimulate" coalescentWithReassortment="@networkPrior" network="@network" weight="200.0" divertOneSegment="true">
             <segmentTree idref="seg1tree"/>
             <segmentTree idref="seg2tree"/>
@@ -1079,10 +1010,6 @@
             <segmentTree idref="seg7tree"/>
             <segmentTree idref="seg8tree"/>
         </operator>
-
-
-
-
 
         <operator id="NetworkScale" spec="NetworkScaleOperator" network="@network" weight="2" scaleFactor="0.9" doubleDiscount="false">
             <segmentTree idref="seg1tree"/>
@@ -1105,7 +1032,6 @@
 
         </operator>
 
-
         <operator id="NetworkScale2" spec="NetworkScaleOperator" network="@network" weight="2" scaleFactor="0.9" doubleDiscount="false">
             <segmentTree idref="seg1tree"/>
             <segmentTree idref="seg2tree"/>
@@ -1117,7 +1043,7 @@
             <segmentTree idref="seg8tree"/>
         </operator>
         
-        <operator id="NetworkScaleIndependently" scaleIntervalsIndependently="true" scaleFactor="0.95"  spec="NetworkScaleOperator" network="@network" weight="2">
+        <operator id="NetworkScaleIndependently" scaleIntervalsIndependently="true" scaleFactor="0.95" spec="NetworkScaleOperator" network="@network" weight="2">
             <segmentTree idref="seg1tree"/>
             <segmentTree idref="seg2tree"/>
             <segmentTree idref="seg3tree"/>
@@ -1160,7 +1086,7 @@
             <segmentTree idref="seg8tree"/>
         </operator>
 
-        <operator id="uniform" spec="UniformNetworkNodeHeightOperator"  network="@network" weight="5.0">
+        <operator id="uniform" spec="UniformNetworkNodeHeightOperator" network="@network" weight="5.0">
             <segmentTree idref="seg1tree"/>
             <segmentTree idref="seg2tree"/>
             <segmentTree idref="seg3tree"/>
@@ -1171,8 +1097,7 @@
             <segmentTree idref="seg8tree"/>
         </operator>
 
-
-        <operator id="slide" spec="SubNetworkSlide" useEdgeLength="false"  network="@network" weight="15.0">
+        <operator id="slide" spec="SubNetworkSlide" useEdgeLength="false" network="@network" weight="15.0">
             <segmentTree idref="seg1tree"/>
             <segmentTree idref="seg2tree"/>
             <segmentTree idref="seg3tree"/>
@@ -1194,7 +1119,7 @@
             <segmentTree idref="seg8tree"/>
         </operator>
 
-        <operator id="weighted" spec="SubNetworkLeapAndResimulate" coalescentWithReassortment="@networkPrior" randomlySampleAttachmentEdge="false"  useEdgeLength="true" network="@network" weight="50.0">
+        <operator id="weighted" spec="SubNetworkLeapAndResimulate" coalescentWithReassortment="@networkPrior" randomlySampleAttachmentEdge="false" useEdgeLength="true" network="@network" weight="50.0">
             <segmentTree idref="seg1tree"/>
             <segmentTree idref="seg2tree"/>
             <segmentTree idref="seg3tree"/>
@@ -1204,9 +1129,6 @@
             <segmentTree idref="seg7tree"/>
             <segmentTree idref="seg8tree"/>
         </operator>
-
-
-
 
         <logger spec="Logger" logEvery="100000" mode="tree" fileName="$(filebase).trees">
             <log idref="network"/>
@@ -1236,7 +1158,6 @@
         <logger spec="Logger" logEvery="10000" mode="tree" fileName="$(filebase).seg8.trees">
             <log idref="seg8tree"/>
         </logger> -->
-
 
         <logger spec="Logger" logEvery="100000" fileName="$(filebase).log">
             <log idref="posterior"/>
@@ -1313,9 +1234,8 @@
         <logger spec="Logger" logEvery="10000">
             <log idref="posterior"/>
             <log idref="likelihood"/>
-            <log spec="beast.base.inference.util.ESS" arg="@posterior"/>
+            <log spec="beast.base.spec.inference.util.ESS" arg="@posterior"/>
         </logger>
-
 
     </run>
 </beast>
