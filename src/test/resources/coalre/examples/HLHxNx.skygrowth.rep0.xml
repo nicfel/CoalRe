@@ -480,57 +480,57 @@
             <stateNode id="seg7tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
             <stateNode id="seg8tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
 
-            <stateNode id="sigma" value="1" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
-            <stateNode id="sigma2" value="0.5" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+            <stateNode id="sigma" value="1" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
+            <stateNode id="sigma2" value="0.5" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
             <stateNode id="popSize" value="1.0293" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
             <stateNode id="reassortmentRate" value="0.1211" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
 
             <stateNode id="logNe" value="1 1.01" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
-            <stateNode id="rateShifts" value="0 1.25 2.5 3.75 5 6 50" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
+            <stateNode id="rateShifts" value="0 1.25 2.5 3.75 5 6 50" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="NonNegativeReal"/>
             <stateNode id="recoveryRate" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
             <stateNode id="InfectedToRho" value="-8 -7" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
 
-            <parameter id="clockRate.c" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">0.0035</parameter>
+            <parameter id="clockRate.c" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">0.0035</parameter>
             
-            <parameter id="mutationRate.s:seg1" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
-            <parameter id="gammaShape.s:seg1" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
+            <parameter id="mutationRate.s:seg1" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">1.0</parameter>
+            <parameter id="gammaShape.s:seg1" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
             <parameter id="freqParameter.s:seg1" dimension="4" name="stateNode" spec="beast.base.spec.inference.parameter.SimplexParam">0.25</parameter>
-            <parameter id="kappa.s:seg1" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">2.0</parameter>
+            <parameter id="kappa.s:seg1" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">2.0</parameter>
 
-            <parameter id="mutationRate.s:seg2" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
-            <parameter id="gammaShape.s:seg2" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
+            <parameter id="mutationRate.s:seg2" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">1.0</parameter>
+            <parameter id="gammaShape.s:seg2" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
             <parameter id="freqParameter.s:seg2" dimension="4" name="stateNode" spec="beast.base.spec.inference.parameter.SimplexParam">0.25</parameter>
-            <parameter id="kappa.s:seg2" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">2.0</parameter>
+            <parameter id="kappa.s:seg2" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">2.0</parameter>
 
-            <parameter id="mutationRate.s:seg3" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
-            <parameter id="gammaShape.s:seg3" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
+            <parameter id="mutationRate.s:seg3" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">1.0</parameter>
+            <parameter id="gammaShape.s:seg3" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
             <parameter id="freqParameter.s:seg3" dimension="4" name="stateNode" spec="beast.base.spec.inference.parameter.SimplexParam">0.25</parameter>
-            <parameter id="kappa.s:seg3" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">2.0</parameter>
+            <parameter id="kappa.s:seg3" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">2.0</parameter>
 
-            <parameter id="mutationRate.s:seg4" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
-            <parameter id="gammaShape.s:seg4" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
+            <parameter id="mutationRate.s:seg4" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">1.0</parameter>
+            <parameter id="gammaShape.s:seg4" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
             <parameter id="freqParameter.s:seg4" dimension="4" name="stateNode" spec="beast.base.spec.inference.parameter.SimplexParam">0.25</parameter>
-            <parameter id="kappa.s:seg4" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">2.0</parameter>
+            <parameter id="kappa.s:seg4" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">2.0</parameter>
 
-            <parameter id="mutationRate.s:seg5" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
-            <parameter id="gammaShape.s:seg5" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
+            <parameter id="mutationRate.s:seg5" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">1.0</parameter>
+            <parameter id="gammaShape.s:seg5" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
             <parameter id="freqParameter.s:seg5" dimension="4" name="stateNode" spec="beast.base.spec.inference.parameter.SimplexParam">0.25</parameter>
-            <parameter id="kappa.s:seg5" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">2.0</parameter>
+            <parameter id="kappa.s:seg5" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">2.0</parameter>
 
-            <parameter id="mutationRate.s:seg6" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
-            <parameter id="gammaShape.s:seg6" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
+            <parameter id="mutationRate.s:seg6" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">1.0</parameter>
+            <parameter id="gammaShape.s:seg6" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
             <parameter id="freqParameter.s:seg6" dimension="4" name="stateNode" spec="beast.base.spec.inference.parameter.SimplexParam">0.25</parameter>
-            <parameter id="kappa.s:seg6" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">2.0</parameter>
+            <parameter id="kappa.s:seg6" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">2.0</parameter>
 
-            <parameter id="mutationRate.s:seg7" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
-            <parameter id="gammaShape.s:seg7" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
+            <parameter id="mutationRate.s:seg7" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">1.0</parameter>
+            <parameter id="gammaShape.s:seg7" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
             <parameter id="freqParameter.s:seg7" dimension="4" name="stateNode" spec="beast.base.spec.inference.parameter.SimplexParam">0.25</parameter>
-            <parameter id="kappa.s:seg7" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">2.0</parameter>
+            <parameter id="kappa.s:seg7" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">2.0</parameter>
 
-            <parameter id="mutationRate.s:seg8" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
-            <parameter id="gammaShape.s:seg8" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
+            <parameter id="mutationRate.s:seg8" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">1.0</parameter>
+            <parameter id="gammaShape.s:seg8" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
             <parameter id="freqParameter.s:seg8" dimension="4" name="stateNode" spec="beast.base.spec.inference.parameter.SimplexParam">0.25</parameter>
-            <parameter id="kappa.s:seg8" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">2.0</parameter>
+            <parameter id="kappa.s:seg8" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">2.0</parameter>
 
             <stateNode id="network" spec="SimulatedCoalescentNetwork" nSegments="8" enableSegmentTreeUpdate="false">
 

@@ -7,7 +7,7 @@
         <!-- Coalescent with Reassortment -->
         <subtemplate id="CoalescentWithReassortmentConstantPopulation" class="coalre.util.DummyTreeDistribution" mainid="CoalescentWithReassortmentDummy.t:$(n)" inlineInputs="coalre.distribution.CoalescentWithReassortment.networkIntervals" suppressInputs="coalre.distribution.NetworkIntervals.network"><![CDATA[
             
-            <stateNode id="reassortmentRateCwR.alltrees" value="0.1" estimate="true" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+            <stateNode id="reassortmentRateCwR.alltrees" value="0.1" estimate="true" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal"/>
             <stateNode id="popSizeCwR.alltrees" value="1.0" estimate="true" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
             <stateNode id="binomialProbCwR.alltrees" value="0.5" estimate="false" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="UnitInterval"/>
 

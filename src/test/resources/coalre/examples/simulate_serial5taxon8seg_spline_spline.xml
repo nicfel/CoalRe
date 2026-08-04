@@ -10,14 +10,14 @@
         <populationModel id="splinePop" spec="coalre.dynamics.NeDynamicsFromSpline">
             <spline id="spline" spec="coalre.dynamics.Spline" infectedIsNe="true" gridPoints="500">
                     <logInfected id="logInfected" value="1 1 2 1.5 1 0" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
-                <rateShifts id="rateShifts" value="0 1 2 3 4 5" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
-                <uninfectiousRate id="recoveryRate" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+                <rateShifts id="rateShifts" value="0 1 2 3 4 5" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="NonNegativeReal"/>
+                <uninfectiousRate id="recoveryRate" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal"/>
             </spline>
         </populationModel>
 
         <timeVaryingReassortmentRates id="reassortmentDynamics" spec="coalre.dynamics.PiecewiseConstantReassortmentRates">
             <reassortmentRate id="reassortmentRate" value="2 -1 1 0 -10 0" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
-            <rateShifts id="rateShifts2" value="0 1 2 3 4 5" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
+            <rateShifts id="rateShifts2" value="0 1 2 3 4 5" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="NonNegativeReal"/>
         </timeVaryingReassortmentRates>
 
         <traitSet spec="TraitSet" traitname="date-backward" id="traitSet">

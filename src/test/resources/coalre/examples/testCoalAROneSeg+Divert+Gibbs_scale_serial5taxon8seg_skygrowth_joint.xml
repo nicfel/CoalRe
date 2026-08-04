@@ -35,11 +35,11 @@
 
                     <populationModel id="splinePop" spec="coalre.dynamics.SkygrowthNeDynamics">
                         <logNe idref="logInfected"/>
-                        <rateShifts id="rateShifts" value="0 1 2 3 4 5" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
+                        <rateShifts id="rateShifts" value="0 1 2 3 4 5" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="NonNegativeReal"/>
                     </populationModel>
                     <timeVaryingReassortmentRates id="splinePop2" spec="coalre.dynamics.SkygrowthReassortmentRatesFromSkygrowthNe" logNe="@logInfected">
                         <neToReassortment idref="reassortmentRate"/>
-                        <rateShifts id="rateShifts2" value="0 1 2 3 4 5" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
+                        <rateShifts id="rateShifts2" value="0 1 2 3 4 5" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="NonNegativeReal"/>
                     </timeVaryingReassortmentRates>
                 </distribution>
 

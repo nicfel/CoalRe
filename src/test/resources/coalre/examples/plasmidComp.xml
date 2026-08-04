@@ -1192,20 +1192,20 @@
                 </trait>
                 <taxonset idref="TaxonSet.4AMRgenes"/>
             </tree>
-            <parameter id="clockRate.c:4AMRgenes" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
-            <parameter id="kappa.s:4AMRgenes" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">2.0</parameter>
+            <parameter id="clockRate.c:4AMRgenes" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">1.0</parameter>
+            <parameter id="kappa.s:4AMRgenes" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">2.0</parameter>
             <parameter id="freqParameter.s:4AMRgenes" dimension="4" name="stateNode" spec="beast.base.spec.inference.parameter.SimplexParam">0.25</parameter>
-            <parameter id="gammaShape.s:4AMRgenes" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
+            <parameter id="gammaShape.s:4AMRgenes" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
             <parameter id="freqParameter.s:spA" dimension="4" name="stateNode" spec="beast.base.spec.inference.parameter.SimplexParam">0.25</parameter>
-            <parameter id="kappa.s:spA" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">2.0</parameter>
-            <parameter id="gammaShape.s:spA" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
+            <parameter id="kappa.s:spA" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">2.0</parameter>
+            <parameter id="gammaShape.s:spA" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
             <parameter id="freqParameter.s:strABsul2" dimension="4" name="stateNode" spec="beast.base.spec.inference.parameter.SimplexParam">0.25</parameter>
-            <parameter id="kappa.s:strABsul2" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">2.0</parameter>
-            <parameter id="gammaShape.s:strABsul2" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
-            <parameter id="reassortmentRateCwR.alltrees" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">0.1</parameter>
+            <parameter id="kappa.s:strABsul2" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">2.0</parameter>
+            <parameter id="gammaShape.s:strABsul2" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
+            <parameter id="reassortmentRateCwR.alltrees" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">0.1</parameter>
             <parameter id="popSizeCwR.alltrees" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
             <stateNode id="networkCwR.alltrees" spec="coalre.simulator.SimulatedCoalescentNetwork" enableSegmentTreeUpdate="false" nSegments="3" traitSet="@dateTrait.t:4AMRgenes">
-                <parameter id="RealParameter" name="reassortmentRate" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">0.0</parameter>
+                <parameter id="RealParameter" name="reassortmentRate" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">0.0</parameter>
                 <populationModel id="ConstantPopulation" spec="beast.base.spec.evolution.tree.coalescent.ConstantPopulation">
                     <parameter id="RealParameter1" name="popSize" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
                 </populationModel>
@@ -1214,9 +1214,9 @@
                 <segmentTree idref="Tree.t:spA"/>
                 <taxonSet id="TaxonSet" spec="TaxonSet" alignment="@4AMRgenes"/>
             </stateNode>
-            <parameter id="mutationRate.s:4AMRgenes" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
-            <parameter id="mutationRate.s:spA" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
-            <parameter id="mutationRate.s:strABsul2" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
+            <parameter id="mutationRate.s:4AMRgenes" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">1.0</parameter>
+            <parameter id="mutationRate.s:spA" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">1.0</parameter>
+            <parameter id="mutationRate.s:strABsul2" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal">1.0</parameter>
         </state>
 
         <init id="segmentTreeInitializerCwR.t:strABsul2" spec="coalre.network.SegmentTreeInitializer" network="@networkCwR.alltrees" segmentIndex="2">

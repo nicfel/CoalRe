@@ -39,7 +39,7 @@
         <state>
             <stateNode id="seg1tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
             <stateNode id="seg2tree" spec="Tree" taxonset="@taxonSet" trait="@traitSet"/>
-            <stateNode id="reassortmentRate" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
+            <stateNode id="reassortmentRate" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="NonNegativeReal"/>
             <stateNode id="clockRate" value="0.05" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
             <stateNode id="popSize" value="1.0" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real"/>
 
