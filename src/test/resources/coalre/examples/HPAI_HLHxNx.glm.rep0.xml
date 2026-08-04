@@ -399,7 +399,7 @@
 
 			<parameter id="predictorActive" name="stateNode" spec="beast.base.spec.inference.parameter.IntScalarParam" domain="NonNegativeInt">4</parameter>
 
-			<parameter id="effectSize" name="stateNode" dimension="1" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="PositiveReal">1</parameter>
+			<parameter id="effectSize" name="stateNode" dimension="1" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real">1</parameter>
 
             <parameter id="mutationRate.s:seg1" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal">1.0</parameter>
             <parameter id="gammaShape.s:seg1" name="stateNode" spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real">1.0</parameter>
