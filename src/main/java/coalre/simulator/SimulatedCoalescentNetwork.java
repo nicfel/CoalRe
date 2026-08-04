@@ -72,10 +72,17 @@ public class SimulatedCoalescentNetwork extends Network {
 
     public void initAndValidate() {
 
-        if (segmentTreesInput.get().isEmpty()) {
+        // Working copy: the Input list is emptied below once the segment names have
+        // been harvested from it, but the rest of this method still needs the trees.
+        // Why the Input must be cleared at all is undocumented (introduced in 8f6c7fe,
+        // "keeps better track of segment trees"); the clear is kept as-is rather than
+        // removed, so behaviour is unchanged for every analysis that worked before.
+        final List<Tree> segmentTrees = new ArrayList<>(segmentTreesInput.get());
+
+        if (segmentTrees.isEmpty()) {
             nSegments = nSegmentsInput.get();
         }else {
-            nSegments = segmentTreesInput.get().size();
+            nSegments = segmentTrees.size();
             segmentNames = new String[nSegments];
             // initialize names of segments
             baseName = "";
@@ -93,7 +100,7 @@ public class SimulatedCoalescentNetwork extends Network {
 //            }
             
             for (int segIdx=0; segIdx<nSegments; segIdx++) {
-            	segmentNames[segIdx] = segmentTreesInput.get().get(segIdx).getID().replace(baseName, "");
+            	segmentNames[segIdx] = segmentTrees.get(segIdx).getID().replace(baseName, "");
             }
             segmentTreesInput.get().clear();
         }
@@ -121,8 +128,8 @@ public class SimulatedCoalescentNetwork extends Network {
             taxonSet = traitSetInput.get().taxaInput.get();
         else if (taxonSetInput.get() != null)
             taxonSet = taxonSetInput.get();
-        else if (!segmentTreesInput.get().isEmpty())
-        	taxonSet = segmentTreesInput.get().get(0).getTaxonset();
+        else if (!segmentTrees.isEmpty())
+        	taxonSet = segmentTrees.get(0).getTaxonset();
         else
             throw new IllegalArgumentException("Taxon set must be specified " +
                     "using either taxonSet, traitSet or provided by a segmentTree input.");
@@ -130,8 +137,8 @@ public class SimulatedCoalescentNetwork extends Network {
         TraitSet traitSet = null;
         if (traitSetInput.get() != null)
             traitSet = traitSetInput.get();
-        else if (!segmentTreesInput.get().isEmpty())
-            traitSet = segmentTreesInput.get().get(0).getDateTrait();
+        else if (!segmentTrees.isEmpty())
+            traitSet = segmentTrees.get(0).getDateTrait();
 
         for (int taxonIndex=0; taxonIndex<taxonSet.getTaxonCount(); taxonIndex++) {
             String taxonName = taxonSet.getTaxonId(taxonIndex);
@@ -142,8 +149,8 @@ public class SimulatedCoalescentNetwork extends Network {
 
             if (traitSet != null)
                 sampleNode.setHeight(traitSet.getValue(taxonName));
-            else if (!segmentTreesInput.get().isEmpty())
-                sampleNode.setHeight(segmentTreesInput.get().get(0).getNode(taxonIndex).getHeight());
+            else if (!segmentTrees.isEmpty())
+                sampleNode.setHeight(segmentTrees.get(0).getNode(taxonIndex).getHeight());
             else
                 sampleNode.setHeight(0.0);
 
@@ -156,7 +163,7 @@ public class SimulatedCoalescentNetwork extends Network {
         // Update segment trees:
         if (enableSegTreeUpdateInput.get()) {
             for (int segIdx = 0; segIdx < nSegments; segIdx++) {
-                Tree segmentTree = segmentTreesInput.get().get(segIdx);
+                Tree segmentTree = segmentTrees.get(segIdx);
                 updateSegmentTree(segmentTree, segIdx);
                 segmentTree.setEverythingDirty(false);
             }
