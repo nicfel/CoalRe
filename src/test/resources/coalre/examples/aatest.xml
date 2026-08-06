@@ -96,9 +96,7 @@
             <segmentTree idref="tree8" />
         </operator> -->
 
-        <!-- lambda= removed: it belongs to EmptyEdgesNetworkOperator, which none of the
-             operators used here descend from. Restore if the hierarchy changes. -->
-        <operator id="oneSegCoal" spec="AddRemoveReassortmentCoalescent" network="@network" coalescentWithReassortment="@coalDensity" weight="5.0" divertOneSegment="false">
+        <operator id="oneSegCoal" spec="AddRemoveReassortmentCoalescent" network="@network" coalescentWithReassortment="@coalDensity" weight="5.0" lambda="0.1" divertOneSegment="false">
             <segmentTree idref="tree1"/>
             <segmentTree idref="tree2"/>
             <segmentTree idref="tree3"/>
@@ -208,6 +206,10 @@
             <segmentTree idref="tree8" />
         </operator> -->
 
+        <!-- lambda="0" removed: these two extend NetworkOperator, which has no lambda
+             input (only EmptyEdgesNetworkOperator declares one), so BEAST rejects it at
+             parse time. This was already broken before the migration; the class carries
+             comments about zeroing a superclass lambda but no code to do it. -->
         <operator spec="AddRemoveAndResimulate" coalescentWithReassortment="@coalDensity" divertOneSegment="false" network="@network" weight="1">
             <segmentTree idref="tree1"/>
             <segmentTree idref="tree2"/>
