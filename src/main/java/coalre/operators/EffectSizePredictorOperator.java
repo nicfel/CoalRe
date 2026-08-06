@@ -79,7 +79,16 @@ public class EffectSizePredictorOperator extends Operator {
 
         // propose a new effect size for activePredictorIndex
         double delta = getDelta();
-        effectSize.set(activePredictorIndex, effectSize.get(activePredictorIndex) + delta);
+        double newEffectSize = effectSize.get(activePredictorIndex) + delta;
+
+        // Reject rather than set: RealVectorParam.set() throws IllegalArgumentException on
+        // a value outside its domain, and MCMC does not catch it — an out-of-domain
+        // proposal would abort the run instead of being rejected. The bounds come from the
+        // parameter's domain (RealVector.getLower/getUpper delegate to it).
+        if (newEffectSize < effectSize.getLower() || newEffectSize > effectSize.getUpper()) {
+            return Double.NEGATIVE_INFINITY;
+        }
+        effectSize.set(activePredictorIndex, newEffectSize);
 
 
         // set the new values of NeToReassortment, such that the total reassortment rate remains the same
