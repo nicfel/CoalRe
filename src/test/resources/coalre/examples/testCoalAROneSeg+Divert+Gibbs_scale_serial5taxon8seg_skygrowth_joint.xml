@@ -43,12 +43,12 @@
                     </timeVaryingReassortmentRates>
                 </distribution>
 
-                    <distribution spec="beast.base.spec.inference.distribution.Normal" mean="0" sigma="0.5"/>
+                    <distribution spec="beast.base.spec.inference.distribution.IID"><param spec="coalre.dynamics.Difference" arg="@reassortmentRate"/><distr spec="beast.base.spec.inference.distribution.Normal" mean="0" sigma="0.5"/></distribution>
 
-                    <distribution spec="beast.base.spec.inference.distribution.Normal" mean="0" sigma="0.5"/>
+                    <distribution spec="beast.base.spec.inference.distribution.IID"><param spec="coalre.dynamics.Difference" arg="@logInfected"/><distr spec="beast.base.spec.inference.distribution.Normal" mean="0" sigma="0.5"/></distribution>
 
-                    <distribution spec="beast.base.spec.inference.distribution.Normal" mean="-1" sigma="0.5"/>
-                    <distribution spec="beast.base.spec.inference.distribution.Normal" mean="0" sigma="0.5"/>
+                    <distribution spec="beast.base.spec.inference.distribution.Normal" mean="-1" sigma="0.5"><param spec="mascot.util.Final" arg="@reassortmentRate"/></distribution>
+                    <distribution spec="beast.base.spec.inference.distribution.Normal" mean="0" sigma="0.5"><param spec="mascot.util.Final" arg="@logInfected"/></distribution>
 
         </distribution>
         <operator spec="AddRemoveReassortmentCoalescent" network="@network" coalescentWithReassortment="@coalDensity" weight="1.0" lambda="15"/>

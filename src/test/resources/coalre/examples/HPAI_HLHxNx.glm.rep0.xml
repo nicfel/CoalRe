@@ -601,15 +601,23 @@
                 <distribution id="parametersPrior" spec="CompoundDistribution">
                     <distribution spec="beast.base.spec.inference.distribution.LogNormal" param="@popSize"><M spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real" value="3.0"/><S spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="2.5"/></distribution>
                     <distribution spec="beast.base.spec.inference.distribution.LogNormal" param="@reassortmentRate" M="-1.7344" S="0.5"/>
-                    <distribution spec="beast.base.spec.inference.distribution.Normal" mean="0" sigma="@sigma"/>
+                    <distribution spec="beast.base.spec.inference.distribution.IID"><param spec="coalre.dynamics.Difference" arg="@logNe"/><distr spec="beast.base.spec.inference.distribution.Normal" mean="0" sigma="@sigma"/></distribution>
 
                     <distribution spec="beast.base.spec.inference.distribution.LogNormal" param="@sigma2" meanInRealSpace="true" M="1" S="0.5"/>
-					<distribution spec="beast.base.spec.inference.distribution.Normal" param="@effectSize" mean="1" sigma="1"/>
+					<distribution spec="beast.base.spec.inference.distribution.IID" param="@effectSize"><distr spec="beast.base.spec.inference.distribution.TruncatedReal"><lower spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real" value="0.0"/><distribution spec="beast.base.spec.inference.distribution.Normal" mean="1" sigma="1"/></distr></distribution>
+
+					<!-- Carries the BEAST2 bounds lower="0" upper="4" that were dropped on
+					     predictorActive: no integer domain expresses "0..4". BEAST3 reads
+					     a parameter's bounds from its domain widened by any attached
+					     distribution (IntScalar.getUpper via BoundUtils), so this prior is
+					     what keeps IntUniformOperator proposing in range. Upper is the
+					     number of predictors, which is also the "no predictor active" state. -->
+					<distribution id="predictorActivePrior" spec="beast.base.spec.inference.distribution.IntUniform" param="@predictorActive"><lower spec="beast.base.spec.inference.parameter.IntScalarParam" domain="Int" value="0"/><upper spec="beast.base.spec.inference.parameter.IntScalarParam" domain="Int" value="4"/></distribution>
 
                     <!-- isinfectedSkyline-->
-                    <distribution spec="beast.base.spec.inference.distribution.Normal" mean="0" sigma="@sigma2"/>
+                    <distribution spec="beast.base.spec.inference.distribution.IID"><param spec="coalre.dynamics.Difference" arg="@InfectedToRho" independentAfter="40"/><distr spec="beast.base.spec.inference.distribution.Normal" mean="0" sigma="@sigma2"/></distribution>
 
-                    <distribution spec="beast.base.spec.inference.distribution.Normal" mean="-3" sigma="0.5"/>
+                    <distribution spec="beast.base.spec.inference.distribution.Normal" mean="-3" sigma="0.5"><param spec="mascot.util.Final" arg="@InfectedToRho"/></distribution>
 
                     <distribution spec="beast.base.spec.inference.distribution.LogNormal" param="@sigma2" meanInRealSpace="true" M="1" S="0.5"/>
                     <!--isinfectedSkyline -->

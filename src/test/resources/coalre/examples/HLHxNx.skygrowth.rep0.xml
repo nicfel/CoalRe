@@ -680,15 +680,15 @@
                 <distribution id="parametersPrior" spec="CompoundDistribution">
                     <distribution spec="beast.base.spec.inference.distribution.LogNormal" param="@popSize"><M spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real" value="3.0"/><S spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="2.5"/></distribution>
                     <distribution spec="beast.base.spec.inference.distribution.LogNormal" param="@reassortmentRate" M="-1.7344" S="0.5"/>
-                    <distribution spec="beast.base.spec.inference.distribution.Normal" mean="0" sigma="@sigma"/>
+                    <distribution spec="beast.base.spec.inference.distribution.IID"><param spec="coalre.dynamics.Difference" arg="@logNe"/><distr spec="beast.base.spec.inference.distribution.Normal" mean="0" sigma="@sigma"/></distribution>
 
                     <distribution spec="beast.base.spec.inference.distribution.LogNormal" param="@sigma2" meanInRealSpace="true" M="1" S="0.5"/>
                     <!--insert_from_to_prior -->
 
                     <!-- isinfectedSkyline-->
-                    <distribution spec="beast.base.spec.inference.distribution.Normal" mean="0" sigma="@sigma2"/>
+                    <distribution spec="beast.base.spec.inference.distribution.IID"><param spec="coalre.dynamics.Difference" arg="@InfectedToRho"/><distr spec="beast.base.spec.inference.distribution.Normal" mean="0" sigma="@sigma2"/></distribution>
 
-                    <distribution spec="beast.base.spec.inference.distribution.Normal" mean="-3" sigma="0.5"/>
+                    <distribution spec="beast.base.spec.inference.distribution.Normal" mean="-3" sigma="0.5"><param spec="mascot.util.Final" arg="@InfectedToRho"/></distribution>
 
                     <distribution spec="beast.base.spec.inference.distribution.LogNormal" param="@sigma2" meanInRealSpace="true" M="1" S="0.5"/>
                     <!--isinfectedSkyline -->
