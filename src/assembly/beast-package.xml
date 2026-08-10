@@ -37,9 +37,17 @@
     </dependencySets>
 
     <fileSets>
+        <!-- Allow-list: ship the analyses and their input data only. A working copy
+             also holds run output (.log/.trees/.state), which would otherwise be
+             swept into the release archive. -->
         <fileSet>
             <directory>${project.basedir}/src/test/resources/coalre/examples</directory>
             <outputDirectory>/examples</outputDirectory>
+            <includes>
+                <include>*.xml</include>
+                <include>*.fasta</include>
+                <include>*.R</include>
+            </includes>
         </fileSet>
         <fileSet>
             <directory>${project.basedir}/src/main/resources/coalre/fxtemplates</directory>
