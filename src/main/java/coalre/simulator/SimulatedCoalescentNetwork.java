@@ -70,14 +70,35 @@ public class SimulatedCoalescentNetwork extends Network {
 
     private int nSegments;
 
+    /**
+     * Segment trees harvested from the {@code segmentTree} Input on the first call to
+     * {@link #initAndValidate()}. The Input itself is emptied there (see below), so this
+     * is the only copy that survives, and the only one a second initialisation can use.
+     */
+    private final List<Tree> segmentTrees = new ArrayList<>();
+
     public void initAndValidate() {
 
-        // Working copy: the Input list is emptied below once the segment names have
-        // been harvested from it, but the rest of this method still needs the trees.
-        // Why the Input must be cleared at all is undocumented (introduced in 8f6c7fe,
-        // "keeps better track of segment trees"); the clear is kept as-is rather than
-        // removed, so behaviour is unchanged for every analysis that worked before.
-        final List<Tree> segmentTrees = new ArrayList<>(segmentTreesInput.get());
+        // The segment trees must be removed from the Input list, and must be remembered
+        // here instead.
+        //
+        // Removed, because leaving them in makes each Tree an input of this Network, and
+        // hence makes the Network a CalculationNode downstream of the trees. MCMC then
+        // stores it twice per step (once via StateNode.startEditing, once via
+        // State.storeCalculationNodes after the proposal) and restores it twice on
+        // rejection. The second store overwrites the pre-proposal copy and the second
+        // restore undoes the first, so a rejected network move is never rolled back and
+        // the network desynchronises from the segment trees within a few steps.
+        //
+        // Remembered, because initAndValidate runs once per simulation under
+        // GPSimulator, and every call after the first would otherwise see an empty list
+        // and fall into the nSegments branch below — null whenever the XML derives the
+        // segment count from the trees.
+        if (!segmentTreesInput.get().isEmpty()) {
+            segmentTrees.clear();
+            segmentTrees.addAll(segmentTreesInput.get());
+            segmentTreesInput.get().clear();
+        }
 
         if (segmentTrees.isEmpty()) {
             nSegments = nSegmentsInput.get();
@@ -102,7 +123,6 @@ public class SimulatedCoalescentNetwork extends Network {
             for (int segIdx=0; segIdx<nSegments; segIdx++) {
             	segmentNames[segIdx] = segmentTrees.get(segIdx).getID().replace(baseName, "");
             }
-            segmentTreesInput.get().clear();
         }
 
         populationFunction = populationFunctionInput.get();
