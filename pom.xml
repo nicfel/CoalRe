@@ -6,7 +6,7 @@
 
     <groupId>io.github.nicfel</groupId>
     <artifactId>coalre</artifactId>
-    <version>3.0.4</version>
+    <version>4.0.0-beta1</version>
 
     <name>CoalRe</name>
     <description>Coalescent with reassortment: joint inference of reassortment networks for segmented viruses</description>
