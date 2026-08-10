@@ -1,7 +1,7 @@
 CoalRe
 ======
 
-[![Build Status](https://github.com/nicfel/CoalRe/workflows/Unit%2Fintegration%20tests/badge.svg)](https://github.com/nicfel/CoalRe/actions?query=workflow%3A%22Unit%2Fintegration+tests%22)
+[![Build status](https://github.com/nicfel/CoalRe/actions/workflows/ci-publish.yml/badge.svg)](https://github.com/nicfel/CoalRe/actions/workflows/ci-publish.yml)
 
 
 BEAST 2 package for inference under the coalescent with reassortment,
@@ -16,15 +16,16 @@ Building CoalRe
 
 In order to build CoalRe from the source, you will need the following:
 
-1. [OpenJDK](https://adoptopenjdk.net) v8 or later,
-2. The Apache Ant build tool.
+1. [OpenJDK](https://adoptium.net) 25 or later,
+2. The Apache Maven build tool.
 
 Once these are installed, open a shell in the root directory of this repository
 and use
 
-    $ ant
+    $ mvn package
 
-to build the package.
+to run the tests and build the BEAST package archive, which is written to
+`target/CoalRe.v<version>.zip`.
 
 License
 -------
