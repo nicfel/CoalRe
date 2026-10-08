@@ -31,8 +31,6 @@ public class SuperspreadingStructuredSIRwithReassortment extends Network impleme
 
     public Input<RealVector<NonNegativeReal>> waningImmunityRateInput  = new Input<>("waningImmunityRate", "waning immunity rate", Input.Validate.REQUIRED);
 
-    public Input<RealVector<UnitInterval>> reassortmenProbabilityInput = new Input<>("reassortmenProbability", "reassortment probability", Input.Validate.REQUIRED);
-
     public Input<RealVector<UnitInterval>> samplingProbabilityInput = new Input<>("samplingProbability", "sampling probability", Input.Validate.REQUIRED);
 
     public Input<IntVector<PositiveInt>> populationSizeInput = new Input<>("populationSize", "population size", Input.Validate.REQUIRED);

@@ -3,7 +3,7 @@
        namespace="beast.core:beast.core.util:beast.evolution.alignment:beast.evolution.nuc:beast.evolution.operators:beast.evolution.sitemodel:beast.evolution.substitutionmodel:beast.evolution.tree.coalescent:beast.base.core:beast.base.evolution.alignment:beast.base.evolution.likelihood:beast.base.evolution.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.tree:beast.base.evolution.tree.coalescent:beast.base.inference:beast.base.inference.operator:beast.base.inference.util:beast.pkgmgmt:feast.simulation:coalre.network:coalre.statistics:coalre.simulator:coalre.distribution:coalre.operators">
 
     <run spec="GPSimulator" nSims="1">
-        <simulationObject id="network_truth" spec="SuperspreadingStructuredSIRwithReassortment" fileName="$(filebase).trees" reassortmenProbability="0.1" simulationTime="1000" nSegments="4" minSamples="50" k="1.62620072006638">
+        <simulationObject id="network_truth" spec="SuperspreadingStructuredSIRwithReassortment" fileName="$(filebase).trees" simulationTime="1000" nSegments="4" minSamples="50" k="1.62620072006638">
           <transmissionRate value="1.68557534612032 1.68557534612032" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
           <recoveryRate value="1 1" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
           <waningImmunityRate value="0.01 0.1" spec="beast.base.spec.inference.parameter.RealVectorParam" domain="Real"/>
