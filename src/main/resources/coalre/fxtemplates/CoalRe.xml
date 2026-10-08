@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<beast version="2.0"
-       namespace="beast.app.beauti                  :beast.core                  :beast.evolution.branchratemodel                  :beast.evolution.speciation                  :beast.evolution.tree.coalescent                  :beast.core.util                  :beast.core.parameter                  :beast.evolution.nuc                  :beast.evolution.operators                  :beast.evolution.sitemodel                  :beast.evolution.substitutionmodel                  :beast.evolution.likelihood                  :beast.evolution                  :beast.math.distributions">
+<beast namespace="beastfx.app.beauti:beastfx.app.inputeditor:beast.pkgmgmt:beast.base.core:beast.base.inference:beast.base.evolution.branchratemodel:beast.base.evolution.speciation:beast.base.evolution.tree.coalescent:beast.base.util:beast.base.math:beast.base.evolution.operator:beast.base.inference.operator:beast.base.evolution.sitemodel:beast.base.evolution.substitutionmodel:beast.base.evolution.likelihood:beast.base.inference.distribution"
+       version="2.0">
 
     <mergewith point="treePriorTemplates">
 
