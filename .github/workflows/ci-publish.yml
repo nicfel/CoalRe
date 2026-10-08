@@ -2,10 +2,10 @@ name: CI & Publish
 
 on:
   push:
-    branches: [ beast2.8 ]
+    branches: [ master ]
     tags: [ 'v*' ]
   pull_request:
-    branches: [ beast2.8 ]
+    branches: [ master ]
 
 jobs:
   build:
