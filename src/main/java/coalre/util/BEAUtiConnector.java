@@ -3,19 +3,16 @@ package coalre.util;
 import beastfx.app.inputeditor.BeautiDoc;
 import beast.base.inference.Scalable;
 import beast.base.core.BEASTInterface;
-import beast.base.core.BEASTObject;
-import beast.base.evolution.likelihood.GenericTreeLikelihood;
-import beast.base.evolution.operator.AdaptableOperatorSampler;
-import beast.base.evolution.operator.kernel.AdaptableVarianceMultivariateNormalOperator;
 import beast.base.inference.MCMC;
 import beast.base.inference.Operator;
-import beast.base.inference.operator.UpDownOperator;
-import beast.base.inference.operator.kernel.BactrianUpDownOperator;
-import beast.base.inference.operator.kernel.Transform;
-import beast.base.evolution.tree.coalescent.RandomTree;
 import beast.base.evolution.tree.TraitSet;
 import beast.base.evolution.tree.Tree;
-import coalre.distribution.CoalescentWithReassortment;
+// BEAUti 2.8 builds the spec-typed twins of these, so the legacy classes never match.
+import beast.base.spec.evolution.likelihood.GenericTreeLikelihood;
+import beast.base.spec.evolution.operator.AdaptableOperatorSampler;
+import beast.base.spec.evolution.operator.AdaptableVarianceMultivariateNormalOperator;
+import beast.base.spec.evolution.operator.UpDownOperator;
+import beast.base.spec.inference.operator.Transform;
 import coalre.network.SegmentTreeInitializer;
 import coalre.operators.NetworkScaleOperator;
 import coalre.simulator.SimulatedCoalescentNetwork;
@@ -76,10 +73,10 @@ public class BEAUtiConnector {
             	if (aos instanceof AdaptableOperatorSampler) {           		
             		
                     for (Operator operator : ((AdaptableOperatorSampler) aos).operatorsInput.get()) {
-		                if (operator instanceof BactrianUpDownOperator) {
-		
-			                BactrianUpDownOperator upDown = (BactrianUpDownOperator) operator;
-			
+		                if (operator instanceof UpDownOperator) {
+
+			                UpDownOperator upDown = (UpDownOperator) operator;
+
 			                boolean segmentTreeScaler = upDown.upInput.get().contains(segmentTree)
 			                        || upDown.downInput.get().contains(segmentTree);
 			
@@ -105,20 +102,20 @@ public class BEAUtiConnector {
             for (Operator aos : mcmc.operatorsInput.get()) {
             	if (aos instanceof AdaptableOperatorSampler) {           		
                     for (Operator operator : ((AdaptableOperatorSampler) aos).operatorsInput.get()) {
-		                if (!(operator instanceof BactrianUpDownOperator))
+		                if (!(operator instanceof UpDownOperator))
 		                    continue;
-		
-		                BactrianUpDownOperator upDown = (BactrianUpDownOperator) operator;
-		
+
+		                UpDownOperator upDown = (UpDownOperator) operator;
+
 		                // Note: built-in up/down operators scale trees _down_ while
 		                // ours scales trees _up_, hence the up/down reversal.
-		                for (BEASTObject o : upDown.upInput.get()) {
-		                    if (o instanceof Scalable s && o.getID().contains("clock"))
+		                for (Scalable s : upDown.upInput.get()) {
+		                    if (isClockParameter(s))
 		                        parametersToScaleDown.add(s);
 		                }
 
-		                for (BEASTObject o : upDown.downInput.get()) {
-		                    if (o instanceof Scalable s && o.getID().contains("clock"))
+		                for (Scalable s : upDown.downInput.get()) {
+		                    if (isClockParameter(s))
 		                        parametersToScaleUp.add(s);
 		                }
                     }
