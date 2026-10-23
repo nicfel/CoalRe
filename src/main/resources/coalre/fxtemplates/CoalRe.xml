@@ -37,7 +37,7 @@
                 </networkIntervals>
             </prior>
 
-            <distribution id="popSizeCwRPrior.alltrees" spec="beast.base.spec.inference.distribution.LogNormal" param="@popSizeCwR.alltrees"><M spec="beast.base.spec.inference.parameter.RealScalarParam" domain="Real" value="3.0"/><S spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="2.5"/></distribution>
+            <distribution id="popSizeCwRPrior.alltrees" spec="beast.base.spec.inference.distribution.LogUniform" param="@popSizeCwR.alltrees"><lower spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="1.0E-12"/><upper spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="1.0E12"/></distribution>
 
             <distribution id="reassortmentRateCwRPrior.alltrees" spec="beast.base.spec.inference.distribution.LogUniform" param="@reassortmentRateCwR.alltrees"><lower spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="1.0E-12"/><upper spec="beast.base.spec.inference.parameter.RealScalarParam" domain="PositiveReal" value="1.0E12"/></distribution>
 
