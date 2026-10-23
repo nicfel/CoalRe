@@ -69,7 +69,7 @@ public class DivertSegmentAndResimulate extends NetworkOperator {
 			System.out.println("restore segment trees in first move");
 			// update all segment trees			
             for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
-          		network.updateSegmentTree(segmentTrees.get(segmentTreeMap[segIdx]), segmentTreeMap[segIdx]); 
+          		network.updateSegmentTree(segmentTrees.get(segIdx), segIdx); 
             
             network.segmentTreesNeedInit = false;
 			return Double.POSITIVE_INFINITY;

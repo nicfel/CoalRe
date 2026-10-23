@@ -26,12 +26,11 @@ public abstract class NetworkOperator extends Operator {
 
     protected Network network;
     protected List<Tree> segmentTrees;
-    int[] segmentTreeMap;
-    
+
 	protected BitSet segmentsChanged = new BitSet();
-	
+
 	protected Tree getSegmentTree(int seg) {
-        return segmentTrees.get(segmentTreeMap[seg]);
+        return segmentTrees.get(seg);
     }
 
     protected Node getSegmentTreeNode(final NetworkNode node, final int seg) {
@@ -64,30 +63,29 @@ public abstract class NetworkOperator extends Operator {
             if (segmentTrees.size() != network.getSegmentCount())
                 throw new IllegalArgumentException("Number of segment trees provided " +
                         "to operator must match number of segments in network.");
-            // ensure the order of the segment trees is correct
-            segmentTreeMap = new int[network.getSegmentCount()];
-            
             if (network.segmentNames==null) {
             	network.segmentNames=new String[segmentTreesInput.get().size()];
             	for (int j = 0; j < segmentTreesInput.get().size(); j++) {
             		network.segmentNames[j] = segmentTreesInput.get().get(j).getID();
             	}
             }
-            
-            int c=0;
+
+            // Put the segment trees into the network's segment order, in place.
+            // Operators index segmentTrees (and segmentTreesInput) by segment, so
+            // the list must follow network.segmentNames, not the order in which the
+            // XML happens to list the trees. BEAUti does not keep the two in step.
+            List<Tree> ordered = new ArrayList<>();
             for (int i = 0; i < network.getSegmentCount(); i++) {
-            	for (int j = 0; j < segmentTreesInput.get().size(); j++) {
-            		if (segmentTreesInput.get().get(j).getID().contentEquals(network.segmentNames[i])) {
-            			segmentTreeMap[i] = j;
-            			c++;
-            		}
+            	for (Tree tree : segmentTrees) {
+            		if (tree.getID().contentEquals(network.segmentNames[i]))
+            			ordered.add(tree);
             	}
             }
-            if (c!=network.getSegmentCount()) {
+            if (ordered.size()!=network.getSegmentCount()) {
             	throw new IllegalArgumentException("not all segments found");
-            }         
-            
-
+            }
+            segmentTrees.clear();
+            segmentTrees.addAll(ordered);
         }
 
     }
@@ -100,7 +98,7 @@ public abstract class NetworkOperator extends Operator {
 			System.out.println("restore segment trees in first move");
 			// update all segment trees			
             for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
-          		network.updateSegmentTree(segmentTrees.get(segmentTreeMap[segIdx]), segmentTreeMap[segIdx]); 
+          		network.updateSegmentTree(segmentTrees.get(segIdx), segIdx); 
             
             network.segmentTreesNeedInit = false;
 			return Double.POSITIVE_INFINITY;

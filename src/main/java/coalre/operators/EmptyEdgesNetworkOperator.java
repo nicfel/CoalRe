@@ -57,7 +57,7 @@ public abstract class EmptyEdgesNetworkOperator extends NetworkOperator {
 		if (network.segmentTreesNeedInit) {			
 			// update all segment trees			
             for (int segIdx=0; segIdx<segmentTrees.size(); segIdx++)
-          		network.updateSegmentTree(segmentTrees.get(segmentTreeMap[segIdx]), segmentTreeMap[segIdx]); 
+          		network.updateSegmentTree(segmentTrees.get(segIdx), segIdx); 
             
             network.segmentTreesNeedInit = false;
 			return Double.POSITIVE_INFINITY;
