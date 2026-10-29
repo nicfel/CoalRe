@@ -173,7 +173,7 @@
             <log idref="reassortmentRate"/>
             <log idref="clockRate"/>
             <log idref="popSize"/>
-            <log spec="ESS" arg="@posterior"/>
+            <log spec="beast.base.spec.inference.util.ESS" arg="@posterior"/>
         </logger>
 
     </run>
