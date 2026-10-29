@@ -5,7 +5,7 @@ import beast.base.core.Input;
 import beast.base.core.Input.Validate;
 import beast.base.evolution.alignment.TaxonSet;
 import beast.base.evolution.tree.Node;
-import beast.base.inference.distribution.ParametricDistribution;
+import beast.base.spec.inference.distribution.ScalarDistribution;
 import beast.base.spec.domain.Real;
 import beast.base.spec.inference.parameter.RealScalarParam;
 import beast.base.util.Randomizer;
@@ -37,7 +37,7 @@ public class TipReheight extends NetworkOperator {
             "set of taxa for which prior information is available");
     public final Input<Boolean> isMonophyleticInput = new Input<>("monophyletic",
             "whether the taxon set is monophyletic (forms a clade without other taxa) or nor. Default is false.", false);
-    public final Input<ParametricDistribution> distInput = new Input<>("distr",
+    public final Input<ScalarDistribution> distInput = new Input<>("distr",
             "distribution used to calculate prior over MRCA time, "
                     + "e.g. normal, beta, gamma. If not specified, monophyletic must be true");
     public Input<RealScalarParam<Real>> dateOffset = new Input<>("dateOffset", "keeps track of how much the dates have change", Validate.REQUIRED);

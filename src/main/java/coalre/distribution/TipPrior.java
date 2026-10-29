@@ -7,7 +7,7 @@ import beast.base.core.Input.Validate;
 import beast.base.evolution.alignment.TaxonSet;
 import beast.base.inference.Distribution;
 import beast.base.inference.State;
-import beast.base.inference.distribution.ParametricDistribution;
+import beast.base.spec.inference.distribution.ScalarDistribution;
 import beast.base.spec.domain.Real;
 import beast.base.spec.type.RealScalar;
 import coalre.network.Network;
@@ -25,7 +25,7 @@ public class TipPrior extends Distribution {
             "set of taxa for which prior information is available", new ArrayList<>());
     public final Input<Boolean> isMonophyleticInput = new Input<>("monophyletic",
             "whether the taxon set is monophyletic (forms a clade without other taxa) or nor. Default is false.", false);
-    public final Input<List<ParametricDistribution>> distInput = new Input<>("distr",
+    public final Input<List<ScalarDistribution>> distInput = new Input<>("distr",
             "distribution used to calculate prior over MRCA time, "
                     + "e.g. normal, beta, gamma. If not specified, monophyletic must be true", new ArrayList<>());
     public Input<RealScalar<Real>> dateOffsetInput = new Input<>("dateOffset", 
@@ -35,7 +35,7 @@ public class TipPrior extends Distribution {
     /**
      * shadow members *
      */
-    List<ParametricDistribution> dist;
+    List<ScalarDistribution> dist;
     Network network;
     
     // number of taxa in taxon set

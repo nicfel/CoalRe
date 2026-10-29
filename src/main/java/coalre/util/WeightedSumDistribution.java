@@ -7,73 +7,96 @@ import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
 import beast.base.spec.domain.PositiveReal;
+import beast.base.spec.domain.Real;
+import beast.base.spec.inference.distribution.ScalarDistribution;
+import beast.base.spec.type.RealScalar;
 import beast.base.spec.type.RealVector;
-import beast.base.inference.distribution.ParametricDistribution;
 import beast.base.util.Randomizer;
 
 
 
-@Description("Dirichlet distribution.  p(x_1,...,x_n;alpha_1,...,alpha_n) = 1/B(alpha) prod_{i=1}^K x_i^{alpha_i - 1} " +
-        "where B() is the beta function B(alpha) = prod_{i=1}^K Gamma(alpha_i)/ Gamma(sum_{i=1}^K alpha_i}. ")
-public class WeightedSumDistribution extends ParametricDistribution {
-    public final Input<List<ParametricDistribution>> distInput = new Input<>("distr",
+@Description("Weighted sum of scalar distributions: density and CDF are the weighted sums of "
+        + "those of the component distributions.")
+public class WeightedSumDistribution extends ScalarDistribution<RealScalar<Real>, Double> {
+    public final Input<List<ScalarDistribution>> distInput = new Input<>("distr",
             "distribution used to calculate prior over MRCA time, "
                     + "e.g. normal, beta, gamma. If not specified, monophyletic must be true", new ArrayList<>());
-	
+
     final public Input<RealVector<PositiveReal>> weightsInput = new Input<>("weights", "weighting of the individual distrbutions ", Validate.REQUIRED);
 
     RealVector<PositiveReal> weights;
-    
-    List<ParametricDistribution> distributions;
-    
+
+    List<ScalarDistribution> distributions;
+
     @Override
     public void initAndValidate() {
     	weights = weightsInput.get();
     	distributions = distInput.get();
-    	
+
     	if (weights.size()!=distributions.size())
     		throw new IllegalArgumentException("the number of weights given differs from the number of distribution");
-    	    	
-    }
 
-    // BEAST3: ParametricDistribution.getDistribution() returns Object
-    // (commons-math2 Distribution was replaced by commons-statistics).
-    @Override
-    public Object getDistribution() {
-        return null;
-    }
-
-    // BEAST3: override the spec RealVector overload — with typed inputs the
-    // legacy calcLogP(Function) overload is never called.
-    @Override
-    public double calcLogP(RealVector<?> pX) {
-        double logP = 0;
-        for (int i = 0; i < pX.size(); i++) {
-            double x = pX.get(i);
-            double prob = 0;
-            for (int j = 0; j < weights.size(); j++){
-                // BEAST3: cumulativeProbability no longer throws MathException.
-                prob += weights.get(j)*distributions.get(j).cumulativeProbability(x);
-            }
-            logP += Math.log(prob);
-        }
-        return logP;
+        super.initAndValidate();
     }
 
     @Override
-    public double logDensity(double val){
-        double logP = 0;
-        double x = val;
+    public void refresh() {
+        // nothing to cache: each component refreshes itself when evaluated
+    }
+
+    // Scores the parameter by the weighted sum of the component CDFs, not their densities.
+    // This is the BEAST 2 behaviour (calcLogP(Function)), kept so that the model is unchanged.
+    @Override
+    protected double calcLogP(Double x) {
+        return Math.log(cumulativeProbability(x));
+    }
+
+    @Override
+    public double density(double x) {
         double prob = 0;
         for (int j = 0; j < weights.size(); j++){
 			prob += weights.get(j)*distributions.get(j).density(x);
         }
-        logP += Math.log(prob);
-        return logP;
+        return prob;
     }
-    
-	@Override
-	public Double[][] sample(int size) {
-		return null;
-	}
+
+    @Override
+    public double cumulativeProbability(double x) {
+        double prob = 0;
+        for (int j = 0; j < weights.size(); j++){
+            prob += weights.get(j)*distributions.get(j).cumulativeProbability(x);
+        }
+        return prob;
+    }
+
+    @Override
+    public List<Double> sample() {
+        double totalWeight = 0;
+        for (int j = 0; j < weights.size(); j++)
+            totalWeight += weights.get(j);
+
+        double u = Randomizer.nextDouble()*totalWeight;
+        int j = 0;
+        while (j < weights.size()-1 && u >= weights.get(j)) {
+            u -= weights.get(j);
+            j++;
+        }
+        return List.of(((Number) distributions.get(j).sample().get(0)).doubleValue());
+    }
+
+    @Override
+    public Double getLowerBoundOfParameter() {
+        double lower = Double.POSITIVE_INFINITY;
+        for (ScalarDistribution dist : distributions)
+            lower = Math.min(lower, ((Number) dist.getLowerBoundOfParameter()).doubleValue());
+        return lower;
+    }
+
+    @Override
+    public Double getUpperBoundOfParameter() {
+        double upper = Double.NEGATIVE_INFINITY;
+        for (ScalarDistribution dist : distributions)
+            upper = Math.max(upper, ((Number) dist.getUpperBoundOfParameter()).doubleValue());
+        return upper;
+    }
 }

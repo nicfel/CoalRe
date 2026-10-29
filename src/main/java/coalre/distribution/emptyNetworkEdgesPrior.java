@@ -3,10 +3,7 @@ package coalre.distribution;
 import beast.base.core.Description;
 import beast.base.core.Input;
 import beast.base.core.Input.Validate;
-import beast.base.spec.domain.NonNegativeReal;
-import beast.base.spec.inference.parameter.RealScalarParam;
-import beast.base.spec.type.RealScalar;
-import beast.base.inference.distribution.ParametricDistribution;
+import beast.base.spec.inference.distribution.ScalarDistribution;
 import coalre.network.NetworkEdge;
 
 import java.util.BitSet;
@@ -22,14 +19,14 @@ import java.util.stream.Collectors;
         " the framework of Mueller (2018).")
 public class emptyNetworkEdgesPrior extends NetworkDistribution {
 
-	final public Input<ParametricDistribution> nrEventsDistributionInput = new Input<>("nrEventsDistribution", "distribution used to calculate prior, e.g. normal, beta, gamma.", Validate.REQUIRED);
-	final public Input<ParametricDistribution> emptyLengthDistributionInput = new Input<>("emptyLengthDistribution", "distribution used to calculate prior, e.g. normal, beta, gamma.", Validate.REQUIRED);
+	final public Input<ScalarDistribution> nrEventsDistributionInput = new Input<>("nrEventsDistribution", "distribution used to calculate prior, e.g. normal, beta, gamma.", Validate.REQUIRED);
+	final public Input<ScalarDistribution> emptyLengthDistributionInput = new Input<>("emptyLengthDistribution", "distribution used to calculate prior, e.g. normal, beta, gamma.", Validate.REQUIRED);
 
 	/**
      * shadows distInput *
      */
-    protected ParametricDistribution nrEventsDistribution;
-    protected ParametricDistribution emptyLengthDistribution;
+    protected ScalarDistribution nrEventsDistribution;
+    protected ScalarDistribution emptyLengthDistribution;
 
     @Override
     public void initAndValidate(){
@@ -48,9 +45,6 @@ public class emptyNetworkEdgesPrior extends NetworkDistribution {
                 .filter(e -> e.hasSegments.cardinality()==0)
                 .filter(e -> e.childNode.isReassortment())
                 .count();
-        
-        RealScalar<NonNegativeReal> nrEmptyEdges =
-                new RealScalarParam<>(nrEmptyReassortmentEdges, NonNegativeReal.INSTANCE);
 
         
         // get how many reassortment events are empty
@@ -68,13 +62,12 @@ public class emptyNetworkEdgesPrior extends NetworkDistribution {
         // overalLengthForInit, and then built lengthEmptyEdges from arrayForInit anyway -- so
         // overalLength was computed and discarded, and emptyLengthDistribution scored the
         // empty-edge COUNT, not the total length. Preserved verbatim because changing it would
-        // alter this model's likelihood; flagged in tmp/b3migration/NOTES.md for the author.
-        RealScalar<NonNegativeReal> lengthEmptyEdges =
-                new RealScalarParam<>(nrEmptyReassortmentEdges, NonNegativeReal.INSTANCE);
+        // alter this model's likelihood.
+        double lengthEmptyEdges = nrEmptyReassortmentEdges;
            
         
-        logP += nrEventsDistribution.calcLogP(nrEmptyEdges);
-        logP += emptyLengthDistribution.calcLogP(lengthEmptyEdges);
+        logP += nrEventsDistribution.logDensity(nrEmptyReassortmentEdges);
+        logP += emptyLengthDistribution.logDensity(lengthEmptyEdges);
         
         return logP;
     }    
