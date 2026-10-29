@@ -31,3 +31,5 @@
 # Ignore generated R files
 .Rhistory
 /validation/*.png
+# Package ZIP copied to the root by release.sh
+*.v*.zip
