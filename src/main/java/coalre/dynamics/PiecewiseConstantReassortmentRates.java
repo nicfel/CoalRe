@@ -6,7 +6,7 @@ import beast.base.core.Loggable;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
 import beast.base.spec.domain.NonNegativeReal;
 import beast.base.spec.domain.Real;
-import beast.base.spec.inference.parameter.RealVectorParam;
+import beast.base.spec.type.RealVector;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -18,14 +18,13 @@ import java.util.List;
 @Description("Computes time varying recombination rates as a population"+
         " function from spline interpolation of the number of infected over time")
 public class PiecewiseConstantReassortmentRates extends PopulationFunction.Abstract {
-    // written to (setDimension) in initAndValidate: needs the concrete param type
-    final public Input<RealVectorParam<Real>> reassortmentRateInput = new Input<>("reassortmentRate",
+    final public Input<RealVector<Real>> reassortmentRateInput = new Input<>("reassortmentRate",
             "the value of the reassortmentRate");
     final public Input<beast.base.spec.type.RealVector<NonNegativeReal>> rateShiftsInput = new Input<>("rateShifts",
             "When to switch between elements of Ne", Input.Validate.REQUIRED);
 
 
-    RealVectorParam<Real> reassortmentRate;
+    RealVector<Real> reassortmentRate;
     beast.base.spec.type.RealVector<NonNegativeReal> rateShifts;
 
 
@@ -39,7 +38,7 @@ public class PiecewiseConstantReassortmentRates extends PopulationFunction.Abstr
         reassortmentRate = reassortmentRateInput.get();
         // ensure that the reassortment rates is of dimension rateShifts
 		if (reassortmentRate.size() != rateShifts.size()) {
-			reassortmentRate.setDimension(rateShifts.size());
+			VectorDimensions.ensureDimension(reassortmentRate, rateShifts.size());
 		}
     }
 

@@ -6,7 +6,7 @@ import beast.base.core.Loggable;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
 import beast.base.spec.domain.NonNegativeReal;
 import beast.base.spec.domain.Real;
-import beast.base.spec.inference.parameter.RealVectorParam;
+import beast.base.spec.type.RealVector;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -18,8 +18,7 @@ import java.util.List;
 @Description("Computes time varying recombination rates as a population"+
         " function from spline interpolation of the number of infected over time")
 public class PiecewiseConstantReassortmentRateScalers extends PopulationFunction.Abstract implements Loggable  {
-    // written to (setDimension) in initAndValidate: needs the concrete param type
-    final public Input<RealVectorParam<Real>> InfectedToRhoInput = new Input<>("InfectedToRho",
+    final public Input<RealVector<Real>> InfectedToRhoInput = new Input<>("InfectedToRho",
             "the value that maps the number of infected or the Ne to the reassortment rate ");
     final public Input<beast.base.spec.type.RealVector<NonNegativeReal>> rateShiftsInput = new Input<>("rateShifts",
             "When to switch between elements of Ne", Input.Validate.REQUIRED);
@@ -31,7 +30,7 @@ public class PiecewiseConstantReassortmentRateScalers extends PopulationFunction
     boolean NesKnown = false;
 
     Spline spline;
-    RealVectorParam<Real> InfectedToRho;
+    RealVector<Real> InfectedToRho;
     beast.base.spec.type.RealVector<NonNegativeReal> rateShifts;
 
 
@@ -45,7 +44,7 @@ public class PiecewiseConstantReassortmentRateScalers extends PopulationFunction
         InfectedToRho = InfectedToRhoInput.get();
         // ensure that the reassortment rates is of dimension rateShifts
 		if (InfectedToRho.size() != rateShifts.size()) {
-			InfectedToRho.setDimension(rateShifts.size());
+			VectorDimensions.ensureDimension(InfectedToRho, rateShifts.size());
 		}
 
         spline = splineInput.get();

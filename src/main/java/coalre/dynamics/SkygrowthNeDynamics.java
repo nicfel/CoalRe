@@ -5,7 +5,7 @@ import beast.base.core.Input;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
 import beast.base.spec.domain.NonNegativeReal;
 import beast.base.spec.domain.Real;
-import beast.base.spec.inference.parameter.RealVectorParam;
+import beast.base.spec.type.RealVector;
 
 import java.util.Arrays;
 import java.util.List;
@@ -16,13 +16,12 @@ import java.util.List;
 @Description("Population function with defines Ne's at points in time and interpolated between them. Parameter has to be in log space. The Ne's are used to compute the transmission rates, which are used for the coalescent process. ")
 public class SkygrowthNeDynamics extends PopulationFunction.Abstract {
 
-	// written to (setDimension) in initAndValidate: needs the concrete param type
-	final public Input<RealVectorParam<Real>> logNeInput = new Input<>("logNe", "Nes over time in log space",
+	final public Input<RealVector<Real>> logNeInput = new Input<>("logNe", "Nes over time in log space",
 			Input.Validate.REQUIRED);
 	final public Input<beast.base.spec.type.RealVector<NonNegativeReal>> rateShiftsInput = new Input<>("rateShifts",
 			"When to switch between elements of Ne", Input.Validate.REQUIRED);
 
-	RealVectorParam<Real> Ne;
+	RealVector<Real> Ne;
 	beast.base.spec.type.RealVector<NonNegativeReal> rateShifts;
 
 	boolean NesKnown = false;
@@ -35,7 +34,7 @@ public class SkygrowthNeDynamics extends PopulationFunction.Abstract {
 	public void initAndValidate() {
 		Ne = logNeInput.get();
 		rateShifts = rateShiftsInput.get();
-		Ne.setDimension(rateShifts.size());
+		VectorDimensions.ensureDimension(Ne, rateShifts.size());
 		growth = new double[rateShifts.size()];
 		invRatio = new double[rateShifts.size()];
 		recalculateNe();

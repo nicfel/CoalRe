@@ -6,7 +6,6 @@ import beast.base.inference.CalculationNode;
 import beast.base.spec.domain.NonNegativeReal;
 import beast.base.spec.domain.PositiveReal;
 import beast.base.spec.domain.Real;
-import beast.base.spec.inference.parameter.RealVectorParam;
 import beast.base.spec.type.RealScalar;
 import org.apache.commons.math3.linear.*;
 
@@ -17,8 +16,7 @@ import org.apache.commons.math3.linear.*;
 @Description("Populaiton function with values at certain time points that are interpolated in between. Parameter has to be in log space")
 public class NotAKnotSpline extends CalculationNode {
 
-    // written to (setDimension) in initAndValidate: needs the concrete param type
-    final public Input<RealVectorParam<Real>> InfectedInput = new Input<>("logInfected",
+    final public Input<beast.base.spec.type.RealVector<Real>> InfectedInput = new Input<>("logInfected",
             "Nes over time in log space", Input.Validate.REQUIRED);
     final public Input<beast.base.spec.type.RealVector<NonNegativeReal>> rateShiftsInput = new Input<>("rateShifts",
             "When to switch between elements of Ne", Input.Validate.REQUIRED);
@@ -29,7 +27,7 @@ public class NotAKnotSpline extends CalculationNode {
     final public Input<Boolean> infectedIsNeInput = new Input<>("infectedIsNe",
             "Whether the infected parameter is actually the number of infected or the logNe", false);
 
-    RealVectorParam<Real> infected;
+    beast.base.spec.type.RealVector<Real> infected;
     beast.base.spec.type.RealVector<NonNegativeReal> rateShifts;
     RealScalar<PositiveReal> uninfectiousRate;
     int gridPoints;
@@ -53,7 +51,7 @@ public class NotAKnotSpline extends CalculationNode {
     public void initAndValidate() {
         infected = InfectedInput.get();
         rateShifts = rateShiftsInput.get();
-        infected.setDimension(rateShifts.size());
+        VectorDimensions.ensureDimension(infected, rateShifts.size());
         uninfectiousRate = uninfectiousRateInput.get();
         gridPoints = gridPointsInput.get();
         infectedIsNe = infectedIsNeInput.get();

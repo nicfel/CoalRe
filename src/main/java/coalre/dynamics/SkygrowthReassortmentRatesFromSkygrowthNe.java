@@ -5,7 +5,7 @@ import beast.base.core.Input;
 import beast.base.evolution.tree.coalescent.PopulationFunction;
 import beast.base.spec.domain.NonNegativeReal;
 import beast.base.spec.domain.Real;
-import beast.base.spec.inference.parameter.RealVectorParam;
+import beast.base.spec.type.RealVector;
 
 import java.util.Arrays;
 import java.util.List;
@@ -16,9 +16,8 @@ import java.util.List;
 @Description("Population function with defines Ne's at points in time and interpolated between them. Parameter has to be in log space. The Ne's are used to compute the transmission rates, which are used for the coalescent process. ")
 public class SkygrowthReassortmentRatesFromSkygrowthNe extends PopulationFunction.Abstract {
 
-	// written to (setDimension) in initAndValidate: needs the concrete param type
-	final public Input<RealVectorParam<Real>> logNeInput = new Input<>("logNe", "Nes over time in log space");
-	final public Input<RealVectorParam<Real>> NeToReassortmentInput = new Input<>("neToReassortment",
+	final public Input<RealVector<Real>> logNeInput = new Input<>("logNe", "Nes over time in log space");
+	final public Input<RealVector<Real>> NeToReassortmentInput = new Input<>("neToReassortment",
 			"the value that maps the number of infected or the Ne to the reassortment rate ");
 	final public Input<beast.base.spec.type.RealVector<NonNegativeReal>> rateShiftsInput = new Input<>("rateShifts",
 			"When to switch between elements of Ne", Input.Validate.REQUIRED);
@@ -26,8 +25,8 @@ public class SkygrowthReassortmentRatesFromSkygrowthNe extends PopulationFunctio
 			"Growth rate to be used after the last rate shift. Default 0.", 0.0);
 
 
-	RealVectorParam<Real> Ne;
-	RealVectorParam<Real> NeToReassortment;
+	RealVector<Real> Ne;
+	RealVector<Real> NeToReassortment;
 	beast.base.spec.type.RealVector<NonNegativeReal> rateShifts;
 
 	boolean NesKnown = false;
@@ -47,9 +46,9 @@ public class SkygrowthReassortmentRatesFromSkygrowthNe extends PopulationFunctio
 		rateShifts = rateShiftsInput.get();
 		if (logNeInput.get()!=null) {
 			Ne = logNeInput.get();
-			Ne.setDimension(rateShifts.size());
+			VectorDimensions.ensureDimension(Ne, rateShifts.size());
 		}
-		NeToReassortment.setDimension(rateShifts.size());
+		VectorDimensions.ensureDimension(NeToReassortment, rateShifts.size());
 		growth = new double[rateShifts.size()];
 		
 		rates = new double[rateShifts.size()];

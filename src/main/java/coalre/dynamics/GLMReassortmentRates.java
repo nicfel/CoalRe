@@ -8,7 +8,7 @@ import beast.base.spec.domain.NonNegativeInt;
 import beast.base.spec.domain.NonNegativeReal;
 import beast.base.spec.domain.Real;
 import beast.base.spec.inference.parameter.IntScalarParam;
-import beast.base.spec.inference.parameter.RealVectorParam;
+import beast.base.spec.type.IntScalar;
 import beast.base.spec.type.RealVector;
 
 import java.io.PrintStream;
@@ -23,25 +23,22 @@ import java.util.List;
 public class GLMReassortmentRates extends PopulationFunction.Abstract implements Loggable {
 
 	final public Input<List<RealVector<Real>>> predictorInput = new Input<>("predictor", "predictor parameters that are used to calculate the Ne", new ArrayList<>());
-	// written to (setDimension) in initAndValidate: needs the concrete param type
-	final public Input<RealVectorParam<Real>> NeToReassortmentInput = new Input<>("neToReassortment",
+	final public Input<RealVector<Real>> NeToReassortmentInput = new Input<>("neToReassortment",
 			"the value that maps the number of infected or the Ne to the reassortment rate ");
 	final public Input<RealVector<NonNegativeReal>> rateShiftsInput = new Input<>("rateShifts",
 			"When to switch between elements of Ne", Input.Validate.REQUIRED);
-	// written to (setValue) in initAndValidate: needs the concrete param type
-	final public Input<IntScalarParam<NonNegativeInt>> predictorIsActiveInput = new Input<>("predictorIsActive",
+	final public Input<IntScalar<NonNegativeInt>> predictorIsActiveInput = new Input<>("predictorIsActive",
 			"index of the active predictor, or the number of predictors for none");
 	final public Input<Integer> independentAfterInput = new Input<>("independentAfter",
 			"ignore differences after that index");
-	// written to (setDimension) in initAndValidate: needs the concrete param type
-	final public Input<RealVectorParam<Real>> effectSizeInput = new Input<>("effectSize",
+	final public Input<RealVector<Real>> effectSizeInput = new Input<>("effectSize",
 			"the effect size of the predictors on the reassortment rates", Input.Validate.REQUIRED);
 
 	List<RealVector<Real>> predictors;
-	RealVectorParam<Real> NeToReassortment;
+	RealVector<Real> NeToReassortment;
 	RealVector<NonNegativeReal> rateShifts;
-	RealVectorParam<Real> effectSize;
-	IntScalarParam<NonNegativeInt> predictorIsActive;
+	RealVector<Real> effectSize;
+	IntScalar<NonNegativeInt> predictorIsActive;
 
 	boolean NesKnown = false;
 	double[] growth;
@@ -72,11 +69,13 @@ public class GLMReassortmentRates extends PopulationFunction.Abstract implements
 		if (predictorIsActive.get() < 0 || predictorIsActive.get() > predictors.size())
 			throw new IllegalArgumentException("predictorIsActive must be in [0, "
 					+ predictors.size() + "] but was " + predictorIsActive.get());
-		predictorIsActive.set(0);
+		// As in BEAST 2, a parameter starts with no predictor active, whatever its XML value.
+		if (predictorIsActive instanceof IntScalarParam<NonNegativeInt> param)
+			param.set(0);
 		effectSize = effectSizeInput.get();
-		effectSize.setDimension(predictors.size());
+		VectorDimensions.ensureDimension(effectSize, predictors.size());
 
-		NeToReassortment.setDimension(rateShifts.size());
+		VectorDimensions.ensureDimension(NeToReassortment, rateShifts.size());
 		growth = new double[rateShifts.size()];
 
 		rates = new double[rateShifts.size()];
